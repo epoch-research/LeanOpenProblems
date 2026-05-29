@@ -24,6 +24,7 @@ from typing import Iterable
 
 import anyio
 
+from inspect_ai.agent import Agent, AgentState, agent, run
 from inspect_ai.model import (
     ChatMessage,
     ChatMessageUser,
@@ -161,6 +162,42 @@ async def run_subagent(
     )
 
 
+@agent
+def prover_subagent(
+    model: Model,
+    verifier: LeanVerifier,
+    original: ProofSketch,
+    target_declarations: list[str],
+    config: BasicAgentConfig,
+) -> Agent:
+    """A prover subagent as an Inspect agent.
+
+    Wrapping :func:`run_subagent` as an ``@agent`` lets the orchestrator launch
+    each subagent with :func:`inspect_ai.agent.run`, which copies the input,
+    isolates it, and records a dedicated span in the transcript. The subagent
+    writes its :class:`ProofResult` into the shared ``results`` mapping (the
+    subagents coordinate no proof state with each other; ``results`` is only a
+    sink for the orchestrator).
+    """
+
+    async def execute(
+        state: AgentState,
+        *,
+        index: int,
+        results: dict[int, ProofResult],
+    ) -> AgentState:
+        result = await run_subagent(
+            index, model, verifier, original, target_declarations, config
+        )
+        results[index] = result
+        state.output = ModelOutput.from_content(
+            model=model.name, content=result.sketch.text
+        )
+        return state
+
+    return execute
+
+
 async def run_basic_agent(
     model: Model,
     verifier: LeanVerifier,
@@ -170,9 +207,10 @@ async def run_basic_agent(
 ) -> ProofResult:
     """Run ``N`` independent subagents; the first complete proof wins.
 
-    When a subagent succeeds, the surrounding task group is cancelled so the
-    others stop immediately (the paper terminates all other subagents as soon as
-    one finds a proof).
+    Each subagent is launched via :func:`inspect_ai.agent.run`. When one
+    succeeds, the surrounding task group is cancelled so the others stop
+    immediately (the paper terminates all other subagents as soon as one finds a
+    proof).
     """
     cfg = config or BasicAgentConfig()
     if not original.contains_sorry():
@@ -183,6 +221,8 @@ async def run_basic_agent(
         )
         return ProofResult(success=verdict.is_complete_proof, sketch=original, verdict=verdict)
 
+    subagent = prover_subagent(model, verifier, original, target_declarations, cfg)
+    initial_input = render_basic_prompt(original.text)
     results: dict[int, ProofResult] = {}
     winner: ProofResult | None = None
 
@@ -190,11 +230,9 @@ async def run_basic_agent(
 
         async def worker(i: int) -> None:
             nonlocal winner
-            result = await run_subagent(
-                i, model, verifier, original, target_declarations, cfg
-            )
-            results[i] = result
-            if result.success and winner is None:
+            await run(subagent, initial_input, index=i, results=results)
+            result = results.get(i)
+            if result is not None and result.success and winner is None:
                 winner = result
                 tg.cancel_scope.cancel()
 

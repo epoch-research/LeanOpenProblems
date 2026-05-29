@@ -71,7 +71,9 @@ def normalize_severity(severity: str) -> str:
 
 
 def message_indicates_sorry(text: str) -> bool:
-    return "uses 'sorry'" in text
+    # Lean's warning is "declaration uses `sorry`" (backticks in recent
+    # toolchains, single quotes in older ones).
+    return bool(re.search(r"uses\s+[`']?sorry[`']?", text))
 
 
 def summarize_compile(
