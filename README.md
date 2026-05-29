@@ -16,7 +16,16 @@ search, with four agent tiers on a shared generation/validation pipeline:
 | **D** full | A + AlphaProof + evolution. | Planned |
 
 This repository currently implements **tier A** end to end, against a **real
-Lean 4 + Mathlib + Pantograph** sandbox.
+Lean 4 + Mathlib + Pantograph** sandbox, and runs it on two of the paper's
+benchmarks:
+
+- **OEIS** — the 492 autoformalized OEIS conjectures (`apn_oeis`); the paper
+  solved 44/492.
+- a small **bundled** smoke set (`apn_basic`).
+
+The Erdős set (`erdos_problems_attempted.txt`, 352 problems) is the next target;
+most of those use the `answer(...)` macro, which needs the answer-aware scorer
+described under *Not yet implemented*.
 
 ## Architecture
 
@@ -95,6 +104,27 @@ images are large (Mathlib dominates).
 
 ## Running
 
+### OEIS conjectures (the paper's 44/492 benchmark)
+
+```bash
+apn/lean/fc/build.sh    # builds the Lean v4.27 + FormalConjectures images
+inspect eval apn/task.py@apn_oeis --model openai/gpt-5.5 --token-limit 100000
+```
+
+Each sample is an autoformalized OEIS conjecture from Formal Conjectures
+(`OEIS/Auto`), vendored under `apn/data/oeis/`. The whole file is handed to the
+agent: it must discharge the embedded **test lemmas** (small-term checks that
+guard against misformalization) as well as the conjecture. SafeVerify then
+re-validates every declaration (definitions, test lemmas, conjecture) verbatim
+and sorry-free. `--token-limit` bounds per-problem cost (these are open
+problems). Restrict to a subset with `-T names=oeis_268597_conjecture_0,...`.
+
+This track pins **Lean v4.27.0** (the paper's toolchain) and uses its own image
+set (`apn/lean/fc/`), separate from the v4.29.1 bundled track below — oleans are
+version-specific, so the agent's repl and SafeVerify are both built at v4.27.
+
+### Bundled smoke set
+
 ```bash
 # Build the Lean images first (above), then:
 inspect eval apn/task.py@apn_basic \
@@ -135,7 +165,13 @@ validated by running a real eval against the Lean sandbox (above).
 
 ## Not yet implemented
 
+- **Erdős set + `answer()`-aware scorer.** 79% of the Erdős problems use the
+  `answer(...)` macro (the paper's EVOLVE-VALUE region): the solver must supply
+  the *answer* as well as the proof. Auto-scoring those needs a relaxed
+  statement-integrity check (only `answer(...)` spans + proof body may change),
+  compilation under `set_option google.answer .withAuxiliary`, and an anti-echo
+  guard — and even then genuine-answer-ness needs human confirmation (as in the
+  paper). The 21% pure-proof Erdős problems are scorable as-is today.
 - AlphaProof tool (tier B) — proprietary; will be a pluggable interface.
 - Evolutionary population database, Elo rating, P-UCB, rater agents (tiers C/D).
 - Global goal caching.
-- A Formal Conjectures Erdős loader (the bundled dataset is a small smoke set).
