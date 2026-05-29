@@ -50,16 +50,24 @@ class SandboxSafeVerify:
             input=json.dumps({"target": target, "submission": submission}),
             timeout=self._timeout,
         )
+        # An infrastructure failure (sandbox exec died, runner timed out,
+        # unparseable output, or safe_verify was OOM-killed before reaching a
+        # verdict) is NOT a judgement on the proof. Raise so the sample errors
+        # out and is rerun/inspected, rather than silently scoring a possibly
+        # valid proof as INCORRECT.
         if not result.success:
-            return CheckOutcome(
-                ok=False,
-                stage="exec",
-                detail=result.stderr.strip()[-4000:] or "sandbox exec failed",
+            raise RuntimeError(
+                "SafeVerify sandbox exec failed (timeout or error): "
+                + (result.stderr.strip()[-4000:] or "<no stderr>")
             )
         try:
             data = json.loads(result.stdout)
-        except json.JSONDecodeError:
-            return CheckOutcome(ok=False, stage="parse", detail=result.stdout[-4000:])
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"SafeVerify runner produced unparseable output: {result.stdout[-4000:]}"
+            ) from exc
+        if "system_error" in data:
+            raise RuntimeError(f"SafeVerify infrastructure error: {data['system_error']}")
         return CheckOutcome(
             ok=bool(data.get("ok", False)),
             stage=str(data.get("stage", "")),
