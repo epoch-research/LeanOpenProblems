@@ -13,7 +13,7 @@ from __future__ import annotations
 from inspect_ai.agent import AgentSubmit, deepagent, run
 from inspect_ai.model import ModelOutput, get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
-from inspect_ai.tool import Tool, ToolResult, text_editor, tool
+from inspect_ai.tool import Tool, ToolResult, bash, text_editor, tool
 from inspect_ai.util import sandbox
 
 from apn.prompts import LEAN_INSTRUCTIONS, render_task
@@ -57,7 +57,14 @@ def lean_prover(verifier: LeanVerifier, model: str | None = None) -> Solver:
         await sandbox().write_file(PROOF_PATH, sketch)
 
         agent = deepagent(
-            tools=[text_editor(), lean_check(verifier, PROOF_PATH)],
+            tools=[
+                text_editor(),
+                lean_check(verifier, PROOF_PATH),
+                # Shell access to the workspace image, so the agent can run
+                # `python3` to explore numerically (compute sequence terms,
+                # check small cases) before committing to a Lean proof.
+                bash(timeout=120),
+            ],
             instructions=LEAN_INSTRUCTIONS,
             memory=False,
             submit=AgentSubmit(tool=submit(), name="submit"),
