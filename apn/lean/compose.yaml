@@ -1,9 +1,17 @@
-# Single Lean sandbox per sample. Run multiple independent attempts per problem
-# by passing epochs at eval time, e.g. `inspect eval ... --epochs 4`; each epoch
-# is a fresh sample run with its own sandbox.
+# Two sandboxes per sample:
+#   - default: the agent's workspace (apn-agent) -- Pantograph, no SafeVerify.
+#   - scorer:  a separate, trusted container (apn-scorer) the agent never writes
+#              to, where SafeVerify validates the final proof.
+# Run several independent attempts per problem with `inspect eval ... --epochs N`.
 services:
   default:
-    image: apn-lean
+    image: apn-agent
+    command: ["sleep", "infinity"]
+    init: true
+    x-local: true
+    network_mode: none
+  scorer:
+    image: apn-scorer
     command: ["sleep", "infinity"]
     init: true
     x-local: true

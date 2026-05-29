@@ -59,11 +59,20 @@ apn/
 
 ## Lean sandbox
 
-Lean compilation runs in Docker (`apn/lean/`), matching the paper's isolated
-sandboxes. A warm [PyPantograph](https://github.com/lenianiva/PyPantograph)
-server holds a single `pantograph-repl` process with Mathlib loaded, behind a
-Unix socket, so the many compile calls an attempt makes don't each re-import
-Mathlib. Each sample (and each epoch) gets its own sandbox.
+Lean runs in Docker (`apn/lean/`), matching the paper's isolated sandboxes. Each
+sample gets **two** sandboxes from a shared Mathlib base image:
+
+* **`default`** — the agent's workspace (`apn-agent`): a warm
+  [PyPantograph](https://github.com/lenianiva/PyPantograph) server holds a single
+  `pantograph-repl` process with Mathlib loaded behind a Unix socket, so the many
+  `lean_check` compiles an attempt makes don't each re-import Mathlib. **No
+  SafeVerify here.**
+* **`scorer`** — a separate, trusted container (`apn-scorer`) the agent never
+  writes to, where SafeVerify validates the final proof. The scorer writes the
+  submitted proof (from the store) into this clean container and checks it, so
+  the agent cannot tamper with the checker, the target spec, or the oleans.
+
+Each sample (and each epoch) gets its own pair of sandboxes.
 
 **Version note.** The image pins **Lean v4.29.1** and **Mathlib v4.29.1**,
 matching the Lean toolchain that the pinned PyPantograph commit builds its repl
@@ -71,19 +80,23 @@ against (the three must agree for the repl to load Mathlib's `.olean` files).
 The paper used Lean v4.27; v4.29.1 is the nearest toolchain PyPantograph
 provides.
 
-### Build the image
+SafeVerify is vendored under `apn/lean/safeverify/` (ported to Lean v4.29.1; see
+its `NOTICE.md`).
+
+### Build the images
 
 ```bash
-docker build -t apn-lean apn/lean
+apn/lean/build.sh   # builds apn-lean-base, then apn-agent and apn-scorer
 ```
 
-This fetches Mathlib's prebuilt `.olean` cache (`lake exe cache get`) and builds
-the Pantograph repl; the resulting image is large (~11 GB).
+This fetches Mathlib's prebuilt `.olean` cache (`lake exe cache get`) into a base
+image, then layers PyPantograph (agent) and SafeVerify (scorer) on top. The
+images are large (Mathlib dominates).
 
 ## Running
 
 ```bash
-# Build the Lean image first (above), then:
+# Build the Lean images first (above), then:
 inspect eval apn/task.py@apn_basic \
   --model anthropic/claude-sonnet-4-5 \
   --epochs 4

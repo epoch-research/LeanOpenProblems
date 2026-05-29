@@ -1,0 +1,15 @@
+# Scorer image: base + SafeVerify (the trusted kernel-level checker). Runs in a
+# separate sandbox the agent never writes to, so the agent cannot tamper with the
+# checker, the target spec, or the compiled oleans. No Pantograph here.
+#
+#   docker build -t apn-scorer -f Dockerfile.scorer .
+FROM apn-lean-base
+
+ENV APN_SAFEVERIFY_BIN=/opt/apn/safeverify/.lake/build/bin/safe_verify
+COPY safeverify /opt/apn/safeverify
+RUN cd /opt/apn/safeverify && lake build safe_verify
+
+COPY apn_safeverify.py /opt/apn/apn_safeverify.py
+RUN chmod +x /opt/apn/apn_safeverify.py
+
+CMD ["sleep", "infinity"]

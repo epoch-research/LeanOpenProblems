@@ -1,8 +1,8 @@
 """Inspect task for AlphaProof Nexus (basic agent).
 
-Build the Lean image, then run the agent over the bundled sketches::
+Build the Lean images, then run the agent over the bundled sketches::
 
-    docker build -t apn-lean apn/lean
+    apn/lean/build.sh   # builds apn-lean-base, apn-agent, apn-scorer
     inspect eval apn/task.py@apn_basic --model anthropic/claude-sonnet-4-5
 
 Run several independent attempts per problem with ``--epochs N`` (each epoch is a
@@ -38,9 +38,10 @@ def apn_basic(sketches_dir: str | None = None) -> Task:
     )
     return Task(
         dataset=dataset,
-        # The agent uses Pantograph (warm, fast) for in-loop compiler feedback;
-        # the scorer uses SafeVerify (cold, authoritative) for the final check.
+        # The agent works in the default sandbox (Pantograph, warm) for in-loop
+        # compiler feedback; the scorer runs SafeVerify in a separate, trusted
+        # "scorer" sandbox the agent never touches.
         solver=lean_prover(PantographVerifier()),
-        scorer=proof_scorer(SandboxSafeVerify()),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
         sandbox=("docker", COMPOSE_FILE),
     )

@@ -1,0 +1,26 @@
+# Shared base: Lean v4.29.1 + a built Mathlib v4.29.1 (olean cache). The agent
+# and scorer images both derive from this so Mathlib is fetched only once.
+#
+#   docker build -t apn-lean-base -f Dockerfile.base .
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH=/root/.elan/bin:$PATH \
+    ELAN_HOME=/root/.elan \
+    APN_LEAN_PROJECT=/workspace/leanproject
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl git ca-certificates build-essential libgmp-dev \
+        python3 python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG LEAN_VERSION=v4.29.1
+RUN curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh \
+    && sh elan-init.sh -y --default-toolchain "leanprover/lean4:${LEAN_VERSION}" \
+    && rm elan-init.sh
+
+WORKDIR /workspace/leanproject
+COPY lean-toolchain lakefile.toml ./
+RUN lake update && lake exe cache get
+
+CMD ["sleep", "infinity"]

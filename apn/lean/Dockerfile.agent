@@ -1,0 +1,20 @@
+# Agent workspace image: base + PyPantograph (warm compiler for the agent's
+# `lean_check`). Deliberately does NOT contain SafeVerify -- the agent can write
+# anywhere in this sandbox, so the trusted checker must live elsewhere.
+#
+#   docker build -t apn-agent -f Dockerfile.agent .
+FROM apn-lean-base
+
+# PyPantograph (not the PyPI `pantograph`); pinned to a commit whose repl targets
+# Lean v4.29.1. Builds the repl from source, so elan/lake (from base) are used.
+ARG PYPANTOGRAPH_COMMIT=ffa7f243824d2762825abddb1e9f6e939ede761f
+RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
+    && cd /opt/PyPantograph \
+    && git checkout "${PYPANTOGRAPH_COMMIT}" \
+    && git submodule update --init --recursive \
+    && pip3 install --break-system-packages --no-cache-dir .
+
+COPY apn_lean.py /opt/apn/apn_lean.py
+RUN chmod +x /opt/apn/apn_lean.py
+
+CMD ["sleep", "infinity"]
