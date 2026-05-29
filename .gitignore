@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Virtualenv
+.venv/
+
+# IDE
+.idea/
+
+# Inspect
+logs/
+.inspect/
+
+# arXiv source (kept in its own commit; not part of the implementation)
