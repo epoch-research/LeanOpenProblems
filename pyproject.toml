@@ -1,0 +1,8 @@
+[project]
+name = "tsoukalas-lean"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "inspect-ai>=0.3.229",
+]
