@@ -63,13 +63,23 @@ def lean_prover(verifier: LeanVerifier, model: str | None = None) -> Solver:
             submit=AgentSubmit(tool=submit(), name="submit"),
             model=get_model(model) if model is not None else None,
         )
-        await run(agent, render_task(PROOF_PATH))
+        try:
+            await run(agent, render_task(PROOF_PATH))
+        finally:
+            # Always capture whatever the agent left in the file -- even if a
+            # token/time limit interrupted it mid-loop (in which case this runs
+            # during exception unwinding). The scorer then judges the actual
+            # file the agent produced rather than seeing nothing. A complete
+            # proof that the agent finished but never `submit`ted still counts.
+            try:
+                final_proof = await sandbox().read_file(PROOF_PATH)
+            except Exception:  # noqa: BLE001 - fall back to the original sketch
+                final_proof = sketch
+            state.store.set("final_proof", final_proof)
+            state.output = ModelOutput.from_content(
+                model=str(state.model), content=final_proof
+            )
 
-        final_proof = await sandbox().read_file(PROOF_PATH)
-        state.store.set("final_proof", final_proof)
-        state.output = ModelOutput.from_content(
-            model=str(state.model), content=final_proof
-        )
         state.completed = True
         return state
 
