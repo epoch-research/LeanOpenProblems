@@ -3,51 +3,59 @@
 Mirrors the paper's Figure 1 pseudocode and the "Basic Agent" methods section:
 
 * A *prover subagent* runs a "Ralph loop" of episodes (:func:`run_subagent`).
-* Each *episode* is a multi-turn LLM session with the ``search_replace`` tool,
-  with Lean compiler feedback after every edit (:func:`run_episode`). When the
-  session ends, the sketch is validated with SafeVerify.
-* ``N`` subagents run independently with no shared state; the first to produce a
-  validated, sorry-free proof wins and the rest are cancelled
-  (:func:`run_basic_agent`).
+* Each *episode* is a multi-turn LLM session in which the model edits a Lean file
+  with Inspect's built-in ``text_editor`` tool and compiles it with
+  ``lean_check`` (:func:`run_episode`). The session ends when the model stops
+  calling tools; the resulting sketch is then validated with SafeVerify.
+* The subagents run independently with no shared state; **each gets its own Lean
+  sandbox** (one Docker service per subagent). The first to produce a validated,
+  ``sorry``-free proof wins and the rest are cancelled (:func:`run_basic_agent`).
 
-The episode-end handling follows the paper: if validation succeeds and the
-proof is sorry-free, it is returned; if a ``sorry`` remains, the next episode
-starts from the current sketch (the model is prompted to leave its findings as
-comments inside the editable regions, which carry forward); if validation fails
-(e.g. an injected axiom), the subagent reverts to the previous sketch.
+Episode-end handling follows the paper: if validation succeeds and the proof is
+``sorry``-free, it is returned; if a ``sorry`` remains, the next episode starts
+from the current sketch (the model leaves its findings as comments inside the
+editable regions, which carry forward); if validation fails (e.g. an out-of-
+region edit or an injected axiom), the subagent reverts to the previous sketch.
 """
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Iterator
 
 import anyio
 
 from inspect_ai.agent import Agent, AgentState, agent, react, run
 from inspect_ai.model import Model, ModelOutput, get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
-from inspect_ai.util import message_limit
+from inspect_ai.tool import text_editor
+from inspect_ai.util import message_limit, sandbox
+from inspect_ai.util._sandbox.context import sandbox_environments_context_var
 
 from apn.prompts import render_basic_prompt
 from apn.safeverify import DEFAULT_ALLOWED_AXIOMS, ValidationVerdict, safe_verify
 from apn.sketch import ProofSketch
-from apn.tools import EpisodeState, search_replace
+from apn.tools import lean_check
 from apn.verifier.base import LeanVerifier
+
+# Path of the proof file inside each subagent's sandbox. A constant is fine
+# because every subagent has its own isolated sandbox.
+PROOF_PATH = "/tmp/apn_proof.lean"
 
 
 @dataclass(frozen=True)
 class BasicAgentConfig:
     """Search budget for the basic agent.
 
-    Defaults are modest so a run is affordable; the paper evaluated the basic
-    agent with up to ``num_subagents=100``.
+    ``num_subagents`` determines how many Lean sandboxes are provisioned (one per
+    subagent). Defaults are modest so a run is affordable; the paper evaluated
+    the basic agent with up to ``num_subagents=100``.
     """
 
     num_subagents: int = 4
     max_episodes: int = 10
     max_turns_per_episode: int = 40
-    max_edits_per_episode: int = 90
     allowed_axioms: frozenset[str] = DEFAULT_ALLOWED_AXIOMS
     model: str | None = None
 
@@ -61,6 +69,30 @@ class ProofResult:
     subagent_index: int | None = None
 
 
+@contextmanager
+def _only_sandbox(name: str | None) -> Iterator[None]:
+    """Restrict the visible sandbox environments to a single named one.
+
+    The built-in ``text_editor`` tool injects into whichever sandbox it finds
+    first, so to pin a subagent to its own sandbox we scope the per-sample
+    environment map down to that one environment for the duration of the
+    subagent. This runs in the subagent's own task, so the context change is
+    isolated to it.
+    """
+    if name is None:
+        yield
+        return
+    environments = sandbox_environments_context_var.get(None)
+    if not environments or name not in environments:
+        yield
+        return
+    token = sandbox_environments_context_var.set({name: environments[name]})
+    try:
+        yield
+    finally:
+        sandbox_environments_context_var.reset(token)
+
+
 async def run_episode(
     model: Model,
     verifier: LeanVerifier,
@@ -68,48 +100,42 @@ async def run_episode(
     original: ProofSketch,
     target_declarations: list[str],
     *,
+    path: str = PROOF_PATH,
     max_turns: int,
-    max_edits: int,
     allowed_axioms: frozenset[str] = DEFAULT_ALLOWED_AXIOMS,
 ) -> tuple[ProofSketch, ValidationVerdict]:
     """Run one proving episode and validate the result.
 
     The episode is a built-in ``react`` agent run with ``submit=False``: it loops
-    "generate -> run search_replace -> feed compiler output back" and terminates
-    exactly when the model stops calling tools (matching the paper's session that
-    ends when the prover emits no further edits). It is bounded by a message
-    limit derived from ``max_turns``; ``max_edits`` is enforced by the tool. The
-    edited sketch is read back from the tool's ``EpisodeState`` afterwards.
+    "edit with text_editor -> lean_check" and terminates when the model stops
+    calling tools (matching the paper's session that ends when the prover emits
+    no further edits), bounded by a message limit derived from ``max_turns``. The
+    sketch is written to ``path`` in the current sandbox beforehand and read back
+    afterwards.
 
     Returns the (possibly edited) sketch and its SafeVerify verdict.
     """
-    episode_state = EpisodeState(
-        sketch=sketch, verifier=verifier, max_edits=max_edits
-    )
-    tool = search_replace(episode_state)
+    sb = sandbox()
+    await sb.write_file(path, sketch.text)
+
     episode_agent = react(
         prompt=None,  # the full paper prompt is supplied as the input message
-        tools=[tool],
+        tools=[text_editor(), lean_check(verifier, path)],
         model=model,
         submit=False,
         truncation="auto",
     )
-    # Each turn adds an assistant message and (usually) a tool message, so allow
-    # roughly two messages per turn plus the initial prompt.
     await run(
         episode_agent,
-        render_basic_prompt(sketch.text),
+        render_basic_prompt(sketch.text, path),
         limits=[message_limit(2 * max_turns + 2)],
     )
 
+    candidate = ProofSketch(await sb.read_file(path))
     verdict = await safe_verify(
-        verifier,
-        original,
-        episode_state.sketch,
-        target_declarations,
-        allowed_axioms=allowed_axioms,
+        verifier, original, candidate, target_declarations, allowed_axioms=allowed_axioms
     )
-    return episode_state.sketch, verdict
+    return candidate, verdict
 
 
 async def run_subagent(
@@ -133,7 +159,6 @@ async def run_subagent(
             original,
             target_declarations,
             max_turns=config.max_turns_per_episode,
-            max_edits=config.max_edits_per_episode,
             allowed_axioms=config.allowed_axioms,
         )
         if verdict.passes_validation:
@@ -148,9 +173,9 @@ async def run_subagent(
                     episodes=episode,
                     subagent_index=index,
                 )
-        # Validation failed: revert (keep the previous `sketch`), but remember
-        # the verdict for diagnostics.
         elif last_verdict is None:
+            # Validation failed: revert (keep the previous sketch); remember the
+            # verdict for diagnostics.
             last_verdict = verdict
     return ProofResult(
         success=False,
@@ -169,14 +194,11 @@ def prover_subagent(
     target_declarations: list[str],
     config: BasicAgentConfig,
 ) -> Agent:
-    """A prover subagent as an Inspect agent.
+    """A prover subagent as an Inspect agent, pinned to its own sandbox.
 
-    Wrapping :func:`run_subagent` as an ``@agent`` lets the orchestrator launch
-    each subagent with :func:`inspect_ai.agent.run`, which copies the input,
-    isolates it, and records a dedicated span in the transcript. The subagent
-    writes its :class:`ProofResult` into the shared ``results`` mapping (the
-    subagents coordinate no proof state with each other; ``results`` is only a
-    sink for the orchestrator).
+    Launched with :func:`inspect_ai.agent.run` (its own transcript span and
+    isolated state). It writes its :class:`ProofResult` into the shared
+    ``results`` mapping; the subagents share no proof state with each other.
     """
 
     async def execute(
@@ -184,10 +206,12 @@ def prover_subagent(
         *,
         index: int,
         results: dict[int, ProofResult],
+        sandbox_name: str | None = None,
     ) -> AgentState:
-        result = await run_subagent(
-            index, model, verifier, original, target_declarations, config
-        )
+        with _only_sandbox(sandbox_name):
+            result = await run_subagent(
+                index, model, verifier, original, target_declarations, config
+            )
         results[index] = result
         state.output = ModelOutput.from_content(
             model=model.name, content=result.sketch.text
@@ -204,39 +228,47 @@ async def run_basic_agent(
     target_declarations: list[str],
     config: BasicAgentConfig | None = None,
 ) -> ProofResult:
-    """Run ``N`` independent subagents; the first complete proof wins.
+    """Run one subagent per Lean sandbox; the first complete proof wins.
 
-    Each subagent is launched via :func:`inspect_ai.agent.run`. When one
-    succeeds, the surrounding task group is cancelled so the others stop
-    immediately (the paper terminates all other subagents as soon as one finds a
-    proof).
+    The number of subagents equals the number of sandbox environments provisioned
+    for the sample (see :func:`apn.task.apn_basic`). When a subagent succeeds, the
+    surrounding task group is cancelled so the others stop immediately.
     """
     cfg = config or BasicAgentConfig()
     if not original.contains_sorry():
-        # Nothing to prove; validate the provided file as-is.
         verdict = await safe_verify(
             verifier, original, original, target_declarations,
             allowed_axioms=cfg.allowed_axioms,
         )
-        return ProofResult(success=verdict.is_complete_proof, sketch=original, verdict=verdict)
+        return ProofResult(
+            success=verdict.is_complete_proof, sketch=original, verdict=verdict
+        )
+
+    environments = sandbox_environments_context_var.get(None) or {}
+    sandbox_names: list[str | None] = list(environments.keys()) or [None]
 
     subagent = prover_subagent(model, verifier, original, target_declarations, cfg)
-    initial_input = render_basic_prompt(original.text)
     results: dict[int, ProofResult] = {}
     winner: ProofResult | None = None
 
     async with anyio.create_task_group() as tg:
 
-        async def worker(i: int) -> None:
+        async def worker(i: int, name: str | None) -> None:
             nonlocal winner
-            await run(subagent, initial_input, index=i, results=results)
+            await run(
+                subagent,
+                original.text,
+                index=i,
+                results=results,
+                sandbox_name=name,
+            )
             result = results.get(i)
             if result is not None and result.success and winner is None:
                 winner = result
                 tg.cancel_scope.cancel()
 
-        for i in range(cfg.num_subagents):
-            tg.start_soon(worker, i)
+        for i, name in enumerate(sandbox_names):
+            tg.start_soon(worker, i, name)
 
     if winner is not None:
         return winner
@@ -248,8 +280,6 @@ def _best_partial(results: Iterable[ProofResult], original: ProofSketch) -> Proo
     candidates = list(results)
     if not candidates:
         return ProofResult(success=False, sketch=original)
-    # Prefer a result that at least passed validation (compiles, statement
-    # intact, no injected axioms), then the earliest subagent.
     candidates.sort(
         key=lambda r: (
             0 if (r.verdict is not None and r.verdict.passes_validation) else 1,

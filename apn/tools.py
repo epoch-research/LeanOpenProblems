@@ -1,73 +1,58 @@
 """Tools available to prover subagents.
 
-The basic agent's only tool is ``search_replace``: the model proposes edits to
-the current proof sketch as find/replace pairs (a compact diff format that
-scales to large Lean files), and each edit is applied and recompiled so the
-model gets compiler feedback on the next turn.
+Editing is done with Inspect's built-in ``text_editor`` tool (a robust,
+model-friendly file editor that operates on the sandbox filesystem). The proof
+sketch lives as a file in the sandbox; the model views and edits it with
+``text_editor`` and calls ``lean_check`` to compile the file and get Lean
+compiler feedback. (The paper's bespoke ``search_replace`` tool is replaced by
+``text_editor`` here.)
+
+EVOLVE-region and statement integrity are enforced after the episode by
+SafeVerify rather than inside the editor.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from inspect_ai.tool import Tool, tool
+from inspect_ai.util import sandbox
 
-from inspect_ai.tool import Tool, ToolError, tool
-
-from apn.sketch import ProofSketch, SearchReplaceError
 from apn.verifier.base import CompileResult, LeanVerifier
 
 
-@dataclass
-class EpisodeState:
-    """Mutable state threaded through a single proving episode.
-
-    The ``search_replace`` tool reads and updates this; the agent reads the
-    final ``sketch`` once the episode's LLM session ends.
-    """
-
-    sketch: ProofSketch
-    verifier: LeanVerifier
-    max_edits: int = 90
-    edits: int = 0
-    last_compile: CompileResult | None = None
+def format_check_feedback(result: CompileResult) -> str:
+    """Render compiler output for the ``lean_check`` tool, with a status note."""
+    feedback = result.feedback()
+    if result.system_error is not None:
+        return feedback
+    if result.ok and not result.has_sorry:
+        feedback += (
+            "\n\nThe file compiles with no errors and no remaining `sorry`. "
+            "The proof is complete."
+        )
+    elif result.ok and result.has_sorry:
+        feedback += "\n\nThe file compiles, but it still contains `sorry`."
+    return feedback
 
 
 @tool
-def search_replace(state: EpisodeState) -> Tool:
-    """Build a ``search_replace`` tool bound to an episode's mutable state."""
+def lean_check(
+    verifier: LeanVerifier, path: str, sandbox_name: str | None = None
+) -> Tool:
+    """Build a tool that compiles the proof file and returns Lean feedback."""
 
-    async def execute(search: str, replace: str) -> str:
-        """Edit the current Lean proof, then compile and return the feedback.
+    async def execute() -> str:
+        """Compile the current Lean proof file and return the compiler feedback.
 
-        Finds the single occurrence of `search` in the current proof and
-        replaces it with `replace`. The match must occur exactly once and lie
-        entirely within an `-- EVOLVE-BLOCK-START`/`-- EVOLVE-BLOCK-END` or
-        `-- EVOLVE-VALUE-START`/`-- EVOLVE-VALUE-END` region; edits elsewhere are
-        rejected so the target theorem statement cannot change. After applying
-        the edit the Lean compiler runs and its messages are returned. The edit
-        is kept even if it does not compile, so you can fix errors with further
-        edits.
-
-        Args:
-            search: The exact existing text to find. Include enough surrounding
-                context that it appears exactly once in the file.
-            replace: The text to substitute in its place.
+        Call this after editing the file with the text editor to see compilation
+        errors and whether any `sorry` remains. The execution environment already
+        imports Mathlib, so `import` lines are ignored.
 
         Returns:
-            Lean compiler feedback after applying the edit.
+            The Lean compiler messages, plus a note on whether the proof is
+            complete.
         """
-        if state.edits >= state.max_edits:
-            raise ToolError(
-                f"Edit budget exhausted ({state.max_edits} edits this episode). "
-                "Make sure the file compiles and wrap up."
-            )
-        try:
-            new_sketch = state.sketch.apply_search_replace(search, replace)
-        except SearchReplaceError as exc:
-            raise ToolError(str(exc))
-        compiled = await state.verifier.compile(new_sketch.text)
-        state.sketch = new_sketch
-        state.edits += 1
-        state.last_compile = compiled
-        return compiled.feedback()
+        code = await sandbox(sandbox_name).read_file(path)
+        result = await verifier.compile(code)
+        return format_check_feedback(result)
 
     return execute
