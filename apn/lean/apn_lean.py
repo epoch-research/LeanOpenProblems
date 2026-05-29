@@ -66,6 +66,24 @@ _SEVERITY_MAP = {"information": "info", "warning": "warning", "error": "error"}
 # --------------------------------------------------------------------------- #
 
 
+_IMPORT_RE = re.compile(r"^\s*import\s")
+
+
+def strip_import_lines(code: str) -> str:
+    """Blank out ``import`` lines while preserving line numbers.
+
+    The Pantograph server preloads Mathlib (``imports=["Mathlib"]``), so the
+    snippet is compiled in an environment that already has it. An ``import``
+    statement in the snippet is then both unnecessary and rejected by Lean
+    ("invalid 'import' command, it must be used in the beginning of the file").
+    Blanking the lines (rather than deleting them) keeps diagnostic line numbers
+    aligned with the file the agent edits.
+    """
+    return "\n".join(
+        "" if _IMPORT_RE.match(line) else line for line in code.split("\n")
+    )
+
+
 def normalize_severity(severity: str) -> str:
     return _SEVERITY_MAP.get(severity, "info")
 
@@ -146,13 +164,13 @@ def _collect_messages(units: Any) -> list[tuple[str, str, int | None, int | None
 
 
 async def _compile(server: Any, code: str) -> dict[str, Any]:
-    units = await server.check_compile_async(code)
+    units = await server.check_compile_async(strip_import_lines(code))
     return summarize_compile(_collect_messages(units))
 
 
 async def _axioms(server: Any, code: str, decls: list[str]) -> dict[str, Any]:
     queries = "\n".join(f"#print axioms {decl}" for decl in decls)
-    full = code + "\n" + queries + "\n"
+    full = strip_import_lines(code) + "\n" + queries + "\n"
     units = await server.check_compile_async(full)
     messages = [(sev, data) for sev, data, _line, _col in _collect_messages(units)]
     return parse_axiom_messages(messages, decls)

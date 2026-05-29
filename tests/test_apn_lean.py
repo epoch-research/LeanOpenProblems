@@ -52,6 +52,14 @@ def test_summarize_compile_error_and_sorry() -> None:
     assert result["diagnostics"][0]["line"] == 4
 
 
+def test_strip_import_lines_blanks_imports_preserving_lines() -> None:
+    code = "import Mathlib\nimport Foo.Bar\ntheorem t : True := trivial\n"
+    stripped = apn_lean.strip_import_lines(code)
+    assert "import" not in stripped
+    # Line count is preserved so diagnostic positions stay aligned.
+    assert stripped.split("\n") == ["", "", "theorem t : True := trivial", ""]
+
+
 def test_sorry_detection_handles_backticks_and_quotes() -> None:
     # Lean v4.29.1 uses backticks; older toolchains use single quotes.
     assert apn_lean.message_indicates_sorry("declaration uses `sorry`")
