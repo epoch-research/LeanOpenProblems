@@ -11,7 +11,7 @@ with its own sandbox.
 from __future__ import annotations
 
 from inspect_ai.agent import AgentSubmit, deepagent, run
-from inspect_ai.model import ModelOutput, get_model
+from inspect_ai.model import get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolError, ToolResult, bash, text_editor, tool
 from inspect_ai.util import sandbox
@@ -126,7 +126,7 @@ def lean_prover(
             model=get_model(model) if model is not None else None,
         )
         try:
-            await run(agent, render_task(PROOF_PATH))
+            state.output = (await run(agent, render_task(PROOF_PATH))).output
         finally:
             # Capture whatever the agent left in the file -- even if a token/time
             # limit interrupted it mid-loop (this block then runs during exception
@@ -135,12 +135,10 @@ def lean_prover(
             # gated by the token limit, and the file was written at the start, so
             # this normally succeeds; a genuine read failure is a real sandbox
             # problem and should error the sample rather than be masked by
-            # silently substituting the unproven sketch.
+            # silently substituting the unproven sketch. The proof itself is read
+            # from the store by the scorer (not from state.output).
             final_proof = await sandbox().read_file(PROOF_PATH)
             state.store.set("final_proof", final_proof)
-            state.output = ModelOutput.from_content(
-                model=str(state.model), content=final_proof
-            )
 
         state.completed = True
         return state
