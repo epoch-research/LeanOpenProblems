@@ -1,9 +1,9 @@
 """Datasets of Lean proof sketches.
 
-A *sketch* is a Lean file with the proof body replaced by ``sorry`` inside an
-EVOLVE region. Each becomes an Inspect :class:`Sample` whose input is the file
-text and whose metadata records the target theorem name(s) and the original
-sketch text (so the scorer can recover the frozen statement).
+A *sketch* is a Lean file containing a theorem whose proof body is ``sorry``.
+Each becomes an Inspect :class:`Sample` whose input is the file text and whose
+metadata records the target theorem name(s) and the original sketch text (so the
+scorer can check the statement was preserved).
 
 This module ships a handful of small bundled sketches for smoke testing and a
 loader for a directory of ``.lean`` sketch files (e.g. an export of the Formal

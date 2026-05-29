@@ -1,33 +1,27 @@
-"""SafeVerify: validate a candidate sketch against its specification.
+"""Validate a candidate proof against its specification.
 
-The paper validates every episode's output with "SafeVerify", which "checks the
-proof against the theorem specification and guards against environment exploits
-(e.g., axiom injection)". Concretely, validation here has three parts:
+With the EVOLVE-marker machinery removed, the anti-cheat lives entirely here (and
+in the scorer that calls it). A candidate proof is valid only if:
 
 1. **Compiles** -- the Lean file has no error diagnostics.
-2. **Statement preserved** -- nothing outside the EVOLVE regions changed, so the
-   agent cannot weaken or replace the target theorem. (EVOLVE-VALUE regions may
-   legitimately change a value, including a truth value, so changes there are
-   allowed by design.)
+2. **Statement preserved** -- the target theorem's signature (everything up to
+   the proof's ``:=``) still appears verbatim, so the agent cannot weaken or
+   replace the goal (e.g. turn it into ``: True``).
 3. **No axiom injection** -- the target declarations depend only on permitted
-   axioms. Lean's standard axioms are allowed; ``sorryAx`` is tolerated *only*
-   while the proof still contains ``sorry`` (an incomplete sketch), and any other
-   axiom (e.g. a user-declared ``axiom cheat : False``) fails validation.
+   axioms. ``sorryAx`` is tolerated only while a ``sorry`` legitimately remains.
 
-A sketch *passes validation* if all three hold allowing for remaining ``sorry``;
-it is a *complete proof* if, additionally, it is ``sorry``-free and does not use
-``sorryAx``.
+A candidate *passes validation* if all three hold (allowing a remaining
+``sorry``); it is a *complete proof* if additionally ``sorry``-free.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Sequence
 
-from apn.sketch import ProofSketch, SketchParseError
 from apn.verifier.base import LeanVerifier
 
-# Lean's standard axioms, always permitted.
 DEFAULT_ALLOWED_AXIOMS: frozenset[str] = frozenset(
     {"propext", "Classical.choice", "Quot.sound"}
 )
@@ -41,30 +35,36 @@ class IntegrityResult:
     reason: str | None = None
 
 
-def check_statement_integrity(
-    original: ProofSketch, candidate: ProofSketch
-) -> IntegrityResult:
-    """Verify the candidate changed only inside EVOLVE regions.
-
-    Both sketches must expose the same frozen skeleton (identical text outside
-    editable regions, and identical marker placement).
+def extract_statement(text: str, decl: str) -> str | None:
+    """Return the source of ``decl``'s signature: from ``theorem``/``lemma`` up
+    to and including the ``:=`` that begins its proof, or ``None`` if not found.
     """
-    try:
-        original_skeleton = original.skeleton()
-        candidate_skeleton = candidate.skeleton()
-    except SketchParseError as exc:
-        return IntegrityResult(
-            ok=False, reason=f"EVOLVE markers are malformed: {exc}"
-        )
-    if original_skeleton != candidate_skeleton:
-        return IntegrityResult(
-            ok=False,
-            reason=(
-                "The code outside the EVOLVE regions changed (or an EVOLVE "
-                "marker moved). The target theorem statement and surrounding "
-                "context must remain exactly as provided."
-            ),
-        )
+    match = re.search(rf"\b(?:theorem|lemma)\s+{re.escape(decl)}\b", text)
+    if match is None:
+        return None
+    end = text.find(":=", match.start())
+    if end == -1:
+        return None
+    return text[match.start() : end + 2]
+
+
+def check_statement_preserved(
+    original: str, candidate: str, declarations: Sequence[str]
+) -> IntegrityResult:
+    """Verify each target declaration's signature is unchanged in ``candidate``."""
+    for decl in declarations:
+        statement = extract_statement(original, decl)
+        if statement is None:
+            # Could not locate the original signature; nothing to compare.
+            continue
+        if statement not in candidate:
+            return IntegrityResult(
+                ok=False,
+                reason=(
+                    f"The statement of `{decl}` was changed. The theorem signature "
+                    "must remain exactly as provided; only the proof may change."
+                ),
+            )
     return IntegrityResult(ok=True)
 
 
@@ -76,8 +76,7 @@ def check_axioms(
 ) -> IntegrityResult:
     """Flag any axiom outside the permitted set.
 
-    ``sorryAx`` is permitted only when ``allow_sorry_ax`` is set (i.e. the sketch
-    legitimately still contains ``sorry``).
+    ``sorryAx`` is permitted only when ``allow_sorry_ax`` is set.
     """
     permitted = set(allowed)
     if allow_sorry_ax:
@@ -85,16 +84,13 @@ def check_axioms(
     disallowed = sorted({a for a in axioms_used if a not in permitted})
     if disallowed:
         return IntegrityResult(
-            ok=False,
-            reason="Disallowed axioms detected: " + ", ".join(disallowed),
+            ok=False, reason="Disallowed axioms detected: " + ", ".join(disallowed)
         )
     return IntegrityResult(ok=True)
 
 
 @dataclass(frozen=True)
 class ValidationVerdict:
-    """The full SafeVerify outcome for a candidate sketch."""
-
     compiles: bool
     statement_preserved: bool
     has_sorry: bool
@@ -104,10 +100,6 @@ class ValidationVerdict:
 
     @property
     def passes_validation(self) -> bool:
-        """Safe to keep/admit: compiles, statement intact, no injected axioms.
-
-        May still contain ``sorry`` (an incomplete-but-honest sketch).
-        """
         return (
             self.compiles
             and self.statement_preserved
@@ -116,7 +108,6 @@ class ValidationVerdict:
 
     @property
     def is_complete_proof(self) -> bool:
-        """A genuine, complete, ``sorry``-free proof of the target."""
         return (
             self.passes_validation
             and not self.has_sorry
@@ -126,27 +117,22 @@ class ValidationVerdict:
 
 async def safe_verify(
     verifier: LeanVerifier,
-    original: ProofSketch,
-    candidate: ProofSketch,
+    original: str,
+    candidate: str,
     target_declarations: Sequence[str],
     *,
     allowed_axioms: frozenset[str] = DEFAULT_ALLOWED_AXIOMS,
 ) -> ValidationVerdict:
-    """Run the full validation pipeline on ``candidate``.
-
-    ``target_declarations`` are the theorem names whose axioms are inspected
-    (typically the single target theorem).
-    """
-    integrity = check_statement_integrity(original, candidate)
-
-    compiled = await verifier.compile(candidate.text)
+    """Run the full validation pipeline on ``candidate`` proof source."""
+    integrity = check_statement_preserved(original, candidate, target_declarations)
+    compiled = await verifier.compile(candidate)
     feedback_parts: list[str] = []
 
     if compiled.system_error is not None:
         return ValidationVerdict(
             compiles=False,
             statement_preserved=integrity.ok,
-            has_sorry=candidate.contains_sorry(),
+            has_sorry=False,
             uses_sorry_ax=False,
             disallowed_axioms=(),
             feedback=compiled.feedback(),
@@ -155,7 +141,6 @@ async def safe_verify(
     if not integrity.ok:
         assert integrity.reason is not None
         feedback_parts.append(integrity.reason)
-
     if not compiled.ok:
         feedback_parts.append(compiled.feedback())
 
@@ -163,18 +148,13 @@ async def safe_verify(
     uses_sorry_ax = False
     disallowed: tuple[str, ...] = ()
 
-    # Only inspect axioms when the file compiles and the statement is intact;
-    # otherwise the axiom query is meaningless or impossible.
     if compiled.ok and integrity.ok and target_declarations:
-        axiom_result = await verifier.print_axioms(
-            candidate.text, target_declarations
-        )
+        axiom_result = await verifier.print_axioms(candidate, target_declarations)
         if axiom_result.error is not None:
             feedback_parts.append(f"Axiom check failed: {axiom_result.error}")
         else:
             used = axiom_result.all_axioms()
             uses_sorry_ax = SORRY_AX in used
-            # A complete proof must not use sorryAx; an incomplete one may.
             axiom_check = check_axioms(
                 sorted(used),
                 allow_sorry_ax=has_sorry or uses_sorry_ax,

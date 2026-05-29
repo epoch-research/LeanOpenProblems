@@ -5,6 +5,4 @@ open Finset in
 the sum of their cubes. Requires induction plus algebraic manipulation. -/
 theorem apn_sum_cubes (n : ℕ) :
     (∑ i ∈ range n, i) ^ 2 = ∑ i ∈ range n, i ^ 3 := by
--- EVOLVE-BLOCK-START
   sorry
--- EVOLVE-BLOCK-END

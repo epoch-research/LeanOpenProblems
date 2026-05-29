@@ -16,7 +16,7 @@ def test_infer_handles_lemma_and_attributes() -> None:
 
 
 def test_sketch_sample_records_metadata() -> None:
-    text = "theorem bar : True := by\n-- EVOLVE-BLOCK-START\n  sorry\n-- EVOLVE-BLOCK-END\n"
+    text = "theorem bar : True := by\n  sorry\n"
     sample = sketch_sample(text, "bar")
     assert sample.input == text
     assert sample.metadata is not None

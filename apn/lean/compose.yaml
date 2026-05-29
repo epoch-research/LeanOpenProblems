@@ -1,0 +1,10 @@
+# Single Lean sandbox per sample. Run multiple independent attempts per problem
+# by passing epochs at eval time, e.g. `inspect eval ... --epochs 4`; each epoch
+# is a fresh sample run with its own sandbox.
+services:
+  default:
+    image: apn-lean
+    command: ["sleep", "infinity"]
+    init: true
+    x-local: true
+    network_mode: none

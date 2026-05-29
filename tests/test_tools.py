@@ -2,17 +2,9 @@
 
 from __future__ import annotations
 
-from apn.prompts import render_basic_prompt
+from apn.prompts import LEAN_INSTRUCTIONS, render_task
 from apn.tools import format_check_feedback
 from apn.verifier.base import CompileResult, Diagnostic
-
-SAMPLE = (
-    "import Mathlib\n"
-    "theorem tgt : True := by\n"
-    "-- EVOLVE-BLOCK-START\n"
-    "  sorry\n"
-    "-- EVOLVE-BLOCK-END\n"
-)
 
 
 def test_feedback_complete_proof() -> None:
@@ -41,12 +33,13 @@ def test_feedback_system_error() -> None:
     assert "sandbox died" in feedback
 
 
-def test_render_basic_prompt() -> None:
-    rendered = render_basic_prompt(SAMPLE, "/tmp/apn_proof.lean")
-    assert "world-class mathematician" in rendered
-    assert "theorem tgt : True" in rendered
+def test_render_task_references_path() -> None:
+    rendered = render_task("/tmp/apn_proof.lean")
     assert "/tmp/apn_proof.lean" in rendered
-    assert "{code}" not in rendered
-    assert "{path}" not in rendered
-    assert "text_editor" in rendered
-    assert "EVOLVE-BLOCK-START" in rendered
+    assert "lean_check" in rendered
+
+
+def test_instructions_cover_rules() -> None:
+    assert "Lean 4" in LEAN_INSTRUCTIONS
+    assert "lean_check" in LEAN_INSTRUCTIONS
+    assert "statement" in LEAN_INSTRUCTIONS

@@ -1,14 +1,9 @@
-"""Tools available to prover subagents.
+"""Tools for the proving agent.
 
-Editing is done with Inspect's built-in ``text_editor`` tool (a robust,
-model-friendly file editor that operates on the sandbox filesystem). The proof
-sketch lives as a file in the sandbox; the model views and edits it with
-``text_editor`` and calls ``lean_check`` to compile the file and get Lean
-compiler feedback. (The paper's bespoke ``search_replace`` tool is replaced by
-``text_editor`` here.)
-
-EVOLVE-region and statement integrity are enforced after the episode by
-SafeVerify rather than inside the editor.
+Editing is done with Inspect's built-in ``text_editor`` tool; the only custom
+tool is ``lean_check``, which compiles the proof file in the sandbox and returns
+the Lean compiler feedback. Statement integrity and the axiom guard are enforced
+by SafeVerify at scoring time, not inside the tools.
 """
 
 from __future__ import annotations

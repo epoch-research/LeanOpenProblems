@@ -44,6 +44,3 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 addopts = "-q"
 asyncio_mode = "auto"
-markers = [
-    "slow: integration tests that start Docker sandboxes (deselect with '-m \"not slow\"')",
-]

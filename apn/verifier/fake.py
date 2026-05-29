@@ -11,11 +11,14 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, Sequence
 
-from apn.sketch import ProofSketch
 from apn.verifier.base import AxiomResult, CompileResult, Diagnostic
 
 CompileFn = Callable[[str], CompileResult]
 AxiomsFn = Callable[[str, Sequence[str]], AxiomResult]
+
+# `sorry` as a standalone token (matches the daemon's detection closely enough
+# for an in-process fake).
+_SORRY_RE = re.compile(r"(?<![A-Za-z0-9_'])sorry(?![A-Za-z0-9_'])")
 
 
 def _default_compile(code: str) -> CompileResult:
@@ -30,7 +33,7 @@ def _default_compile(code: str) -> CompileResult:
             diagnostics.append(
                 Diagnostic("error", line.split("-- FAKE-ERROR", 1)[1].strip(), lineno)
             )
-    has_sorry = ProofSketch(code).contains_sorry()
+    has_sorry = bool(_SORRY_RE.search(code))
     if has_sorry:
         diagnostics.append(Diagnostic("warning", "declaration uses 'sorry'"))
     return CompileResult(diagnostics=tuple(diagnostics), has_sorry=has_sorry)
@@ -40,7 +43,7 @@ def _default_axioms(code: str, declarations: Sequence[str]) -> AxiomResult:
     """Report standard axioms, adding ``sorryAx`` when ``sorry`` is present and
     surfacing any ``axiom <name>`` the code declares (a crude injection model)."""
     base = ["Classical.choice", "propext", "Quot.sound"]
-    if ProofSketch(code).contains_sorry():
+    if _SORRY_RE.search(code):
         base.append("sorryAx")
     injected = re.findall(r"^\s*axiom\s+(\w+)", code, re.MULTILINE)
     used = tuple(sorted(set(base + injected)))
