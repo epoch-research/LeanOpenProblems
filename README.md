@@ -89,6 +89,20 @@ Point at your own sketches with `-T sketches_dir=/path/to/lean/sketches`
 (each `*.lean` file is one problem). Any Inspect-supported model works; the
 paper used Gemini 3.1 Pro for proving.
 
+The first compile in each sample's sandbox imports Mathlib (~1–2 minutes); after
+that the warm Pantograph server makes compiles fast.
+
+### API keys
+
+Provider keys live in `.env`. Inspect loads `.env` but does not override a
+variable already set in the environment, so if your shell exports an empty
+`ANTHROPIC_API_KEY` (etc.) it will shadow the `.env` value. Export the key
+explicitly for the run if needed:
+
+```bash
+export ANTHROPIC_API_KEY="$(python -c "from dotenv import dotenv_values; print(dotenv_values('.env')['ANTHROPIC_API_KEY'])")"
+```
+
 ## Development
 
 ```bash
