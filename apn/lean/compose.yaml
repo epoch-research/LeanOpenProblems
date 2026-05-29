@@ -1,0 +1,17 @@
+# Inspect Docker sandbox definition for the Lean verifier.
+#
+# Point a Task or Sample at this file via
+#   sandbox=("docker", "apn/lean/compose.yaml")
+# Build the image first with:
+#   docker build -t apn-lean apn/lean
+services:
+  default:
+    image: apn-lean
+    build:
+      context: .
+    command: ["sleep", "infinity"]
+    init: true
+    # Lean compilation is memory hungry once Mathlib is loaded.
+    mem_limit: 8g
+    cpus: 4.0
+    network_mode: none

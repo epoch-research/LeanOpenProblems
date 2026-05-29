@@ -17,4 +17,7 @@ dist/
 logs/
 .inspect/
 
+# Cloned upstream sources kept for reference, not part of the repo
+reference_sources/
+
 # arXiv source (kept in its own commit; not part of the implementation)
