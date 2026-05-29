@@ -11,8 +11,9 @@ agent is allowed to modify:
   (e.g. a parameter) whose *value* the agent may change.
 
 Everything outside these regions -- crucially, the target theorem statement --
-is frozen. The agent edits the file exclusively through a ``search_replace``
-tool, and every edit must fall entirely within an editable region.
+is frozen; the agent edits the file with Inspect's ``text_editor`` tool, and
+edits that touch anything outside the editable regions are rejected by
+SafeVerify (see :mod:`apn.safeverify`).
 
 This module is pure text manipulation with no Lean dependency; authoritative
 ``sorry`` detection comes from the Lean compiler (see :mod:`apn.verifier`). The
@@ -57,14 +58,6 @@ class SketchParseError(ValueError):
     """Raised when EVOLVE markers are malformed (unbalanced or interleaved)."""
 
 
-class SearchReplaceError(ValueError):
-    """Raised when a ``search_replace`` edit cannot be applied.
-
-    The message is surfaced to the model as tool feedback, so it should explain
-    *why* the edit failed and how to fix it.
-    """
-
-
 @dataclass(frozen=True)
 class EvolveRegion:
     """An editable region, identified by the character span of its content.
@@ -78,10 +71,6 @@ class EvolveRegion:
     kind: EvolveKind
     content_start: int
     content_end: int
-
-    def contains(self, start: int, end: int) -> bool:
-        """Whether ``[start, end)`` lies entirely within this region's content."""
-        return self.content_start <= start and end <= self.content_end
 
 
 @dataclass(frozen=True)
@@ -125,46 +114,6 @@ class ProofSketch:
             cursor = region.content_end
         out.append(self.text[cursor:])
         return "".join(out)
-
-    def apply_search_replace(self, search: str, replace: str) -> ProofSketch:
-        """Return a new sketch with the first occurrence of ``search`` replaced.
-
-        The match must be unique and lie entirely within a single editable
-        region.
-
-        Raises:
-            SearchReplaceError: if ``search`` is empty, is not found, is
-                ambiguous (multiple matches), or the match is not fully inside an
-                editable region.
-        """
-        if search == "":
-            raise SearchReplaceError("The `search` string must not be empty.")
-
-        first = self.text.find(search)
-        if first == -1:
-            raise SearchReplaceError(
-                "The `search` string was not found in the current proof. It must "
-                "match the existing text exactly (including whitespace and "
-                "indentation)."
-            )
-        second = self.text.find(search, first + 1)
-        if second != -1:
-            raise SearchReplaceError(
-                "The `search` string matches more than one location. Add "
-                "surrounding context so it matches exactly once."
-            )
-
-        start, end = first, first + len(search)
-        if not any(region.contains(start, end) for region in self.regions):
-            raise SearchReplaceError(
-                "The edit falls outside the editable regions. You may only modify "
-                "text between `-- EVOLVE-BLOCK-START`/`-- EVOLVE-BLOCK-END` or "
-                "`-- EVOLVE-VALUE-START`/`-- EVOLVE-VALUE-END` markers, and the "
-                "edit must not touch the markers themselves."
-            )
-
-        new_text = self.text[:start] + replace + self.text[end:]
-        return ProofSketch(new_text)
 
 
 def _parse_regions(text: str) -> list[EvolveRegion]:

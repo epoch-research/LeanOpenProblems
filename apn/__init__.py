@@ -9,7 +9,8 @@ The framework describes four agent tiers built on a shared generation/validation
 pipeline:
 
 * **(A) basic** -- independent "Ralph-loop" prover subagents that refine a Lean
-  proof sketch with a ``search_replace`` tool, guided by Lean compiler feedback.
+  proof sketch with Inspect's ``text_editor`` tool, guided by Lean compiler
+  feedback.
 * **(B)** = A plus an AlphaProof proof tool.
 * **(C)** = A plus an evolutionary population database (Plackett-Luce Elo via
   Gibbs sampling, Thompson sampling, P-UCB selection, LLM rater agents).
