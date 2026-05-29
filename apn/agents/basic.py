@@ -24,16 +24,10 @@ from typing import Iterable
 
 import anyio
 
-from inspect_ai.agent import Agent, AgentState, agent, run
-from inspect_ai.model import (
-    ChatMessage,
-    ChatMessageUser,
-    Model,
-    ModelOutput,
-    execute_tools,
-    get_model,
-)
+from inspect_ai.agent import Agent, AgentState, agent, react, run
+from inspect_ai.model import Model, ModelOutput, get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
+from inspect_ai.util import message_limit
 
 from apn.prompts import render_basic_prompt
 from apn.safeverify import DEFAULT_ALLOWED_AXIOMS, ValidationVerdict, safe_verify
@@ -80,28 +74,33 @@ async def run_episode(
 ) -> tuple[ProofSketch, ValidationVerdict]:
     """Run one proving episode and validate the result.
 
+    The episode is a built-in ``react`` agent run with ``submit=False``: it loops
+    "generate -> run search_replace -> feed compiler output back" and terminates
+    exactly when the model stops calling tools (matching the paper's session that
+    ends when the prover emits no further edits). It is bounded by a message
+    limit derived from ``max_turns``; ``max_edits`` is enforced by the tool. The
+    edited sketch is read back from the tool's ``EpisodeState`` afterwards.
+
     Returns the (possibly edited) sketch and its SafeVerify verdict.
     """
     episode_state = EpisodeState(
         sketch=sketch, verifier=verifier, max_edits=max_edits
     )
     tool = search_replace(episode_state)
-    messages: list[ChatMessage] = [
-        ChatMessageUser(content=render_basic_prompt(sketch.text))
-    ]
-
-    for _turn in range(max_turns):
-        output = await model.generate(messages, tools=[tool])
-        messages.append(output.message)
-        if not output.message.tool_calls:
-            # The model ended its turn without further edits: session over.
-            break
-        if episode_state.edits >= max_edits:
-            break
-        exec_result = await execute_tools(messages, [tool])
-        messages.extend(exec_result.messages)
-        if episode_state.edits >= max_edits:
-            break
+    episode_agent = react(
+        prompt=None,  # the full paper prompt is supplied as the input message
+        tools=[tool],
+        model=model,
+        submit=False,
+        truncation="auto",
+    )
+    # Each turn adds an assistant message and (usually) a tool message, so allow
+    # roughly two messages per turn plus the initial prompt.
+    await run(
+        episode_agent,
+        render_basic_prompt(sketch.text),
+        limits=[message_limit(2 * max_turns + 2)],
+    )
 
     verdict = await safe_verify(
         verifier,
