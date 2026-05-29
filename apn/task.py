@@ -18,11 +18,12 @@ from inspect_ai import Task, task
 
 from apn.agent import lean_prover
 from apn.checker import SandboxSafeVerify
-from apn.dataset import bundled_dataset, dataset_from_dir
+from apn.dataset import bundled_dataset, dataset_from_dir, oeis_dataset
 from apn.scorer import proof_scorer
 from apn.verifier.pantograph import PantographVerifier
 
 COMPOSE_FILE = str(Path(__file__).parent / "lean" / "compose.yaml")
+FC_COMPOSE_FILE = str(Path(__file__).parent / "lean" / "fc" / "compose.yaml")
 
 
 @task
@@ -44,4 +45,35 @@ def apn_basic(sketches_dir: str | None = None) -> Task:
         solver=lean_prover(PantographVerifier()),
         scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
         sandbox=("docker", COMPOSE_FILE),
+    )
+
+
+@task
+def apn_oeis(names: str | list[str] | None = None) -> Task:
+    """Prove the autoformalized OEIS conjectures from the paper (44/492).
+
+    Replicates the paper's OEIS evaluation: each sample is an autoformalized OEIS
+    conjecture from Formal Conjectures (``OEIS/Auto``). The agent must discharge
+    the embedded *test lemmas* (small-term checks guarding against
+    misformalization) as well as the conjecture; SafeVerify then re-validates the
+    whole file (every definition, test lemma, and the conjecture must be
+    reproduced verbatim and proved sorry-free with only permitted axioms).
+
+    Runs against the Formal Conjectures Lean v4.27 sandbox (build it first with
+    ``apn/lean/fc/build.sh``).
+
+    Args:
+        names: Optional comma-separated list of conjecture theorem names to keep
+            (a smoke subset); defaults to all 492.
+    """
+    if names is None:
+        name_list = None
+    else:
+        raw = names.split(",") if isinstance(names, str) else names
+        name_list = [n.strip() for n in raw if n.strip()]
+    return Task(
+        dataset=oeis_dataset(names=name_list),
+        solver=lean_prover(PantographVerifier()),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", FC_COMPOSE_FILE),
     )

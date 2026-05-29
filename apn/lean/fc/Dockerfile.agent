@@ -1,0 +1,25 @@
+# FC agent workspace: apn-fc-base + PyPantograph (warm compiler for the agent's
+# `lean_check`), preloading the FormalConjectures imports. Deliberately does NOT
+# contain SafeVerify -- the trusted checker lives in the scorer image.
+#
+#   docker build -t apn-fc-agent -f Dockerfile.agent .
+FROM apn-fc-base
+
+# PyPantograph commit b8608f3 pins Pantograph v0.3.13, whose repl targets Lean
+# v4.27.0 -- matching this track's Mathlib + FormalConjectures oleans. (The repl
+# must be built with the same toolchain that produced the oleans it loads.)
+ARG PYPANTOGRAPH_COMMIT=b8608f3
+RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
+    && cd /opt/PyPantograph \
+    && git checkout "${PYPANTOGRAPH_COMMIT}" \
+    && git submodule update --init --recursive \
+    && pip3 install --break-system-packages --no-cache-dir .
+
+# Preload the FC problem imports so the warm repl already has them; the daemon is
+# shared with the v4.29.1 track and reads its import set from this env var.
+ENV APN_LEAN_IMPORTS=FormalConjectures.Util.ProblemImports
+
+COPY apn_lean.py /opt/apn/apn_lean.py
+RUN chmod +x /opt/apn/apn_lean.py
+
+CMD ["sleep", "infinity"]

@@ -46,7 +46,14 @@ SOCKET_PATH = os.environ.get("APN_LEAN_SOCKET", "/tmp/apn_lean.sock")
 LOCK_PATH = SOCKET_PATH + ".lock"
 LOG_PATH = os.environ.get("APN_LEAN_LOG", "/tmp/apn_lean.log")
 PROJECT_PATH = os.environ.get("APN_LEAN_PROJECT", "/workspace/leanproject")
-IMPORTS = ["Mathlib"]
+# Modules preloaded into the warm repl. Defaults to Mathlib (v4.29.1 track); the
+# Formal Conjectures track sets this to FormalConjectures.Util.ProblemImports so
+# problem files (which import it) compile against a warm environment.
+IMPORTS = [
+    m.strip()
+    for m in os.environ.get("APN_LEAN_IMPORTS", "Mathlib").split(",")
+    if m.strip()
+]
 # Mathlib import + a hard proof can take a while; give the repl room.
 SERVER_TIMEOUT = int(os.environ.get("APN_LEAN_TIMEOUT", "600"))
 # A single JSON message can hold a large Lean file, so the stream reader needs a
