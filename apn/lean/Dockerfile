@@ -29,8 +29,16 @@ COPY lean-toolchain lakefile.toml ./
 RUN lake update \
     && lake exe cache get
 
-# PyPantograph ships a prebuilt linux repl matching the toolchain above.
-RUN pip3 install --break-system-packages --no-cache-dir pantograph
+# PyPantograph (the Lean<->Python bridge) is NOT the PyPI `pantograph` package;
+# install it from source, pinned to a commit whose bundled repl targets the same
+# Lean toolchain (v4.29.1) as Mathlib above. Its build runs `lake build repl`, so
+# elan/lake (installed above) must be on PATH.
+ARG PYPANTOGRAPH_COMMIT=ffa7f243824d2762825abddb1e9f6e939ede761f
+RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
+    && cd /opt/PyPantograph \
+    && git checkout "${PYPANTOGRAPH_COMMIT}" \
+    && git submodule update --init --recursive \
+    && pip3 install --break-system-packages --no-cache-dir .
 
 COPY apn_lean.py /opt/apn/apn_lean.py
 RUN chmod +x /opt/apn/apn_lean.py
