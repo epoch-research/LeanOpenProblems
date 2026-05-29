@@ -1,0 +1,47 @@
+%\documentclass{article}
+%\PassOptionsToPackage{usenames,dvipsnames,table}{xcolor}
+\documentclass[logo,copyright,12pt]{googledeepmind}
+
+\input{preamble}
+
+\title{Advancing Mathematics Research with AI-Driven Formal Proof Search} 
+
+
+\author[1$^\dagger$]{George Tsoukalas}
+\author[1$^\dagger$]{Anton Kovsharov}
+\author[1$^\dagger$]{Sergey Shirobokov}
+\author[1]{Anja Surina}
+\author[1]{Moritz Firsching}
+\author[2]{Gergely B\'erczi}
+\author[1]{Francisco J. R. Ruiz}
+\author[1]{Arun Suggala}
+\author[1]{Adam Zsolt Wagner}
+\author[1]{Eric Wieser}
+\author[1]{Lei Yu}
+\author[1]{Aja Huang}
+\author[1]{Mikl\'os Z. Horv\'ath}
+\author[1]{Andrew Ferrauiolo}
+\author[1]{Henryk Michalewski}
+\author[3]{Codrut Grosu}
+\author[1]{Thomas Hubert}
+\author[1]{Matej Balog}
+\author[1]{Pushmeet Kohli}
+\author[1$^\dagger$]{Swarat Chaudhuri}
+\affil[1]{Google DeepMind\footnote{$^\dagger$Equal contributions. The first three authors are in random order. Correspondence to \url{pushmeet@google.com} and \url{swarat@google.com}.}}
+\affil[2]{Aarhus University}
+\affil[3]{Google}
+
+
+%\affil[\hspace{-0.2em}]{Google DeepMind\footnote{See Acknowledgments and Author information section. $^*$Equal contributions.}}
+
+\begin{abstract} \bfseries \boldmath
+Large language models (LLMs) increasingly excel at mathematical reasoning, but their unreliability limits their utility in mathematics research. A mitigation is using LLMs to generate formal proofs in languages like Lean. We perform the first large-scale evaluation of this method's ability to solve open problems. Our most capable agent autonomously resolved 9 of 353 open {\erdos} problems at the per-problem cost of a few hundred dollars, proved 44/492 OEIS conjectures, and is being deployed in combinatorics, optimization, graph theory, algebraic geometry, and quantum optics research. A basic agent alternating LLM-based generation with Lean-based verification replicated the {\erdos} successes but proved costlier on the hardest problems. These findings demonstrate the power of AI-aided formal proof search and shed light on the agent designs that enable it.
+\end{abstract}
+
+\begin{document}
+\maketitle
+
+\input{main_arxiv_submission}
+
+\end{document}
+

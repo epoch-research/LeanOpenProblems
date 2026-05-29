@@ -1,0 +1,33 @@
+
+\noindent \textbf{Theorem \upshape(i).} There is an infinite set $A \subseteq \mathbb{N}$ satisfying that there are no distinct $a,b,c \in A$ with $a < b,c$ satisfying $a | b + c$ and
+$$\liminf_{N \to \infty} \frac{|A \cap \{1, \dots, N\}|}{N^{1/2}} > 0.$$
+\noindent \textbf{Proof.}
+We will construct a sequence of "blocks" that individually cannot contain such $a,b,c$, and with a careful choice of parameters, their union forms the desired set. By precisely controlling the growth and modular residues of these blocks, we ensure the set remains dense enough to satisfy the $\liminf$ condition while avoiding all forbidden divisibility relations.
+\\\\
+Let $f : \mathbb{N} \to \mathbb{N}$ be defined by $f(0) = 0$ and $f(n) = 3f(\lfloor n/2 \rfloor) + (n \bmod 2)$. The function $f$ takes a number represented in base 2 and outputs the number given by the same representation but read in base 3. In particular, the base 3 representation of $f(n)$ will contain only $0$s and $1$s. For this reason, $f(a) + f(b) = 2f(c)$ implies $a = b = c$, ensuring the sequence $(f(n))_{n \in \mathbb{N}}$ contains no 3-APs.
+\\\\
+Next, let $F_i$ be the $i$-th odd prime, and write $M_i = \prod_{j < i} F_j$ and $V_i = F_i M_i$. By Bertrand's postulate, we have $F_i \le 2^{i + 2}$. By the Chinese Remainder Theorem, for each $i$, let $C_i < V_i$ be the unique integer such that $C_i \equiv 0 \pmod{F_i}$ and $C_i \equiv 1 \pmod{M_i}$.
+\\\\
+Now we define the parameters for the blocks $(B_i)$. Let
+\begin{itemize}
+    \item $Y_i = 3^{(i + 20)^3}$ be the exponential bounding scale to control the distance between blocks.
+    \item $P_i = 10V_iY_i + C_i$ be the starting coordinate of block $i$.
+    \item $X_i = \lfloor \sqrt{P_{i + 1}} \rfloor$ be the element capacity of block $i$. Note that the capacity of $B_i$ is directly tied to the starting point of the next block $B_{i+1}$.
+\end{itemize}
+Formally, define $B_i = \{P_i + V_if(y) \mid y < X_i\}$. The purpose of $Y_i$ is to keep the blocks relatively narrow while ensuring they are well-spaced. Note that if $y < 2^k$, then $f(y) < 3^k$. Letting $k = (i + 20)^3$, we want to guarantee that for any $y < X_i$, we have $f(y) < Y_i = 3^k$. To do this, it suffices to show $X_i \le \sqrt{P_{i+1}} < 2^k$, which is equivalent to $P_{i+1} \le 4^k$. 
+\\\\
+Observe that $P_{i+1} \leq 11V_{i + 1}Y_{i + 1} \leq 11 \cdot 2^{(i + 4)^2} \cdot 3^{(i + 21)^3}$, following from the bound on $F_i$. This is asymptotically strictly smaller than $4^k = 4^{(i+20)^3}$. By adding the shift of $20$, the inequality $11 \cdot 2^{(i + 4)^2} \cdot 3^{(i + 21)^3} \le 4^{(i+20)^3}$ holds universally for all $i \ge 1$.
+\\\\
+Set $A = \bigcup_{i \in \mathbb{N}} B_i$. Clearly, $A$ is an infinite set. Suppose, for the sake of contradiction, that there exist distinct $a,b,c \in A$ with $a < b,c$ such that $a \mid (b + c)$. Let $a \in B_i$. We analyze two cases:
+\begin{itemize}
+    \item (Case 1: Cross-block) Suppose at least one of $b,c$ is not in $B_i$. Without loss of generality, assume $b \in B_j$ for some $j > i$ (since $b > a$). Since $a \in B_i$, we have $a \equiv 0 \pmod{F_i}$, and thus $b + c \equiv 0 \pmod{F_i}$ by the divisibility condition. However, by our CRT construction, $b \equiv 1 \pmod{F_i}$. The element $c$ must belong to some block $B_m$ with $m \ge i$, so $c \equiv 0 \pmod{F_i}$ (if $m=i$) or $c \equiv 1 \pmod{F_i}$ (if $m > i$). Therefore, $b + c \equiv 1 \pmod{F_i}$ or $b + c \equiv 2 \pmod{F_i}$. Since $F_i \ge 3$, this directly contradicts $b + c \equiv 0 \pmod{F_i}$.
+    \item (Case 2: Same block) Suppose $b, c \in B_i$. They must be tightly clustered around $P_i$. Because $y < X_i$, we have $f(y) < Y_i$. The maximum "noise" added to any block element is $V_iY_i$. Since $P_i > 10V_iY_i$, any $x \in B_i$ must satisfy $x \in [P_i, 1.1P_i]$. The divisibility condition $a \mid (b+c)$ implies $m a = b + c$ for some integer $m$. Because $b+c \in [2P_i, 2.2P_i]$ and $a \in [P_i, 1.1P_i]$, it must be that $m = 2$, implying $2a = b + c$. 
+\end{itemize}
+Writing the elements as $a = P_i + V_if(a')$, $b = P_i + V_if(b')$, and $c = P_i + V_if(c')$, substitution and cancellation yield $2f(a') = f(b') + f(c')$. This is impossible for distinct $a', b', c'$ because the image of $f$ avoids 3-APs, contradicting the assumption that $a,b,c$ are distinct.
+\\\\
+Finally, we show that $C(N) = |A \cap \{1, \dots, N\}| \ge c\sqrt{N}$ for some constant $c > 0$. We split into two cases:
+\begin{enumerate}
+    \item $N$ falls in the gap between $B_i$ and $B_{i + 1}$; precisely, $P_i + V_iY_i \leq N < P_{i + 1}$. Here, $C(N)$ counts at least all elements in $B_i$, meaning $C(N) \geq X_i = \lfloor \sqrt{P_{i + 1}} \rfloor$. Since $N \leq P_{i + 1}$, we have $\sqrt{N} \leq \sqrt{P_{i + 1}}$. Thus, $\frac{C(N)}{\sqrt{N}} \geq \frac{\lfloor \sqrt{P_{i + 1}} \rfloor}{\sqrt{P_{i + 1}}} \approx 1$.
+    \item $N$ is inside the block $B_i$; precisely, $P_i \leq N < P_i + V_iY_i$. A pessimistic lower bound counts only the elements up to the previous block, giving $C(N) \geq X_{i - 1} = \lfloor \sqrt{P_i} \rfloor$. Observe that $V_iY_i \leq 0.1P_i$, so $N \leq 1.1 P_i < 2 P_i$. Consequently, $\sqrt{P_i} > \sqrt{N/2}$, which implies $\frac{C(N)}{\sqrt{N}} \geq \frac{1}{\sqrt{2}}$.
+\end{enumerate}
+In both cases, $\liminf_{N \to \infty} \frac{C(N)}{N^{1/2}} \ge \frac{1}{\sqrt{2}} > 0$. \hfill $\Box$

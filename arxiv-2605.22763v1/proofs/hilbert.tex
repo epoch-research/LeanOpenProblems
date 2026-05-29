@@ -1,0 +1,553 @@
+Pure $O$-sequences, introduced in the context of Stanley’s work on Hilbert functions of monomial level algebras in the late 1970s, have been studied intensively over the last fifteen years \cite{Stanley1978}. They exhibit surprisingly strong positivity phenomena, especially in small codimension and type. Although pure $O$-sequences are not log-concave in general, the case of codimension 3 and type 2 remained open for over a decade \cite{BMMNZ2012,Zanello2024}. The following theorem establishes log-concavity in precisely this remaining case. 
+
+\noindent \textbf{Theorem.}
+Every pure $O$-sequence of codimension $3$ and type $2$ is
+log-concave.
+
+
+\noindent\textbf{Terminology.}
+A monomial $x_0^{m(0)}x_1^{m(1)}x_2^{m(2)}$ in three variables is
+identified with its exponent vector $m=(m(0),m(1),m(2))\in\mathbb N^3$. 
+We write $m'\le m$ for coordinate-wise inequality and
+$|m|=m(0)+m(1)+m(2)$ for total degree.  A finite order ideal
+$\Gamma\subset\mathbb N^3$ is a finite set closed downward under this
+order: if $n\in\Gamma$ and $m\le n$, then $m\in\Gamma$.
+
+A monomial $m\in\Gamma$ is maximal if every $n\in\Gamma$ with
+$m\le n$ also satisfies $n\le m$.  The ideal is pure if all maximal
+monomials have the same total degree; this common degree is the socle
+degree.  The type is the number of maximal monomials.  The pure
+$O$-sequence of $\Gamma$ is
+\[
+  h_\Gamma(d)=\#\{m\in\Gamma:|m|=d\}.
+\]
+For a monomial $g$, we simply write $h_g(d)=\#\{u\le g:|u|=d\}$. The $O$-sequence is log-concave if
+\[
+  h_\Gamma(i-1)h_\Gamma(i+1)\le h_\Gamma(i)^2
+  \qquad(0<i<e),
+\]
+where $e$ is the socle degree of $\Gamma$.  We write
+$\mathbf 1_P$ for the indicator of the condition $P$.
+
+\noindent \textbf{Proof.}
+Let $\Gamma$ be a pure order ideal in three variables and suppose that
+its two maximal monomials are $m_1\ne m_2$.  Since $\Gamma$ is pure, $|m_1|=|m_2|=e$.
+Every element of a finite order ideal lies below a maximal element, so
+\[
+  \Gamma=\{u:u\le m_1\} \cup \{u:u\le m_2\},
+\]
+After possibly interchanging $m_1$ and $m_2$, there is a coordinate
+$x\in\{0,1,2\}$ such that
+\[
+  m_2(x)>m_1(x),
+  \qquad
+  m_2(y)\le m_1(y)\quad(y\ne x).                         \tag{1}
+\]
+Indeed, the three integers $m_1(i)-m_2(i)$ sum to zero and are not all
+zero, hence one sign occurs in a minority position; if necessary we swap
+the two monomials so that the minority sign is negative.
+
+Let $c=m_1(x)+1$, and define
+\[
+  M_{\rm red}(y)=
+  \begin{cases}
+    m_2(x)-m_1(x)-1,&y=x,\\
+    m_2(y),&y\ne x.
+  \end{cases}
+\]
+Then $|M_{\rm red}|=e-c$. For $u\le m_2$, condition (1) implies
+\[
+  u\not\le m_1
+  \quad\Longleftrightarrow\quad
+  u(x)\ge c.
+\]
+If $d\ge c$, the map $u\mapsto u-ce_x$ bijects
+$\{u\le m_2:|u|=d,\ u(x)\ge c\}$
+with
+$\{v\le M_{\rm red}:|v|=d-c\}$.
+If $d<c$, the first set is empty.  Hence the $O$ sequence of
+$\Gamma$ can be written as 
+\[
+  H(d):=h_\Gamma(d)
+  =
+  h_{m_1}(d)+\mathbf 1_{d\ge c}\,h_{M_{\rm red}}(d-c).       \tag{2}
+\]
+We need to prove that $H(d-1)H(d+1)\le H(d)^2$ holds for $0<d<e$.
+
+For an integer-valued sequence $F:\mathbb N\to\mathbb Z$, define the first and scond difference sequences as
+\[
+  \Delta F(0)=F(0),
+  \qquad
+  \Delta F(d)=F(d)-F(d-1)\quad(d>0),
+\]
+\[
+  \Delta^2F(0)=\Delta F(0),
+  \qquad
+  \Delta^2F(d)=\Delta F(d)-\Delta F(d-1)\quad(d>0).
+\]
+
+We first prove an elementary divisor-count formula for a single
+monomial. Let $m=(\alpha,\beta,\gamma)$ be a monomial. 
+For $p,q\in\mathbb N$, set
+\[
+  L_{p,q}(k)=\#\{r\in\mathbb N:r<p,\ r\le k,\ k-r<q\}.
+\]
+Thus $L_{p,q}(k)$ counts the number of pairs $(r,s)$ with
+$0\le r<p$, $0\le s<q$, and $r+s=k$.  A direct box count gives
+\[
+  h_m(t)
+  =
+  \sum_{k=0}^{t}\mathbf 1_{t-k<\gamma+1}\,
+  L_{\alpha+1,\beta+1}(k).
+\]
+With the convention $\Delta F(0)=F(0)$, the first-difference identities are
+\[
+  \Delta L_{p,q}(t)
+  =
+  \mathbf 1_{t<p}
+  +
+  \mathbf 1_{t<q}
+  -
+  \mathbf 1_{t<p+q}
+  \qquad(t\ge0),
+\]
+and hence
+\[
+  \Delta h_m(t)
+  =
+  L_{\alpha+1,\beta+1}(t)
+  -
+  \mathbf 1_{t\ge \gamma+1}\,
+  L_{\alpha+1,\beta+1}(t-\gamma-1)
+  \qquad(t\ge 0).
+\]
+Taking one more difference gives, for every $t>0$,
+\begin{align}
+  \Delta^2 h_m(t)
+  &=
+  \mathbf 1_{t\le\alpha}
+  +
+  \mathbf 1_{t\le\beta}
+  +
+  \mathbf 1_{t\le\gamma}
+  -
+  \mathbf 1_{t\le\alpha+\beta+1}
+  -
+  \mathbf 1_{t\le\beta+\gamma+1}       \notag\\
+  &\hspace{2.5cm}
+  -
+  \mathbf 1_{t\le\gamma+\alpha+1}
+  +
+  \mathbf 1_{t\le\alpha+\beta+\gamma+2}.              \tag{3}
+\end{align}
+In particular, $\Delta^2h_m(t)\le 1$. 
+The same bound holds for the shifted sequence
+$t\longmapsto \mathbf 1_{t\ge c}h_{M_{\rm red}}(t-c),
+$
+because below the shift its second difference is zero, and from the shift
+onward it is the second difference of the principal sequence of
+$M_{\rm red}$.  Therefore $\Delta^2H(t)\le 2$.                                      
+
+Formula (3) also implies the following useful dichotomy.  If
+$t>0$ and $\Delta^2h_m(t)=1$, then either
+\[
+  t\le m(0),\qquad t\le m(1),\qquad t\le m(2),              \tag{L}
+\]
+or
+\[
+  t\ge m(0)+m(1)+2,\qquad
+  t\ge m(1)+m(2)+2,\qquad
+  t\ge m(0)+m(2)+2,\qquad
+  t\le |m|+2.                                             \tag{U}
+\]
+We refer to these as the lower and upper alternatives. For $t=0$, the lower alternative is automatic. 
+
+We shall also use the following elementary consequences of the same box
+count. 
+\begin{enumerate}
+    \item If $t\le m(i)$ for all $i$, then
+\[
+  2h_m(t)=(t+1)(t+2),
+  \qquad
+  \Delta h_m(t)=t+1.                                      \tag{5}
+\]
+\item If $t\ge m(i)+m(j)$ for every pair $\{i,j\}$,
+and $t\le |m|+2$,
+then,
+\[
+  2h_m(t)=(|m|+1-t)(|m|+2-t).                              \tag{6}
+\]
+\item If $t\ge m(i)+m(j)+1$ for every pair $\{i,j\}$,
+and $t\le |m|+2$, then 
+\[
+  \Delta h_m(t)=-(|m|+2-t).                                \tag{7}
+\]
+\item For all $t$,
+\[
+  2h_m(t)\le (|m|-t+1)(|m|-t+2).                           \tag{8}
+\]
+\item If $2t\ge |m|+1$, then
+\[
+  \Delta h_m(t)\le0.                                      \tag{9}
+\]
+\end{enumerate}
+Now fix $0<d<e=|m_1|=|m_2|$. Using $H(d)=H(d-1)+\Delta H(d)$
+and $\Delta H(d+1)=\Delta H(d)+\Delta^2H(d+1)$
+gives
+\[
+  H(d)^2-H(d-1)H(d+1)
+  =
+  (\Delta H(d))^2-H(d-1)\Delta^2H(d+1).                   \tag{10}
+\]
+Since $H(d-1)\ge0$ and $\Delta^2H(d+1)\le2$, it is enough to prove the following two statements:
+\[
+  \Delta^2H(d+1)=1
+  \quad\Longrightarrow\quad
+  H(d-1)\le(\Delta H(d))^2,                               \tag{11}
+\]
+and
+\[
+  \Delta^2H(d+1)=2
+  \quad\Longrightarrow\quad
+  2H(d-1)\le(\Delta H(d))^2.                              \tag{12}
+\]
+Indeed, if $\Delta^2H(d+1)\le0$, equation (10) is immediate; if it is
+$1$ or $2$, then (11) or (12) applies.
+
+Write $f(t)=h_{m_1}(t)$ and $g(t)=\mathbf 1_{t\ge c}h_{M_{\rm red}}(t-c)$, so that $H=f+g$.
+Since $\Delta^2f\le1$ and $\Delta^2g\le1$, if
+$\Delta^2H(d+1)=1$, then either
+\[
+  \Delta^2f(d+1)=1,
+  \qquad
+  \Delta^2g(d+1)=0,                                      \tag{A}
+\]
+or
+\[
+  \Delta^2f(d+1)=0,
+  \qquad
+  \Delta^2g(d+1)=1.                                      \tag{B}
+\]
+If $\Delta^2H(d+1)=2$, then
+\[
+  \Delta^2f(d+1)=\Delta^2g(d+1)=1.
+  \tag{C}
+\]
+
+\medskip
+\noindent\textbf{Case A1: (A)+(L) for $f$.}
+Suppose equation (A) holds and the lower alternative (L) holds for $f$ with $t=d+1$. Then in particular $d+1\le m_1(x)<c$, thus $g(d-1)=g(d)=0$, hence $\Delta g(d)=0$ and therefore
+\[
+  H(d-1)=f(d-1),
+  \qquad
+  \Delta H(d)=\Delta f(d).
+\]
+By (5), $2f(d-1)=d(d+1)$ and $\Delta f(d)=d+1$. 
+Therefore
+\[
+  H(d-1)=f(d-1)\le(d+1)^2=(\Delta f(d))^2=(\Delta H(d))^2.
+\]
+This proves (11) in this case.
+
+\medskip
+\noindent\textbf{Case A2: (A)+(U) for $f$}. Assume equation (A) holds and the upper alternative (U) holds for $f$ with $t=d+1$. Let us introduce the shorthand notation $\rho=e-d$.
+Then (U) gives $\rho\ge -1$.  Applying
+(6) and (7) gives
+\[
+  2f(d-1)=(\rho+2)(\rho+3),
+  \qquad
+  \Delta f(d)=-(\rho+2).                                    \tag{13}
+\]
+The shifted summand satisfies
+\[
+  \Delta g(d)\le0,
+  \qquad
+  2g(d-1)\le (\rho+2)(\rho+3),
+  \qquad
+  2g(d)\le (\rho+1)(\rho+2).        \tag{14}
+\]
+Indeed, the two inequalities for $g(d-1)$ and
+$g(d)$ follow from the universal upper bound (8),
+applied to the shifted sequence.  For the sign of $\Delta g(d)$, if
+$d<c$, then $\Delta g(d)=0$.  If $d\ge c$, then the upper alternative
+for $f$ implies
+\[
+  d\ge m_1(x)+m_1(y)+1,
+  \qquad
+  d\ge m_1(x)+m_1(z)+1,
+\]
+where $\{x,y,z\}=\{0,1,2\}$.  Adding these inequalities gives
+\[
+  2d\ge 2m_1(x)+m_1(y)+m_1(z)+2=e+m_1(x)+2.
+\]
+Since $c=m_1(x)+1$ and $|M_{\rm red}|=e-c$, this is equivalent to
+$2(d-c)\ge |M_{\rm red}|+1$.  Thus the midpoint monotonicity (9) applies
+to the shifted $M_{\rm red}$-sequence and gives $\Delta g(d)\le0$.
+
+To prove (11), by (13) it remains to show
+\[
+  f(d-1)+g(d-1)\le\bigl(-(\rho+2)+\Delta g(d)\bigr)^2.
+\]
+By (13) and (14), this follows from
+\[
+  (\rho+2)(\rho+3)+2g(d-1)
+  \le
+  2\bigl(-(\rho+2)+\Delta g(d)\bigr)^2.                    \tag{15}
+\]
+Since $g(d)=g(d-1)+\Delta g(d)$, the third inequality in (14) gives
+\[
+  2g(d-1)
+  \le
+  (\rho+1)(\rho+2)-2\Delta g(d).
+\]
+Therefore the difference between the right-hand side and the left-hand
+side of (15) is at least
+\begin{align*}
+&2\bigl(-(\rho+2)+\Delta g(d)\bigr)^2
+  -(\rho+2)(\rho+3)
+  -\bigl((\rho+1)(\rho+2)-2\Delta g(d)\bigr)  \\
+&\qquad
+=
+2\Delta g(d)\bigl(\Delta g(d)-2(\rho+2)+1\bigr).
+\end{align*}
+This is nonnegative because $\Delta g(d)\le0$, $\rho\ge-1$, and hence
+\[
+  \Delta g(d)-2(\rho+2)+1\le0.
+\]
+Thus (11) holds in this case, and we completed the (A) case.
+
+For the two cases when (B) holds, that is $\Delta^2g(d+1)=1$, we use the following
+shift reduction.  If
+\[
+  \Delta^2H(d+1)=1
+  \qquad\text{and}\qquad
+  H(d+1)\le(\Delta H(d+1))^2,
+\]
+then
+\[
+  H(d-1)\le(\Delta H(d))^2.                                \tag{16}
+\]
+Indeed, $\Delta H(d)=\Delta H(d+1)-1$ and $H(d-1)=H(d+1)-\Delta H(d+1)-\Delta H(d)$.
+Therefore
+\[
+  H(d-1)
+  =
+  H(d+1)-2\Delta H(d+1)+1
+  \le
+  (\Delta H(d+1))^2-2\Delta H(d+1)+1
+  =
+  (\Delta H(d))^2.
+\]
+
+\medskip
+\noindent\textbf{Case B1: (B)+(L) for $g$.}
+Assume equation (B) holds and the lower alternative (L) holds for $g$ with $t=d+1$. Let $D=d+1$. Since $\Delta^2g(D)=1$, necessarily $D\ge c$, and $\Delta^2h_{M_{\rm red}}(D-c)=1$.
+In the lower subcase $D-c\le M_{\rm red}(i)$ for every $i$. Then $D-c+1\ge 1$, and the lower formula (5) gives
+\[
+  2g(D)=(D-c+1)(D-c+2),
+  \qquad
+  \Delta g(D)=D-c+1.                                           \tag{17}
+\]
+We next prove two bounds for $f$ at $D$:
+\[
+  f(D)\le (D+1)\Delta f(D),
+  \qquad
+  \Delta f(D)=c.                                       \tag{18}
+\]
+First, since $\Delta^2f(D)=0$, the explicit formula (3), together with
+the lower inequalities for $M_{\rm red}$, implies
+\[
+  D\le m_1(0)+m_1(1)+1,
+  \qquad
+  D\le m_1(1)+m_1(2)+1,
+  \qquad
+  D\le m_1(0)+m_1(2)+1.                                  \tag{19}
+\]
+Indeed, the two pair inequalities involving $x$ follow directly from
+$D-c\le M_{\rm red}(y)\le m_1(y)$ for $y\ne x$.  The remaining pair
+inequality follows from (3): if it failed, then the corresponding two
+single indicators would be zero; since $D\ge c=m_1(x)+1$, the
+$x$-single indicator is also zero, and the right-hand side of (3)
+would be negative, contradicting $\Delta^2f(D)=0$.
+
+Thus, in (3) for $f$ at $D$, all three pair indicators and the triple
+indicator are equal to $1$.  Since $\Delta^2f(D)=0$, exactly two of
+the three single indicators are equal to $1$.  Moreover the
+$x$-single indicator is zero, because $D\ge m_1(x)+1$.  Hence the
+two remaining single indicators are equal to $1$.
+
+It follows that for every $1\le k\le D$, the same two single
+indicators are still equal to $1$, while the three pair indicators and
+the triple indicator are also equal to $1$.  Therefore
+\[
+  \Delta^2f(k)\ge 2-3+1=0
+  \qquad(1\le k\le D).
+\]
+Thus the first differences $\Delta f(k)$ are nondecreasing on
+$\{0,1,\ldots,D\}$.  Since
+\[
+  f(D)=\sum_{j=0}^{D}\Delta f(j),
+\]
+we get
+\[
+  f(D)\le (D+1)\Delta f(D).
+\]
+This proves the first inequality in (18).
+
+For the second inequality in (18), relabel the two coordinates different
+from $x$ as $y,z$, and write
+\[
+  A=m_1(y)+1,
+  \qquad
+  B=m_1(z)+1,
+\]
+and recall $c=m_1(x)+1$. Using the box-count formula with $x$ as the third coordinate, the
+first-difference formula gives
+\[
+  \Delta f(D)=L_{A,B}(D)-L_{A,B}(D-c),
+\]
+because $D\ge c$.  From the preceding paragraph,
+$D<A$ and $D<B$, hence
+\[
+  L_{A,B}(D)=D+1,
+  \qquad
+  L_{A,B}(D-c)=D-c+1.
+\]
+Therefore
+\[
+  \Delta f(D)=(D+1)-(D-c+1)=c,
+\]
+proving (18). Using (17) and (18), we have
+\[
+  2H(D)
+  =
+  2f(D)+2g(D)
+  \le
+  2\Delta f(D)(D+1)+(D-c+1)(D-c+2).
+\]
+Also, by (17),
+\[
+  \Delta H(D)=\Delta f(D)+\Delta g(D)
+  =
+  \Delta f(D)+(D-c+1).
+\]
+Thus it is enough to show
+\[
+  2\Delta f(D)(D+1)+(D-c+1)(D-c+2)
+  \le
+  2\bigl(\Delta f(D)+D-c+1\bigr)^2.
+\]
+Since $D+1=(D-c+1)+c$, the difference between the right-hand side and
+the left-hand side is
+\[
+  2\Delta f(D)\bigl(\Delta f(D)-c\bigr)
+  +2\Delta f(D)(D-c+1)
+  +(D-c+1)(D-c).
+\]
+This is nonnegative because $\Delta f(D)\ge c$ and $D-c+1\ge1$.
+Therefore $H(D)\le(\Delta H(D))^2$.
+By the shift reduction (16), this proves (11).
+
+\medskip
+\noindent\textbf{Case B2: (B)+(U) for $g$.}
+Again let $D=d+1$ and put $\rho=e-D$.  The upper alternative for
+$h_{M_{\rm red}}$ at $D-c$ gives $\rho\ge -2$.  Since
+$|M_{\rm red}|=e-c$, formulas (6) and (7) give
+\[
+  2g(D)=(\rho+1)(\rho+2),
+  \qquad
+  \Delta g(D)=-(\rho+2).                                  \tag{20}
+\]
+For the first summand, the universal upper bound (8) gives
+\[
+  2f(D)\le(e-D+1)(e-D+2)=(\rho+1)(\rho+2).                 \tag{21}
+\]
+
+It remains to justify the sign of $\Delta f(D)$.  Since $g$ is in the
+upper alternative at $D$, we have
+\[
+  D-c\ge M_{\rm red}(0)+M_{\rm red}(1)+2,\ 
+  D-c\ge M_{\rm red}(1)+M_{\rm red}(2)+2,\ D-c\ge M_{\rm red}(0)+M_{\rm red}(2)+2.
+\]
+Adding these three inequalities gives
+\[
+  3(D-c)\ge 2|M_{\rm red}|+6=2(e-c)+6.
+\]
+Hence 
+\[
+  2(D-c)
+  \ge
+  \frac{2}{3}\bigl(2|M_{\rm red}|+6\bigr)
+  =
+  |M_{\rm red}|+1+\frac{|M_{\rm red}|+9}{3}
+  >
+  |M_{\rm red}|+1,
+\]
+because $|M_{\rm red}|\ge0$.
+Therefore
+\[
+  2D=2(D-c)+2c\ge (e-c+1)+2c=e+c+1\ge e+1.
+\]
+By midpoint monotonicity (9), applied to $f=h_{m_1}$, we get $\Delta f(D)\le0$. Using (20), (21), we get 
+\[
+  2H(D)\le2(\rho+1)(\rho+2),
+  \qquad
+  \Delta H(D)=\Delta f(D)-(\rho+2).
+\]
+Since $\rho\ge-2$ and $\Delta f(D)\le0$, we have
+\[
+  (\rho+1)(\rho+2)\le\bigl(-\Delta f(D)+\rho+2\bigr)^2.
+\]
+giving the desired $H(D)\le(\Delta H(D))^2$. By the shift reduction (16), this proves (11).
+
+\medskip
+\noindent\textbf{Case C: (C) holds.}
+So here $\Delta^2H(d+1)=2$ and hence $\Delta^2f(d+1)=\Delta^2g(d+1)=1$.
+Since $\Delta^2g(d+1)=1$, necessarily $d+1\ge c$.
+Therefore the lower alternative (L) for $f$ is impossible, because it
+would imply $d+1\le m_1(x)<c$.
+Hence $f$ is in its upper alternative, that is, (U) holds for $f$. The lower alternative (L) for $g$ is also impossible. Indeed, if $d+1-c\le M_{\rm red}(i)$ for every $i$,
+then, choosing any $y\ne x$, we get
+\[
+  d+1
+  \le
+  m_1(x)+1+M_{\rm red}(y)
+  =
+  m_1(x)+1+m_2(y)
+  \le
+  m_1(x)+1+m_1(y).
+\]
+But the upper alternative for $f$ gives $d+1\ge m_1(x)+m_1(y)+2$, a contradiction.  Thus $g$ is also in its upper alternative, and (U) holds for $g$.
+Put $\rho=e-d$ again. Since $|M_{\rm red}|=e-c$, we also have $|M_{\rm red}|-(d-c)=e-d=\rho$.
+The upper formulas (6) and (7), applied to $f$ and to the shifted
+summand $g$, give
+\[
+  2f(d-1)=(\rho+2)(\rho+3),
+  \qquad
+  \Delta f(d)=-(\rho+2),
+\]
+and
+\[
+  2g(d-1)=(\rho+2)(\rho+3),
+  \qquad
+  \Delta g(d)=-(\rho+2).
+\]
+Therefore
+\[
+  2H(d-1)=2(\rho+2)(\rho+3),
+  \qquad
+  \Delta H(d)=-2(\rho+2).
+\]
+Since the upper alternative for $f$ gives $\rho\ge-1$, we have
+\[
+  (\Delta H(d))^2-2H(d-1)
+  =
+  4(\rho+2)^2-2(\rho+2)(\rho+3)
+  =
+  2(\rho+2)(\rho+1)
+  \ge0.
+\]
+which proves (12). This completes the proof of (11) and (12), and hence by (10) $H(d-1)H(d+1)\le H(d)^2$.
+Since $0<d<e$ was arbitrary and $H$ is the pure $O$-sequence of
+$\Gamma$ by (2), the theorem follows. \hfill $\Box$
+

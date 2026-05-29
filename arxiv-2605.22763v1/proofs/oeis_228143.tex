@@ -1,0 +1,37 @@
+\textbf{Theorem.} (A conjecture of OEIS A228143, 2018) Let $s_m = \sum_{k=0}^m \binom{m}{k}^2 \binom{m+k}{k}^2$ be the sequence A005259. Let $a_n$ denote the determinant of the $(n+1) \times (n+1)$ Hankel-type matrix whose $(i, j)$-entry is $s_{i+j}$ for all $i, j = 0, \dots, n$. Let $A(x) = \sum_{n=0}^\infty a_n x^n = 1 + 48x + 161856x^2 + \dots$ denote the ordinary generating function of $a_n$. Then $A(x/3)^{1/8}$ has integer coefficients. 
+
+\textbf{Proof.} We proceed in three main stages: analyzing the matrix entries modulo $3$, analyzing them modulo $4$, and using the resulting divisibility properties of the determinant $a_n$ to construct the required eighth root as a formal power series over the integers.
+
+First, we determine the residues of $s_m$ modulo $3$. By writing $k$ in base $3$, Kummer's Theorem dictates that the highest power of $3$ dividing $\binom{2k}{k}$ equals the number of carries when evaluating $k + k$ in base $3$. If $k$ contains the digit $2$, a carry occurs, so $\binom{2k}{k} \equiv 0 \pmod 3$. Alternatively, if $k$ consists only of the digits $0$ and $1$, there are no carries. Applying Lucas's Theorem digit-by-digit to $\binom{2k}{k}$ yields a product of terms $\binom{0}{0}=1$ and $\binom{2}{1}=2 \equiv -1 \pmod 3$. Thus, $\binom{2k}{k} \equiv (-1)^c \pmod 3$, where $c$ is the number of $1$s in the base-3 representation of $k$. Since $c$ shares the same parity as $k$, we obtain $\binom{2k}{k} \equiv (-1)^k \pmod 3$.
+
+We can rewrite the squared product of binomial coefficients as:
+$$ \left( \binom{m}{k} \binom{m+k}{k} \right)^2 = \binom{m+k}{2k}^2 \binom{2k}{k}^2 $$
+When $\binom{2k}{k} \not\equiv 0 \pmod 3$, the base-3 digits of $2k$ are strictly $0$s and $2$s. Applying Lucas's Theorem to $\binom{m+k}{2k}$, each digit of the evaluation takes the form $\binom{d_i}{0} = 1$ or $\binom{d_i}{2} \in \{0, 1\}$. Thus, $\binom{m+k}{2k} \equiv 0 \text{ or } 1 \pmod 3$. Since values in $\{0, 1\}$ are invariant under squaring, $\binom{m+k}{2k}^2 \equiv \binom{m+k}{2k} \pmod 3$. Furthermore, since $\binom{2k}{k} \in \{0, (-1)^k\} \pmod 3$, squaring it absorbs the parity: $\binom{2k}{k}^2 \equiv (-1)^k \binom{2k}{k} \pmod 3$. Combining these pieces, we find that for all $m$ and $k$:
+$$ \left( \binom{m}{k} \binom{m+k}{k} \right)^2 \equiv (-1)^k \binom{m+k}{2k} \binom{2k}{k} \equiv (-1)^k \binom{m}{k} \binom{m+k}{k} \pmod 3 $$
+Summing this equivalence over $k = 0, \dots, m$ yields $s_m \equiv \sum_{k=0}^m (-1)^k \binom{m}{k} \binom{m+k}{k} \pmod 3$. By a standard alternating binomial sum identity, $\sum_{k=0}^m (-1)^k \binom{m}{k} \binom{m+k}{k} = (-1)^m$. Consequently, $s_m \equiv (-1)^m \pmod 3$. 
+
+Using this congruence, we apply row operations to the matrix $M^{(n)}$ to establish that $3^n \mid a_n$. Let $P_n$ be the lower-triangular matrix with ones on the main diagonal, $P_{i,0} = -(-1)^i$ for $i \ge 1$, and zeros elsewhere. The matrix product $P_n M^{(n)}$ replaces each row $i \ge 1$ with the $i$-th row minus $(-1)^i$ times the $0$-th row. Visually, the modified matrix takes the form:
+$$ P_n M^{(n)} = \begin{bmatrix} s_0 & s_1 & s_2 & \cdots & s_n \\ s_1 + s_0 & s_2 + s_1 & s_3 + s_2 & \cdots & s_{n+1} + s_n \\ s_2 - s_0 & s_3 - s_1 & s_4 - s_2 & \cdots & s_{n+2} - s_n \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ s_n - (-1)^n s_0 & s_{n+1} - (-1)^n s_1 & s_{n+2} - (-1)^n s_2 & \cdots & s_{2n} - (-1)^n s_n \end{bmatrix} $$
+The new $(i, j)$-entry for $i \ge 1$ is $s_{i+j} - (-1)^i s_j$. By our previous congruence, $s_{i+j} - (-1)^i s_j \equiv (-1)^{i+j} - (-1)^i(-1)^j \equiv 0 \pmod 3$. Thus, every entry in rows $1$ through $n$ of the new matrix is divisible by $3$. Factoring a $3$ out of each of these $n$ rows gives a factor of $3^n$. Because $\det(P_n) = 1$, we conclude that $3^n \mid \det(M^{(n)}) = a_n$.
+
+Second, we analyze $s_m$ modulo $4$. For any $k \ge 1$, the product $\binom{m}{k} \binom{m+k}{k}$ is always even, which implies its square is divisible by $4$. Thus, $\left(\binom{m}{k} \binom{m+k}{k}\right)^2 \equiv 0 \pmod 4$ for all $k \ge 1$. The $k=0$ term evaluates to $1$, yielding $s_m \equiv 1 \pmod 4$ for all $m$. 
+
+We apply a similar matrix transformation to establish divisibility by $4^n$. Let $P'_n$ be the lower-triangular matrix with ones on the diagonal, $P'_{i,0} = -1$ for $i \ge 1$, and zeros elsewhere. The product $P'_n M^{(n)}$ subtracts the $0$-th row from every subsequent row $i \ge 1$:
+$$ P'_n M^{(n)} = \begin{bmatrix} s_0 & s_1 & \cdots & s_n \\ s_1 - s_0 & s_2 - s_1 & \cdots & s_{n+1} - s_n \\ s_2 - s_0 & s_3 - s_1 & \cdots & s_{n+2} - s_n \\ \vdots & \vdots & \ddots & \vdots \end{bmatrix} $$
+For $i \ge 1$, the $(i, j)$-entry becomes $s_{i+j} - s_j$. Since $s_m \equiv 1 \pmod 4$ for all $m$, this difference evaluates to $1 - 1 \equiv 0 \pmod 4$. Factoring $4$ out of the $n$ modified rows shows that $4^n \mid \det(M^{(n)}) = a_n$.
+
+Now we combine these divisibility properties. We explicitly compute $a_1 = 48$. For $n \ge 1$, we know $4^n \mid a_n$, and since $4^n \ge 16$ for $n \ge 2$, it follows that $16 \mid a_n$ for all $n \ge 1$ (as $16 \mid 48$ for $n=1$). Because $16$ and $3^n$ are coprime, their respective divisibilities imply $16 \cdot 3^n \mid a_n$ for all $n \ge 1$.
+
+We consider the scaled generating function $A(x/3) = \sum_{n=0}^\infty \frac{a_n}{3^n} x^n$. Let $b_n = a_n / 3^n$ denote the coefficients of this series. Since $a_0 = 1$, we have $b_0 = 1$. For $n \ge 1$, our divisibility result yields $16 \mid b_n$. Therefore, we can write $A(x/3) = 1 + 16 Y(x)$, where $Y(x) = \sum_{n=1}^\infty y_n x^n$ is a formal power series with integer coefficients and zero constant term ($Y(0) = 0$).
+
+Finally, we construct the eighth root $C(x) = A(x/3)^{1/8} \in \mathbb{Z}\llbracket x \rrbracket$. We seek a series of the form $C(x) = 1 + 2X(x)$ where $X(x) \in \mathbb{Z}\llbracket x \rrbracket$ has no constant term. Expanding the eighth power yields
+$$ \begin{aligned} (1 + 2X(x))^8 &= 1 + 16X(x) + 112X(x)^2 + 448X(x)^3 + 1120X(x)^4 \\ &\quad + 1792X(x)^5 + 1792X(x)^6 + 1024X(x)^7 + 256X(x)^8 \end{aligned} $$
+Factoring out $16$ from the higher degree terms, we define the polynomial
+$$ P(X) = 7X^2 + 28X^3 + 70X^4 + 112X^5 + 112X^6 + 64X^7 + 16X^8 $$
+Thus, $(1 + 2X(x))^8 = 1 + 16(X(x) + P(X(x)))$. To satisfy $C(x)^8 = A(x/3)$, we must solve the equation $1 + 16(X(x) + P(X(x))) = 1 + 16Y(x)$, which simplifies to $X(x) + P(X(x)) = Y(x)$. 
+
+We determine the coefficients $x_n$ of $X(x) = \sum_{n=1}^\infty x_n x^n$ inductively. We set $x_0 = 0$. For the inductive step, the coefficient of $x^{n+1}$ in the equation is
+$$ x_{n+1} + [x^{n+1}] P(X(x)) = y_{n+1} $$
+Because every term in $P(X)$ has degree at least $2$, and $X(x)$ has no constant term, the $x^{n+1}$ coefficient of $P(X(x))$ depends only on the terms $x_1, \dots, x_n$. Therefore, we can uniquely solve for the integers $x_{n+1}$ as
+$$ x_{n+1} = y_{n+1} - [x^{n+1}] P\left( \sum_{k=1}^n x_k x^k \right) $$
+This well-defined recurrence provides an integer sequence $(x_n)_{n \ge 1}$ giving a formal power series $X(x) \in \mathbb{Z}\llbracket x \rrbracket$ that satisfies $X(x) + P(X(x)) = Y(x)$. Substituting this back into our expansion yields $(1 + 2X(x))^8 = 1 + 16Y(x) = A(x/3)$. Setting $C(x) = 1 + 2X(x)$, we have established the existence of the desired integer power series $C(x) = A(x/3)^{1/8}$. \hfill $\Box$

@@ -1,0 +1,54 @@
+\noindent \textbf{Theorem}. Let $A\subset\mathbb{R}^2$
+ be an infinite set for which there exists some $\epsilon > 0$
+ such that in any subset of $A$
+ of size $n$
+ there are always at least $\epsilon n$
+ with no three on a line.
+
+Is it true that $A$
+ is the union of a finite number of sets where no three are on a line?
+        
+\noindent \textbf{Proof.} We will show that there exists an infinite set $A \subset \mathbb{R}^2$ for which any $n$-element subset contains at least $n/2$ points with no three on a line, but $A$ is not the union of a finite number of sets where no three are on a line.
+
+Let $K_\infty$ be the countably infinite complete graph with vertex set $V = \{x_1, x_2, \dots\}$. We choose the sequence of real numbers $(x_i)_{i=1}^\infty$ such that it grows sufficiently fast to avoid any accidental roots of polynomials that will arise in our collinearity condition, by setting $x_n = 100^{4^n}$.
+
+We construct our point set $A \subset \mathbb{R}^2$ by mapping each edge $e = \{x_i, x_j\}$ of $K_\infty$ to a point $P_e$ as follows:
+\begin{equation}
+P_e = (x_i + x_j, x_i^2 + x_i x_j + x_j^2)
+\end{equation}
+Let $A = \{ P_e \mid e \in E(K_\infty) \}$.
+
+\textbf{Lemma.}
+Three points in $A$ are collinear if and only if their corresponding edges form a triangle in $K_\infty$.
+
+\textbf{Proof of Lemma.} First, assume three edges form a triangle in $K_\infty$ with vertices $a, b, c \in V$. The corresponding points in $A$ are:
+\begin{align*}
+P_{ab} &= (a+b, a^2+ab+b^2) \\
+P_{bc} &= (b+c, b^2+bc+c^2) \\
+P_{ca} &= (c+a, c^2+ca+a^2)
+\end{align*}
+The slope $m$ of the line connecting $P_{ab}$ and $P_{bc}$ is given by:
+\begin{equation*}
+m = \frac{(b^2+bc+c^2) - (a^2+ab+b^2)}{(b+c) - (a+b)} = \frac{c^2 - a^2 + bc - ab}{c - a}
+\end{equation*}
+Factoring the numerator yields:
+\begin{equation*}
+m = \frac{(c-a)(c+a) + b(c-a)}{c-a} = a+b+c
+\end{equation*}
+By symmetry, the slope of the line connecting $P_{bc}$ and $P_{ca}$ is also $a+b+c$. Because the slopes are equal, the three points are collinear.
+
+Conversely, suppose three distinct edges do not form a triangle. We must show their corresponding points are not collinear. The condition that these points are collinear is equivalent to the determinant of their $3 \times 3$ augmented coordinate matrix evaluating to zero. 
+
+Because the sequence $(x_i)_{i=1}^\infty$ grows quickly enough, any polynomial evaluated on its terms is strictly dominated by the highest power of its largest variable. By sorting the endpoints of the three edges, we can group the expanded determinant into three topological cases based on whether the largest vertex is present in one, two, or all three of the edges. In every case, because the edges are distinct and do not form a triangle, the coefficient of the dominant highest-degree term is bounded strictly away from zero. Furthermore, the massive gap between consecutive terms in the sequence ensures that the lower-degree terms are strictly bounded and cannot sum to cancel the leading term out. Therefore, the determinant never evaluates to zero, and no accidental collinearities occur. $\Box$
+
+\textbf{Lemma.}
+Any $n$-element subset of $A$ contains at least $n/2$ points with no three on a line.
+
+\textbf{Proof of Lemma.}
+Let $S \subset A$ be an arbitrary subset of size $n$. The elements of $S$ correspond to a subgraph $G_S \subset K_\infty$ containing exactly $n$ edges. Every graph with $n$ edges contains a bipartite subgraph $B_S$ with at least $n/2$ edges. Because $B_S$ is bipartite, it contains no odd cycles and is therefore triangle-free. By the previous lemma, the corresponding points in $A$ contain no collinear triplets. This provides a subset of at least $\lceil n/2 \rceil$ points with no three on a line, satisfying the condition with $\epsilon = 1/2$. $\Box$
+
+To complete the proof of the theorem, assume for contradiction that $A$ can be covered by a finite number of sets where no three are on a line; that is, $A = \bigcup_{k=1}^r A_k$. 
+
+This partition naturally induces an $r$-coloring on the edges of $K_\infty$. By the infinite Ramsey Theorem, any finite coloring of the edges of the infinite complete graph must contain a monochromatic triangle. Consequently, there exists some color class $k$ containing three edges that form a triangle. By the lemma, these three edges map to three collinear points in $A_k$. This contradicts the assumption that $A_k$ contains no three collinear points. 
+
+Therefore, $A$ cannot be covered by finitely many sets with no three on a line. \hfill $\Box$

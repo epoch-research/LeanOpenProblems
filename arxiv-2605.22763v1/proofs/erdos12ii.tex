@@ -1,0 +1,31 @@
+\noindent \textbf{Theorem \upshape(ii).} There exists an infinite set $A \subset \mathbb{Z}^+$ with no distinct $a, b, c \in A$ with $b, c > a$, and $a | b + c$, yet for any $\varepsilon > 0$ and all sufficiently large $N$:
+    $$ |A \cap \{1, \dots, N\}| \geq N^{1-\varepsilon}.$$
+    Consequently, there is no absolute constant $c > 0$ such that every such set $A$ satisfies $|A \cap \{1, \dots, N\}| < N^{1-c}$ for infinitely many $N$.
+    
+\noindent \textbf{Proof.} 
+The proof is similar to the previous one for Erd\H{o}s \#12(i), differing mainly in the use of a Behrend-style construction to produce a dense 3-AP-free set.
+
+Let $c \in (0, 1)$, and let $(P_k)$ be a sequence of pairwise coprime integers with $P_k \geq 3$ and $P_k \leq 4^{k+2}$ (for example, we can choose $P_k$ to be the $k$-th odd prime). Next, define the running product $L_k = \prod_{i = 0}^k P_i$. As before, we have $L_k \leq 4^{(k+2)^2}$. By the Chinese Remainder Theorem, there are integers $R_k < L_k$ satisfying $R_k \equiv 0 \pmod{P_k}$ and $R_k \equiv 1 \pmod{P_i}$ for all $i < k$.
+\\\\
+Choose an integer $m \geq 2$ satisfying $m > (2m + 1)^{1-c/2}$ and define the dimension $V_k = (k + 10)^4$. We use a construction of Behrend to generate dense sets free of 3-term arithmetic progressions. Consider the grid of vectors $\{1, \dots, m\}^{V_k - 1}$. Let $v = (v_0, \dots, v_{V_k - 2})$ be such a vector. The squared norm $\|v\|_2^2$ takes integer values in the range $[V_k - 1, (V_k - 1) m^2]$. By the pigeonhole principle, there exists an integer radius $K$ such that the number of vectors on this sphere satisfies $|\{v \in \{1, \dots, m\}^{V_k - 1} \mid \|v\|_2^2 = K\}| \geq m^{V_k - 1} / (V_k m^2 + 1)$.
+\\\\
+Define $S_k$ as the set of integers formed by evaluating these vectors in base $2m+1$, strictly offset by adding a massive leading digit $m(2m+1)^{V_k - 1}$:
+$$S_k = \left\{ m(2m+1)^{V_k - 1} + \sum_{i = 0}^{V_k - 2} v_i (2m + 1)^i \mathrel{\Bigg|} v \in \{1, \dots, m\}^{V_k - 1}, \sum_{i=0}^{V_k-2} v_i^2 = K \right\}$$
+Because the digits are bounded by $m$, adding two elements in base $2m+1$ involves no carrying. The restriction to the sphere of radius $\sqrt{K}$ ensures $S_k$ contains no 3-APs. Furthermore, because the vectors use digits strictly between $1$ and $m$, every element $x \in S_k$ satisfies $m(2m+1)^{V_k-1} \leq x < (m+1)(2m+1)^{V_k-1}$, ensuring the set is tightly clustered.
+\\\\
+We define the blocks $A_k = \{L_kx + R_k \mid x \in S_k\}$, and set $A = \bigcup_{k \in \mathbb{N}} A_k$. Clearly, $A$ is an infinite set. We verify $A$ contains no distinct $a,b,c$ such that $a \mid (b + c)$ with $b, c > a$. If $a, b, c$ are in different blocks, a similar modular arithmetic argument as before using the CRT conditions yields a contradiction. If they are in the same block, the tightness of $S_k$ guarantees $b+c < 3a$, forcing the divisibility multiplier to be exactly 2 (i.e., $2a = b+c$), which contradicts the fact that $S_k$ is 3-AP-free. To ensure the blocks $A_k$ do not overlap, we bound their elements. The maximum element in $A_k$ is bounded above by:
+$$\max(A_k) \leq L_k (m+1)(2m + 1)^{V_k - 1}$$
+The minimum element in the next block $A_{k+1}$ is bounded below by:
+$$\min(A_{k+1}) \geq L_{k + 1} m(2m + 1)^{V_{k + 1} - 1}$$
+Because the dimension $V_{k + 1} = (k + 11)^4$ is significantly larger than $V_k = (k + 10)^4$, the base exponent strictly dominates, separating the blocks.
+\\\\
+We now show that $|A \cap \{1, \dots, N\}| \geq N^{1-c}$ for sufficiently large $N$. The density drops the most in the empty gaps between blocks, with the absolute minimum occurring immediately before block $A_{k + 1}$ begins. At this point, $N = \min(A_{k+1}) - 1$, and our total element count is strictly greater than $|A_k|$. Thus, it suffices to prove:
+$$|A_k| \geq (\max(A_{k + 1}))^{1-c}$$
+Substituting our parameter bounds into this inequality yields, and since $m$ was chosen to satisfy $m > (2m + 1)^{1 - c/2}$, it remains to prove
+$$\frac{\left((2m+1)^{1-c/2}\right)^{V_k - 1}}{V_k m^2 + 1} \geq \left( L_{k + 1}(m+1)(2m + 1)^{V_{k+1} - 1} \right)^{1-c}$$
+Ignoring the polynomial denominator and constant multipliers, we compare the asymptotic growth of the exponents on the base $2m+1$:
+\begin{itemize}
+    \item On the left hand side, the exponent is $(1 - c/2)(V_k - 1) = (1 - c/2)k^4 + O(k^3)$.
+    \item On the right hand side, the exponent is $(1 - c)(V_{k + 1} - 1) = (1 - c)(k + 11)^4 = (1-c)k^4 + O(k^3)$.
+\end{itemize}
+The contribution of the running product $L_{k + 1} \leq 4^{(k+3)^2}$ and the constant $(m+1)$ to the right hand side is only $O(k^2)$, which is safely absorbed into the $O(k^3)$ error term. Because $c > 0$, the $k^4$ coefficient on the left hand side $(1 - c/2)$ is strictly greater than the $k^4$ coefficient on the right hand side $(1 - c)$. Thus, for sufficiently large $k$, the left hand side asymptotically dominates, and the inequality holds. \hfill $\Box$

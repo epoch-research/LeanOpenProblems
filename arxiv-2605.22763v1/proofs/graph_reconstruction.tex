@@ -1,0 +1,247 @@
+The Kelly-Ulam graph reconstruction program aims to recover a graph from its deck of one-vertex-deleted subgraphs \cite{ulam1960collection, Kelly1957}. A standard bipartite version was formulated by Bondy and Hemminger as the problem of showing that bipartite graphs are reconstructible \cite{BondyHemminger1977}. The following theorem proves a structured incidence-deletion analogue under strong type-distinguishability assumptions. 
+
+\noindent \textbf{Terminology}
+Let $\Omega=L \sqcup R$ be a finite vertex set with a partition into the disjoint parts $L,R\subseteq \Omega$. 
+A graph $K$ is bipartite with respect to $(L,R)$ if every edge of $K$ has one endpoint in $L$ and one endpoint in
+$R$. We say $K$ is $2$-connected if $K$ is connected and, for every vertex $v$, the induced graph on
+$\Omega\setminus\{v\}$ is connected. For a graph $K$ and a vertex $v$, write $K\setminus_{\mathrm{inc}} v$
+for the graph obtained from $K$ by deleting all edges incident to $v$, while
+leaving the vertex set unchanged. Thus 
+\[
+E(K\setminus_{\mathrm{inc}} v)=\{xy\in E(K):x\ne v,\ y\ne v\}.
+\]
+A bipartite isomorphism $K\cong_B K'$ is a graph isomorphism whose underlying
+bijection preserves both parts $L$ and $R$. The bipartite deck is the multiset
+\[
+\mathcal D_B(K):=\multiset{[K\setminus_{\mathrm{inc}} v]_B: v\in\Omega},
+\]
+where $[\cdot]_B$ denotes bipartite-isomorphism class.
+Let $N_K(x)$ be the neighbor set of $x$ in $K$. The degree profile and type of
+$x$ are
+\[
+P_K(x):=\multiset{\degG K y: y\in N_K(x)},
+\qquad
+\tau_K(x):=(\degG K x,P_K(x)).
+\]
+The type profile of $u$ is the multiset of the types of its neighbors:
+\[
+T_K(u):=\multiset{\tau_K(x): x\in N_K(u)}.
+\]
+Finally, for a type $t=(d,M)\in\mathbb N\times\operatorname{Multiset}(\mathbb N)$ and $a\in\mathbb N$, define
+\[
+F_a(t):=(\max(d-1,0),M\setminus\{a\}),
+\]
+where $M\setminus\{a\}$ means deletion of one occurrence of $a$ from the multiset
+$M$.  In the applications below, $F_a$ is applied to neighbor-types, whose
+first coordinate is positive, so $\max(d-1,0)=d-1$ there.  We write
+$\#_t M$ for the multiplicity of $t$ in a multiset $M$.
+
+
+\noindent \textbf{Theorem} (\upshape Weak bipartite graph reconstruction)
+Let $G$ and $H$ be finite simple graphs on the same finite vertex set
+$\Omega$, both bipartite with respect to the same parts $\Omega=L\sqcup R$ and $\card\Omega\ge 3$. Assume that $G$ is 2-connected and all vertex types of $G$ are pairwise distinct, that is, $\tau_G(x)\ne \tau_G(y)$ if  $x\ne y$. If
+$\mathcal D_B(G)=\mathcal D_B(H)$,
+then $G$ and $H$ are bipartite-isomorphic.
+
+
+
+
+\noindent \textbf{Proof.}
+Write $n=\card\Omega$ and $e(K)=\card{E(K)}$. Since bipartite isomorphisms
+preserve edge counts, the deck determines the multiset
+\[
+\multiset{e(K\setminus_{\mathrm{inc}} v):v\in\Omega}.
+\]
+For every vertex $v$,
+\[
+e(K\setminus_{\mathrm{inc}} v)+\degG K v=e(K),                                      \tag{1}
+\]
+because $K\setminus_{\mathrm{inc}} v$ removes exactly the edges incident to $v$. Also,
+\[
+\sum_{v\in\Omega}e(K\setminus_{\mathrm{inc}} v)=(n-2)e(K),                            \tag{2}
+\]
+because each edge of $K$ remains in precisely the cards indexed by the
+$n-2$ vertices not incident to that edge. Since $n\ge 3$, equation~(2) shows
+that the deck determines $e(K)$. Applying this to the equal decks of $G$ and
+$H$ gives
+\[
+e(G)=e(H),                                                        \tag{3}
+\]
+and then equation~(1) shows that the degree multisets of $G$ and $H$ are equal.
+
+Equality of the two decks also gives a bijection $f:\Omega\to\Omega$ such that,
+for every $v\in\Omega$, there is a bipartite isomorphism
+\[
+\phi_v:G\setminus_{\mathrm{inc}} v\cong_B H \setminus_{\mathrm{inc}}{f(v)}.                              \tag{4}
+\]
+For this matched pair of cards, edge counts are equal. Combining this with
+(1) and (3) yields
+\[
+\degG G v=\degG H {f(v)}                                          \tag{5}
+\]
+for every $v$.
+
+Next, $G$ has minimum degree at least $2$. Indeed, if a vertex had degree $0$,
+then $G$ would not be connected; if a vertex $x$ had the unique neighbor $y$,
+then the induced graph on $\Omega\setminus\{y\}$ would contain the isolated
+vertex $x$, contradicting $2$-connectivity. Since the
+degree multisets of $G$ and $H$ are equal, $H$ also has minimum degree at least
+$2$.
+
+Therefore, in any graph $K$ with minimum degree at least $2$, the card
+$K\setminus_{\mathrm{inc}} v$ has a unique isolated vertex, namely $v$. Indeed, the vertex $v$ is isolated
+because all its incident edges have been removed. On the other hand, if $x\ne v$, then $x$ has at
+least two neighbors in $K$, at most one of which is $v$; hence $x$ has a
+neighbor $y\ne v$, and the edge $xy$ remains in $K\setminus_{\mathrm{inc}} v$.
+
+Applying this uniqueness to (4), the isomorphism $\phi_v$ sends the unique
+isolated vertex of $G\setminus_{\mathrm{inc}} v$ to the unique isolated vertex of
+$H \setminus_{\mathrm{inc}} {f(v)}$. Hence
+\[
+\phi_v(v)=f(v).                                                    \tag{6}
+\]
+Since $\phi_v$ preserves $L$ and $R$, (6) implies that $f$ preserves the two
+parts:
+\[
+v\in L \Longleftrightarrow f(v)\in L,
+\qquad
+v\in R \Longleftrightarrow f(v)\in R.                              \tag{7}
+\]
+
+We now prove that $f$ preserves vertex types. It remains, in view of (5), to
+compare degree profiles. For a graph $K$ and vertex $v$, put
+\[
+A_K(k):=\#\{x\in\Omega:\degG K x=k\},
+\]
+\[
+B_{K,v}(k):=\#\{x\in\Omega:\deg_{K\setminus_{\mathrm{inc}} v}(x)=k\},
+\]
+and
+\[
+C_{K,v}(k):=\#\{x\in N_K(v):\degG K x=k\}.
+\]
+Counting vertices of degree $k$ before and after deleting the incidence set of
+$v$ gives, for every $k\ge 0$,
+\[
+C_{K,v}(k+1)+A_K(k)+\mathbf{1}_{k=0}
+=
+C_{K,v}(k)+B_{K,v}(k)+\mathbf{1}_{\degG K v=k}.                           \tag{8}
+\]
+Indeed, in $K\setminus_{\mathrm{inc}} v$, every non-neighbor of $v$
+keeps its degree, while every neighbor of $v$ has its degree lowered by
+$1$.  Hence the vertices of degree $k$ in $K\setminus_{\mathrm{inc}} v$
+are precisely the old non-neighbors of degree $k$, the old neighbors of
+degree $k+1$, and additionally $v$ itself if $k=0$.  Therefore
+\[
+B_{K,v}(k)
+=
+A_K(k)-C_{K,v}(k)-\mathbf{1}_{\deg_K(v)=k}
++
+C_{K,v}(k+1)
++
+\mathbf{1}_{k=0}.
+\]
+Since the global
+degree multisets are equal, $A_G(k)=A_H(k)$. Since $\phi_v$ is an isomorphism
+between the matched cards, $B_{G,v}(k)=B_{H,f(v)}(k)$. By (5), the final
+indicator in (8) is also the same for $G$ and $H$. Finally,
+$C_{K,v}(0)=0$, because a neighbor always has positive degree. Induction on
+$k$ in (8) gives
+\[
+C_{G,v}(k)=C_{H,f(v)}(k)\qquad(k\ge 0).
+\]
+Thus
+\[
+P_G(v)=P_H(f(v)),
+\]
+and together with (5) this proves
+\[
+\tau_G(v)=\tau_H(f(v))                                             \tag{9}
+\]
+for every $v\in\Omega$.
+We next prove equality of type profiles:
+\[
+T_G(u)=T_H(f(u))                                                    \tag{10}
+\]
+for every $u$. Fix $u$. If $u\in L$, take $S=R$, otherwise take $S=L$ (thus $S$ is the
+opposite side from $u$). By (7) and (9), the multisets of global types on $S$
+agree:
+\[
+\multiset{\tau_G(x):x\in S}
+=
+\multiset{\tau_H(x):x\in S}.                                        \tag{11}
+\]
+The card isomorphism $\phi_u$ also preserves $S$, and therefore the multisets
+of local types on $S$ agree:
+\[
+\multiset{\tau_{G \setminus_{\mathrm{inc}} u}(x):x\in S}
+=
+\multiset{\tau_{H \setminus_{\mathrm{inc}} {f(u)}}(x):x\in S}.                           \tag{12}
+\]
+
+For $x\in S$, bipartiteness gives the local-type formula
+\[
+\tau_{G \setminus_{\mathrm{inc}} u}(x)=
+\begin{cases}
+F_{\degG G u}(\tau_G(x)), & \text{if } x\in N_G(u),\\[1mm]
+\tau_G(x), & \text{if } x\notin N_G(u).
+\end{cases}                                                          \tag{13}
+\]
+Indeed, if $x$ is adjacent to $u$, then deleting the incidence set of $u$
+removes the edge $ux$, lowering $\degG G x$ by one and deleting one occurrence
+of $\degG G u$ from the degree profile of $x$. If $x$ is not adjacent to $u$,
+then any neighbor of $x$ lies on the same side of the bipartition as $u$, and
+therefore cannot be adjacent to $u$; hence the type of $x$ is unchanged. The
+same formula holds for $H$ and $f(u)$.
+
+Taking the number of occurrences of an arbitrary type $t$ in (13) gives
+\[
+\#_t\multiset{\tau_{G \setminus_{\mathrm{inc}} u}(x):x\in S}
++
+\#_t T_G(u)
+=
+\#_t\multiset{\tau_G(x):x\in S}
++
+\#_t\multiset{F_{\degG G u}(s):s\in T_G(u)}.                        \tag{14}
+\]
+There is an identical identity for $H$. The first terms on the two sides of
+(14) agree by (12), and the global-type terms agree by (11). Also
+$\degG G u=\degG H {f(u)}$ by (5). Hence equality of the type-profile counts
+can be proved by descending induction on the first coordinate of $t$. The base
+case is that no type in a type profile can have first coordinate at least $n$,
+since every vertex degree is $<n$. For the induction step, the only types
+$s$ with $F_{\degG G u}(s)=t$ have first coordinate $t_1+1$; moreover every
+$s$ occurring in a type profile has positive first coordinate. Thus the
+rightmost term in (14) is already equal for $G$ and $H$ by the induction
+hypothesis, and subtracting the two versions of (14) yields equality of the
+number of occurrences of $t$ in $T_G(u)$ and in $T_H(f(u))$. This proves (10).
+
+The distinctness of types transfers from $G$ to $H$: if
+$\tau_H(x)=\tau_H(y)$, then by applying (9) to $f^{-1}(x)$ and $f^{-1}(y)$ we
+obtain equality of the corresponding $G$-types, so $x=y$.
+
+Since types are pairwise distinct, adjacency is determined by type profiles:
+for every graph $K$ among $G,H$ and every pair of vertices $a,b$,
+\[
+K\text{ has edge }ab
+\quad\Longleftrightarrow\quad
+\tau_K(b)\in T_K(a).                                                \tag{15}
+\]
+The forward implication is the definition of $T_K(a)$. Conversely, if
+$\tau_K(b)$ occurs in $T_K(a)$, then some neighbor $c$ of $a$ has
+$\tau_K(c)=\tau_K(b)$, and distinctness of types gives $c=b$.
+
+Finally, for any $u,v\in\Omega$, equations (9), (10), and (15) give
+\[
+G\text{ has edge }uv
+\Longleftrightarrow
+\tau_G(v)\in T_G(u)
+\Longleftrightarrow
+\tau_H(f(v))\in T_H(f(u))
+\Longleftrightarrow
+H\text{ has edge }f(u)f(v).
+\]
+Thus $f$ is a graph isomorphism $G\cong H$. By (7), it preserves the two
+bipartition parts, so it is a bipartite isomorphism. \hfill $\Box$
+
+The Lean proof discovered for this problem is at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/AICollaborator/Graphs/bipartite_graph_reconstruction_conjecture_2.lean}.

@@ -1,0 +1,9 @@
+
+\noindent \textbf{Question.} Let the van der Waerden number $W(k)$
+ be such that whenever $N\geq W(k)$
+ and $\{1,\ldots,N\}$
+ is 2-coloured there must exist a monochromatic $k$-term arithmetic progression.  Is it true that $W(k+1)-W(k)\rightarrow\infty$?
+ 
+\noindent \textbf{Proof.} We will show that $W(k+1) \geq W(k) + k$, which establishes that $W(k+1)-W(k)\rightarrow\infty$. Given a 2-coloring of the first $W(k)-1$ integers without a monochromatic $k$-AP, we can extend it by $k$ further elements without creating a monochromatic $(k+1)$-AP by proceeding greedily. Adding new elements one by one, suppose we have validly colored up to $M$ (where $M < W(k)-1+k$); we simply color $M+1$ red if doing so doesn't create a red $(k+1)$-AP, and blue otherwise. 
+        
+        The only way this algorithm could result in an invalid coloring is if both choices are blocked, meaning there is already a red $k$-AP with some step size $d_R$ and a blue $k$-AP with some step size $d_B$ such that the $(k+1)$-th element for both progressions lands exactly on $M+1$. But this is impossible. Because our original interval up to $W(k)-1$ has no monochromatic $k$-APs, these progressions must contain at least one newly added element, which bounds their step sizes to $d_R, d_B \le k-1$. Hence, if we step backward $d_B$ times along the red progression and $d_R$ times along the blue progression, both calculations land exactly on the positive integer $M + 1 - d_R d_B$, meaning this single point would have to be simultaneously colored red and blue, which is a contradiction. \hfill $\Box$
