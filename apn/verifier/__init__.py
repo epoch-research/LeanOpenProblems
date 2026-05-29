@@ -1,23 +1,15 @@
-"""Lean verification: the interface plus its implementations.
+"""Lean verification: the compiler interface used for in-loop agent feedback.
 
-The agent's only source of ground truth about a proof is the Lean compiler. A
-:class:`~apn.verifier.base.LeanVerifier` compiles sketch source, reports
-diagnostics, and prints the axioms a declaration depends on (for the SafeVerify
-axiom guard). The real implementation runs Lean 4 + Mathlib + Pantograph inside
-an Inspect sandbox; a lightweight in-process fake is provided for testing agent
-logic without the toolchain.
+A :class:`~apn.verifier.base.LeanVerifier` compiles Lean source and reports
+diagnostics plus whether it uses ``sorry``. The real implementation
+(:class:`~apn.verifier.pantograph.PantographVerifier`) runs Lean 4 + Mathlib +
+Pantograph inside an Inspect sandbox. Final, authoritative validation is done
+separately by SafeVerify (see :mod:`apn.checker`).
 """
 
-from apn.verifier.base import (
-    AxiomResult,
-    CompileResult,
-    Diagnostic,
-    LeanVerifier,
-    Severity,
-)
+from apn.verifier.base import CompileResult, Diagnostic, LeanVerifier, Severity
 
 __all__ = [
-    "AxiomResult",
     "CompileResult",
     "Diagnostic",
     "LeanVerifier",

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Literal, Protocol, Sequence, runtime_checkable
+from dataclasses import dataclass
+from typing import Literal, Protocol, runtime_checkable
 
 Severity = Literal["error", "warning", "info"]
 
@@ -70,35 +70,16 @@ class CompileResult:
         return rendered
 
 
-@dataclass(frozen=True)
-class AxiomResult:
-    """The axioms each requested declaration depends on.
-
-    ``axioms`` maps a declaration name to the sorted tuple of axiom names it
-    transitively uses. ``error`` is set if the axiom query could not run (e.g.
-    the file did not compile, or a declaration was not found).
-    """
-
-    axioms: dict[str, tuple[str, ...]] = field(default_factory=dict)
-    error: str | None = None
-
-    def all_axioms(self) -> set[str]:
-        result: set[str] = set()
-        for used in self.axioms.values():
-            result.update(used)
-        return result
-
-
 @runtime_checkable
 class LeanVerifier(Protocol):
-    """Compiles Lean source and inspects the axioms it relies on."""
+    """Compiles Lean source, reporting diagnostics and ``sorry`` usage.
+
+    This is the in-loop compiler the proving agent talks to for feedback. The
+    final, authoritative validation (statement integrity + axiom guard) is done
+    separately by SafeVerify (see :mod:`apn.checker`), so the verifier does not
+    need to inspect axioms itself.
+    """
 
     async def compile(self, code: str) -> CompileResult:
         """Compile ``code`` and report diagnostics and whether it uses sorry."""
-        ...
-
-    async def print_axioms(
-        self, code: str, declarations: Sequence[str]
-    ) -> AxiomResult:
-        """Return the axioms each named declaration in ``code`` depends on."""
         ...

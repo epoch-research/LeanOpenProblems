@@ -18,6 +18,7 @@ packages = ["apn"]
 dev = [
     "anthropic>=0.105.2",
     "mypy>=2.1.0",
+    "openai>=2.38.0",
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "types-PyYAML>=6.0",

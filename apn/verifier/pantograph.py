@@ -13,11 +13,10 @@ started lazily by the client on the first compile.
 from __future__ import annotations
 
 import json
-from typing import Sequence
 
 from inspect_ai.util import SandboxEnvironment, sandbox
 
-from apn.verifier.base import AxiomResult, CompileResult, Diagnostic, Severity
+from apn.verifier.base import CompileResult, Diagnostic, Severity
 
 CLIENT_CMD = ["python3", "/opt/apn/apn_lean.py", "client"]
 
@@ -93,26 +92,6 @@ class PantographVerifier:
             diagnostics=tuple(diagnostics),
             has_sorry=bool(response.get("has_sorry", False)),
         )
-
-    async def print_axioms(
-        self, code: str, declarations: Sequence[str]
-    ) -> AxiomResult:
-        response = await self._call(
-            {"op": "axioms", "code": code, "decls": list(declarations)}
-        )
-        if response is None:
-            return AxiomResult(error="sandbox exec or daemon transport failed")
-        if response.get("system_error") is not None:
-            return AxiomResult(error=str(response["system_error"]))
-
-        axioms: dict[str, tuple[str, ...]] = {}
-        raw_axioms = response.get("axioms", {})
-        if isinstance(raw_axioms, dict):
-            for decl, used in raw_axioms.items():
-                if isinstance(used, list):
-                    axioms[str(decl)] = tuple(str(a) for a in used)
-        error = response.get("error")
-        return AxiomResult(axioms=axioms, error=None if error is None else str(error))
 
 
 def _as_int(value: object) -> int | None:

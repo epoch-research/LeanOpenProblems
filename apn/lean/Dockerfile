@@ -40,8 +40,14 @@ RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
     && git submodule update --init --recursive \
     && pip3 install --break-system-packages --no-cache-dir .
 
-COPY apn_lean.py /opt/apn/apn_lean.py
-RUN chmod +x /opt/apn/apn_lean.py
+# SafeVerify: the kernel-level scorer (vendored, ported to v4.29.1). Builds only
+# Lean core + Cli, so it's quick; Mathlib is supplied on LEAN_PATH at runtime.
+ENV APN_SAFEVERIFY_BIN=/opt/apn/safeverify/.lake/build/bin/safe_verify
+COPY safeverify /opt/apn/safeverify
+RUN cd /opt/apn/safeverify && lake build safe_verify
+
+COPY apn_lean.py apn_safeverify.py /opt/apn/
+RUN chmod +x /opt/apn/apn_lean.py /opt/apn/apn_safeverify.py
 
 # Keep the container alive; the Inspect sample's setup step starts the daemon.
 CMD ["sleep", "infinity"]
