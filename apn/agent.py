@@ -10,10 +10,10 @@ with its own sandbox.
 
 from __future__ import annotations
 
-from inspect_ai.agent import deepagent, run
+from inspect_ai.agent import AgentSubmit, deepagent, run
 from inspect_ai.model import ModelOutput, get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
-from inspect_ai.tool import text_editor
+from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox
 
 from apn.prompts import LEAN_INSTRUCTIONS, render_task
@@ -22,6 +22,25 @@ from apn.verifier.base import LeanVerifier
 
 # Path of the proof file inside the sample's sandbox.
 PROOF_PATH = "/tmp/apn_proof.lean"
+
+
+@tool
+def submit() -> Tool:
+    """A no-argument submit tool.
+
+    The proof is the edited file, not a text answer, so submitting takes no
+    arguments -- the model just signals it is done.
+    """
+
+    async def execute() -> ToolResult:
+        """Submit the proof for verification.
+
+        Call this once the file compiles with no remaining `sorry`. Takes no
+        arguments: your edited file is the submission.
+        """
+        return "Submitted."
+
+    return execute
 
 
 @solver
@@ -41,6 +60,7 @@ def lean_prover(verifier: LeanVerifier, model: str | None = None) -> Solver:
             tools=[text_editor(), lean_check(verifier, PROOF_PATH)],
             instructions=LEAN_INSTRUCTIONS,
             memory=False,
+            submit=AgentSubmit(tool=submit(), name="submit"),
             model=get_model(model) if model is not None else None,
         )
         await run(agent, render_task(PROOF_PATH))
