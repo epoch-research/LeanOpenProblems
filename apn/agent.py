@@ -128,15 +128,15 @@ def lean_prover(
         try:
             await run(agent, render_task(PROOF_PATH))
         finally:
-            # Always capture whatever the agent left in the file -- even if a
-            # token/time limit interrupted it mid-loop (in which case this runs
-            # during exception unwinding). The scorer then judges the actual
-            # file the agent produced rather than seeing nothing. A complete
-            # proof that the agent finished but never `submit`ted still counts.
-            try:
-                final_proof = await sandbox().read_file(PROOF_PATH)
-            except Exception:  # noqa: BLE001 - fall back to the original sketch
-                final_proof = sketch
+            # Capture whatever the agent left in the file -- even if a token/time
+            # limit interrupted it mid-loop (this block then runs during exception
+            # unwinding, before the limit propagates on), so a complete proof the
+            # agent finished but never `submit`ted still counts. read_file isn't
+            # gated by the token limit, and the file was written at the start, so
+            # this normally succeeds; a genuine read failure is a real sandbox
+            # problem and should error the sample rather than be masked by
+            # silently substituting the unproven sketch.
+            final_proof = await sandbox().read_file(PROOF_PATH)
             state.store.set("final_proof", final_proof)
             state.output = ModelOutput.from_content(
                 model=str(state.model), content=final_proof
