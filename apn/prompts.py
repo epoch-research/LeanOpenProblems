@@ -17,7 +17,8 @@ Workflow:
   remaining `sorry`.
 
 You also have a `bash` tool giving you a shell in the workspace, where `python3`
-is installed. Use it as a scratchpad to explore the problem numerically before
+is installed (with `sympy` and `numpy`). Use it as a scratchpad to explore the
+problem numerically before
 committing to a proof: compute the first terms of a sequence, test a conjectured
 identity or bound on small cases, search for a pattern or counterexample, or
 sanity-check the "test lemmas". This is exploration only -- Python results carry
