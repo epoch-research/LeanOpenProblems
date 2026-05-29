@@ -126,7 +126,7 @@ def lean_prover(
             model=get_model(model) if model is not None else None,
         )
         try:
-            state.output = (await run(agent, render_task(PROOF_PATH))).output
+            await run(agent, render_task(PROOF_PATH))
         finally:
             # Capture whatever the agent left in the file -- even if a token/time
             # limit interrupted it mid-loop (this block then runs during exception
@@ -135,8 +135,8 @@ def lean_prover(
             # gated by the token limit, and the file was written at the start, so
             # this normally succeeds; a genuine read failure is a real sandbox
             # problem and should error the sample rather than be masked by
-            # silently substituting the unproven sketch. The proof itself is read
-            # from the store by the scorer (not from state.output).
+            # silently substituting the unproven sketch. The scorer reads the
+            # proof from the store.
             final_proof = await sandbox().read_file(PROOF_PATH)
             state.store.set("final_proof", final_proof)
 
