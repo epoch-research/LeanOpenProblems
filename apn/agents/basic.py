@@ -31,7 +31,10 @@ from inspect_ai.model import Model, ModelOutput, get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import text_editor
 from inspect_ai.util import message_limit, sandbox
-from inspect_ai.util._sandbox.context import sandbox_environments_context_var
+from inspect_ai.util._sandbox.context import (
+    sandbox_default_context_var,
+    sandbox_environments_context_var,
+)
 
 from apn.prompts import render_basic_prompt
 from apn.safeverify import DEFAULT_ALLOWED_AXIOMS, ValidationVerdict, safe_verify
@@ -86,11 +89,16 @@ def _only_sandbox(name: str | None) -> Iterator[None]:
     if not environments or name not in environments:
         yield
         return
-    token = sandbox_environments_context_var.set({name: environments[name]})
+    env_token = sandbox_environments_context_var.set({name: environments[name]})
+    # Also pin the default-sandbox name, otherwise the sample-wide default (the
+    # x-default service) leaks in and `sandbox()` fails to resolve it within the
+    # scoped, single-entry environment map.
+    default_token = sandbox_default_context_var.set(name)
     try:
         yield
     finally:
-        sandbox_environments_context_var.reset(token)
+        sandbox_default_context_var.reset(default_token)
+        sandbox_environments_context_var.reset(env_token)
 
 
 async def run_episode(
