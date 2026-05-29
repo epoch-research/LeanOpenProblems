@@ -13,7 +13,7 @@ package SafeVerify
 -- supplied on LEAN_PATH at runtime (we run the exe via `lake env` from the
 -- Mathlib project), so it is not a build dependency here.
 require Cli from git
-  "https://github.com/leanprover/lean4-cli.git" @ "v4.29.0"
+  "https://github.com/leanprover/lean4-cli.git" @ "v4.27.0"
 
 @[default_target]
 lean_lib SafeVerify where

@@ -1,5 +1,10 @@
-# Shared base: Lean v4.29.1 + a built Mathlib v4.29.1 (olean cache). The agent
-# and scorer images both derive from this so Mathlib is fetched only once.
+# Shared base: Lean v4.27.0 + Mathlib v4.27.0 (olean cache) + the
+# FormalConjectures library, so that a problem file importing
+# `FormalConjectures.Util.ProblemImports` compiles. The agent and scorer images
+# both derive from this.
+#
+# Lean v4.27.0 matches the Formal Conjectures Erdős/OEIS datasets (oleans are
+# version-specific, so the repl and SafeVerify are all built at this version).
 #
 #   docker build -t apn-lean-base -f Dockerfile.base .
 FROM debian:bookworm-slim
@@ -14,13 +19,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-ARG LEAN_VERSION=v4.29.1
+ARG LEAN_VERSION=v4.27.0
 RUN curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh \
     && sh elan-init.sh -y --default-toolchain "leanprover/lean4:${LEAN_VERSION}" \
     && rm elan-init.sh
 
+# Clone Formal Conjectures at a pinned commit on the auto_oeis branch (which
+# carries both the FC library and the OEIS/Auto problem set). The problem files
+# themselves are injected at runtime; we only need the library oleans here.
+ARG FC_BRANCH=auto_oeis
+ARG FC_COMMIT=67338a157bbb8d87e9a349d662f82a868bda6327
+RUN git clone --filter=blob:none --branch "${FC_BRANCH}" \
+        https://github.com/google-deepmind/formal-conjectures /workspace/leanproject \
+    && git -C /workspace/leanproject checkout "${FC_COMMIT}"
+
 WORKDIR /workspace/leanproject
-COPY lean-toolchain lakefile.toml ./
-RUN lake update && lake exe cache get
+
+# Fetch Mathlib's prebuilt oleans, then build only the ProblemImports closure
+# (the FC Util/* support modules + FormalConjecturesForMathlib). The hundreds of
+# problem files are NOT built.
+RUN lake exe cache get \
+    && lake build FormalConjectures.Util.ProblemImports
 
 CMD ["sleep", "infinity"]

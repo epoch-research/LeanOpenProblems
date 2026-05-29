@@ -5,9 +5,9 @@ sample's Docker sandbox and invoking the ``apn_lean.py client`` helper, which
 relays the request to a warm PyPantograph daemon (see ``apn/lean/apn_lean.py``).
 The heavy Mathlib import is paid once per sample when the daemon starts.
 
-Build the image before use (``docker build -t apn-lean apn/lean``). The
-:func:`apn.task.apn_basic` task wires up the Docker sandbox(es); the daemon is
-started lazily by the client on the first compile.
+Build the images before use (``apn/lean/build.sh``). The :func:`apn.task.apn_oeis`
+task wires up the Docker sandbox(es); the daemon is started lazily by the client
+on the first compile.
 """
 
 from __future__ import annotations

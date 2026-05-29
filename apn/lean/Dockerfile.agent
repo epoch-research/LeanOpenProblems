@@ -1,18 +1,28 @@
-# Agent workspace image: base + PyPantograph (warm compiler for the agent's
-# `lean_check`). Deliberately does NOT contain SafeVerify -- the agent can write
-# anywhere in this sandbox, so the trusted checker must live elsewhere.
+# Agent workspace: apn-lean-base + PyPantograph (warm compiler for the agent's
+# `lean_check`), preloading the FormalConjectures imports. Deliberately does NOT
+# contain SafeVerify -- the trusted checker lives in the scorer image.
 #
 #   docker build -t apn-agent -f Dockerfile.agent .
 FROM apn-lean-base
 
-# PyPantograph (not the PyPI `pantograph`); pinned to a commit whose repl targets
-# Lean v4.29.1. Builds the repl from source, so elan/lake (from base) are used.
-ARG PYPANTOGRAPH_COMMIT=ffa7f243824d2762825abddb1e9f6e939ede761f
+# PyPantograph commit b8608f3 pins Pantograph v0.3.13, whose repl targets Lean
+# v4.27.0 -- matching this track's Mathlib + FormalConjectures oleans. (The repl
+# must be built with the same toolchain that produced the oleans it loads.)
+ARG PYPANTOGRAPH_COMMIT=b8608f3
 RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
     && cd /opt/PyPantograph \
     && git checkout "${PYPANTOGRAPH_COMMIT}" \
     && git submodule update --init --recursive \
     && pip3 install --break-system-packages --no-cache-dir .
+
+# Python libraries for the agent's numerical scratchpad (the `bash` tool runs
+# python3 in this image). sympy/numpy are very useful for the number-theory
+# problems; the sandbox has no network, so they must be baked in here.
+RUN pip3 install --break-system-packages --no-cache-dir numpy sympy
+
+# Preload the FC problem imports so the warm repl already has them; the daemon
+# reads its import set from this env var.
+ENV APN_LEAN_IMPORTS=FormalConjectures.Util.ProblemImports
 
 COPY apn_lean.py /opt/apn/apn_lean.py
 RUN chmod +x /opt/apn/apn_lean.py
