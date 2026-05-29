@@ -49,7 +49,7 @@ def apn_basic(sketches_dir: str | None = None) -> Task:
 
 
 @task
-def apn_oeis(names: str | list[str] | None = None) -> Task:
+def apn_oeis(names: str | list[str] | None = None, gated: bool = False) -> Task:
     """Prove the autoformalized OEIS conjectures from the paper (44/492).
 
     Replicates the paper's OEIS evaluation: each sample is an autoformalized OEIS
@@ -65,15 +65,21 @@ def apn_oeis(names: str | list[str] | None = None) -> Task:
     Args:
         names: Optional comma-separated list of conjecture theorem names to keep
             (a smoke subset); defaults to all 492.
+        gated: If true, submissions are gated by SafeVerify -- a submission that
+            fails verification is rejected and the agent must keep working (until
+            a limit), and it is told only that verification failed (not why).
     """
     if names is None:
         name_list = None
     else:
         raw = names.split(",") if isinstance(names, str) else names
         name_list = [n.strip() for n in raw if n.strip()]
+    # One checker instance drives both the submit gate (during the loop) and the
+    # final scorer; both run in the trusted "scorer" sandbox.
+    checker = SandboxSafeVerify(sandbox_name="scorer")
     return Task(
         dataset=oeis_dataset(names=name_list),
-        solver=lean_prover(PantographVerifier()),
-        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        solver=lean_prover(PantographVerifier(), gate=checker if gated else None),
+        scorer=proof_scorer(checker),
         sandbox=("docker", FC_COMPOSE_FILE),
     )
