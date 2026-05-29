@@ -4,8 +4,11 @@
 # `pantograph-repl` binary is compiled against. The paper used Lean v4.27; we
 # track v4.29.1 because that is the toolchain PyPantograph ships, and the two
 # must agree for the repl to load Mathlib's `.olean` files.
+#
+# This package has no targets of its own: Pantograph imports Mathlib directly,
+# and only needs Mathlib's prebuilt oleans on LEAN_PATH (via `lake exe cache
+# get`). It is not necessary to `lake build` anything here.
 name = "apnproject"
-defaultTargets = ["ApnProject"]
 
 [[require]]
 name = "mathlib"

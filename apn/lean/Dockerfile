@@ -22,12 +22,12 @@ RUN curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh \
 
 # Resolve the Mathlib dependency and pull its prebuilt olean cache. This is the
 # expensive layer; it is kept separate so edits to the helper script below do
-# not invalidate it.
+# not invalidate it. No `lake build` is needed: Pantograph imports Mathlib
+# directly and only requires its oleans on LEAN_PATH.
 WORKDIR /workspace/leanproject
-COPY lean-toolchain lakefile.toml ApnProject.lean ./
+COPY lean-toolchain lakefile.toml ./
 RUN lake update \
-    && lake exe cache get \
-    && lake build
+    && lake exe cache get
 
 # PyPantograph ships a prebuilt linux repl matching the toolchain above.
 RUN pip3 install --break-system-packages --no-cache-dir pantograph
