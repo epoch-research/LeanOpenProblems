@@ -122,7 +122,15 @@ def lean_prover(
             ],
             instructions=LEAN_INSTRUCTIONS,
             memory=False,
-            submit=AgentSubmit(tool=submit_tool, name="submit"),
+            # Name it distinctly from the subagents' "submit" tool and keep the
+            # call in the message history. keep_in_messages=True stops react from
+            # folding the tool's return into the assistant message (which made the
+            # confirmation look like model output); the distinct name means the
+            # main loop's submission scan can never match a subagent's "submit",
+            # so keeping it in history is safe (no early-termination collision).
+            submit=AgentSubmit(
+                tool=submit_tool, name="submit_proof", keep_in_messages=True
+            ),
             model=get_model(model) if model is not None else None,
         )
         try:
