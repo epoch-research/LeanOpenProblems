@@ -52,6 +52,18 @@ Ideas to try if you get stuck:
 * Brainstorm new approaches and try each of them.
 """
 
+# Appended to the instructions only when the agent is given the arXiv tools (the
+# ``literature`` option). Kept separate so the closed-book agent is never told
+# about tools it doesn't have.
+LITERATURE_INSTRUCTIONS = """\
+
+You can consult the mathematical literature with `arxiv_search` (find papers by
+keyword/author/title) and `arxiv_source` (download a paper's full LaTeX source
+into the workspace, then read it with the text editor or bash). These cover
+papers published before this problem set was assembled, so they will not contain
+a ready-made solution -- use them for relevant techniques, definitions, and prior
+results, not for the answer."""
+
 
 def render_task(path: str) -> str:
     """The user message pointing the agent at the proof file."""

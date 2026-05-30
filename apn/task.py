@@ -26,7 +26,11 @@ COMPOSE_FILE = str(Path(__file__).parent / "lean" / "compose.yaml")
 
 
 @task
-def apn_oeis(names: str | list[str] | None = None, gated: bool = False) -> Task:
+def apn_oeis(
+    names: str | list[str] | None = None,
+    gated: bool = False,
+    literature: bool = False,
+) -> Task:
     """Prove the autoformalized OEIS conjectures from the paper (44/492).
 
     Replicates the paper's OEIS evaluation: each sample is an autoformalized OEIS
@@ -45,6 +49,10 @@ def apn_oeis(names: str | list[str] | None = None, gated: bool = False) -> Task:
         gated: If true, submissions are gated by SafeVerify -- a submission that
             fails verification is rejected and the agent must keep working (until
             a limit), and it is told only that verification failed (not why).
+        literature: If true, give the agent ``arxiv_search`` / ``arxiv_source``
+            (gated to papers predating the benchmark paper). Off by default --
+            this is a distinct, literature-augmented run condition that should be
+            reported separately from the closed-book numbers.
     """
     if names is None:
         name_list = None
@@ -57,7 +65,9 @@ def apn_oeis(names: str | list[str] | None = None, gated: bool = False) -> Task:
     return Task(
         dataset=oeis_dataset(names=name_list),
         solver=lean_prover(
-            PantographVerifier(), max_attempts=99_999_999 if gated else 1
+            PantographVerifier(),
+            max_attempts=99_999_999 if gated else 1,
+            literature=literature,
         ),
         scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
         sandbox=("docker", COMPOSE_FILE),
