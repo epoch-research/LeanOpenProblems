@@ -44,6 +44,8 @@ the file compiles with no `sorry`.
   problems like these.
 
 Ideas to try if you get stuck:
+* Consider spending a lot of your effort coming up with a rigorous
+  natural-language proof first, and only then formalising it in Lean.
 * Think about other, similar problems.
 * Try first solving a simpler version of the problem.
 * Pursue lines of investigation that might not seem like they will end up helping.
