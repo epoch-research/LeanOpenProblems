@@ -51,12 +51,14 @@ def apn_oeis(names: str | list[str] | None = None, gated: bool = False) -> Task:
     else:
         raw = names.split(",") if isinstance(names, str) else names
         name_list = [n.strip() for n in raw if n.strip()]
-    # One checker instance drives both the submit gate (during the loop) and the
-    # final scorer; both run in the trusted "scorer" sandbox.
-    checker = SandboxSafeVerify(sandbox_name="scorer")
+    # When gated, the agent re-runs the (task) scorer on every submission via
+    # Inspect's `attempts`, bounded only by the token limit; otherwise the first
+    # submission ends the loop and is validated once by the final scorer.
     return Task(
         dataset=oeis_dataset(names=name_list),
-        solver=lean_prover(PantographVerifier(), gate=checker if gated else None),
-        scorer=proof_scorer(checker),
+        solver=lean_prover(
+            PantographVerifier(), max_attempts=99_999_999 if gated else 1
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
         sandbox=("docker", COMPOSE_FILE),
     )

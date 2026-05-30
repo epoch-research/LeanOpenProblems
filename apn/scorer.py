@@ -4,6 +4,11 @@ Validation is delegated to a :class:`~apn.checker.SafeVerifyChecker` -- normally
 the kernel-level ``safe_verify`` executable run in the sandbox, which confirms
 the submission compiles, implements the target theorem with the same kernel
 type, leaves it ``sorry``-free, and uses only the standard axioms.
+
+The submission is read **live** from the agent's proof file in the sandbox (not
+from any solver-written store), so this scorer gives the same verdict whether
+Inspect runs it at the end of a sample or react runs it mid-loop on each
+submission (the ``attempts`` gating mechanism -- see :func:`apn.agent.lean_prover`).
 """
 
 from __future__ import annotations
@@ -19,27 +24,26 @@ from inspect_ai.scorer import (
     stderr,
 )
 from inspect_ai.solver import TaskState
+from inspect_ai.util import sandbox
 
+from apn.agent import PROOF_PATH
 from apn.checker import SafeVerifyChecker
 
 
 @scorer(metrics=[accuracy(), stderr()])
 def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
-    """Score a completed sample by checking its final proof with SafeVerify."""
+    """Score a sample by checking the agent's proof file with SafeVerify."""
 
     async def score(state: TaskState, target: Target) -> Score:
-        final = state.store.get("final_proof")
-        if not isinstance(final, str) or not final:
-            return Score(
-                value=INCORRECT,
-                explanation="The agent did not produce a final proof.",
-            )
-
+        # Read the agent's current proof file from its (default) workspace
+        # sandbox. A read failure is a real sandbox problem -- let it propagate
+        # (error the sample) rather than masking it as a rejection.
+        submission = await sandbox().read_file(PROOF_PATH)
         original = state.metadata.get("sketch") or state.input_text
-        outcome = await checker.check(original, final)
+        outcome = await checker.check(original, submission)
         return Score(
             value=CORRECT if outcome.ok else INCORRECT,
-            answer=final,
+            answer=submission,
             explanation=outcome.detail,
             metadata={"stage": outcome.stage},
         )

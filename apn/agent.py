@@ -1,28 +1,39 @@
 """The Lean-proving solver: a thin wrapper around Inspect's ``deepagent``.
 
-The agent is given the proof file in the sandbox plus two tools -- the built-in
-``text_editor`` to edit it and ``lean_check`` to compile it -- and left to prove
-the theorem. There is no bespoke episode/subagent orchestration: ``deepagent``
-runs its own loop and submits when done. Run several independent attempts per
-problem by passing ``--epochs N`` at eval time; each epoch is a fresh sample run
-with its own sandbox.
+The agent is given the proof file in the sandbox plus tools -- the built-in
+``text_editor`` to edit it, ``lean_check`` to compile it, and ``bash`` (python)
+to explore -- and left to prove the theorem. ``deepagent`` runs its own loop and
+submits when done.
+
+Submissions can be *gated*: with ``max_attempts`` > 1, Inspect's native
+``attempts`` mechanism re-runs the task scorer (SafeVerify) on each submission
+and, if it isn't accepted, tells the model to keep going -- up to ``max_attempts``
+or until a token/time limit. The model is told only that it was incorrect (the
+``incorrect_message`` below), not why, so it cannot probe the verifier for gaps.
 """
 
 from __future__ import annotations
 
-from inspect_ai.agent import AgentSubmit, deepagent, run
+from inspect_ai.agent import AgentAttempts, AgentSubmit, deepagent, run
 from inspect_ai.model import get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
-from inspect_ai.tool import Tool, ToolError, ToolResult, bash, text_editor, tool
+from inspect_ai.tool import Tool, ToolResult, bash, text_editor, tool
 from inspect_ai.util import sandbox
 
-from apn.checker import SafeVerifyChecker
 from apn.prompts import LEAN_INSTRUCTIONS, render_task
 from apn.tools import lean_check
 from apn.verifier.base import LeanVerifier
 
 # Path of the proof file inside the sample's sandbox.
 PROOF_PATH = "/tmp/apn_proof.lean"
+
+# Played back to the model when a gated submission fails verification. Note it
+# deliberately reveals nothing about *why* (no SafeVerify output), so the model
+# cannot search for verifier gaps.
+INCORRECT_MESSAGE = (
+    "Your submission did not pass verification. Keep working to find a correct, "
+    "complete proof. (The verifier's output is not disclosed.)"
+)
 
 
 @tool
@@ -44,73 +55,34 @@ def submit() -> Tool:
     return execute
 
 
-@tool
-def gated_submit(checker: SafeVerifyChecker, target: str, proof_path: str) -> Tool:
-    """A submit tool that runs SafeVerify and only accepts a valid proof.
-
-    On a passing submission the tool returns normally and the agent loop ends.
-    On a (clean) verification failure it raises ``ToolError``; the react loop
-    does not treat an errored tool call as a submission, so the agent is forced
-    to keep working until it produces a valid proof or hits a limit.
-
-    The verifier's output is deliberately withheld -- the agent is told only that
-    verification failed -- so it cannot probe SafeVerify for gaps to exploit. An
-    *infrastructure* failure of SafeVerify (the checker raising) propagates rather
-    than becoming a ``ToolError``, so it crashes the sample instead of being
-    silently treated as a rejection.
-
-    Args:
-        checker: The SafeVerify checker (pointed at the trusted scorer sandbox).
-        target: The original spec the submission must implement (verbatim).
-        proof_path: Path of the agent's proof file in its workspace sandbox.
-    """
-
-    async def execute() -> ToolResult:
-        """Submit the proof for verification. Takes no arguments: your edited
-        file is the submission. It is accepted only if verification passes; if
-        it fails you must keep working (the verifier's output is not shown)."""
-        submission = await sandbox().read_file(proof_path)
-        outcome = await checker.check(target, submission)
-        if outcome.ok:
-            return "Submission accepted: verification passed."
-        raise ToolError(
-            "Verification failed: your submission was not accepted. Keep working "
-            "to find a correct, complete proof. (The verifier's output is not "
-            "disclosed.)"
-        )
-
-    return execute
-
-
 @solver
 def lean_prover(
     verifier: LeanVerifier,
     model: str | None = None,
-    gate: SafeVerifyChecker | None = None,
+    max_attempts: int = 1,
 ) -> Solver:
     """Prove the sample's theorem with a ``deepagent``.
 
-    Reads the initial Lean file from ``metadata['sketch']`` (else the sample
-    input), writes it into the sandbox, runs the agent, and stores the final
-    file contents under ``final_proof`` for the scorer.
+    Writes the initial Lean file (from ``metadata['sketch']``, else the sample
+    input) into the sandbox and runs the agent. The proof is the edited file in
+    the sandbox; the scorer reads it back from there (see :mod:`apn.scorer`), so
+    the solver keeps no state of its own.
 
     Args:
         verifier: In-loop compiler for the ``lean_check`` tool.
         model: Optional model override for the agent.
-        gate: If provided, enables *gated submit*: a submission is verified with
-            this SafeVerify checker and only accepted if it passes; a failed
-            submission forces the agent to keep working (until a limit). If
-            ``None``, ``submit`` simply ends the loop and validation happens
-            afterwards in the scorer.
+        max_attempts: With ``> 1``, enables *gated submit* via Inspect's native
+            ``attempts``: each submission is re-scored by the task scorer
+            (SafeVerify) and, if not accepted, the model is told to keep going
+            (up to this many attempts, or until a token/time limit). With ``1``
+            (default), the first submission ends the loop and is validated only
+            by the final scorer.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         sketch = state.metadata.get("sketch") or state.input_text
         await sandbox().write_file(PROOF_PATH, sketch)
 
-        submit_tool = (
-            gated_submit(gate, sketch, PROOF_PATH) if gate is not None else submit()
-        )
         agent = deepagent(
             tools=[
                 text_editor(),
@@ -122,32 +94,23 @@ def lean_prover(
             ],
             instructions=LEAN_INSTRUCTIONS,
             memory=False,
+            # Gating: re-score each submission with the task scorer (SafeVerify);
+            # on failure the model is told only INCORRECT_MESSAGE (no verifier
+            # output) and keeps going. max_attempts=1 disables this.
+            attempts=AgentAttempts(
+                attempts=max_attempts, incorrect_message=INCORRECT_MESSAGE
+            ),
             # Name it distinctly from the subagents' "submit" tool and keep the
             # call in the message history. keep_in_messages=True stops react from
-            # folding the tool's return into the assistant message (which made the
-            # confirmation look like model output); the distinct name means the
-            # main loop's submission scan can never match a subagent's "submit",
-            # so keeping it in history is safe (no early-termination collision).
+            # folding the tool's return into the assistant message; the distinct
+            # name means the main loop's submission scan can never match a
+            # subagent's "submit" (no early-termination collision).
             submit=AgentSubmit(
-                tool=submit_tool, name="submit_proof", keep_in_messages=True
+                tool=submit(), name="submit_proof", keep_in_messages=True
             ),
             model=get_model(model) if model is not None else None,
         )
-        try:
-            await run(agent, render_task(PROOF_PATH))
-        finally:
-            # Capture whatever the agent left in the file -- even if a token/time
-            # limit interrupted it mid-loop (this block then runs during exception
-            # unwinding, before the limit propagates on), so a complete proof the
-            # agent finished but never `submit`ted still counts. read_file isn't
-            # gated by the token limit, and the file was written at the start, so
-            # this normally succeeds; a genuine read failure is a real sandbox
-            # problem and should error the sample rather than be masked by
-            # silently substituting the unproven sketch. The scorer reads the
-            # proof from the store.
-            final_proof = await sandbox().read_file(PROOF_PATH)
-            state.store.set("final_proof", final_proof)
-
+        await run(agent, render_task(PROOF_PATH))
         state.completed = True
         return state
 
