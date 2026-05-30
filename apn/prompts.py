@@ -37,6 +37,17 @@ Rules:
 Think like a mathematician: focus on the key insight and proof structure, prefer
 clever arguments over brute-force casework, and don't give up easily. Submit once
 the file compiles with no `sorry`.
+
+* **Try your hardest to answer it.** Even if it seems impossible, try extremely
+  hard to think of approaches that have some chance of working. We already know
+  from other experiments that language models like you are capable of solving
+  problems like these.
+
+Ideas to try if you get stuck:
+* Think about other, similar problems.
+* Try first solving a simpler version of the problem.
+* Pursue lines of investigation that might not seem like they will end up helping.
+* Brainstorm new approaches and try each of them.
 """
 
 
