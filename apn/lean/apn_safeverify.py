@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
 from typing import Any
@@ -61,18 +62,24 @@ def classify_safeverify(returncode: int, detail: str) -> dict[str, Any]:
     plain check failure ("SafeVerify check failed.") and a replay-time rejection
     raised before that line (an unsafe/partial constant, a kernel type-check
     failure, missing imports, ...). A *negative* return code means the process
-    was killed by a signal (e.g. the OOM killer's SIGKILL), which is an
-    infrastructure failure rather than a judgement on the proof. So:
+    was terminated by a signal (``subprocess`` reports ``-N`` for signal ``N`` on
+    POSIX) -- e.g. SIGKILL (OOM killer or a timeout), SIGSEGV (a crash), SIGABRT.
+    Whatever the signal, it is not a verdict, so it is an infrastructure failure.
 
     * ``< 0`` -> system_error (host raises, crashing the sample);
     * ``== 0`` -> accepted;
     * ``> 0`` -> rejected (INCORRECT).
     """
     if returncode < 0:
+        sig = -returncode
+        try:
+            signame = signal.Signals(sig).name
+        except ValueError:
+            signame = "unknown signal"
         return {
             "system_error": (
-                f"safe_verify killed by signal {-returncode} (likely OOM). "
-                f"Output tail:\n{detail}"
+                f"safe_verify was terminated by {signame} (signal {sig}) before "
+                f"returning a verdict. Output tail:\n{detail}"
             )[-_MAX_DETAIL:]
         }
     return {"ok": returncode == 0, "stage": "safeverify", "detail": detail[-_MAX_DETAIL:]}
