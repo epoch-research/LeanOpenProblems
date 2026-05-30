@@ -19,6 +19,7 @@ import json
 import os
 import subprocess
 import sys
+from typing import Any
 
 PROJECT = os.environ.get("APN_LEAN_PROJECT", "/workspace/leanproject")
 SAFE_VERIFY_BIN = os.environ.get(
@@ -43,13 +44,6 @@ def _compile(stem: str, source: str) -> tuple[str, subprocess.CompletedProcess[s
     return olean_path, result
 
 
-# safe_verify reports its verdict with one of these exact lines; their absence
-# means it never reached a verdict (crash / OOM-kill / timeout), which is an
-# infrastructure failure rather than a judgement on the proof.
-_PASS_MARKER = "SafeVerify check passed."
-_FAIL_MARKER = "SafeVerify check failed."
-
-
 def _emit(ok: bool, stage: str, detail: str) -> None:
     print(json.dumps({"ok": ok, "stage": stage, "detail": detail[-_MAX_DETAIL:]}))
 
@@ -57,6 +51,31 @@ def _emit(ok: bool, stage: str, detail: str) -> None:
 def _emit_system_error(detail: str) -> None:
     """Signal an infrastructure failure (not a verdict). The host raises on this."""
     print(json.dumps({"system_error": detail[-_MAX_DETAIL:]}))
+
+
+def classify_safeverify(returncode: int, detail: str) -> dict[str, Any]:
+    """Classify a ``safe_verify`` run from its exit code.
+
+    ``safe_verify`` exits ``0`` only on the verification-passed path; it exits
+    with a positive code whenever it *ran and rejected* the submission -- both a
+    plain check failure ("SafeVerify check failed.") and a replay-time rejection
+    raised before that line (an unsafe/partial constant, a kernel type-check
+    failure, missing imports, ...). A *negative* return code means the process
+    was killed by a signal (e.g. the OOM killer's SIGKILL), which is an
+    infrastructure failure rather than a judgement on the proof. So:
+
+    * ``< 0`` -> system_error (host raises, crashing the sample);
+    * ``== 0`` -> accepted;
+    * ``> 0`` -> rejected (INCORRECT).
+    """
+    if returncode < 0:
+        return {
+            "system_error": (
+                f"safe_verify killed by signal {-returncode} (likely OOM). "
+                f"Output tail:\n{detail}"
+            )[-_MAX_DETAIL:]
+        }
+    return {"ok": returncode == 0, "stage": "safeverify", "detail": detail[-_MAX_DETAIL:]}
 
 
 def main() -> int:
@@ -78,21 +97,7 @@ def main() -> int:
 
     verify = _run(["lake", "env", SAFE_VERIFY_BIN, target_olean, submission_olean])
     detail = (verify.stdout + "\n" + verify.stderr).strip()
-    if _PASS_MARKER in detail:
-        _emit(True, "safeverify", detail)
-    elif _FAIL_MARKER in detail:
-        _emit(False, "safeverify", detail)
-    else:
-        # No verdict line: safe_verify was killed before finishing (e.g. SIGKILL
-        # from the OOM killer -- returncode is negative for a signal). Reporting
-        # this as a rejection would silently fail a possibly-valid proof.
-        signal_note = (
-            f" (killed by signal {-verify.returncode})" if verify.returncode < 0 else ""
-        )
-        _emit_system_error(
-            f"safe_verify did not reach a verdict{signal_note}; "
-            f"returncode={verify.returncode}. Output tail:\n{detail}"
-        )
+    print(json.dumps(classify_safeverify(verify.returncode, detail)))
     return 0
 
 

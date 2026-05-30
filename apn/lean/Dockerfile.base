@@ -42,12 +42,16 @@ RUN lake exe cache get \
     && lake build FormalConjectures.Util.ProblemImports
 
 # Strip the problem files (every FormalConjectures/ subdir except the Util
-# library) from the workspace. They are only needed to build the library closure
-# above; leaving them in would put the entire conjecture corpus -- other OEIS
-# problems, and the Erdős/Arxiv/etc. sets which contain real proofs and axioms --
-# into every agent's sandbox, a benchmark-contamination vector. Importing
+# library) and the library test suite from the workspace. They are only needed to
+# build the library closure above; leaving the problem files in would put the
+# entire conjecture corpus -- other OEIS problems, and the Erdős/Arxiv/etc. sets
+# which contain real proofs and axioms -- into every agent's sandbox, a
+# benchmark-contamination vector. We keep the proving library itself (Util +
+# FormalConjecturesForMathlib): it is imported into every problem's scope, so it
+# is what the agent legitimately proves *with* (like Mathlib). Importing
 # `FormalConjectures.Util.ProblemImports` still resolves via the built oleans.
 RUN find FormalConjectures -mindepth 1 -maxdepth 1 -type d ! -name Util \
-        -exec rm -rf {} +
+        -exec rm -rf {} + \
+    && rm -rf FormalConjecturesTest
 
 CMD ["sleep", "infinity"]
