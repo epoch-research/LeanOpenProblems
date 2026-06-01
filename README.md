@@ -140,9 +140,10 @@ hawk eval-set configs/example-eval-set.yml
 ```
 
 For local Inspect runs, `apn/lean/build.sh` tags the sandbox images as
-`apn:agent` and `apn:scorer`. On Hawk, set the runner secret `APN_IMAGE_NAME` to
-the pushed image repository; the compose file appends the `:agent` and `:scorer`
-tags.
+`LeanOpenProblems_<kind>_0.1.0_<git-hash>`. On Hawk, set the runner secret
+`LEAN_OPEN_PROBLEMS_IMAGE_NAME` to the pushed image repository; the task
+generates its compose file with the matching agent and scorer tags for the
+installed package git hash.
 
 ### API keys
 

@@ -52,8 +52,8 @@ secrets:
   - name: ANTHROPIC_API_KEY
   - name: OPENAI_API_KEY
   - name: GOOGLE_API_KEY
-  - name: APN_IMAGE_NAME
-    description: "The image repo containing the APN sandbox images tagged :agent and :scorer"
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
 
 runner:
   memory: 64Gi

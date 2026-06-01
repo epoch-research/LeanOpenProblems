@@ -15,7 +15,6 @@ build-backend = "hatchling.build"
 packages = ["apn"]
 artifacts = [
     "apn/data/oeis/**/*",
-    "apn/lean/compose.yaml",
 ]
 
 [project.entry-points.inspect_ai]
