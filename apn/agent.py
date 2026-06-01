@@ -15,7 +15,7 @@ or until a token/time limit. The model is told only that it was incorrect (the
 from __future__ import annotations
 
 from inspect_ai.agent import AgentAttempts, AgentSubmit, deepagent, run
-from inspect_ai.model import get_model
+from inspect_ai.model import CompactionSummary, get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolResult, bash, text_editor, tool
 from inspect_ai.util import sandbox
@@ -122,6 +122,7 @@ def lean_prover(
             submit=AgentSubmit(
                 tool=submit(), name="submit_proof", keep_in_messages=True
             ),
+            compaction=CompactionSummary(threshold=300_000),
             model=get_model(model) if model is not None else None,
         )
         await run(agent, render_task(PROOF_PATH))
