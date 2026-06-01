@@ -115,15 +115,15 @@ def get_compose_file_content(source_git_hash: str | None = None) -> str:
 services:
   default:
     image: {IMAGE_REPOSITORY}:{agent_tag}
-    command: ["sleep", "infinity"]
     init: true
-    x-local: true
+    entrypoint: tail -f /dev/null
+    mem_limit: 15Gi
     network_mode: none
   scorer:
     image: {IMAGE_REPOSITORY}:{scorer_tag}
-    command: ["sleep", "infinity"]
     init: true
-    x-local: true
+    entrypoint: tail -f /dev/null
+    mem_limit: 15Gi
     network_mode: none
 """
 
