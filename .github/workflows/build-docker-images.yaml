@@ -34,11 +34,10 @@ jobs:
             echo "Could not read apn.__version__" >&2
             exit 1
           fi
-          git_hash="$(git rev-parse HEAD)"
           {
-            echo "BASE_IMAGE_TAG=LeanOpenProblems_base_${image_version}_${git_hash}"
-            echo "AGENT_IMAGE_TAG=LeanOpenProblems_agent_${image_version}_${git_hash}"
-            echo "SCORER_IMAGE_TAG=LeanOpenProblems_scorer_${image_version}_${git_hash}"
+            echo "BASE_IMAGE_TAG=LeanOpenProblems_base_${image_version}"
+            echo "AGENT_IMAGE_TAG=LeanOpenProblems_agent_${image_version}"
+            echo "SCORER_IMAGE_TAG=LeanOpenProblems_scorer_${image_version}"
           } >> "$GITHUB_ENV"
 
       - name: Login to ECR
