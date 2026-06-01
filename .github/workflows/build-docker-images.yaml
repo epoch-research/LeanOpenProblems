@@ -14,7 +14,7 @@ env:
 
 jobs:
   publish-lean-images:
-    runs-on: ubuntu-24.04
+    runs-on: epoch-research-x64-64core-256GB-2040GB
     steps:
       - name: Derive AWS region from ECR registry
         id: ecr
