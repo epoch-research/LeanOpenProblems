@@ -52,10 +52,8 @@ secrets:
   - name: ANTHROPIC_API_KEY
   - name: OPENAI_API_KEY
   - name: GOOGLE_API_KEY
-  - name: APN_AGENT_IMAGE
-    description: "Full image URI for the apn-agent Lean sandbox image"
-  - name: APN_SCORER_IMAGE
-    description: "Full image URI for the apn-scorer Lean sandbox image"
+  - name: APN_IMAGE_NAME
+    description: "The image repo containing the APN sandbox images tagged :agent and :scorer"
 
 runner:
   memory: 64Gi

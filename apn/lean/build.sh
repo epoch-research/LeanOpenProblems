@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 docker build -t apn-lean-base -f Dockerfile.base .
-docker build -t apn-agent     -f Dockerfile.agent .
-docker build -t apn-scorer    -f Dockerfile.scorer .
+docker build -t apn-agent  -t apn:agent  -f Dockerfile.agent .
+docker build -t apn-scorer -t apn:scorer -f Dockerfile.scorer .
 
-echo "Built apn-lean-base, apn-agent, apn-scorer."
+echo "Built apn-lean-base, apn-agent/apn:agent, apn-scorer/apn:scorer."

@@ -139,9 +139,10 @@ available at `configs/example-eval-set.yml`:
 hawk eval-set configs/example-eval-set.yml
 ```
 
-For local Inspect runs, the compose file uses the locally built `apn-agent` and
-`apn-scorer` images. On Hawk, set the runner secrets `APN_AGENT_IMAGE` and
-`APN_SCORER_IMAGE` to the full pushed image URIs for those two sandbox images.
+For local Inspect runs, `apn/lean/build.sh` tags the sandbox images as
+`apn:agent` and `apn:scorer`. On Hawk, set the runner secret `APN_IMAGE_NAME` to
+the pushed image repository; the compose file appends the `:agent` and `:scorer`
+tags.
 
 ### API keys
 

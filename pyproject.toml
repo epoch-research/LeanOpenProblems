@@ -2,7 +2,7 @@
 name = "tsoukalas-lean"
 version = "0.1.0"
 description = "An Inspect implementation of the AlphaProof Nexus formal proof-search framework"
-requires-python = ">=3.11"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "inspect-ai>=0.3.229",
 ]
@@ -24,6 +24,7 @@ apn = "apn._registry"
 [dependency-groups]
 dev = [
     "anthropic>=0.105.2",
+    "hawk[cli]",
     "mypy>=2.1.0",
     "openai>=2.38.0",
     "pytest>=8.0",
@@ -31,8 +32,15 @@ dev = [
     "types-PyYAML>=6.0",
 ]
 
+[tool.uv]
+# Force inspect-ai to come from PyPI rather than hawk's [tool.uv.sources].
+override-dependencies = ["inspect-ai"]
+
+[tool.uv.sources]
+hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v2026.05.04" }
+
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 files = ["apn", "tests"]
 strict = true
 # Inspect ships py.typed; lean on its annotations.
