@@ -38,9 +38,17 @@ def _docker_tag_component(value: str) -> str:
 
 
 def _commit_from_direct_url() -> str | None:
-    try:
-        direct_url = metadata.distribution("tsoukalas-lean").read_text("direct_url.json")
-    except metadata.PackageNotFoundError:
+    distribution_names = [*metadata.packages_distributions().get("apn", []), "apn"]
+    for distribution_name in dict.fromkeys(distribution_names):
+        try:
+            direct_url = metadata.distribution(distribution_name).read_text(
+                "direct_url.json"
+            )
+        except metadata.PackageNotFoundError:
+            continue
+        if direct_url is not None:
+            break
+    else:
         return None
     if direct_url is None:
         return None

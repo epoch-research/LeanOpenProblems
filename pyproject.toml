@@ -1,5 +1,5 @@
 [project]
-name = "tsoukalas-lean"
+name = "apn"
 version = "0.1.0"
 description = "An Inspect implementation of the AlphaProof Nexus formal proof-search framework"
 requires-python = ">=3.13,<3.14"
