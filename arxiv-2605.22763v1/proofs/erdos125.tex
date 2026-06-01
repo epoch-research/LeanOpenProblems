@@ -1,0 +1,21 @@
+\noindent \textbf{Question.} Let $A=\{\sum\epsilon_k 3^k:\epsilon_k\in\{0,1\}\}$
+ be the set of integers which have only the digits 0,1
+ when written base 3, and $B=\{\sum\epsilon_k 4^k:\epsilon_k\in\{0,1\}\}$
+ be the set of integers which have only the digits $0,1$
+ when written base $4$.
+Does $A+B$
+ have positive lower density?
+ 
+\noindent \textbf{Proof.} We show that the answer is no: the lower density is zero. Let $A$ and $B$ be defined as the sets of integers whose base 3 and base 4 representations, respectively, contain only the digits 0 and 1. We will show that the lower density of $A + B$ is zero.  
+        
+        For any integer $a \in A$, we can decompose it at the $k$-th digit into a top and bottom part, writing $a = 3^k a_{top} + a_{bot}$. Because $a$ uses only the digits 0 and 1, both $a_{top}$ and $a_{bot}$ must also belong to $A$. Furthermore, the maximum possible value for $a_{bot}$ is the integer consisting of $k$ ones in base 3, which provides the strict upper bound $a_{bot} \leq (3^k - 1)/2$. By applying the exact same logic to any $b \in B$ at scale $m$, we can write $b = 4^m b_{top} + b_{bot}$, yielding the analogous bound $b_{bot} \leq (4^m - 1)/3$.
+        
+        To evaluate the density of $A + B$ up to a large scale, we define a threshold $M \cdot N_0$, where $M = \min(3^k, 4^m)$ for some integers $k$ and $m$. Consider any element $x \in A + B$ such that $x < M \cdot N_0$. By definition, $x = a + b$ for some $a \in A$ and $b \in B$. Using the previously established decompositions, we can express this sum as $x = 3^k a_{top} + a_{bot} + 4^m b_{top} + b_{bot}$. Assume without loss of generality that $3^k \leq 4^m$, so $M = 3^k$. We can rewrite this expression to factor out $M$, yielding $x = 3^k(a_{top} + b_{top}) + c$, where the remainder term is $c = (4^m - 3^k)b_{top} + a_{bot} + b_{bot}$.
+        
+        Let $y = a_{top} + b_{top}$. Since $a_{top} \in A$ and $b_{top} \in B$, it naturally follows that $y \in A + B$. Furthermore, because $x < 3^k N_0$, we must have $y < N_0$, which in turn dictates that $b_{top} \leq N_0$. Applying our bounds for the bottom parts, we can bound the remainder $c$ by a maximum value $C$, defined as $C = |4^m - 3^k|N_0 + (3^k - 1)/2 + (4^m - 1)/3$.
+        
+        This shows that any valid sum $x < M \cdot N_0$ is uniquely determined by choosing a base value $y \in (A+B) \cap [0, N_0)$ and a remainder $c \in [0, C]$. Therefore, the total number of elements in $A+B$ strictly less than $M \cdot N_0$ is bounded by the product of the number of choices for $y$ and the number of choices for $c$. Dividing by the interval length $M \cdot N_0$ yields an upper bound on the density at this new scale: the density up to $M \cdot N_0$ is less than or equal to the density up to $N_0$ multiplied by the factor $(C + 1)/M$.
+        
+        To force the density to drop, we require this multiplying factor to be strictly less than 1. Because the ratio of logarithms $\ln(4)/\ln(3)$ is irrational, Dirichlet's Approximation Theorem guarantees that we can find arbitrarily large integers $k$ and $m$ such that the ratio $4^m / 3^k$ is arbitrarily close to 1. By choosing $k$ and $m$ carefully, the absolute difference $|4^m - 3^k|$ becomes extremely small relative to $M$. Consequently, for any given $N_0$, we can select $k$ and $m$ large enough such that $(C + 1)/M \leq 0.99$.
+        
+        We can now apply this bounding process iteratively. Starting from an arbitrary scale $N_0$, we can find a larger scale $N_1 = M_1 N_0$ where the density of $A + B$ drops by a factor of at least $0.99$. Taking $N_1$ as our new baseline, we find a still larger scale $N_2 = M_2 N_1$ where the density drops by another factor of $0.99$. After $r$ iterations, the density of the set up to the scale $N_r$ is bounded by $(0.99)^r$. As $r \to \infty$, this bound approaches 0. This demonstrates the existence of a sequence of arbitrarily large scales where the density tends to 0, proving that the lower density of $A + B$ is 0. \hfill $\Box$

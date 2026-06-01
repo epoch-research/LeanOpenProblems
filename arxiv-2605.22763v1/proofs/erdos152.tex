@@ -1,0 +1,37 @@
+\noindent \textbf{Theorem.} For a Sidon set $A \subset \mathbb{N}$ of size $n$, let $I(A+A)$ count the isolated elements of the sumset — those $s \in A+A$ with $s \pm 1 \notin A+A$. Define $f(n)$ as the minimum of $I(A+A)$ over all Sidon sets of size $n$. Then $f(n) \geq (n^2 - 100n - 16)/16$, so in particular $f(n) \to \infty$.
+
+\noindent \textbf{Proof.} The proof establishes, for every Sidon set $A$ of size $n$:
+$$16 \cdot I(A+A) + 100n + 16 \geq n^2. \qquad (\star)$$
+Let $D = \{a - b : a, b \in A\}$ denote the difference set and $S = A + A$ the sumset. For any set $X \subseteq \mathbb{Z}$, let $N_k(X) := |{x \in X : x+k \in X}|$ be the number of pairs at distance $k$, $V_2(X) := |{x \in X : x \pm 1 \in X}|$ be the number of interior points, and $I(X)$ be the isolated points .
+\\\\
+Let $X \subset \mathbb{Z}$. We will employ the following three facts:
+\begin{enumerate}
+    \item $I(X) + 2N_1(X) = |X| + V_2(X)$, by partitioning elements by neighbor count.
+    \item $4N_1(X) + N_3(X) \leq 3|X| + 2N_2(X)$, which follows from writing $N_k(x)  = \sum_{x \in \mathbb{Z}} 1_X(x)1_X(x + k)$ and a pointwise check of the indicator function $1_X$ across all $4$-point windows $(x, x+1, x+2, x+3)$; that is, summing the local inequality $1_X(x) + 1_X(x+1) + 1_X(x+2) + 1_X(x) 1_X(x+2) + 1_X(x+1)1_X(x+3) \geq 1_X(x)1_X(x+1) + 21_X(x+1)1_X(x+2) + 1_X(x+2)1_X(x+3) + 1_X(x)1_X(x+3)$ and then summing over all $x \in \mathbb{Z}$.
+    \item $2N_2(X) \leq N_3(X) + 2V_2(X) + 2I(X)$. Consider each pair $(x, x + 2) \in X^2$ and we proceed by cases on $x + 1$. Let $G = \{x \in X \mid  x+1 \notin X \land x + 2 \in X\}$. If $x + 1 \in X$, then the pair is counted exactly by $V_2$, so $N_2(X) = V_2(X) + |G|$. If $x + 1 \notin X$, then
+    \begin{itemize}
+        \item If $x - 1 \in X$, then $(x - 1, x + 2)$ is a pair counted in $N_3(X)$.
+        \item If $x + 3 \in X$, then $(x, x + 3)$ is a pair counted in $N_3(X)$.
+        \item If $x - 1 \notin X$, then $x$ is an isolated point in $I(X)$, and if $x + 3 \notin X$, then $x + 2$ is an isolated point in $I(X)$.
+    \end{itemize}
+    Since each $N_3$ pair can be counted by two different gaps, while isolated points are distinct in this construction, we have $2|G| \leq N_3(X) + 2I(X)$.
+\end{enumerate}
+Next, for each $k \geq 1$, count quadruples $(a,b,c,d) \in A^4$ with $a + b + k = c + d$. Rewriting as $a - c = d - b - k$ and partitioning by $\delta = a - c$ yields the following two quadruple transfer bounds:
+\begin{enumerate}%[resume]
+    \item The cases $\delta = 0$ and $\delta = -k$ each contribute $\leq |A|$ (one coordinate determines the rest). For any $\delta \notin \{0, -k\}$, the Sidon property ensures that there is at most one pair $(a, c)$ with $a - c = \delta$ and at most one pair $(d, b)$ with $d - b = \delta + k$. Consequently, each gap of size $k$ in $D$ identifies exactly one quadruple. Thus $|\text{quad}_k| \leq N_k(D) + 2n$.
+    \item Each "good" element $s \in S$ with $s + k \in S$ (excluding $\leq 2n$ doubles of the form $2a$) produces $\geq 4$ quadruples, giving $4N_k(S) \leq |\text{quad}_k| + 8n$.
+\end{enumerate}
+
+Combining these bounds shows that $N_k(D)$ and $N_k(S)$ are related up to $O(n)$ error. Applying fact (2) to $D = A - A$ gives
+$$4N_1(D) + N_3(D) \leq 3|D| + 2N_2(D)$$
+and then substitute the above two quadruple transfer bounds for $k = 1, 2, 3$ and collecting all $O(n)$ terms gives
+$$16N_1(S) + 4N_3(S) \leq 3|D| + 8N_2(S) + 100n$$
+Then, using fact (3) on $S$ we obtain
+$$16N_1(S) + 4N_3(S) \leq 3 |D| + (4N_3(S) + 8V_2(S) + 8I(S)) + 100n$$
+and notice that the $4N_3(S)$ terms cancel. Then applying fact (1) we obtain
+$$(8|S| + 8V_2(S) - 8I(S)) \leq 3 |D| + 8 V_2(S) + 8I(S) + 100n$$
+and see that the $8V_2(S)$ terms now cancel, leaving
+$$16I(S) + 100n \geq 8|S| - 3|D|.$$
+The standard Sidon estimates $|S| \geq n^2/2$ and $|D| \leq n^2$ then give $16I(S) + 100n \geq 4n^2 - 3n^2 = n^2$, accounting for a boundary correction of $+16$ at zero yields $(\star)$. \hfill $\Box$
+
+We include the Lean proof at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_152.lean}.

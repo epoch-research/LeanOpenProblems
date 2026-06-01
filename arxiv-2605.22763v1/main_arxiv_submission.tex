@@ -1,0 +1,502 @@
+\section{Introduction}
+
+Large language models (LLMs) have recently shown remarkable promise in solving complex mathematics problems \cite{feng2026autonomous, woodruff2026accelerating}, but \emph{unreliability} remains a primary barrier to their integration into mathematics research. Because LLM-generated natural language proofs can contain subtle logical errors, or ``hallucinations,'' they require expensive expert review. Mistakes in unreviewed intermediate steps can cascade through a proof, limiting the complexity of tasks that can be delegated to AI. 
+
+Recent efforts \cite{hubert2025olympiad, achim2025aristotle} mitigate these issues by using AI to generate proofs in formal languages like Lean \cite{moura2021lean}, in which a compiler automatically verifies every logical step. So far, successes of this paradigm have been concentrated in competition mathematics and the human-aided formalization of natural language arguments \cite{hariharan2026milestone}. 
+In this paper, we demonstrate its broader potential through a large-scale evaluation on open research-level problems. 
+
+To this end, we developed a framework, {\systemlong}, for LLM-aided proof generation and used it to build a basic agent in which a set of subagents independently searches for proofs with feedback from the Lean compiler. We also developed a ``full-featured'' agent in which subagents are coordinated using an evolutionary algorithm \cite{novikov2025alphaevolve} and can use {\AP}~\cite{hubert2025olympiad}, a system for olympiad-level Lean theorem-proving based on reinforcement learning, as a focused proof tool.
+
+Our full-featured agent autonomously solved 9 {\erdos} problems out of 353 attempted, including two questions that had been open for 56 years \cite{SCHOEN2001191, Baier2004ANO, elsholtz2016erd}, at the inference cost of a few hundred dollars per problem. It also 
+proved 44/492 open conjectures from the Online Encyclopedia of Integer Sequences (OEIS), resolved a 15-year-old open question on Hilbert functions in algebraic geometry, improved an open bound in convex optimization by discovering a novel algorithmic parameter schedule, identified several misformalizations in the literature, helped resolve an open problem from Ben Green's well-known list \cite{green2024100}, and is aiding ongoing research efforts on quantum optics and graph theory. 
+
+To understand the impact of the agent design on these results, we did a post-hoc analysis of the performance of the full-featured and basic agents, as well as two agents with intermediate capabilities, on the 9 {\erdos} problems solved by the full-featured agent. Remarkably, the basic agent solved all 9 problems, though at a higher cost on the harder problems. 
+
+Overall, our results demonstrate the utility of LLM-powered formal proof search as a tool for mathematics research, and point to an ongoing shift from specialized trained systems toward simple agentic loops as LLMs become more capable. All Lean proofs and select natural-language proofs are available in \url{https://www.github.com/google-deepmind/alphaproof-nexus-results}.
+
+\begin{figure}[htbp]
+      \centering
+\includegraphics[width=0.9\textwidth]{assets/SP_erdos_125_fixed_efw.pdf} 
+\caption{\textbf{Example inputs/outputs for an {\AP}-equipped agent (applied to {\erdos} \#125).}  The user provides a Lean file with a specification of the problem, and an empty proof body replaced with the \texttt{sorry} placeholder. \textbf{(a)} Modifications are permitted only within \texttt{EVOLVE-BLOCK} and \texttt{EVOLVE-VALUE} markers. 
+%The latter are present in the theorem statement, where the agent can change the truth value of the theorem by substituting \texttt{default} for \texttt{True} or \texttt{False}. 
+\textbf{(b)} During sketch refinement, the prover subagent is shown an assembled prompt template with the current proof, and optionally prior attempts/sketches, their Elo ratings, and feedback from {\AP}'s attempts on unsolved goals. \textbf{(c)} The prover reasons about the problem informally and invokes %\texttt{search\_replace} and \texttt{attempt\_goals\_with\_alphaproof} towards 
+tools.
+%to producing a proof of the problem. 
+In this example, the prover invoked {\AP} which resolved all but one goal. 
+The prover then decomposed that goal into three simpler lemmas, and called {\AP} again, which then resolved all remaining goals. The agent also produced a natural language summary of its attempt at the end of generation. 
+%All snippets are abbreviated.
+}
+    \label{fig:components}
+\end{figure}
+
+
+
+
+\section{{\systemlong}}
+
+\paragraph{Lean.} Lean \cite{moura2021lean} is a proof assistant in which definitions, theorems, and proofs are all mechanically verified code. Proofs are constructed via a sequence of applications of \emph{tactics}, or elementary proof steps. Lean's compiler ``executes'' a proof tactic-by-tactic, tracking the proof goals pending after every tactic. A proof is correct if it leads the compiler to a state with no pending goals.
+
+Lean includes a special $\mathtt{sorry}$ tactic, which immediately closes pending goals while passing the type checker. Proving a theorem thus amounts to the generation of type-safe code without $\mathtt{sorry}$ tactics. 
+
+\paragraph{Input and Output.} {\systemlong} is a new framework for agents that query frontier LLMs and the Lean compiler. The agents take as input a Lean file consisting of a target theorem with $\mathtt{sorry}$ in place of a proof, along with definitions and library imports on which the theorem depends (we refer to such a file as a \emph{proof sketch}). Optionally, the user may input additional natural-language context and domain knowledge encoded in Lean. 
+
+The input sketch is annotated with user-provided markers that delineate which code segments the agent may modify (see Fig.~\ref{fig:components}).
+Within \texttt{EVOLVE-BLOCK} markers, the agent can introduce helper lemmas, definitions, and proof steps. \texttt{EVOLVE-VALUE} markers are used to enclose expressions (e.g., parameters) whose values the agent can change. On successful termination, the agent outputs a $\mathtt{sorry}$-free proof of the target theorem.
+
+\paragraph{Agent Architecture.} 
+The basic agent in {\systemlong} (agent (A)) consists of a set of \emph{prover subagents} that execute independently with no shared state. Each subagent 
+is a ``Ralph loop''~\cite{huntley2025ralph} consisting of a sequence of \emph{episodes}: multi-turn LLM inference loops (based on Gemini 3.1 Pro) in which the subagent can reason via chain-of-thought and refine the sketch using a search-and-replace tool. After each turn, the subagent uses Lean to check that the current proof sketch compiles; if it does not, Lean's error message is used to direct the next turn. If the sketch contains \texttt{sorry} when the episode terminates, the subagent adds a comment to the sketch summarizing the lessons learned from the episode. The resulting sketch is the input to the next episode. 
+
+We extended the basic agent into one (B) that can query {\AP} \cite{hubert2025olympiad} to fill out missing parts of sketches. Queries to {\AP} can return a proof, disproof (a proof that the submitted subgoal is false), or a failure message; proofs are directly substituted into the sketch, while disproofs and failure messages are fed into the prover's prompt.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{assets/system_design_centered.pdf} 
+    \caption{\textbf{Design of the full-featured {\systemlong} agent.} The mathematician provides as input a Lean theorem with \texttt{sorry} for a proof, and optionally, natural language context and additional domain knowledge encoded in Lean. The agent architecture consists of a basic generation-validation pipeline and an optional evolutionary framework. An LLM-based prover subagent attempts to solve the problem by refining proof sketches \textbf{(2)}. The subagent may optionally call {\AP} as a tool; each invocation of {\AP} on a goal returns whether a proof or disproof was found, or whether it was unsuccessful in resolving the goal. The sketch produced in the end is checked by a validator to ensure the problem statement was not changed unsafely and the proof compiles. If all goals are successfully proved, the agent outputs the final Lean proof. This basic pipeline can be extended with an evolutionary population database and rating mechanism. In this configuration, validated sketches are admitted into the Population Database \textbf{(3)}. Simultaneously, rater subagents sample previous attempts \textbf{(4)}, which are then ranked by an LLM critic in matches. The match results are admitted back into the database \textbf{(5)} to update the Elo scores of the sketches. These scores are then used by the evolutionary algorithm to sample prior sketches from the database, constructing an overall prompt -- which includes any optional inputs from the mathematician -- to condition new episodes \textbf{(1)}.}
+    \label{fig:detailed_system}
+\end{figure}
+
+
+
+Separately, we developed an evolutionary agent (C), inspired by AlphaEvolve \cite{novikov2025alphaevolve}, in which prover subagents sample from and contribute to a shared population database of sketches. A challenge here is the mismatch between evolutionary algorithms, which typically assume a graduated fitness landscape, and formal proof evaluation, which is inherently binary. To bridge this gap, we used a pool of \emph{rating agents} (based on the less expensive Gemini 3.0 Flash) to construct relative rankings of sketches based on their plausibility, clarity, and novelty. We aggregated these rankings into Elo ratings for the sketches and used a sampling procedure based on the P-UCB formula \cite{hubert2021learning,silver2017masteringchessshogiselfplay} to drive the search. 
+
+Finally, we combined the {\AP} and evolution capabilities into a ``full-featured'' agent (D; see Fig.~\ref{fig:detailed_system}) in which prover subagents can use {\AP} as well as evolutionary search. We used this agent as the instrument in our exploration of open research problems. 
+
+\section{Systematic Evaluation on Open Problems}
+
+
+
+\paragraph{{\erdos} Problems.} 
+
+Bloom maintains an online catalog \cite{erdosproblems} of over 1200 open problems posed by Paul {\erdos} and his collaborators.
+The open-source Formal Conjectures repository \cite{deepmind2026formalconjectures} contains Lean formalizations of a subset of these problems.
+We ran Agent (D) on all these formal statements (353 at the time of the run), terminating the search if no proof was found within 3000 episodes. The agent solved 9/353 problems (Table~\ref{tab:major_results} and supplementary text); after each solve, experts on our team validated that the Lean statement faithfully captured the original conjecture. We have publicly shared the proofs, and our results have been logged on Terence Tao's wiki on AI contributions to {\erdos} problems \cite{TaoErdosWiki}. 
+
+Several proofs require sophisticated constructions and the synthesis of distinct mathematical arguments. For example, problem \#12(i), posed by {\erdos} and S\'ark\"ozy in 1970 \cite{Erds1970OnTD}, asks if there is an infinite set $A$ that satisfies a restrictive divisibility constraint -- no element may divide the sum of two larger elements -- and which satisfies the density condition $\liminf_{N \to \infty} \frac{|A \cap [1, N]|}{\sqrt{N}} > 0$; this problem had received attention in multiple prior works \cite{elsholtz2016erd, SCHOEN2001191, Baier2004ANO}. Our agent constructed $A$ as an infinite union of disjoint ``blocks'' $B_i \subseteq [P_i, 1.1P_i]$ for a suitably rapidly growing sequence $(P_i)$. To satisfy the local divisibility conditions, the proof integrates the Chinese Remainder Theorem with the properties of sets that avoid length-3 arithmetic progressions. 
+
+Problem \#125 concerns the sumset $A+B$, where $A$ is the set of non-negative integers whose base-3 representation uses only the digits 0 and 1, and $B$ is the analogous set in base 4.  
+The question of whether the lower density of $(A + B)$ is positive was open since 1996 \cite{BurrErdos125}. 
+Our agent resolved the conjecture by synthesizing an inductive thinning argument that exploits the Diophantine proximity of the two multiplicatively independent bases ($3^m \approx 4^k$). 
+
+% Problem \#138 \cite{erdHos1981combinatorial} investigates the asymptotic growth of the van der Waerden numbers $W(k)$ \cite{landman2014ramsey}, which represent the smallest integers $n$ such that any 2-coloring of the set $\{1,2,\dots,n\}$ is guaranteed to contain a monochromatic arithmetic progression of length $k$. A variant of the problem asks whether the consecutive differences of $W(k)$ diverge. Our agent established a lower bound on this divergence by showing that $W(k+1) - W(k) \geq k$. The proof uses a greedy coloring argument whose core insight is showing that if monochromatic $k$-term progressions of different colors and varying step sizes $d < k$ terminate at the same integer, they must overlap at an earlier term. This property guarantees the existence of a valid color choice at each step, succinctly resolving the problem. 
+%Other {\erdos} problems solved include \#138, two variants of \#741, problems \#846 and \#152, and a more general variant of \#26. 
+
+The agent also served as a tool for detecting and fixing misformalizations. For example, in {\erdos} problems \#125 and \#741(i), the interpretation of ``density'' in the original informal statements was amended to ``lower density'' and ``upper density'' respectively, after our full-featured agent found proofs using density as ``natural density.'' Following the correction of the ambiguity, the agent was still able to resolve the questions.
+
+\noindent \textit{Failure Analysis.} We analyzed the highest-scoring sketches (measured by Elo) across a random sample of problems on which our agent failed. First, the agent frequently offloaded a problem's core difficulty into a single \texttt{sorry} within a helper lemma that reiterated the target statement in a slightly different form. Explicitly prompting against this behavior failed to prevent it. Second, for several problems, the top sketches relied on lemmas marked with \texttt{sorry} that the agent claimed were established results in the mathematical literature. Upon manual inspection, these lemmas proved to be hallucinations. These failure modes underscore the value of end-to-end formal verification.
+
+\paragraph{OEIS.} We also applied the agent to systematically explore open problems in the OEIS \cite{oeis}, a massive repository of integer sequences and their known and open properties. We used Gemini to autoformalize 492 open questions from the OEIS and applied the agent to the resulting Lean statements. As a guard against misformalization, the agent was required to prove ``test lemmas'' verifying the first few terms of each sequence against its formal definition before attempting the target conjectures. The agent found proofs for 44 conjectures that a manual review found to be correctly formalized and previously unproven. Two of the proofs appear in the supplementary material.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.4}
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{l p{6.5cm} p{6.5cm}}
+\hline
+\textbf{ID} & \textbf{Conjecture Summary} & \textbf{Proof Technique} \\ \hline
+12\,(i) & (1970) Existence of $A \subset \mathbb{Z}^+$ s.t.\ $a \nmid (b+c)$ with $|A \cap [1,N]|/\sqrt{N} > \delta > 0$ infinitely often & Block-based construction via CRT and 3-AP avoiding sets \\
+12\,(ii) & (1970) Existence of $A \subset \mathbb{Z}^+$ s.t.\ $a \nmid (b+c)$ with $|A \cap [1,N]| \gg N^{1-\epsilon}$ for any $\epsilon$ and $N$ sufficiently large & Block-based construction via CRT and 3-AP avoiding sets \\
+125 & (1996) $\{ \sum \epsilon_k 3^k | \epsilon_k \in \{0,1\}\} + \{ \sum \epsilon_j 4^j | \epsilon_j \in \{0,1\}\}$ has lower density zero & Inductive thinning via Diophantine approx. $3^m \approx 4^k$  \\
+138$^*$ & (1981) Van der Waerden numbers satisfy $W(k{+}1) - W(k) \to \infty$ & Greedy coloring extension with monochromatic intersection lemma \\
+152 & (1994) Sufficiently large Sidon sets $A$ contain many isolated points in $A+A$ & Elementary argument by bounds on interior points, shifted neighbors and quadruples \\
+741\,(i) & (1994) If $A + A$ has upper density, there exists a decomposition $A = A_1 \sqcup A_2$ s.t. $A_1 + A_1, A_2 + A_2$ have positive upper density & Bounding of upper density of $A_i + A_i$ via cases on upper density of $A$ \\
+741\,(ii) & (1994) Existence of a basis $A$ of order $2$ with $A_1 + A_1$, $A_2 + A_2$ having bounded gaps for all $A_1, A_2$ such that $A = A_1 \sqcup A_2$ &  Explicit construction via rapidly growing sequence \\
+846 & (1992) Existence of infinite set $A$ such that any finite subset contains many non-collinear points, but is not a finite union of non-collinear sets & Label $K_\infty$ vertices with terms from fast-growing sequence, apply map on edges $\{i,j\} \mapsto (x_i + x_j, x_i^2 + x_ix_j + x_j^2)$ to obtain $A$ \\
+26$^{*, \dagger}$ & (1995) Existence of $A$ such that upper density of $A+k$ is $< 1 - \frac{1}{4}$ for all naturals $k$ & Block-based construction using increasing sequence of primes, CRT, and bounding u. density by cases \\
+\hline
+\end{tabular}
+\caption{\textbf{Open problems from the ErdosProblems repository autonomously resolved by our full-featured agent.} The asterisk indicates a variant of the main problem with this number. Problem \#26 (annotated with $\dagger$) is a more general variant of a question posed by {\erdos}, but was not posed by {\erdos} himself.}
+\label{tab:major_results}
+\end{table}
+
+\section{Deployment in Mathematics Research}
+
+\paragraph{Optimization Theory.} Agent (D) resolved an open question in optimization: proving an exact $\mathcal{O}(1/t)$ convergence rate for the Anchored Gradient Descent-Ascent (GDA) algorithm for min-max convex-concave optimization, thereby tightening the slower bound established by \cite{ryu2019ode}. 
+The proof departs from continuous-time ordinary differential equations (ODE) analysis used in previous work, instead using a discrete-time recurrence-based approach. The agent did not merely verify a fixed algorithm: we marked the learning schedule as a parameter within an \texttt{EVOLVE-VALUE} block in the input file, allowing the agent to simultaneously search for the schedule and the proof, ultimately discovering a novel parameter choice that yields the stronger guarantee. We previously released a deformalized version of the proof as a preprint \cite{surina2026improvedlastiterateconvergencerate}. %; the proof is reproduced in the supplement. 
+Subsequent work \cite{cai2026last} has extended this result.
+
+\paragraph{Graph Theory.} The \emph{graph reconstruction conjecture}
+\cite{graphreconstruction} is one of the oldest open problems in combinatorics.
+It asserts that every finite simple graph with at least three vertices is
+determined, up to isomorphism, by the multiset of its vertex-deleted subgraphs,
+known as its \emph{deck}.  AlphaEvolve \cite{novikov2025alphaevolve} experiments helped us 
+formulate two bipartite variants of the graph reconstruction conjecture, along
+with a proposed full reconstruction algorithm.  For
+one of these variants, our agent produced a complete proof.  For the full
+algorithmic reconstruction statement, the agent generated proof sketches and
+strategies that helped clarify the structure of the problem and led to
+simplified reformulations of the conjectures originally suggested by
+AlphaEvolve.  A paper based on the results of this collaboration is currently
+in preparation.
+
+Separately, the agent proved an open graph theory conjecture regarding a bound on the maximum number of leaves over all spanning trees of a graph $G$, relating it to the maximum number, over all vertices $v \in G$, of independent sets in the neighborhood of $v$. The problem was posed by Graffiti \cite{Graffiti}, an automated conjecturing system, in 1996, and points to an interesting future opportunity to close the loop between AI-based conjecturing and proof. 
+%Additionally, the agent proved the first of three conjectures that collectively imply the nonexistence of a perfect cuboid \cite{sharipov2011perfectcuboidsirreduciblepolynomials}. The conjecture had been resolved in October 2025 \cite{asiryan2026irreducibilitycuboidpolynomialpaut}, but our AI-generated proof follows a different approach.
+
+
+\paragraph{Algebraic Geometry.} 
+We evaluated our full-featured agent on eight algebraic geometry problems, from textbook-style exercises to open research questions on Hilbert functions, solving two of the four open problems. One of these problems had been a well-known open question for approximately fifteen years. This problem concerned pure
+$O$-sequences, equivalently the Hilbert functions of monomial Artinian level
+algebras \cite{Stanley1978}.  Their shape and positivity properties have
+been studied intensively in recent years \cite{BMMNZ2012}.  Although
+log-concavity fails for broad families of pure $O$-sequences, the case of codimension $3$ and type $2$ was identified as the principal remaining
+open case \cite{Zanello2024}.  The agent's proof establishes log-concavity in
+this case; the argument is substantial, using a nontrivial
+reformulation of the Hilbert function and a detailed case analysis of the
+resulting second-difference inequalities.
+%The agent was useful as a tool for detecting misformalizations. Specifically, in one case, the agent found a proof for a claim that was missing a key domain assumption, which led to the correction of the statement.
+
+\paragraph{Additive Combinatorics.} Our agent helped resolve problem \#57 from Green's well-known list of open conjectures \cite{green2024100}. The problem asks whether two specific quadratically structured function spaces coincide. The functions of interest map elements of an Abelian group $G$ to the complex numbers. Here, our agent autonomously solved a variant of the problem in which the functions are real-valued, but a personal communication from Green clarified that the complex-valued case was the intended challenge. While the agent could not immediately prove the intended version of the problem, numerical heuristics using floating-point arithmetic provided a candidate counterexample (the cyclic group $\mathbb{Z}/3\mathbb{Z}$ and a specific separating functional). We formalized the problem of whether this counterexample disproves the correct conjecture, and the agent autonomously proved that it indeed does. A paper on the result is in the works \cite{firsching2026strict}. 
+
+\paragraph{Quantum Optics.} With Mario Krenn, we investigated a set of quantum optics problems concerning the existence of monochromatic quantum graphs with $N$ vertices and $d$ colors drawn from domains such as the reals, the complex numbers, and $\{-1, 0, 1\}$. These constructions correspond to $N$-particle quantum states with local Hilbert space dimension $d$ -- in particular, high-dimensional Greenberger–Horne–Zeilinger (GHZ) states realizable via linear optics \cite{Krenn_2017}. Our agent resolved multiple conjectures of this form, in particular with $N = d \in \{4,6,10\}$. A paper on these results is in preparation \cite{Krenn2026TensorAlgebraic}.   
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{assets/scaling_plot_erdos_main_with_labels.pdf} 
+    \caption{\textbf{Solve rate versus mean inference cost (USD) across six {\erdos} problem instances.} The solve rates are evaluated for the four agents: (A) basic (blue circles), (B) basic with {\AP} (orange squares), (C) basic with evolution (green diamonds), and (D) full-featured (red triangles). Numeric annotations denote the number of independent attempts $K \in \{1,3,6,10\}$ grouped together; error bars indicate one standard error interval. Due to their higher costs, agents (C) and (D) lack variance estimates, as independent attempts were used to obtain a single point estimate (see main text for details). For agents (A) and (B), each curve traces the cost–performance Pareto frontier as $K$ increases, revealing diminishing marginal returns at higher budgets. Agent (B) generally matches or exceeds the solve rate of the basic configuration at comparable cost. Costs reported for (B) and (D) do not include the inference cost of {\AP}. While for most problems configuration (A) or (B) is the best, for some challenging problems like {\erdos} \#125, the full-featured configuration (D) performs significantly better. Note that accounting for the estimated {\AP} cost of 60 USD does not change the above outcomes beyond the margin of error.}
+    \label{fig:scaling_plot_erdos_main}
+\end{figure}
+
+\section{Impact of Agent Architecture and Model}
+
+Exploration of a large space of open problems is expensive, and we chose the full-featured agent (agent (D)) for this based on its strong performance on competition benchmarks. To understand which architectural components are necessary for its successes, we compared its performance against agents (A), (B), and (C) on the {\erdos} problem set in Table~\ref{tab:major_results}. 
+
+We compared the agents by analyzing the solve rate against the cost (in US dollars) per successfully proven problem. 
+We report computational cost in USD because it directly measures the barrier to reproducing this work and provides a natural common currency for comparing agents that allocate compute differently (e.g., agent (D) uses Gemini 3.0 Flash for rater subagents and Gemini 3.1 Pro for provers). We do not intend USD as a comparison of AI and human mathematical labor.
+
+For agents (C) and (D), in which a single proof attempt requires 10 subagents, 
+we executed 10 attempts per problem. In contrast, for the basic Agent (A) and its {\AP}-equipped extension (B), we ran 100 independent attempts, each with a single subagent. 
+
+Because (A) and (B) consist of independent subagents, we simulated scenarios where they have $K$ subagents by grouping the attempts into chunks of size $100/K$; a chunk was considered successful if any attempt included in the chunk proved the statement. The overall solve rate was defined to be the fraction of successful chunks. To calculate the monetary cost for these successful chunks, we identified the earliest timestamp $T$ of a successful attempt and summed the costs of all attempts within that chunk up to $T$. Since 
+agents (C) and (D) are more expensive, we used the independent attempts to obtain a single point estimate.
+
+Fig.~\ref{fig:scaling_plot_erdos_main} compares the agents across six {\erdos} problems (results for the rest are in the supplementary material). 
+Agents (A) and (B) perform similarly -- within the margin of error -- on four of the problems, though agent (B) is more efficient on problems 12(ii) and 125. Agent (D) outperforms (A) and (B) on problems 138 and 125, offering significant monetary savings (2x to 5x), but is roughly half as cost-efficient on the remaining problems. 
+We also compared agents (A), (B), and (D) on the wall-clock time needed to solve the problems. The results broadly followed the inference cost trends, with (B) offering savings over (A) in several of the problems, and (D) substantially outperforming both (A) and (B) on problems 138 and 125.
+
+Finally, we evaluated {\AP} in standalone tree-search mode and versions of agent (A) based on smaller models (Gemini 3.0 Flash, Gemini 3.1 Flash-Lite). These systems could not solve any of the problems.
+
+
+\paragraph{Cost and Variance.} Per-problem inference costs exhibit high variance due to the stochastic nature of our agents. The reported costs also do not capture the full cost of discovery: we applied the full-featured agent to all 353 {\erdos} problems in Formal Conjectures, and identifying tractable problems was itself a significant computational investment. {\AP} cost approximately 27.5 TPU hours (\$60 USD) per problem on v6e TPUs.
+
+
+\section{Discussion}
+
+We have provided a large-scale demonstration of the value of formal proof search agents on research-level mathematical problems. 
+Recently, some natural-language reasoning systems have been shown to succeed in research-level mathematical tasks, including {\erdos} problems \cite{feng2026aletheia, alexeev2026short2}. However, the use of AI-generated informal proofs, either as standalone products or as inputs to a subsequent formalization stage, requires careful validation by human experts. Formal verification can serve as a filter for determining which proofs merit human review. 
+
+The effectiveness of our basic agent in our post-hoc analysis was surprising. At the time we were planning our large-scale exploration, simpler agentic loops did not show strong performance on competition-level benchmarks, and this informed our decision to use the full-featured agent. The LLM landscape has since shifted substantially. We attribute the basic agent's success to both this shift and the power of compiler feedback in grounding LLM reasoning. The full-featured agent retains an advantage on the hardest problems for now. However, as LLM capabilities grow, this advantage may diminish.
+
+At present, our agents' successes are concentrated in areas such as combinatorics, convex optimization, and number theory, where Lean's mathematics library \cite{mathlib2020} is mature and tasks often decompose into tractable subgoals. Even most {\erdos} problems remain out of reach, let alone problems that require extensive new theory. Additionally, our agents inherit the biases of their underlying LLMs and exhibit high search variance. Characterizing the agents' boundaries and expanding them is an important direction for future work.
+
+We built {\systemlong} with the belief that the future of mathematics lies in human-machine partnership, where interactive AI tools serve to expand a mathematician's creative capacity. Our results support this vision. Our mathematician collaborators found that proof attempts by our agents enhanced their understanding of a problem, even when an agent could not prove the claim at hand. Because the sketches were formal, experts could focus on the unresolved subgoals rather than re-verifying the entire argument. Moreover, the agents were powerful tools for detecting misformalizations. These experiences suggest that AI-driven formal proof search can serve not only to solve problems but to deepen human understanding.
+
+
+%%%%%%%%%%%%%%%% REFERENCES %%%%%%%%%%%%%%%
+
+
+\bibliography{refs} % for a file named science_template.bib
+\bibliographystyle{plain}
+
+
+%%%%%%%%%%%%%%%% ACKNOWLEDGEMENTS %%%%%%%%%%%%%%%
+
+\section*{Acknowledgments}
+
+We thank Emilien Dupont, Dan Roy, and Daniel Zheng for their careful feedback on the paper, Alexander Novikov for help with LLM infrastructure, Katerina Hristova for help with Lean formalization, and Sebastian Nowozin and Taylan Cemgil for their guidance on designing an Elo scoring mechanism for proof sketches.
+
+\paragraph*{Author contributions:}
+SC, SS, and GT conceptualized and implemented the first version of {\systemlong}. AK led the engineering and infrastructure decisions. AK, SS, GT, and A.Surina developed the final version of {\systemlong} with inputs from FJR, AF, and SC. AK and SS maintained the underlying infrastructure of \systemlong. 
+
+GT initiated and led the use of the system in mathematics research tasks. AK, SS, GT, A.Surina, LY, and SC coordinated the large-scale runs on open research problems. GT, MF, GB, A.Suggala and AZW identified problems to solve and validated the generated solutions. GB, in particular, was the first research mathematician to use {\systemlong}. MF, GT, A.Surina, FJR, HM, SC, and EW contributed to Lean formalizations of problems. SS led the systematic evaluation of our agents, with additional contributions from AK, MZH and AH. 
+
+SC, SS, GT, FJR, and A.Surina wrote the paper with inputs from MF, AZW, HM, and AF. SS, AF, and EW created the figures with inputs from SC, GT, A.Surina and FJR. GB, AZW, MF, GT, A.Surina and CG wrote the natural language proofs, with HM providing agent-generated drafts to facilitate the writing process.  MZH and EW assisted with Lean setup and integration with AlphaProof. AF coordinated the creation of the accompanying Github repository. 
+
+MB and TH provided technical advice throughout the project. SC led the overall effort, with PK providing sponsorship and technical and strategic direction. 
+
+\paragraph*{Competing interests:} There are no competing interests to declare.
+
+\paragraph*{Data and materials availability:} All Lean proofs are available in the accompanying repository 
+\url{https://www.github.com/google-deepmind/alphaproof-nexus-results}. Natural language proofs
+of some key results are provided in the repository and the supplementary text.
+\newpage 
+
+%%%%%%%%%%%%%%%% SUPPLEMENT TITLE PAGE %%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%% MATERIALS AND METHODS %%%%%%%%%%%%%%%
+
+\appendix
+
+\section{Materials and Methods}
+
+\subsection{Further Details on {\systemlong} Agents}
+
+\begin{figure}[htbp]
+\centering 
+\includegraphics[scale=1.1]{assets/agent-A-pseudocode.pdf}
+\caption{\textbf{Pseudocode for the basic agent (A).} A prover subagent executes a sequence of steps in a loop. Each step is a conversation with a LLM instance (Gemini 3.1 Pro). During this conversation, the subagent can view a Lean file and apply search-replace edits. After each change, the Lean compiler provides feedback, such as compilation errors. As for agent (D), we check for the integrity of the final sketch once the conversation is over. $N$ subagents run independently in parallel and stop as soon as one of them found a valid proof.}
+\label{fig:basic_pseudocode}
+\end{figure}
+
+
+\paragraph{Basic Agent.} The pseudocode for the basic agent (A) is shown in Figure~\ref{fig:basic_pseudocode}. The agent operates $N$ independent subagents that share no state. All subagents start with the same initial proof sketch. As soon as one subagent finds a proof, all others are terminated.
+
+Each subagent implements a Ralph loop \cite{huntley2025ralph} consisting of a sequence of episodes. The full prompt is shown in Figure~\ref{fig:basic_prompt}. Within each episode, the subagent runs a multi-turn session with an access to a \texttt{search\_replace} tool. After each edit, the Lean code is compiled and compiler feedback is passed back to the model. When the subagent ends an episode, the code is validated using SafeVerify \cite{SafeVerify2025}, which checks the proof against the theorem specification and guards against environment exploits (e.g., axiom injection). If validation succeeds and the proof is \texttt{sorry}-free, the proof is returned. If \texttt{sorry} remains, the subagent summarizes lessons learned in a comment and begins the next episode from the current sketch. If validation fails, the subagent reverts to the previous sketch.
+
+\begin{figure}[htbp]
+\centering 
+\includegraphics{assets/agent-D-pseudocode.pdf}
+\caption{\textbf{Pseudocode for the main components of the full-featured agent (Agent (D)).} The main loop creates a pool of asynchronous prover subagents and raters and awaits the creation of a full (\texttt{sorry}-free) proof. At each step, a prover subagent uses the P-UCB strategy to sample a parent sketch from the population and initiates a stateful conversation with a LLM instance (Gemini 3.1 Pro). The agent has access to two tools: {\AP} and a structured search-and-replace operation. The results of these tool calls provide context for the subsequent turn. Once the conversation concludes, the resulting sketch is added to the population only if it compiles successfully and the original theorem remains uncompromised. Concurrently, each \texttt{rater\_agent} samples $P$ sketches, uses a LLM (Gemini 3.0 Flash) to determine which is the most promising, and updates the Elo scores used for P-UCB sampling. We set $P=7$ in all the experiments.}
+\label{fig:pseudocode}
+\end{figure}
+
+
+\paragraph{Full-featured Agent.} The pseudocode for the full-featured agent (D) is shown in Figure~\ref{fig:pseudocode}. The evolutionary process is orchestrated by a controller, which executes a continuous, asynchronous loop. At each step, the controller performs the following stages: 
+
+\begin{enumerate} 
+\setlength{\itemsep}{8pt}
+\setlength{\parsep}{2pt}
+\item \textbf{Database sampling:} The controller selects a root proof sketch $S_{\text{root}}$ by sampling from the database, along with $M = 2$ auxiliary inspiration sketches ${S_{\text{insp}}}$. The selection strategy balances exploitation of high-rated sketches with exploration of diverse candidates (see ``Population Database and Matchmaking'').
+
+\item \textbf{Prompt construction:} A prompt $\mathcal{X}$ is assembled to guide the LLM. It integrates the formal problem specification, the Lean source code and natural language plan of $S_{\text{root}}$, and structured feedback derived from \AP's previous attempts on $\{S_{\text{insp}}\}$. As in \AEv, the controller encourages diversity by stochastically injecting instructions such as ``decompose unsolved goals,'' ``combine ideas from prior attempts,'' or ``try a completely new approach.''
+
+\item \textbf{Prover subagent:} The assembled prompt $\mathcal{X}$ is dispatched to the LLM (Gemini 3.1 Pro), initiating a multi-turn episode. To scale to large Lean files, the subagent outputs mutations via a \texttt{search\_replace} tool in a compact diff format rather than rewriting the entire file. The subagent can also query {\AP} to test specific subgoals mid-episode; the feedback indicates whether the goal was proven, disproven, or unresolved. To manage compute, each episode is restricted to a maximum of 5 {\AP} queries and 90 search-and-replace edits. At the conclusion of the episode, the generated sketch undergoes a sandbox check that permits \texttt{sorry} placeholders but verifies that the original target theorem statement was not altered.
+
+\item \textbf{Validation:} Once the candidate sketch $S'$ passes the sandbox check, it undergoes formal validation. The system extracts all remaining \texttt{sorry} subgoals and cross-references them against a global goal cache using a deep hash of their exact Lean state (see ``Global Goal Caching''). If a subgoal was previously resolved, the proof is retrieved immediately; otherwise, it is dispatched to {\AP}. If {\AP} closes all remaining goals, the fully assembled, \texttt{sorry}-free proof is passed to SafeVerify \cite{SafeVerify2025} for final validation, ensuring the proof compiles and that no disallowed axioms (including \texttt{sorryAx}) were introduced. If any subgoals remain unresolved, $S'$ is registered with its remaining \texttt{sorry} placeholders.
+
+\item \textbf{Database registration:} The candidate $S'$, along with per-subgoal feedback from {\AP}, is registered in the database. Its fitness is then determined asynchronously via Elo matchmaking.
+\end{enumerate}
+
+{\AP} has a Test-Time Reinforcement Learning (TTRL) mode in which it learns to solve a problem by solving its AI-generated variants at inference time; however, we prioritize the use of compute for LLM inference and run {\AP} in its low-compute tree search inference mode.
+
+\paragraph{Population Database and Matchmaking.} Unlike systems where numerical fitness can be directly computed (e.g., empirical runtime), formal proof evaluation yields only discrete signals: whether the code compiles and whether the proof is complete. Agent (D) overcomes this by decoupling generation from fitness assignment, using LLM-based relative review to evaluate the promise of incomplete sketches.
+
+\paragraph{Elo-based Rating.} Asynchronous rater agents (Gemini 3.0 Flash) continuously sample sets of $P = 7$ sketches from the database for pairwise ``matches.'' We found $P=7$ to provide a good trade-off between information per LLM call and input context size. Each rater produces a relative ranking by evaluating the clarity of the proof strategy, the plausibility of remaining goals, and the mathematical novelty of the approach.
+
+We model match outcomes using a Plackett-Luce distribution \cite{plackett1975analysis,luce1959individual}, in which each sketch $s$ has a latent strength parameter $\lambda_s$. We place a hierarchical prior $p(\lambda_s | r_s) = \textrm{Gamma}(1, r_s)$ with rate parameter $r_s$ distributed as $p(r_s) = \textrm{Gamma}(1,1)$. This distribution has heavier tails than a simple Gamma over $\lambda_s$ while keeping the distributions conditionally conjugate; we expect the choice of hyperparameters to have a relatively small impact. 
+
+We infer sketches' posterior strengths using a Gibbs sampling procedure \cite{caron2012efficient}. For each sketch $s$, we draw $I$ Gibbs samples $\{\lambda_s^{(i)}\}_{i=1}^{I}$ from the posterior distribution of that sketch's strength parameter, obtained after drawing $B$ burn-in samples (we set $I=1000$ and $B=200$ based on an experiment with synthetic data). We then use the posterior sample mean $\lambda_s^{\textrm{mean}} = \frac{1}{I} \sum_i \lambda_s^{(i)}$ to obtain the sketch's Elo score as
+\[
+    \textrm{Elo}_s = 1200 + 400 \log_{10} \lambda_s^{\textrm{mean}}.
+\]
+
+To obtain the set of $P$ sketches for each match, we use a Thompson sampling strategy that repeatedly takes an independent sample $\lambda_s$ for each sketch and chooses the sketch with the highest value. In practice, we obtain the independent samples via Gibbs sampling, retaining only every $25$-th sample in order to mitigate in-chain correlation. This is sampling with replacement, so the same sketch may appear more than once. After sampling exactly $P$ times, we remove duplicate sketches from the chosen set, replacing them with the sketches with the highest posterior sample variance $\lambda_s^{\textrm{var}}$.
+
+Occasionally the LLM raters may output ties between the input sketches. Since the Plackett-Luce model does not consider ties, we break ties randomly by sampling from the model.
+
+\paragraph{Evolutionary Selection.}
+During the sampling phase, the controller selects ``parent'' sketches using the Predictor + Upper Confidence Bound (P-UCB) formula. To focus the search and reduce computational overhead, the sampler first filters the population to the top 64 highest-scoring sketches based on their current Elo ratings. For these top candidates, the Elo ratings are normalized to a range of $[0, 1]$ to yield a base score $q$. The final P-UCB score for each sketch is then computed as:
+\[
+\text{score} = q + c \frac{\sqrt{\sum V_i}}{v + 1}
+\]
+where $v$ is the number of times the specific sketch has been visited (sampled), $\sum V_i$ is the total number of visits across the filtered population, and $c$ is a tunable exploration constant (set at $0.2$ for this work). This mechanism prioritizes the exploitation of the most promising sketches -- those within the elite top-64 threshold -- while the UCB exploration bonus ensures adequate exploration of newly promoted or infrequently sampled candidates within that elite tier, preventing the search from collapsing into a single, suboptimal lineage. The values $c=0.2$ and top-64 were chosen empirically based on observed performance. 
+
+\paragraph{Global Goal Caching and Incorporation.}
+Independent proving agents can generate the same goals to dispatch to {\AP}. For efficiency, Agent (D) implements a global goal cache within the database. When a sketch is parsed, the system computes a deep hash of the exact formal Lean context and target for every generated subgoal (the \texttt{goal\_id}). Before querying {\AP}, the validator checks this cache. If a specific subgoal's state was already proved or formally disproved in any prior sketch across the population, the result -- along with the specific tactic sequence or value function -- is retrieved and incorporated into the current sketch. Novel subgoals are batched and dispatched concurrently to {\AP} via non-blocking remote procedure calls (RPCs), and their subsequent results are cached to accelerate future generations.
+
+
+\paragraph{{\AP} Budget.}
+When a novel subgoal is evaluated, {\AP} executes a formal tree search to discover a proof or disproof. To prevent the system from stalling on intractable or hallucinated goals, {\AP} operates under a strict computational budget, typically restricted to $400$ simulations and bounded by a hard RPC timeout. We compile {\AP}'s response into textual feedback in case it cannot solve a subgoal. This feedback is then associated with this particular subgoal and rendered in the corresponding prompt sketches.
+
+\paragraph{Implementation.}
+The entire {\systemlong} infrastructure is implemented in Python, utilizing the \texttt{asyncio} framework. The evolutionary controller in Agent (D) runs an event loop that distributes work across asynchronous threads for generation, validation, and Elo rating. Formal validation and compilation are executed inside isolated sandboxes (Docker instances) running Lean v4.27 and Pantograph \cite{aniva2025pantographmachinetomachineinteractioninterface}. This ensures that generated code is type-checked in a secure, stateful environment without risking execution of malicious code. The LLM backend leverages an ensemble of models: Gemini 3.1 Pro is used for the complex reasoning required in the multi-turn proving agent, while the faster Gemini 3.0 Flash is deployed for high-throughput match rating and evaluation synthesis.
+
+\subsection{Prompts}
+
+\begin{figure}[htbp]
+\centering 
+\includegraphics[scale=0.9]{assets/sketcher_prompt.pdf}
+\caption{\textbf{Prompt for prover subagents in the full-featured agent (D) (condensed).} Elided text is represented by \texttt{[\ldots]}. Text in braces denotes template variables populated at runtime. For example, \texttt{\{code\}} is replaced by the current Lean file.}
+\label{fig:sketcher-prompt}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[scale=0.9]{assets/rater_prompt.pdf}
+\caption{\textbf{Prompt for raters in the full-featured agent (D) (condensed).} Elided text is represented by \texttt{[\ldots]}. Text in braces denotes template variables populated at runtime. For example, \texttt{\{player\_blocks\}} is replaced by the sketches to be compared.}
+\label{fig:rater-prompt}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering 
+\includegraphics[scale=1.1]{assets/prompt_basic.pdf}
+\caption{\textbf{Full prompt for the basic agent (A).} Text in braces denotes template variables populated at runtime. For example, \texttt{\{code\}} is replaced by the current Lean file.}
+\label{fig:basic_prompt}
+\end{figure}
+
+
+Figure~\ref{fig:sketcher-prompt} shows the main pieces of the prompt used for prover subagents in the full-featured agent (D). Figure~\ref{fig:rater-prompt} shows the prompt for the rating subagents in the full-featured agent (D). Figure~\ref{fig:basic_prompt} shows the full prompt for the basic agent (A).
+
+
+%%%%%%%%%%%%%%%% SUPPLEMENTARY TEXT %%%%%%%%%%%%%%%
+
+\section{Supplementary Text}
+
+\subsection{Related Work}
+
+\paragraph{Formal Theorem Proving with LLMs.} 
+There is a large literature on neural-network-guided search over machine-checkable formal proofs \cite{yang2024formal,chen2025seed,deepseekv2,wang2025kimina,lin2025goedel}. Early work such as GPT-$f$ \cite{polu2020generative}
+established the viability of language models in this setting; subsequent systems improved tactic generation, premise selection,
+and interaction with external provers \cite{jiang2022thor,yang2023leandojo}. The Draft-Sketch-Prove system
+\cite{jiang2022draft} introduced the hierarchical approach of generating informal sketches before translating them into formal
+steps, and recent systems such as Hilbert \cite{varambally2025hilbert} and Aristotle
+\cite{achim2025aristotle} further separate high-level proof planning from low-level elaboration. {\AP} \cite{hubert2025olympiad} first showed that reinforcement learning (RL) could elevate formal theorem-proving to the Math Olympiad level. Some of the successes of that system came from using test-time RL; however, the system also supports a lower-cost tree search inference mode that we leverage. Subsequently, several other systems have demonstrated strong performance in competition mathematics \cite{achim2025aristotle,chen2025seed,lin2025goedel,axle2025}.
+
+At the research level, AI-aided formal proofs have been used primarily to verify results derived in natural language (either by human mathematicians or AI systems), rather than to discover new ones. In particular, Aristotle \cite{achim2025aristotle} was used to formalize AI-generated natural language proofs of several {\erdos} problems -- see Tao's wiki \cite{TaoErdosWiki} for more details. Gauss \cite{mathinc2026gauss} 
+was used to produce a formalization of Viazovska's proof of sphere packing in dimension 8 \cite{hariharan2026milestone}. Our work differs in that we use Lean as a medium of novel mathematical discovery.
+
+\paragraph{Evolution for Mathematical Discovery.}
+The use of evolutionary algorithms to search over programs has a long history in AI \cite{koza1994genetic}.  FunSearch \cite{Romera-Paredes2024} introduced the idea of using LLM-guided evolution to search for mathematical constructions represented as code. FunSearch was later extended into AlphaEvolve \cite{novikov2025alphaevolve}, which has been used to improve bounds and
+find novel constructions in numerous distinct areas of mathematics \cite{georgiev2025mathematical,nagda2026reinforced, nagda2025reinforced}.
+Our implementation of agent (D) reuses several components of AlphaEvolve. However, the fundamental difference between the two systems is that AlphaEvolve aims to find programs that optimize a quantitative reward function, while the goal of our agents is to find proofs that pass a boolean formal verification criterion.
+
+\paragraph{Natural Language Proof Discovery.} 
+A large body of recent work explores whether LLMs can perform research-level mathematical tasks in natural language, as evidenced in the AI Co-Mathematician \cite{zheng2026aicomathematician}. Focusing on theorem proving, Aletheia \cite{feng2026autonomous} exemplifies this approach via heavy test-time compute with interleaved
+generation and revision. Other provers include FullProof \cite{bryan2026motivic} and DeepThink \cite{deepmind2026deepthink}. A proprietary model developed by OpenAI resolved several {\erdos} conjectures 
+\cite{alexeev2026short,alexeev2026short2}. Subsequently, {\erdos} problem \#1196 was resolved informally through community experimentation using GPT-5.4 \cite{alexeev2026primitivesetsvonmangoldt}.
+Many proofs and partial results discovered this way have been subsequently autoformalized with the help of agents such as Aristotle \cite{achim2025aristotle} and Gauss \cite{mathinc2026gauss}. Further collaborations between mathematicians and AI models have yielded
+results in optimization theory \cite{jang2025point}, algebraic geometry \cite{schmitt2025extremal,bryan2026motivic}, and spectral
+theory \cite{jain2026equality}.
+
+\subsection{Selection of {\erdos} and OEIS Problems}
+
+For the {\erdos} evaluation, we ran our agent on all Lean statements of {\erdos} problems available in the Formal Conjectures repository \cite{deepmind2026formalconjectures} as of early February 2026 -- 353 problems in total. We did not select which problems to attempt; the set was determined entirely by what the open-source community had formalized from the 1200+ problems catalogued on the ErdosProblems site. We recognize that this process has a bias toward problems amenable to formalization in Lean.
+
+For the OEIS evaluation, we began with a corpus of 2649 open conjectures drawn from the OEIS \cite{oeis}. We prompted Gemini to select 500 problems that are 
+non-trivial, mathematically interesting, not famous open problems, and good candidates for automated theorem-proving, and used a Gemini-based agent to formalize them. Of the 500 problems, 8 were excluded due to incompatibilities introduced by a Lean version upgrade, yielding a final set of 492 problems. 
+
+
+\subsection{Details on Comparisons across Agent Architectures and Models}
+Figure~\ref{fig:cost_distribution_appendix} reports, for each {\erdos} problem, the distribution of computational costs for successful runs, along with the solve rate for each agent. We note a large variance in the cost for most problems and methods, which highlights the stochastic nature of the agent. This is especially noticeable on problems such as {\erdos} 12(ii) and 152.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{assets/box_plot_main_after_sketcher_cost.pdf} 
+    \caption{\textbf{Box plots illustrating the distribution of a cost for successful proof for the {\erdos} problems.} Four distinct experimental configurations are compared: basic@K=10 (blue), basic with {\AP} @K=10 (orange), basic with evolution (green), and full (red). The solid horizontal line within each box denotes the median cost, while the upper and lower box boundaries represent the third and first quartiles, respectively. Whiskers extend to the rest of the distribution, and individual circles indicate outlier data points. Triangular markers denote instances with a single data point where only one proof attempt was successful.}
+    \label{fig:cost_distribution_appendix}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{assets/scaling_curves_full.pdf} 
+    \caption{\textbf{Solve rate versus mean inference cost (USD) across nine {\erdos} problem instances.} Seven system configurations shown: basic (blue circles), basic with {\AP} (AP) (orange squares), basic with evolution (green diamonds), full (red triangles), full@1 (purple downward triangles), full@3 (brown pluses), and full@6 (pink x), where @S are the variants of full system with a given number of parallel LLM generation threads. Connected curves denote the number of independent attempts $K$. Error bars indicate one standard error interval. For the basic and basic with {\AP} configurations, each curve traces the cost–performance Pareto frontier as $K$ increases, revealing diminishing marginal returns at higher budgets. Note that basic with {\AP} and full do not include the inference cost of {\AP}.}
+    \label{fig:scaling_curves_full_appendix}
+\end{figure}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{assets/box_plot_duration.pdf} 
+    \caption{\textbf{Box plots illustrating the distribution of a wall-clock time for a successful proof for the {\erdos} problems.} Three distinct experimental configurations are compared: basic@K=10 (blue), basic with {\AP} @K=10 (orange), and full (red). The solid horizontal line within each box denotes the median time, while the upper and lower box boundaries represent the third and first quartiles, respectively. Whiskers extend to the rest of the distribution, and individual circles indicate outlier data points. Triangular markers denote instances with a single data point where only one proof attempt was successful. A cut-off of 48 hours applied to all experiments.}
+    \label{fig:time_distribution}
+\end{figure}
+
+
+Figure~\ref{fig:scaling_curves_full_appendix} shows the solve rate versus mean inference cost (in USD) for all nine {\erdos} problems. In addition to the plot in the main text, it also presents results for the full method when run with varying numbers of asynchronous LLM agents. Interestingly, running the full method with only one generator, but sampling from the database (instead of taking the previous session's output), underperformed in comparison to the basic setup. This suggests that sampling is not beneficial unless one has an asynchronous pipeline and uses the database as a way of coordinating agents. Having three or six asynchronous agents did not outperform the full configuration with 10 agents on the most challenging problems; however, these configurations were more efficient on the easier tasks. Given the high variance in the observed results, one can conclude that setting $K=10$ is a strong default for the system.
+
+We conducted two additional runs of our basic agent (A), differing only in the proving LLMs used: Gemini 3.0 Flash and Gemini 3.1 Flash-Lite. We also ran the basic setup with {\AP} as a tool using Gemini 3.0 Flash as the prover model. All runs were executed with $K=100$ and a 24-hour time budget. None of the three runs were able to solve any of the {\erdos} problems.
+
+To evaluate {\AP} as a standalone baseline, we ran it in tree search inference mode on all 9 {\erdos} problems. 
+Even though we allowed a compute budget of approximately 64 v6e TPU hours per problem, the system could not resolve any of them. TPU pricing can be found at \url{https://cloud.google.com/tpu/pricing}.
+
+The LLM cost for each agent was computed as follows:
+\begin{gather*}
+total_{component} = input * p_{input} + cache_{read} * p_{cache} + output * p_{output}, \\
+total = total_{sketcher} + total_{rater}
+\end{gather*}
+where $input$ includes user prompt, agent session prefix, thoughts and tool calls outputs and excludes cached tokens, $cache_{read}$ accounts for the input tokens read from cache and $output$ includes model output and thoughts. $p$ is the corresponding standard price per token as per \url{https://ai.google.dev/gemini-api/docs/pricing}. Note that for all agent price estimates, we applied the rate for prompts of 200k tokens or fewer.
+
+
+\subsection{Deformalized Lean Proofs}
+
+Next, we give deformalized versions of the Lean proofs discovered by our full-featured Agent (D). 
+
+\subsubsection*{{\erdos} \#12-(i)}
+First, we give the proof of the first question under {\erdos} problem \#12, as classified on the ErdosProblems site (\url{https://www.erdosproblems.com}). 
+
+\input{proofs/erdos12i}
+
+\subsubsection*{{\erdos} \#12-(ii)}
+
+Next, we give a proof for the second question of the three listed in {\erdos} \#12.
+
+\input{proofs/erdos12ii}
+
+These questions were posed in 1970 \cite{Erds1970OnTD}, and saw attention from multiple human mathematicians, achieving partial results towards the questions \cite{SCHOEN2001191, Baier2004ANO, elsholtz2016erd}. We thank Thomas Bloom for summarizing the history regarding these questions on the ErdosProblems site (\url{https://www.erdosproblems.com}). 
+\\\\
+Note that the answer to the (ii) implies the answer to (i). Nevertheless, we included both proofs as the agent found them independently, as each question was separately formalized as a theorem in Formal Conjectures. Originally, the agent located multiple proofs for the second question, though we chose the first proof to informalize for presentation. It also happened to differ the most in the construction, which otherwise is quite similar to the proof for (i). After sharing the solutions publicly, it was noted that a minor adjustment could be performed on the construction from the original paper to answer the questions. The third and final question, asking whether such a set $A$ could satisfy $\sum_{a \in A} 1/a = \infty$, is still open and seems difficult.
+\\\\
+We provide the Lean proof discovered for (i) at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_12.parts.i.lean} and for (ii) at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_12.parts.ii.lean}. Our original communication of the result can be found at the problem thread of the ErdosProblems site:  \url{https://www.erdosproblems.com/forum/thread/12}.
+
+
+\subsubsection*{{\erdos} \#125}
+
+\input{proofs/erdos125}
+        
+We originally communicated the result in \url{https://www.erdosproblems.com/forum/thread/125#post-5110}. The Lean proof is at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_125.variants.positive_lower_density.lean}. In the discussion at the ErdosProblems site, it was pointed out that this leaves two possibilities regarding the set $A+B$:
+\begin{enumerate}
+    \item $A+B$ has zero upper and lower density (and hence also zero density), or
+    \item $A+B$ has zero lower density, but positive upper density (and hence no density).
+\end{enumerate}
+
+\subsubsection*{{{\erdos} \#138, Differences Variant}}
+\input{proofs/erdos138}
+
+We originally communicated the result in \url{https://www.erdosproblems.com/forum/thread/138#post-5314}, and share the Lean proof at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_138.variants.difference.lean}. In the discussion at the ErdosProblems site, Thomas Bloom pointed out that the obvious generalization of this argument gives $W(k+1,l+1)\geq W(k,l)+\textrm{min}(k,l)$, and asked what this kind of argument can prove for the $r$-color variant $W_r(k)$.
+
+\subsubsection*{{\erdos} \#741-(i)}
+\input{proofs/erdos741i}
+
+The agent also initially disproved a strict ``natural density'' formulation of this problem (where the density must exist as a limit), which served as a diagnostic for the correct interpretation of Erd\H{o}s' original phrasing. Following Thomas Bloom's observation that Erd\H{o}s likely meant ``positive upper density,'' the formulation was amended and {the agent} resolved the corrected version as described above. The Lean proof for the upper density variant is available at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_741.parts.i.lean}.
+
+\subsubsection*{{\erdos} \#741-(ii)}
+\input{proofs/erdos741ii}
+
+The Lean proof for part (ii) is available at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_12.parts.ii.lean}. Our original communication of both results can be found in the problem thread on the ErdosProblems site (\url{https://www.erdosproblems.com/forum/thread/741}).
+
+\subsubsection*{{\erdos} \#26, More General Variant}
+\input{proofs/erdos26}
+
+This problem is a more general variant to the original question stating that ``For all $A \subseteq \mathbb{N}$, does there exist $k \geq 1$ such that almost all integers have a divisor of the form $a + k$ for some $a \in A$?''. A simple counterexample to this question can be produced using the Chinese Remainder Theorem. In the more general variant we resolve, note the Chinese Remainder Theorem is still used to construct a counterexample, but with additional constraints to make the upper density of $A+k$ small, for all $k$. We originally communicated the result in \url{https://www.erdosproblems.com/forum/thread/26}, and share the Lean proof at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_26.variants.tenenbaum.lean}.
+% \\\\
+% \\\\
+\subsubsection*{{\erdos} \#846}
+\input{proofs/erdos846}
+
+We originally communicated the result in \url{https://www.erdosproblems.com/forum/thread/846#post-4447} to the
+ErdosProblems site, and share the Lean proof at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/ErdosProblems/erdos_846.lean}. This result was independently discovered by an internal model at OpenAI~\cite{putterman2026infinite}. In the discussion at the ErdosProblems site, it was pointed out that this result also follows from a projection argument of Reiher, R\"odl and Sales~\cite{reiher2024colouring}.
+
+\subsubsection*{{\erdos} \#152}
+\input{proofs/erdos152}
+
+
+\subsubsection*{OEIS Conjectures}
+\input{proofs/oeis_51293}
+\\\\
+\input{proofs/oeis_228143}
+
+These OEIS problems were added as conjectures in 2022 (\url{https://oeis.org/A051293}) and 2018 (\url{https://oeis.org/A228143}). Though neither problem has likely received much attention, the ability to provide a guarantee on the correctness of the statement that an expert conjectured serves value. For example, it appears that a good part of the work is done in identifying the asymptotic formula to be conjectured in OEIS A051293. In this case, ensuring the formula holds with a rigorous proof is a matter of validating intuition without carrying out potentially tedious proof steps, which our agent can handle. The Lean proofs for the two problems can be found at \url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/OEIS}.
+
+\subsubsection*{A variant of the Graph Reconstruction Conjecture}
+\input{proofs/graph_reconstruction}
+
+\subsubsection*{Log-Concavity of Hilbert Sequences}
+\input{proofs/hilbert}
+
+The Lean proof for the problem can be found at~\url{https://github.com/google-deepmind/alphaproof-nexus-results/tree/main/APNOutputs/AICollaborator/AlgebraicGeometry}.
+
+\subsubsection*{A Convergence Proof of Modified Anchored Gradient Descent-Ascent}
+% \input{proofs/anchored_gda}
+A natural-language version of the convergence proof we discovered can be found in Surina et al.~\cite{surina2026improvedlastiterateconvergencerate}.
+The Lean proof is at~\url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/Optimization/LastIterateConvergence.lean}.
+
+\subsubsection*{Written on the Wall, Conjecture 2}
+\input{proofs/woow2}
+
+The discovered lean proof for this is available at ~\url{https://github.com/google-deepmind/alphaproof-nexus-results/blob/main/APNOutputs/OEIS/GraphConjecture2.lean}.
+
+%%%%%%%%%%%%%%%% SUPPLEMENTARY FIGURES %%%%%%%%%%%%%%%
+
+

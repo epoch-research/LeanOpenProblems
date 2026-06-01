@@ -1,0 +1,113 @@
+name: Build LeanOpenProblems Docker Images and Upload to Amazon ECR
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  IMAGE_NAME: ${{ vars.ECR_REGISTRY }}
+
+jobs:
+  publish-lean-images:
+    runs-on: epoch-research-x64-64core-256GB-2040GB
+    steps:
+      - name: Derive AWS region from ECR registry
+        id: ecr
+        run: echo "region=$(echo '${{ vars.ECR_REGISTRY }}' | cut -d. -f4)" >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          aws-region: ${{ steps.ecr.outputs.region }}
+          role-to-assume: arn:aws:iam::328726945407:role/production-github-actions-epochai
+
+      - uses: actions/checkout@v4
+
+      - name: Set image tags
+        run: |-
+          image_version="$(sed -nE 's/^__version__ = "([^"]+)"/\1/p' apn/__init__.py)"
+          if [ -z "$image_version" ]; then
+            echo "Could not read apn.__version__" >&2
+            exit 1
+          fi
+          git_hash="$(git rev-parse HEAD)"
+          {
+            echo "BASE_IMAGE_TAG=LeanOpenProblems_base_${image_version}_${git_hash}"
+            echo "AGENT_IMAGE_TAG=LeanOpenProblems_agent_${image_version}_${git_hash}"
+            echo "SCORER_IMAGE_TAG=LeanOpenProblems_scorer_${image_version}_${git_hash}"
+          } >> "$GITHUB_ENV"
+
+      - name: Login to ECR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ${{ vars.ECR_REGISTRY }}
+
+      - name: Check existing image tags
+        id: image_tags
+        run: |-
+          repository="${IMAGE_NAME#*/}"
+          for image in base agent scorer; do
+            tag_var="${image^^}_IMAGE_TAG"
+            tag="${!tag_var}"
+            if aws ecr describe-images \
+              --repository-name "$repository" \
+              --image-ids "imageTag=$tag" \
+              >/dev/null 2>&1; then
+              echo "${image}_exists=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "${image}_exists=false" >> "$GITHUB_OUTPUT"
+            fi
+          done
+
+      - name: Set reproducible build timestamp
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
+      - name: Prepare base image
+        if: >-
+          steps.image_tags.outputs.base_exists != 'true' ||
+          steps.image_tags.outputs.agent_exists != 'true' ||
+          steps.image_tags.outputs.scorer_exists != 'true'
+        working-directory: apn/lean
+        run: |-
+          if [ "${{ steps.image_tags.outputs.base_exists }}" = "true" ]; then
+            docker pull "${IMAGE_NAME}:${BASE_IMAGE_TAG}"
+            docker tag "${IMAGE_NAME}:${BASE_IMAGE_TAG}" apn-lean-base
+          else
+            docker build \
+              -t apn-lean-base \
+              -t "${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
+              -f Dockerfile.base \
+              .
+            docker push "${IMAGE_NAME}:${BASE_IMAGE_TAG}"
+          fi
+
+      - name: Build and push agent image
+        if: steps.image_tags.outputs.agent_exists != 'true'
+        working-directory: apn/lean
+        run: |-
+          docker build \
+            -t "${IMAGE_NAME}:${AGENT_IMAGE_TAG}" \
+            -f Dockerfile.agent \
+            .
+          docker push "${IMAGE_NAME}:${AGENT_IMAGE_TAG}"
+
+      - name: Build and push scorer image
+        if: steps.image_tags.outputs.scorer_exists != 'true'
+        working-directory: apn/lean
+        run: |-
+          docker build \
+            -t "${IMAGE_NAME}:${SCORER_IMAGE_TAG}" \
+            -f Dockerfile.scorer \
+            .
+          docker push "${IMAGE_NAME}:${SCORER_IMAGE_TAG}"
+
+      - name: Report image repository
+        run: |-
+          echo "LEAN_OPEN_PROBLEMS_IMAGE_NAME=${IMAGE_NAME}"
+          echo "Base image: ${IMAGE_NAME}:${BASE_IMAGE_TAG}"
+          echo "Agent image: ${IMAGE_NAME}:${AGENT_IMAGE_TAG}"
+          echo "Scorer image: ${IMAGE_NAME}:${SCORER_IMAGE_TAG}"

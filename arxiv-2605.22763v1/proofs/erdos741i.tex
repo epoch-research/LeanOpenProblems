@@ -1,0 +1,29 @@
+
+\noindent \textbf{Question.} Let $A\subseteq \mathbb{N}$ be such that $A+A$ has positive upper density. Can one always decompose $A=A_1\sqcup A_2$ such that $A_1+A_1$ and $A_2+A_2$ both have positive upper density?
+
+\noindent \textbf{Proof.} We show that the answer is yes. We use an alternating block partition. Given a rapidly growing sequence $M_0 < M_1 < M_2 < \cdots$, we define
+    $$A_1 = A \cap \bigcup_k (M_{2k}, M_{2k+1}], \qquad A_2 = A \setminus A_1.$$
+    In odd-indexed intervals $(M_{2k}, M_{2k+1}]$, all elements of $A$ belong to $A_1$; in even-indexed intervals $(M_{2k+1}, M_{2k+2}]$, they all belong to $A_2$. The sequence $M$ is chosen to grow fast enough that each block dwarfs all previous ones. We split into two cases.
+    \\\\
+    \textbf{Case 1: $A$ has positive upper density.}
+    There exist a constant $c > 0$ and a strictly increasing sequence of scales along which $|A \cap [1,N]| \ge c \cdot N$. Using a dependent-choice argument, we extract a rapidly growing sequence $M_k$ such that for each $k$:
+    \begin{itemize}
+        \item $|A \cap [1, M_{k+1}]| \ge c \cdot M_{k+1}$ (density is retained at the next scale),
+        \item $|A \cap [1, M_k]| \le \frac{c}{4} \cdot M_{k+1}$ (the ``past'' is negligible relative to the ``future'').
+    \end{itemize}
+    Because each new block contains all the ``fresh'' elements of $A$, looking at scale $M_{2k+1}$ shows that $A_1$ has positive upper density, and looking at scale $M_{2k+2}$ shows the same for $A_2$. A short argument then lifts this: if a set has positive upper density, so does its sumset with itself.
+    \\\\
+    \textbf{Case 2: $A$ has zero upper density but $A+A$ has positive upper density.}
+    This is the harder case, since $A$ is too sparse to guarantee positive density for the parts directly. Instead, we argue about the sumsets themselves. Since $A+A$ has positive upper density, there exist $c > 0$ and a sequence of scales along which $|(A+A) \cap [1,N]| \ge c \cdot N$. Since $A$ has zero upper density, $|A \cap [1,N]| = o(N)$, so for any fixed $K$ there are arbitrarily large $N$ where $(K+1) \cdot |A \cap [1,N]| \le \frac{c}{4} \cdot N$. By dependent choice, we extract a rapidly growing $M_k$ such that for each $k$:
+    \begin{itemize}
+        \item $|(A+A) \cap [1, M_{k+1}]| \ge c \cdot M_{k+1}$,
+        \item $(M_k + 1) \cdot |A \cap [1, M_{k+1}]| \le \frac{c}{4} \cdot M_{k+1}$.
+    \end{itemize}
+    The key ingredient is a combinatorial sumset bound: if $A = A_1 \cup A_2$ and every element of $A_2$ in $[1,N]$ is at most $K$, then
+    $$|(A+A) \cap [1,N]| \le |(A_1+A_1) \cap [1,N]| + (K+1) \cdot |A \cap [1,N]|.$$
+    The idea is that any sum involving an element of $A_2$ has one summand bounded by $K$, giving at most $(K+1) \cdot |A \cap [1,N]|$ such sums. Applying this bound at alternating scales:
+    \begin{itemize}
+        \item At scale $N = M_{2k+1}$: all elements of $A_2$ in $[1,N]$ lie below $M_{2k}$, so the bound with $K = M_{2k}$ gives $|(A_1+A_1) \cap [1,N]| \ge \frac{3c}{4} \cdot N$.
+        \item At scale $N = M_{2k+2}$: symmetrically, all elements of $A_1$ in $[1,N]$ lie below $M_{2k+1}$, giving $|(A_2+A_2) \cap [1,N]| \ge \frac{3c}{4} \cdot N$.
+    \end{itemize}
+    Since these bounds hold for infinitely many $N$, both sumsets have positive upper density. \hfill $\Box$

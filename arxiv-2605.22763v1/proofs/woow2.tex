@@ -1,0 +1,72 @@
+
+For a graph $G$, let $V(G)$ be the set of vertices and $E(G)$ the set of edges. For $v \in V(G)$, write $d(v)$ for the degree of $v$, and let $N(v)$ be the set of vertices adjacent to $v$ in $G$. Let $\alpha(v)$ be the local independence number of $v$: the size of the largest independent set in $G[N(v)]$. Let $\ell(G) := \frac{1}{n}\sum_v \alpha(v)$ be the average of the local independence numbers, and let $L_S(G)$ be the maximum number of leaves in a spanning tree of $G$, or $0$ if $G$ is not connected.
+\\
+\textbf{Theorem.}
+If $G$ is a simple connected graph on $n$ vertices, then
+$$L_S(G) \geq 2(\ell(G) - 1).$$
+\textbf{Proof.}
+Let $V := V(G)$. For every vertex $v \in V$, fix a maximum independent set $A(v)$ in $G[N(v)]$. Then $\alpha(v) = |A(v)|$.
+
+Now take two copies of $V$, and add edges $uv$ from $u \in V$ on the left to $v \in A(u)$ on the right. This forms a bipartite graph, where vertices on the left side have degree $\alpha(v)$. The key idea is to look at the degrees of the vertices on the right side, and formulate the entire proof in terms of them. Formally, put $c(v) := |{u \in V(G): v \in A(u)|}$ as the degree of a vertex $v$ on the right side.
+
+Note that $c(v) \leq d(v)$, for all $v \in V$. Because $\sum_v \alpha(v) = \sum_v c(v)$, it is enough to show that $\sum_v c(v) \leq n(L_S(G)/ 2 + 1)$. To simplify the notation, we set $\mu := L_S(G)/ 2 + 1$, and so the goal is to show $\sum_v c(v) \leq n\mu$.
+\\
+\textbf{Lemma 1.}
+For every edge $uv \in E(G)$ we have $c(u) + c(v) \leq |N(u) \cup N(v)|$.
+\\
+\textbf{Proof of Lemma 1.} For every vertex $w \in N(u) \cup N(v)$, at most one of $u$ and $v$ can be part of $A(w)$, otherwise the edge $uv$ would contradict the fact that $A(w)$ is independent. On the other hand, if $w \in V$ is such that $u$ or $v$ is in $A(w)$, then $w$ must be part of $N(u) \cup N(v)$. Then $c(u) + c(v)$ is at most the size of $N(u) \cup N(v)$. $\Box$
+\\
+\textbf{Lemma 2.}
+For every edge $uv \in E(G)$ we have $|N(u) \cup N(v)| \leq L_S(G) + 2$.
+\\
+\textbf{Proof of Lemma 2.} We construct a spanning tree in $G$ with at least $|N(u) \cup N(v)| - 2$ leaves.
+
+Start with the edge $uv$ and add all the vertices in $N(u) \cup N(v) \setminus \{u,v\}$ as pendant vertices of degree $1$. There are $|N(u) \cup N(v)| - 2$ leaves in this tree $T'$. Because $G$ is connected, we can expand $T'$ to a spanning tree $T$ of $G$ by adding edges until no more can be added. Then from every leaf in $T'$ there is a path to a leaf in $T$ that doesn't cross $uv$. All these leaves must be distinct, since they are contained in distinct subtrees of $T$. Then $T$ has at least $|N(u) \cup N(v)| - 2$ leaves. $\Box$
+\\
+Lemmas 1 and 2 show that for every edge $uv \in E(G)$,
+$$c(u) + c(v) \leq L_S(G) + 2 = 2\mu.$$
+
+Next, we observe that $\sum_v c(v) \leq n\mu$ trivially holds if every $c(v) \leq \mu$. So assume this is not the case. Then we can split the vertices into "heavy" vertices with $c(v) > \mu$, and "light" vertices with $c(v) \leq \mu$. Let $S$ be the set of heavy vertices.
+
+$S$ must be an independent set, since the above equation shows that for any edge $uv$, at most one of $u$ or $v$ can be heavy. Less obvious is that light vertices cannot have many neighbors in $S$.
+\\
+\textbf{Lemma 3.} If $v$ is a light vertex, then $|N(v) \cap S| < \mu$.
+\\
+\textbf{Proof of Lemma 3.} Let $u \in N(v) \cap S$. Since $S$ is independent, all neighbours of $u$ are outside $N(v) \cap S$. So $|N(u) \cup N(v)| \geq |N(v) \cap S| + |N(u)|$. Using Lemma 2 we get
+$$
+|N(v) \cap S| \leq |N(u) \cup N(v)| - |N(u)| \leq L_S(G) + 2 - d(u).
+$$
+As $d(u) \geq c(u) > \mu$, we obtain $|N(v) \cap S| < L_S(G) + 2 - \mu = \mu$. $\Box$
+
+Then the theorem follows from the following more general statement:
+\\
+\textbf{Claim.} Let $c: V \rightarrow \mathbb{R}$ and $\mu \geq 0$ satisfy:
+\begin{enumerate}
+\item $c(v) \leq d(v)$ for all $v$,
+\item $c(u) + c(v) \leq 2\mu$ for every edge $uv$,
+\item $S := \{u: c(u) > \mu\}$ is an independent set,
+\item $|N(v) \cap S| < \mu$ for every $v \notin S$.
+\end{enumerate}
+Then $\sum_v c(v) \leq n\mu$.
+\\
+\textbf{Proof of Claim.} We assume $S$ is non-empty, otherwise the claim is trivially true. The proof uses a discharging argument: it sends the \textit{excess} $c(u) - \mu$ from a heavy vertex $u \in S$ to its neighbors. The redistribution keeps the total sum $\sum_v c(v)$ constant. However, the amount sent to a light vertex $v$ is less than the \textit{slack} $\mu - c(v)$, so the overall sum can't exceed $n\mu$.
+Precisely, define a weight function that transfers excess from heavy to light vertices:
+$$W(u, v) := \begin{cases}
+\frac{\mu - c(v)}{d(u)} & \textrm{if $u \in S$ and $uv$ is an edge},\\
+0 & \textrm{otherwise}.
+\end{cases}$$
+Because $S$ is independent, the weight flows only from heavy to light vertices. We now show two statements.
+\\
+\textbf{Each heavy vertex sends out enough weight}. If $u \in S$ and $uv$ is an edge, then $c(u) + c(v) \leq 2\mu$ by condition 2. So $\mu - c(v) \geq c(u) - \mu$. Then
+$$\sum_{v \in N(u)} W(u, v) \geq d(u) \frac{c(u) - \mu}{d(u)} = c(u) - \mu.$$
+\\
+\textbf{Each light vertex absorbs at most its slack}. Let $v \notin S$. Then $v$ receives weight from vertices in $F := N(v) \cap S$.
+\\
+Let $u \in F$. From conditions (1) and (4), we have $|F| < \mu < c(u) \leq d(u)$. Then the total weight received is
+$$\sum_{u \in F} W(u, v) = \sum_{u \in F} \frac{\mu - c(v)}{d(u)} < \sum_{u \in F} \frac{\mu - c(v)}{|F|} = \mu - c(v). 
+$$
+These two statements together show that
+$$
+\sum_{u \in S} c(u) - \mu \leq \sum_{u \in S} \sum_{v \notin S} W(u, v) = \sum_{v \notin S} \sum_{u \in S} W(u, v) \leq \sum_{v \notin S} \mu - c(v).
+$$
+Re-arranging the terms gives $\sum_v c(v) < n\mu$ as desired. \hfill $\Box$

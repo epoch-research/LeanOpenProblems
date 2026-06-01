@@ -1,0 +1,19 @@
+
+\noindent\textbf{Question.} Is there a basis $A$ of order $2$ such that if $A=A_1\sqcup A_2$ then $A_1+A_1$ and $A_2+A_2$ cannot both have bounded gaps?
+
+\noindent \textbf{Proof.}     We show that the answer is yes by constructing a pathological basis $A$ with ``forbidden zones'' that force any partition to create arbitrarily large gaps in at least one component sumset.
+    \\\\
+    \textbf{Step 1: The construction.}
+    Choose a sequence of rapidly growing scales $P_k = 100^k$. For each $k \ge 1$, define a forbidden zone $Z_k$, which is a broad interval of integers running roughly from $\frac{11}{2} P_k$ to $11 P_k + k$. In the middle of this zone, we leave a single ``oasis'' --- an isolated element $x_k = 10 P_k$. The set $A$ consists of all natural numbers that avoid every forbidden zone, together with the oases $x_k$. In visual terms, $A$ is made of clumps of consecutive integers separated by large empty gaps, each containing a single survivor $x_k$.
+    \\\\
+    \textbf{Step 2: $A \cup \{0\}$ is a basis of order 2.}
+    We must show every natural number $n$ can be written as $a + b$ with $a, b \in A \cup \{0\}$:
+    \begin{itemize}
+        \item If $n \notin Z_k$ for any $k$, then $n \in A$ and we use $n + 0 = n$.
+        \item If $n \in Z_k$ and $n$ lies in the lower half of $Z_k$, we use $\lfloor n/2 \rfloor + \lceil n/2 \rceil$. Because $n$ is small enough, neither half lands in $Z_k$, and both are large enough to avoid the previous zone $Z_{k-1}$.
+        \item If $n \in Z_k$ and $n$ lies in the upper half, we use the oasis: $n = x_k + (n - x_k)$. The difference $n - x_k$ is small enough that it falls safely before the forbidden zone $Z_k$.
+    \end{itemize}
+    \textbf{Step 3: No syndetic partition exists.}
+    Suppose $A = A_1 \sqcup A_2$. Consider a target sum $m \in [11 P_k, 11 P_k + k]$. To write $m = u + v$ with $u, v \in A$, the algebra forces the larger operand $v$ to land inside the forbidden range $[\frac{11}{2}P_k, 11 P_k + k]$. But the only element of $A$ in this range is $x_k$. Therefore, representing any sum in $[11 P_k, 11 P_k + k]$ requires $x_k$.
+    \\\\
+    By the pigeonhole principle, $x_k$ belongs to exactly one partition component, say $A_1$. Then $A_1 + A_1$ can cover the interval $[11 P_k, 11 P_k + k]$ using $x_k$, but $A_2 + A_2$ is completely locked out --- it cannot represent any element in that interval. This leaves a gap of length $k$ in $A_2 + A_2$. Since $k$ can be made arbitrarily large, the gaps in one component's sumset are unbounded, proving it is impossible to partition $A$ so that both sumsets have bounded gaps. \hfill $\Box$

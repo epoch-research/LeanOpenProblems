@@ -1,0 +1,41 @@
+\textbf{Theorem. } (A conjecture of OEIS A051293, 2002) Let $a_n$ denote the number of nonempty subsets of $\{1, 2, 3, \dots, n\}$ whose elements have an integer average. Then
+$$ a_n = \frac{2^{n+1}}{n} \left( 1 + \frac{1}{n} + \frac{3}{n^2} + \frac{13}{n^3} + \frac{75}{n^4} + \frac{541}{n^5} + o\left(\frac{1}{n^5}\right) \right) $$
+\textbf{Proof.} A subset $S \subseteq \{1, 2, \dots, n\}$ has an integer average if and only if the sum of its elements is divisible by its cardinality $|S|$. Let $N(n, k)$ denote the number of subsets of size $k$ whose sum is divisible by $k$. We can express the total number of such subsets as $a_n = \sum_{k=1}^n N(n, k)$
+To isolate the condition that $k$ divides the sum of the elements in $S$, we utilize the orthogonality of roots of unity. Let $\omega_{k, j} = \exp\left(\frac{2\pi i j}{k}\right)$. By the standard orthogonality relation, the sum $\frac{1}{k} \sum_{j=0}^{k-1} \omega_{k, j}^N$ equals $1$ if $k$ divides $N$, and $0$ otherwise. Thus, the indicator function for divisibility by $k$ is $\frac{1}{k} \sum_{j=0}^{k-1} \omega_{k, j}^{\sum_{s \in S} s}$. Summing this over all $\binom{n}{k}$ subsets of size $k$ yields
+$$ N(n, k) = \frac{1}{k} \sum_{j=0}^{k-1} \sum_{|S|=k} \omega_{k, j}^{\sum_{s \in S} s} $$
+We isolate the principal term corresponding to $j = 0$, which evaluates trivially to $\frac{1}{k} \binom{n}{k}$. Let the remainder term be $R_{n,k}$, defined as
+$$ R_{n,k} = \frac{1}{k} \sum_{j=1}^{k-1} \sum_{|S|=k} \omega_{k, j}^{\sum_{s \in S} s} $$
+Thus, $N(n, k) = \frac{1}{k} \binom{n}{k} + R_{n,k}$. Summing over all possible subset sizes $k$, we obtain
+$$ a_n = \sum_{k=1}^n \frac{1}{k} \binom{n}{k} + \sum_{k=1}^n R_{n,k} $$
+Using the well-known identity $\sum_{k=1}^n \frac{1}{k} \binom{n}{k} = \sum_{j=1}^n \frac{2^j - 1}{j}$, we separate this into two sums: $S_n = \sum_{j=1}^n \frac{2^j}{j}$ and the harmonic number $H_n = \sum_{j=1}^n \frac{1}{j}$. This yields our fundamental decomposition
+$$ a_n = S_n - H_n + \sum_{k=1}^n R_{n,k} $$
+Next, we establish that the sum of the remainders $\sum_{k=1}^n R_{n,k}$ is asymptotically negligible. 
+Consider the inner sum $\sum_{|S|=k} \omega_{k, j}^{\sum_{s \in S} s}$. This sum is exactly the coefficient of $z^k$ in the polynomial $P_{n, k, j}(z) = \prod_{m=1}^n (1 + z \omega_{k, j}^m)$. By standard coefficient bounds, the magnitude of the $k$-th coefficient of a polynomial is bounded by its maximum modulus on the unit circle $|z| = 1$:
+$$ \left| \sum_{|S|=k} \omega_{k, j}^{\sum_{s \in S} s} \right| \le \max_{|z|=1} \prod_{m=1}^n |1 + z \omega_{k, j}^m| $$
+For a fixed $k$ and $j \in \{1, \dots, k-1\}$, the sequence of roots $\omega_{k, j}^m$ is periodic with period $L = \frac{k}{\gcd(j, k)} \ge 2$. The product over a full period $L$ can be evaluated algebraically: the roots of $X^L - 1$ dictate that $\prod_{m=A}^{A+L-1} (1 + z \omega_{k,j}^m) = 1 - (-z)^L$. For any $z$ on the unit circle, the magnitude $|1 - (-z)^L|$ is strictly bounded by $2$.
+When taking the product over all $n$ terms, we group them into $\lfloor n/L \rfloor$ full periods, leaving $n \bmod L$ residual terms. For $|z|=1$, each full period contributes at most a factor of $2$, and by the triangle inequality $|1 + z \omega_{k,j}^m| \le 2$, each residual term also contributes at most a factor of $2$. Therefore, the total product is bounded by $2^{\lfloor n/L \rfloor + (n \bmod L)}$. 
+Because $L \ge 2$, we have $\lfloor n/L \rfloor + (n \bmod L) \le \frac{n}{2} + 1$. Thus, for any $z$ on the unit circle, we have
+$$ |P_{n, k, j}(z)| \le 2^{\frac{n}{2} + 1} = 2 \cdot 2^{n/2} $$
+Consequently, the magnitude of the coefficient is bounded by $2 \cdot 2^{n/2}$. Applying this to our remainder definition yields $|R_{n,k}| \le \frac{k-1}{k} 2 \cdot 2^{n/2} \le 2 \cdot 2^{n/2}$. Summing over $k \in \{1, \dots, n\}$ gives the strict bound
+$$ \left| \sum_{k=1}^n R_{n,k} \right| \le 2 n 2^{n/2} $$
+We must now evaluate the asymptotics of $S_n = \sum_{j=1}^n \frac{2^j}{j}$. We propose the asymptotic approximation $f_n$, defined as
+$$ f_n = \frac{2^{n+1}}{n} \left( 1 + \frac{1}{n} + \frac{3}{n^2} + \frac{13}{n^3} + \frac{75}{n^4} + \frac{541}{n^5} \right) = \frac{2^{n+1} P(n)}{n^6} $$
+where $P(n) = n^5 + n^4 + 3n^3 + 13n^2 + 75n + 541$. 
+To demonstrate that $f_n$ is a highly accurate approximation of $S_n$, we analyze the discrepancy in their consecutive differences. Let $E_j$ be the discrete derivative error given by
+$$ E_j = f_j - f_{j-1} - \frac{2^j}{j} $$
+By telescoping summation, $S_n - f_n = S_1 - f_1 - \sum_{j=2}^n E_j$. To bound $E_j$, we expand $f_j - f_{j-1}$ algebraically to obtain
+$$ f_j - f_{j-1} - \frac{2^j}{j} = \frac{2^j \left[ 2P(j)(j-1)^6 - P(j-1)j^6 - j^5(j-1)^6 \right]}{j^6(j-1)^6} $$
+Let $A(x) = 2P(x)(x-1)^6 - P(x-1)x^6 - x^5(x-1)^6$. Expanding $A(x)$ leaves a polynomial of strictly degree $5$:
+$$ A(x) = -4683 x^5 + 13586 x^4 - 19540 x^3 + 15356 x^2 - 6342 x + 1082 $$
+In particular, it is easy to show that $|A(j)| \le 100000 j^5$ for $j \geq 2$. Substituting this back into the error term yields
+$$ |E_j| \le \frac{100000 \cdot 2^j}{j^7} $$
+Summing these errors up to $n$, the sum is dominated by its largest terms, giving $\sum_{j=2}^n |E_j| = \mathcal{O}\left(\frac{2^n}{n^7}\right)$. 
+Recall our decomposition $a_n = f_n + (S_n - f_n) - H_n + \sum_{k=1}^n R_{n,k}$. To prove the theorem, it suffices to show that the combined error terms are $o\left(\frac{2^{n+1}}{n^6}\right)$:
+\begin{enumerate}
+    \item $S_n - f_n = \mathcal{O}\left(\frac{2^n}{n^7}\right) = o\left(\frac{2^{n+1}}{n^6}\right)$.
+    \item $H_n \sim \ln n = o\left(\frac{2^{n+1}}{n^6}\right)$.
+    \item $\sum R_{n,k} \le 2n 2^{n/2} = o\left(\frac{2^{n+1}}{n^6}\right)$.
+\end{enumerate}
+Since all residual terms are bounded by $o\left(\frac{2^{n+1}}{n^6}\right)$, we conclude that
+$$ a_n = f_n + o\left(\frac{2^{n+1}}{n^6}\right) = \frac{2^{n+1}}{n} \left( 1 + \frac{1}{n} + \frac{3}{n^2} + \frac{13}{n^3} + \frac{75}{n^4} + \frac{541}{n^5} + o\left(\frac{1}{n^5}\right) \right)$$
+This establishes the conjectured asymptotic expansion. \hfill $\Box$
