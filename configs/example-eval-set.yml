@@ -3,7 +3,7 @@
 name: apn-oeis-smoke
 
 tasks:
-  - package: git+ssh://git@github.com/epoch-research/tsoukalas-lean.git
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn
     items:
       - name: apn_oeis
