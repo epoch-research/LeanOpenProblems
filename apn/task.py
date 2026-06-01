@@ -117,13 +117,13 @@ services:
     image: {IMAGE_REPOSITORY}:{agent_tag}
     init: true
     entrypoint: tail -f /dev/null
-    mem_limit: 15Gi
+    mem_limit: 15g
     network_mode: none
   scorer:
     image: {IMAGE_REPOSITORY}:{scorer_tag}
     init: true
     entrypoint: tail -f /dev/null
-    mem_limit: 15Gi
+    mem_limit: 15g
     network_mode: none
 """
 
