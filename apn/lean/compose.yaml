@@ -6,13 +6,13 @@
 # Run several independent attempts per problem with `inspect eval ... --epochs N`.
 services:
   default:
-    image: apn-agent
+    image: ${APN_AGENT_IMAGE:-apn-agent}
     command: ["sleep", "infinity"]
     init: true
     x-local: true
     network_mode: none
   scorer:
-    image: apn-scorer
+    image: ${APN_SCORER_IMAGE:-apn-scorer}
     command: ["sleep", "infinity"]
     init: true
     x-local: true

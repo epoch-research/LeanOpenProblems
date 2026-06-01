@@ -129,6 +129,20 @@ Any Inspect-supported model works; the paper used Gemini 3.1 Pro for proving. Th
 first compile in each sample's sandbox imports Mathlib + FC (~1–2 minutes); after
 that the warm Pantograph server makes compiles fast.
 
+### Running on Hawk
+
+The package exports an Inspect registry entry point named `apn`, so Hawk can load
+the task as `apn/apn_oeis` from the installed package. A smoke eval-set config is
+available at `configs/example-eval-set.yml`:
+
+```bash
+hawk eval-set configs/example-eval-set.yml
+```
+
+For local Inspect runs, the compose file uses the locally built `apn-agent` and
+`apn-scorer` images. On Hawk, set the runner secrets `APN_AGENT_IMAGE` and
+`APN_SCORER_IMAGE` to the full pushed image URIs for those two sandbox images.
+
 ### API keys
 
 Provider keys live in `.env`. Inspect loads `.env` but does not override a

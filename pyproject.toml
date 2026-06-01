@@ -13,6 +13,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["apn"]
+artifacts = [
+    "apn/data/oeis/**/*",
+    "apn/lean/compose.yaml",
+]
+
+[project.entry-points.inspect_ai]
+apn = "apn._registry"
 
 [dependency-groups]
 dev = [
