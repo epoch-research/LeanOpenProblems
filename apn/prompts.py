@@ -27,7 +27,10 @@ You have a `bash` tool giving you a shell in the workspace. From there:
   lives at `/workspace/leanproject` with Mathlib + the FC oleans pre-built;
   the relevant import is `FormalConjectures.Util.ProblemImports`.
   PyPantograph documentation and worked example scripts are at
-  `/opt/pypantograph-docs`.
+  `/opt/pypantograph-docs`. PyPantograph is the Python interface to the
+  underlying [Pantograph](https://github.com/leanprover/Pantograph) repl;
+  the repl's own protocol reference (everything reachable via
+  `Server.run_async`) is at `/opt/pantograph-docs/repl.md`.
 
 Rules:
 - Do NOT change any statement (theorem names, hypotheses, goals) or any

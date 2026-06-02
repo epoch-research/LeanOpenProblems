@@ -20,9 +20,12 @@ RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
     && pip3 install --break-system-packages --no-cache-dir . \
     && cd / && rm -rf /opt/PyPantograph
 
-# In-sandbox PyPantograph reference for the agent (the sandbox has no network).
-# Vendored from the same pinned commit -- see pypantograph-docs/README.md.
+# In-sandbox references for the agent (the sandbox has no network), vendored
+# version-matched to the installed package: PyPantograph docs + examples at the
+# pinned commit, and Pantograph's repl protocol reference at the submodule
+# commit that pin builds.
 COPY pypantograph-docs /opt/pypantograph-docs
+COPY pantograph-docs /opt/pantograph-docs
 
 # Python libraries for the agent's numerical scratchpad (the `bash` tool runs
 # python3 in this image). sympy/numpy are very useful for the number-theory
