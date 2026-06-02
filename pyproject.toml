@@ -41,6 +41,8 @@ hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v20
 [tool.mypy]
 python_version = "3.13"
 files = ["apn", "tests"]
+# Vendored third-party docs/examples, not our code.
+exclude = 'pypantograph-docs'
 strict = true
 # Inspect ships py.typed; lean on its annotations.
 warn_unused_configs = true
