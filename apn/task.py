@@ -60,7 +60,13 @@ services:
     image: {IMAGE_REPOSITORY}:{agent_tag}
     init: true
     entrypoint: tail -f /dev/null
-    mem_limit: 64g
+    # A full PyPantograph session (Server + check_compile + load_sorry +
+    # goal_tactic on a benchmark file) peaks at ~6 GiB RSS, almost all of it
+    # mmapped Mathlib oleans -- shared between processes and reclaimable under
+    # pressure (only ~0.4 GiB is anonymous). 10g is comfortable headroom for
+    # the normal workflow; if agent code exceeds it anyway, the OOM kill is
+    # reported back through the bash tool and the agent can adapt.
+    mem_limit: 10g
     network_mode: none
   scorer:
     image: {IMAGE_REPOSITORY}:{scorer_tag}
