@@ -40,6 +40,9 @@ jobs:
             echo "SCORER_IMAGE_TAG=LeanOpenProblems_scorer_${image_version}"
           } >> "$GITHUB_ENV"
 
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
       - name: Login to ECR
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
@@ -70,37 +73,47 @@ jobs:
       # is pushed as its own image so that later CI runs can skip the
       # expensive Lean + Mathlib build: the agent/scorer builds override the
       # `base` stage with the pushed image via a named build context.
+      #
+      # Layer caches are pushed to ECR_CACHE_REGISTRY (mode=max: all layers,
+      # including intermediate stages), keyed by image tag like PortBench --
+      # ECR tags are immutable, so the cache ref must change with the version.
       - name: Build and push base image
         if: steps.image_tags.outputs.base_exists != 'true'
         working-directory: apn/lean
         run: |-
-          docker build \
+          docker buildx build \
             --target base \
+            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${BASE_IMAGE_TAG}" \
+            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${BASE_IMAGE_TAG}" \
+            --push \
             -t "${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
             .
-          docker push "${IMAGE_NAME}:${BASE_IMAGE_TAG}"
 
       - name: Build and push agent image
         if: steps.image_tags.outputs.agent_exists != 'true'
         working-directory: apn/lean
         run: |-
-          docker build \
+          docker buildx build \
             --target agent \
             --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
+            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_IMAGE_TAG}" \
+            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_IMAGE_TAG}" \
+            --push \
             -t "${IMAGE_NAME}:${AGENT_IMAGE_TAG}" \
             .
-          docker push "${IMAGE_NAME}:${AGENT_IMAGE_TAG}"
 
       - name: Build and push scorer image
         if: steps.image_tags.outputs.scorer_exists != 'true'
         working-directory: apn/lean
         run: |-
-          docker build \
+          docker buildx build \
             --target scorer \
             --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
+            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${SCORER_IMAGE_TAG}" \
+            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${SCORER_IMAGE_TAG}" \
+            --push \
             -t "${IMAGE_NAME}:${SCORER_IMAGE_TAG}" \
             .
-          docker push "${IMAGE_NAME}:${SCORER_IMAGE_TAG}"
 
       - name: Report image repository
         run: |-
