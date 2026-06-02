@@ -60,6 +60,51 @@ def lean_check(
     return execute
 
 
+@tool(name="bash")
+def bash(
+    timeout: int | None = None,
+    user: str | None = None,
+    sandbox_name: str | None = None,
+) -> Tool:
+    """Bash tool that surfaces the exit status to the agent on failure.
+
+    Equivalent to ``inspect_ai.tool.bash`` on success (stdout, with stderr
+    prepended if any). On a non-zero exit -- which the built-in tool would
+    silently swallow -- the agent gets stdout, stderr, and the raw returncode
+    each in pseudo-XML tags so the model sees the streams separately and knows
+    the command failed. Interpreting specific codes (137 = SIGKILL/OOM,
+    127 = command not found, ...) is left to the model.
+    """
+
+    async def execute(command: str) -> str:
+        """
+        Use this function to execute bash commands.
+
+        Args:
+          command: The bash command to execute.
+
+        Returns:
+          The output of the command.
+        """
+        result = await sandbox(sandbox_name).exec(
+            cmd=["bash", "--login", "-c", command], timeout=timeout, user=user
+        )
+        if result.returncode == 0:
+            # Mimic inspect_ai.tool.bash, which just concatenates
+            # stderr and stdout.
+            output = ""
+            if result.stderr:
+                output = f"{result.stderr}\n"
+            return f"{output}{result.stdout}"
+        return (
+            f"<stdout>{result.stdout}</stdout>\n"
+            f"<stderr>{result.stderr}</stderr>\n"
+            f"<returncode>{result.returncode}</returncode>"
+        )
+
+    return execute
+
+
 # --------------------------------------------------------------------------- #
 # arXiv access                                                                 #
 # --------------------------------------------------------------------------- #

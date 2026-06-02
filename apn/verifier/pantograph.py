@@ -16,6 +16,7 @@ import json
 
 from inspect_ai.util import SandboxEnvironment, sandbox
 
+from apn._exec_status import exit_status_note
 from apn.verifier.base import CompileResult, Diagnostic, Severity
 
 CLIENT_CMD = ["python3", "/opt/apn/apn_lean.py", "client"]
@@ -45,11 +46,16 @@ class PantographVerifier:
     def _env(self) -> SandboxEnvironment:
         return sandbox(self._sandbox_name)
 
-    async def _call(self, request: dict[str, object]) -> dict[str, object] | None:
-        """Send one request to the daemon; return the parsed JSON or ``None``.
+    async def _call(
+        self, request: dict[str, object]
+    ) -> tuple[dict[str, object] | None, str | None]:
+        """Send one request to the daemon.
 
-        ``None`` signals a transport/system failure (the caller renders it as a
-        system error rather than a clean compile result).
+        Returns ``(response, None)`` on success and ``(None, error_message)`` on
+        a transport/system failure. The error message embeds the raw exit code
+        (see :mod:`apn._exec_status`) when the daemon process died, so the
+        agent sees e.g. ``status 137`` (the kernel OOM-killer's SIGKILL) rather
+        than a generic "transport failed".
         """
         result = await self._env().exec(
             CLIENT_CMD,
@@ -57,19 +63,20 @@ class PantographVerifier:
             timeout=self._timeout,
         )
         if not result.success:
-            return None
+            note = exit_status_note(result) or "sandbox exec failed"
+            return None, f"lean daemon transport failed: {note}"
         try:
             parsed = json.loads(result.stdout)
         except json.JSONDecodeError:
-            return None
+            return None, "lean daemon returned unparseable output"
         if not isinstance(parsed, dict):
-            return None
-        return parsed
+            return None, "lean daemon returned a non-object response"
+        return parsed, None
 
     async def compile(self, code: str) -> CompileResult:
-        response = await self._call({"op": "compile", "code": code})
+        response, error = await self._call({"op": "compile", "code": code})
         if response is None:
-            return CompileResult(system_error="sandbox exec or daemon transport failed")
+            return CompileResult(system_error=error)
         system_error = response.get("system_error")
         if system_error is not None:
             return CompileResult(system_error=str(system_error))

@@ -17,11 +17,11 @@ from __future__ import annotations
 from inspect_ai.agent import AgentAttempts, AgentSubmit, deepagent, run
 from inspect_ai.model import CompactionSummary, get_model
 from inspect_ai.solver import Generate, Solver, TaskState, solver
-from inspect_ai.tool import Tool, ToolResult, bash, text_editor, tool
+from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox
 
 from apn.prompts import LEAN_INSTRUCTIONS, LITERATURE_INSTRUCTIONS, render_task
-from apn.tools import arxiv_search, arxiv_source, lean_check
+from apn.tools import arxiv_search, arxiv_source, bash, lean_check
 from apn.verifier.base import LeanVerifier
 
 # Path of the proof file inside the sample's sandbox.
