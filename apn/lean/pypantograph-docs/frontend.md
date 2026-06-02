@@ -1,3 +1,5 @@
+<!-- Converted to markdown from doc/frontend.ipynb in PyPantograph. -->
+
 # Data Extraction
 
 ```python

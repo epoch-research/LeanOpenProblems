@@ -1,3 +1,5 @@
+<!-- Converted to markdown from doc/agent-search.ipynb in PyPantograph. -->
+
 # Search
 
 Pantograph supports basic proof search. In this case, Pantograph treats goals as nodes on an and-or tree. The user supplies an agent which should provide two functions:

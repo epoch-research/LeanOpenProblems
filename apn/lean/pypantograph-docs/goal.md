@@ -1,3 +1,5 @@
+<!-- Converted to markdown from doc/goal.ipynb in PyPantograph. -->
+
 # Goals and Tactics
 
 Executing tactics in Pantograph is simple. To start a proof, call the
