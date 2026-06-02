@@ -32,7 +32,7 @@ PROOF_PATH = "/tmp/apn_proof.lean"
 # cannot search for verifier gaps.
 INCORRECT_MESSAGE = (
     "Your submission did not pass verification. Keep working to find a correct, "
-    "complete proof. (The verifier's output is not disclosed.)"
+    "complete proof."
 )
 
 
