@@ -72,7 +72,32 @@ services:
     image: {IMAGE_REPOSITORY}:{scorer_tag}
     init: true
     entrypoint: tail -f /dev/null
-    mem_limit: 64g
+    # safe_verify has a large fixed footprint: ~27 GiB peak RSS (~21 GiB
+    # anonymous), flat to within 0.1 GiB across benchmark samples. Phase-by-
+    # phase profiling attributes essentially all of it to four importModules
+    # calls (two in the import-superset check, one per replayed file), each
+    # materializing the full Mathlib environment on the heap and never freeing
+    # it; the kernel replay of the submission's own declarations is negligible
+    # by comparison.
+    #
+    # On top of that baseline, proof *content* adds kernel-checking work, and
+    # this part is effectively unbounded for legitimate proofs: safe_verify's
+    # rebuildExpr deep-copies proof terms *without memoization*, expanding
+    # pointer-shared DAGs (which tactics like `ring` produce routinely) into
+    # trees. Measured example: `(a+b+c)^16 = (c+b+a)^16 := by ring` compiles
+    # in 3.5s at 6.4 GiB but blew past a 34 GiB limit in safe_verify before
+    # being OOM-killed. So the agent-side compile succeeding does NOT bound
+    # the scorer's cost, and no mem_limit can make scorer OOMs impossible.
+    # Real submissions have reached ~43 GiB in production monitoring.
+    #
+    # The real fixes live in the vendored safeverify (memoize rebuildExpr;
+    # skip the redundant importModules in the superset check) -- deliberately
+    # not attempted for now: changing verifier code is risky. 50g covers the
+    # fixed baseline plus the worst production observation to date. An OOM
+    # kill here is an infrastructure error (the checker raises rather than
+    # mis-scoring the proof), and it is deterministic per submission, so it
+    # will recur on retry.
+    mem_limit: 50g
     network_mode: none
 """
 

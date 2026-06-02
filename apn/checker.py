@@ -20,6 +20,12 @@ This module drives those commands in the trusted scorer sandbox, one
   killer) or timing out -> not a verdict: raise, so the sample errors out and
   is rerun/inspected rather than silently scoring a possibly valid proof as
   INCORRECT.
+
+Note that an OOM here can be triggered by a perfectly legitimate proof:
+safe_verify's memory use on a submission can vastly exceed the agent-side
+compile cost (its un-memoized rebuildExpr expands pointer-shared proof terms,
+e.g. from ``ring``, exponentially). See the scorer mem_limit comment in
+apn/task.py for measurements; such failures are deterministic per submission.
 """
 
 from __future__ import annotations
