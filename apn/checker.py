@@ -35,7 +35,7 @@ from typing import Protocol, runtime_checkable
 
 from inspect_ai.util import sandbox
 
-# Paths inside the scorer image (see apn/lean/Dockerfile.scorer). The Lean
+# Paths inside the scorer image (the scorer stage of apn/lean/Dockerfile). The Lean
 # files live inside the lake project so `lake env lean -o` resolves imports.
 PROJECT = "/workspace/leanproject"
 SCORE_DIR = f"{PROJECT}/_apn_score"

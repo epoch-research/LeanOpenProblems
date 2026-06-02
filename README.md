@@ -78,9 +78,9 @@ sample gets **two** sandboxes from a shared base image:
   [PyPantograph](https://github.com/lenianiva/PyPantograph) is installed in
   the image alongside the prebuilt FormalConjectures + Mathlib oleans, so the
   agent compiles Lean by importing `pantograph` from python3 and creating a
-  `Server` itself (~2s per fresh server with the page cache warm; see
-  `apn/lean/Dockerfile.agent`). Also has `python3` + `sympy`/`numpy` for the
-  numerical scratchpad. **No SafeVerify here.**
+  `Server` itself (~2s per fresh server with the page cache warm; see the
+  `agent` stage of `apn/lean/Dockerfile`). Also has `python3` + `sympy`/`numpy`
+  for the numerical scratchpad. **No SafeVerify here.**
 * **`scorer`** — a separate, trusted container (`apn-scorer`) the agent never
   writes to, where SafeVerify validates the final proof. The scorer writes the
   submitted proof (from the store) into this clean container and checks it, so
@@ -97,21 +97,19 @@ Each sample (and each epoch) gets its own pair of sandboxes.
 under `apn/lean/safeverify/` (ported to Lean v4.27.0; see its `NOTICE.md`). All
 three must agree to load the `.olean` files.
 
-### Build the images
+### Images
 
-```bash
-apn/lean/build.sh   # builds apn-lean-base, then apn-agent and apn-scorer
-```
-
-This clones Formal Conjectures, fetches Mathlib's prebuilt `.olean` cache
-(`lake exe cache get`), and builds the FC library closure into a base image, then
-layers PyPantograph (agent) and SafeVerify (scorer) on top. The images are large
-(Mathlib dominates).
+Both sandbox images are stages of the multi-stage `apn/lean/Dockerfile` and are
+built automatically by docker compose when an eval starts (and rebuilt when the
+Dockerfile changes); there is nothing to build or tag manually. The shared
+`base` stage clones Formal Conjectures, fetches Mathlib's prebuilt `.olean`
+cache (`lake exe cache get`), and builds the FC library closure; the `agent`
+and `scorer` stages layer PyPantograph and SafeVerify on top. The first local
+run pays the full build (Mathlib dominates); after that everything is cached.
 
 ## Running
 
 ```bash
-apn/lean/build.sh    # build the images first
 inspect eval apn/task.py@apn_oeis --model openai/gpt-5.5 --token-limit 1000000
 ```
 
@@ -140,11 +138,10 @@ available at `configs/example-eval-set.yml`:
 hawk eval-set configs/example-eval-set.yml
 ```
 
-For local Inspect runs, `apn/lean/build.sh` tags the sandbox images as
-`LeanOpenProblems_<kind>_0.1.0_<git-hash>`. On Hawk, set the runner secret
-`LEAN_OPEN_PROBLEMS_IMAGE_NAME` to the pushed image repository; the task
-generates its compose file with the matching agent and scorer tags for the
-installed package git hash.
+Local Inspect runs build the sandbox images on the fly (see above). On Hawk,
+set the runner secret `LEAN_OPEN_PROBLEMS_IMAGE_NAME` to the image repository
+that CI pushed to; the task generates its compose file with the matching
+agent and scorer tags for the package version.
 
 ### API keys
 

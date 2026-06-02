@@ -1,19 +1,25 @@
-# Shared base: Lean v4.27.0 + Mathlib v4.27.0 (olean cache) + the
-# FormalConjectures library, so that a problem file importing
-# `FormalConjectures.Util.ProblemImports` compiles. The agent and scorer images
-# both derive from this.
+# Multi-stage build for the LeanOpenProblems sandbox images (PortBench's
+# pattern: docker compose builds the stages on demand, no manual image
+# management):
+#
+#   - base   -- Lean v4.27.0 + Mathlib (olean cache) + the FormalConjectures
+#               library, so that a problem file importing
+#               `FormalConjectures.Util.ProblemImports` compiles. Shared by the
+#               two service images; not a service itself.
+#   - agent  -- the agent's workspace: base + PyPantograph + numerical Python
+#               libs. Deliberately does NOT contain SafeVerify.
+#   - scorer -- the trusted checker: base + SafeVerify. Runs in a separate
+#               sandbox the agent never writes to.
 #
 # Lean v4.27.0 matches the Formal Conjectures Erdős/OEIS datasets (oleans are
 # version-specific, so the repl and SafeVerify are all built at this version).
 #
-# Multi-stage: the builder clones the whole formal-conjectures repo and builds
-# the library; the final image copies in ONLY the toolchain, the lake build
-# artifacts (oleans), and the proving-library source. The conjecture corpus
-# (other OEIS problems, the Erdős/Arxiv/etc. sets -- which contain real proofs
-# and axioms), the library test suite, and repo tooling/docs/.git never reach the
+# The builder stage clones the whole formal-conjectures repo and builds the
+# library; base copies in ONLY the toolchain, the lake build artifacts
+# (oleans), and the proving-library source. The conjecture corpus (other OEIS
+# problems, the Erdős/Arxiv/etc. sets -- which contain real proofs and
+# axioms), the library test suite, and repo tooling/docs/.git never reach the
 # agent's sandbox, so there is no contamination to strip after the fact.
-#
-#   docker build -t apn-lean-base -f Dockerfile.base .
 
 # --------------------------------------------------------------------------- #
 # Builder: clone + build the FC library (everything here is discarded).        #
@@ -48,9 +54,9 @@ RUN lake exe cache get \
     && lake build FormalConjectures.Util.ProblemImports
 
 # --------------------------------------------------------------------------- #
-# Final image: copy in only what runtime needs.                               #
+# base: copy in only what runtime needs.                                       #
 # --------------------------------------------------------------------------- #
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim AS base
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/root/.elan/bin:$PATH \
@@ -91,5 +97,53 @@ COPY --from=builder /workspace/leanproject/FormalConjecturesForMathlib \
                     ./FormalConjecturesForMathlib
 COPY --from=builder /workspace/leanproject/FormalConjecturesForMathlib.lean \
                     ./FormalConjecturesForMathlib.lean
+
+CMD ["sleep", "infinity"]
+
+# --------------------------------------------------------------------------- #
+# agent: the agent's workspace.                                                #
+# --------------------------------------------------------------------------- #
+FROM base AS agent
+
+# PyPantograph commit b8608f3 pins Pantograph v0.3.13, whose repl targets Lean
+# v4.27.0 -- matching this track's Mathlib + FormalConjectures oleans. (The repl
+# must be built with the same toolchain that produced the oleans it loads.)
+# The clone is removed after install so the only importable `pantograph` is the
+# installed package (a lingering source tree would shadow it for any python
+# started inside /opt/PyPantograph, and the source tree lacks the built repl).
+ARG PYPANTOGRAPH_COMMIT=b8608f3
+RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
+    && cd /opt/PyPantograph \
+    && git checkout "${PYPANTOGRAPH_COMMIT}" \
+    && git submodule update --init --recursive \
+    && pip3 install --break-system-packages --no-cache-dir . \
+    && cd / && rm -rf /opt/PyPantograph
+
+# In-sandbox references for the agent (the sandbox has no network), vendored
+# version-matched to the installed package: PyPantograph docs + examples at the
+# pinned commit, and Pantograph's repl protocol reference at the submodule
+# commit that pin builds.
+COPY pypantograph-docs /opt/pypantograph-docs
+COPY pantograph-docs /opt/pantograph-docs
+
+# Python libraries for the agent's numerical scratchpad (the `bash` tool runs
+# python3 in this image). sympy/numpy are very useful for the number-theory
+# problems; the sandbox has no network, so they must be baked in here.
+RUN pip3 install --break-system-packages --no-cache-dir numpy sympy
+
+CMD ["sleep", "infinity"]
+
+# --------------------------------------------------------------------------- #
+# scorer: SafeVerify, built with the v4.27.0 toolchain so it can replay/verify  #
+# v4.27.0 oleans. No Pantograph here.                                          #
+# --------------------------------------------------------------------------- #
+FROM base AS scorer
+
+# The host-side checker (apn/checker.py) drives the build product directly:
+# it compiles target/submission with `lake env lean -o` and runs safe_verify
+# on the oleans, one sandbox exec per step.
+COPY safeverify /opt/apn/safeverify
+# No manifest is vendored; resolve Cli (v4.27.0) and build.
+RUN cd /opt/apn/safeverify && lake update && lake build safe_verify
 
 CMD ["sleep", "infinity"]

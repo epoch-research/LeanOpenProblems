@@ -1,9 +1,14 @@
 """Inspect task for AlphaProof Nexus.
 
-Build the Lean images, then run the agent over the OEIS conjectures::
+Run the agent over the OEIS conjectures::
 
-    apn/lean/build.sh   # builds apn-lean-base, apn-agent, apn-scorer
     inspect eval apn/task.py@apn_oeis --model openai/gpt-5.5 --token-limit 1000000
+
+The sandbox images are built automatically by docker compose at eval startup
+from the multi-stage apn/lean/Dockerfile (and rebuilt when it changes); the
+first local run pays the full Lean + Mathlib build. In production,
+LEAN_OPEN_PROBLEMS_IMAGE_NAME points at the registry that CI pushed the
+images to.
 
 Run several independent attempts per problem with ``--epochs N`` (each epoch is a
 fresh sample run with its own sandbox); pair it with an epoch reducer such as
@@ -37,6 +42,21 @@ def get_identifier_for_image(image_kind: str) -> str:
     return f"LeanOpenProblems_{image_kind}_{image_version}"
 
 
+def _build_section(target: str) -> str:
+    """A compose ``build:`` section (PortBench's pattern: build + image).
+
+    Locally the image doesn't exist, so docker compose builds it from the
+    multi-stage apn/lean/Dockerfile at eval startup -- no manual image
+    management. The two services share the heavyweight ``base`` stage (Lean +
+    Mathlib + FormalConjectures oleans) through the build cache.
+    """
+    return f"""\
+    build:
+      context: {Path(__file__).parent / "lean"}
+      target: {target}
+"""
+
+
 def get_compose_file_content() -> str:
     agent_tag = get_identifier_for_image("agent")
     scorer_tag = get_identifier_for_image("scorer")
@@ -54,11 +74,12 @@ def get_compose_file_content() -> str:
 #
 # LEAN_OPEN_PROBLEMS_IMAGE_NAME is the image repository name. The tag after the
 # colon identifies which sandbox image to use, following PortBench's generated
-# compose pattern.
+# compose pattern: each service carries both build: and image:, so local runs
+# build the images on demand from the local Dockerfiles.
 services:
   default:
     image: {IMAGE_REPOSITORY}:{agent_tag}
-    init: true
+{_build_section("agent")}    init: true
     entrypoint: tail -f /dev/null
     # A full PyPantograph session (Server + check_compile + load_sorry +
     # goal_tactic on a benchmark file) peaks at ~6 GiB RSS, almost all of it
@@ -70,7 +91,7 @@ services:
     network_mode: none
   scorer:
     image: {IMAGE_REPOSITORY}:{scorer_tag}
-    init: true
+{_build_section("scorer")}    init: true
     entrypoint: tail -f /dev/null
     # safe_verify has a large fixed footprint: ~27 GiB peak RSS (~21 GiB
     # anonymous), flat to within 0.1 GiB across benchmark samples. Phase-by-
@@ -126,8 +147,8 @@ def apn_oeis(
     whole file (every definition, test lemma, and the conjecture must be
     reproduced verbatim and proved sorry-free with only permitted axioms).
 
-    Runs against the Formal Conjectures Lean v4.27 sandbox (build it first with
-    ``apn/lean/build.sh``).
+    Runs against the Formal Conjectures Lean v4.27 sandbox (built automatically
+    by docker compose from ``apn/lean/Dockerfile``).
 
     Args:
         names: Optional comma-separated list of conjecture theorem names to keep

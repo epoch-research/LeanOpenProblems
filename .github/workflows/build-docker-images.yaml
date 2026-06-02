@@ -65,32 +65,29 @@ jobs:
       - name: Set reproducible build timestamp
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
 
-      - name: Prepare base image
-        if: >-
-          steps.image_tags.outputs.base_exists != 'true' ||
-          steps.image_tags.outputs.agent_exists != 'true' ||
-          steps.image_tags.outputs.scorer_exists != 'true'
+      # The three images are stages of the single apn/lean/Dockerfile (which
+      # docker compose also builds on the fly for local runs). The base stage
+      # is pushed as its own image so that later CI runs can skip the
+      # expensive Lean + Mathlib build: the agent/scorer builds override the
+      # `base` stage with the pushed image via a named build context.
+      - name: Build and push base image
+        if: steps.image_tags.outputs.base_exists != 'true'
         working-directory: apn/lean
         run: |-
-          if [ "${{ steps.image_tags.outputs.base_exists }}" = "true" ]; then
-            docker pull "${IMAGE_NAME}:${BASE_IMAGE_TAG}"
-            docker tag "${IMAGE_NAME}:${BASE_IMAGE_TAG}" apn-lean-base
-          else
-            docker build \
-              -t apn-lean-base \
-              -t "${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
-              -f Dockerfile.base \
-              .
-            docker push "${IMAGE_NAME}:${BASE_IMAGE_TAG}"
-          fi
+          docker build \
+            --target base \
+            -t "${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
+            .
+          docker push "${IMAGE_NAME}:${BASE_IMAGE_TAG}"
 
       - name: Build and push agent image
         if: steps.image_tags.outputs.agent_exists != 'true'
         working-directory: apn/lean
         run: |-
           docker build \
+            --target agent \
+            --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
             -t "${IMAGE_NAME}:${AGENT_IMAGE_TAG}" \
-            -f Dockerfile.agent \
             .
           docker push "${IMAGE_NAME}:${AGENT_IMAGE_TAG}"
 
@@ -99,8 +96,9 @@ jobs:
         working-directory: apn/lean
         run: |-
           docker build \
+            --target scorer \
+            --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
             -t "${IMAGE_NAME}:${SCORER_IMAGE_TAG}" \
-            -f Dockerfile.scorer \
             .
           docker push "${IMAGE_NAME}:${SCORER_IMAGE_TAG}"
 
