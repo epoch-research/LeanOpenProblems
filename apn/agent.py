@@ -122,6 +122,8 @@ def lean_prover(
             submit=AgentSubmit(
                 tool=submit(), name="submit_proof", keep_in_messages=True
             ),
+            # The default continue message is very generic ("proceed to the next step"), this one
+            # might be better at avoiding doom loops.
             on_continue="Continue working on the problem.",
             compaction=CompactionSummary(threshold=300_000),
             model=get_model(model) if model is not None else None,
