@@ -1,6 +1,3 @@
-<!-- Converted from doc/frontend.ipynb in https://github.com/lenianiva/PyPantograph
-     at commit b8608f3 (the version installed in this image). -->
-
 # Data Extraction
 
 ```python

@@ -1,8 +1,3 @@
-<!-- From doc/contributing.md in https://github.com/leanprover/Pantograph
-     at commit 5fcb7542 -- the exact Pantograph version built into the
-     pantograph-repl binary installed in this image (PyPantograph pins it
-     as its src/ submodule). -->
-
 # Contributing
 
 A Lean development shell is provided in the Nix flake. Nix usage is optional.

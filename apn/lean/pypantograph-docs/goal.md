@@ -1,6 +1,3 @@
-<!-- Converted from doc/goal.ipynb in https://github.com/lenianiva/PyPantograph
-     at commit b8608f3 (the version installed in this image). -->
-
 # Goals and Tactics
 
 Executing tactics in Pantograph is simple. To start a proof, call the

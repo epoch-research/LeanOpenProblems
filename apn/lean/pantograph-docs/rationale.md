@@ -1,8 +1,3 @@
-<!-- From doc/rationale.md in https://github.com/leanprover/Pantograph
-     at commit 5fcb7542 -- the exact Pantograph version built into the
-     pantograph-repl binary installed in this image (PyPantograph pins it
-     as its src/ submodule). -->
-
 # Design Rationale
 
 A great problem in machine learning is to use ML agents to automatically prove
