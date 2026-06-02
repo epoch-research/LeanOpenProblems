@@ -35,8 +35,6 @@ PROJECT = "/workspace/leanproject"
 SCORE_DIR = f"{PROJECT}/_apn_score"
 SAFE_VERIFY_BIN = "/opt/apn/safeverify/.lake/build/bin/safe_verify"
 
-_MAX_DETAIL = 6000
-
 
 @dataclass(frozen=True)
 class CheckOutcome:
@@ -54,10 +52,6 @@ class SafeVerifyChecker(Protocol):
         ...
 
 
-def _tail(text: str) -> str:
-    return text.strip()[-_MAX_DETAIL:]
-
-
 class SandboxSafeVerify:
     """Compiles target + submission and runs ``safe_verify`` in the sandbox."""
 
@@ -69,7 +63,7 @@ class SandboxSafeVerify:
         result = await sandbox(self._sandbox_name).exec(
             cmd, cwd=PROJECT, timeout=self._timeout
         )
-        output = _tail(result.stdout + "\n" + result.stderr)
+        output = (result.stdout + "\n" + result.stderr).strip()
         # Exit >= 128 means the process died from a signal (128 + N) -- e.g.
         # 137 = SIGKILL from the OOM killer. That is not a verdict on the
         # proof; treat it as an infrastructure failure wherever it happens.

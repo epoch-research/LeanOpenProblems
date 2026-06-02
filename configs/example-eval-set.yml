@@ -1,19 +1,56 @@
 # Schema reference for eval-set config:
 # https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
-name: apn-oeis-smoke
-
+name: oeis-proved38
 tasks:
-  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@develop
     name: apn
     items:
       - name: apn_oeis
         sample_ids:
+          # OEIS conjectures with published APN proof outputs.
           # Remove sample_ids to run the full OEIS benchmark.
+          - A224515_conjecture_existence
+          - A309132_conjecture_carmichael
+          - A382590_conjecture_kth_prime_factor_is_eventually_periodic
+          - a091669_conjecture_primitive_root
+          - a325046_odd_terms_at_k_times_k_plus_1
+          - oeis_103311_conjecture_0
+          - oeis_108_conjecture_2
+          - oeis_113254_conjecture_0
+          - oeis_175386_conjecture_0
+          - oeis_194806_conjecture_0
+          - oeis_227582_conjecture_0
           - oeis_228143_conjecture_1
+          - oeis_243106_conjecture_0
+          - oeis_248802_conjecture_0
+          - oeis_248802_conjecture_4
+          - oeis_256012_conjecture_0
+          - oeis_267581_conjecture_0
+          - oeis_271591_conjecture_0
+          - oeis_278070_conjecture_0
+          - oeis_282779_conjecture_0
+          - oeis_289411_conjecture_0
+          - oeis_2897_conjecture_0
+          - oeis_306424_conjecture_0
+          - oeis_307865_conjecture_0
+          - oeis_323557_conjecture_0
+          - oeis_340737_conjecture_0
+          - oeis_341254_conjecture_0
+          - oeis_363347_conjecture_2
+          - oeis_372761_conjecture_2
+          - oeis_51293_conjecture_0
+          - oeis_62567_conjecture_0
+          - oeis_A028859_conjecture_1
+          - oeis_A258667_conjecture_0
+          - oeis_a211417_conjecture_specific
+          - oeis_a237271_conjecture_2
+          - oeis_a300997_finite_difference_is_one_or_two
+          - oeis_a363102_conjecture_1
+          - oeis_a368692_conjecture_integrality
         args:
-          gated: false
+          gated: true
           literature: false
-epochs: 1
+epochs: 3
 models:
   - package: anthropic
     name: anthropic
@@ -23,7 +60,7 @@ models:
     # Too low max_tokens results in broken tool calls due to truncation.
     # We set max_tokens to the max supported by each model.
     items:
-      - name: claude-opus-4-7
+      - name: claude-opus-4-8
         args:
           config:
             max_tokens: 128_000
@@ -46,7 +83,7 @@ models:
         args:
           config:
             max_connections: 2
-token_limit: 1_000_000
+token_limit: 100_000_000
 
 secrets:
   - name: ANTHROPIC_API_KEY
