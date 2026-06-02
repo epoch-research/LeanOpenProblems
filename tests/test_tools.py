@@ -1,56 +1,25 @@
-"""Tests for the lean_check feedback formatting and the basic-agent prompt."""
+"""Tests for the agent's bash wrapper and prompt rendering."""
 
 from __future__ import annotations
-
-import json
 
 import pytest
 from inspect_ai.util import ExecResult
 
 import apn.tools as tools_mod
-import apn.verifier.pantograph as pantograph_mod
-from apn._exec_status import exit_status_note
 from apn.prompts import LEAN_INSTRUCTIONS, render_task
-from apn.tools import bash, format_check_feedback
-from apn.verifier.base import CompileResult, Diagnostic
-from apn.verifier.pantograph import PantographVerifier
-
-
-def test_feedback_complete_proof() -> None:
-    feedback = format_check_feedback(CompileResult(diagnostics=(), has_sorry=False))
-    assert "proof is complete" in feedback.lower()
-
-
-def test_feedback_compiles_with_sorry() -> None:
-    result = CompileResult(
-        diagnostics=(Diagnostic("warning", "declaration uses `sorry`"),),
-        has_sorry=True,
-    )
-    feedback = format_check_feedback(result)
-    assert "still contains" in feedback
-
-
-def test_feedback_compile_error() -> None:
-    result = CompileResult(diagnostics=(Diagnostic("error", "boom", 3),))
-    feedback = format_check_feedback(result)
-    assert "boom" in feedback
-    assert "proof is complete" not in feedback.lower()
-
-
-def test_feedback_system_error() -> None:
-    feedback = format_check_feedback(CompileResult(system_error="sandbox died"))
-    assert "sandbox died" in feedback
+from apn.tools import bash
 
 
 def test_render_task_references_path() -> None:
     rendered = render_task("/tmp/apn_proof.lean")
     assert "/tmp/apn_proof.lean" in rendered
-    assert "lean_check" in rendered
 
 
-def test_instructions_cover_rules() -> None:
+def test_instructions_mention_lean_and_pypantograph() -> None:
     assert "Lean 4" in LEAN_INSTRUCTIONS
-    assert "lean_check" in LEAN_INSTRUCTIONS
+    assert "pantograph" in LEAN_INSTRUCTIONS.lower()
+    # Statement-integrity rule must still be present (it's the one substantive
+    # constraint the agent gets from the prompt rather than from the verifier).
     assert "statement" in LEAN_INSTRUCTIONS
 
 
@@ -58,18 +27,6 @@ def _exec_result(returncode: int, stdout: str = "", stderr: str = "") -> ExecRes
     return ExecResult(
         success=returncode == 0, returncode=returncode, stdout=stdout, stderr=stderr
     )
-
-
-def test_exit_status_note_none_on_success() -> None:
-    assert exit_status_note(_exec_result(0)) is None
-
-
-def test_exit_status_note_reports_raw_returncode() -> None:
-    # No signal decoding -- the model interprets 137/139/127/etc itself.
-    for rc in (1, 127, 137, 139):
-        note = exit_status_note(_exec_result(rc))
-        assert note is not None
-        assert f"status {rc}" in note
 
 
 class _FakeExecSandbox:
@@ -128,34 +85,3 @@ async def test_bash_tool_passes_through_normal_output(
     assert isinstance(output, str)
     assert output == "hello\n"
     assert "<stdout>" not in output
-
-
-async def test_verifier_compile_surfaces_raw_exit_code(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # 137 (SIGKILL/OOM) and 1 (generic) are both reported by raw exit code;
-    # the model interprets which is which.
-    for rc in (1, 137):
-        monkeypatch.setattr(
-            pantograph_mod,
-            "sandbox",
-            lambda *a, _rc=rc, **k: _FakeExecSandbox(_exec_result(_rc)),
-        )
-        result = await PantographVerifier().compile("theorem t : True := trivial")
-        assert result.system_error is not None
-        assert f"status {rc}" in result.system_error
-
-
-async def test_verifier_compile_success_parses_response(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    response = json.dumps({"diagnostics": [], "has_sorry": False})
-    monkeypatch.setattr(
-        pantograph_mod,
-        "sandbox",
-        lambda *a, **k: _FakeExecSandbox(_exec_result(0, stdout=response)),
-    )
-    result = await PantographVerifier().compile("theorem t : True := trivial")
-    assert result.system_error is None
-    assert result.ok
-    assert result.has_sorry is False

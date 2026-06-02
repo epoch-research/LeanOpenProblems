@@ -10,7 +10,7 @@ search, with four agent tiers on a shared generation/validation pipeline:
 
 | Tier | Description | Status here |
 |------|-------------|-------------|
-| **A** basic | A prover that refines a Lean proof sketch guided by compiler feedback. Implemented as Inspect's built-in `deepagent` with `text_editor` + `lean_check` (+ a `bash`/python scratchpad); run independent attempts with `--epochs`. | **Implemented** |
+| **A** basic | A prover that refines a Lean proof sketch guided by compiler feedback. Implemented as Inspect's built-in `deepagent` with `text_editor` + `bash` (drives [PyPantograph](https://github.com/lenianiva/PyPantograph) from python3 for Lean compilation and goal interaction; sympy/numpy for numeric exploration); run independent attempts with `--epochs`. | **Implemented** |
 | **B** | A + an AlphaProof proof tool. | Pluggable tool interface planned; AlphaProof itself is proprietary. |
 | **C** | A + an evolutionary population database (Plackett–Luce Elo via Gibbs sampling, Thompson sampling, P-UCB selection, LLM rater agents). | Planned |
 | **D** full | A + AlphaProof + evolution. | Planned |
@@ -35,20 +35,17 @@ remains is Lean integration and a strict scorer.
 ```
 apn/
   agent.py             lean_prover solver: writes the proof file into the
-                       sandbox, runs a deepagent (text_editor + lean_check +
-                       bash), reads the result back. Optional SafeVerify-gated
-                       submit.
-  tools.py             lean_check tool (compile the file via the sandbox).
+                       sandbox, runs a deepagent (text_editor + bash), reads
+                       the result back. Optional SafeVerify-gated submit.
+  tools.py             bash + arxiv tools. PyPantograph is invoked directly by
+                       the agent from python3, not wrapped here.
   prompts.py           Instructions + task message for the agent.
   checker.py           Host-side interface to SafeVerify (the anti-cheat).
   scorer.py            Re-validates the final proof; correct iff complete proof.
-  verifier/
-    base.py            LeanVerifier protocol, CompileResult, Diagnostic.
-    pantograph.py      Host-side verifier that drives the sandbox daemon.
   dataset.py           OEIS conjectures (theorem + sorry) -> Inspect Samples.
   task.py              The apn_oeis Inspect task.
   data/oeis/           Vendored OEIS/Auto dataset (484 files / 492 conjectures).
-  lean/                Docker images + sandbox-side Pantograph daemon + SafeVerify.
+  lean/                Docker images + SafeVerify.
 ```
 
 ### How a proof search runs
@@ -56,9 +53,10 @@ apn/
 1. The input is a Lean file: a sequence definition, small-term **test lemmas**,
    and a conjecture — proofs left as `sorry`.
 2. `lean_prover` writes it into the sample's `default` sandbox and runs a
-   `deepagent`. The agent edits the file with `text_editor`, compiles it with
-   `lean_check`, and may use `bash` (python3 + sympy/numpy) as a numerical
-   scratchpad, iterating on the Lean compiler feedback until it submits.
+   `deepagent`. The agent edits the file with `text_editor` and uses `bash`
+   for everything else: `import pantograph` from python3 to compile the file
+   or drive interactive tactics, and the same shell as a numerical scratchpad
+   (sympy/numpy). It iterates on the Lean compiler feedback until it submits.
 3. The scorer independently re-validates the final file with **SafeVerify** in a
    separate trusted sandbox: every declaration (the definition, the test lemmas,
    and the conjecture) must be reproduced **verbatim**, be `sorry`-free, and use
@@ -76,12 +74,13 @@ apn/
 Lean runs in Docker (`apn/lean/`), matching the paper's isolated sandboxes. Each
 sample gets **two** sandboxes from a shared base image:
 
-* **`default`** — the agent's workspace (`apn-agent`): a warm
-  [PyPantograph](https://github.com/lenianiva/PyPantograph) server holds a single
-  `pantograph-repl` process with `FormalConjectures.Util.ProblemImports` (Mathlib
-  + the FC library) loaded behind a Unix socket, so the many `lean_check` compiles
-  an attempt makes don't each re-import. Also has `python3` + `sympy`/`numpy` for
-  the agent's `bash` scratchpad. **No SafeVerify here.**
+* **`default`** — the agent's workspace (`apn-agent`):
+  [PyPantograph](https://github.com/lenianiva/PyPantograph) is installed in
+  the image alongside the prebuilt FormalConjectures + Mathlib oleans, so the
+  agent compiles Lean by importing `pantograph` from python3 and creating a
+  `Server` itself (~2s per fresh server with the page cache warm; see
+  `apn/lean/Dockerfile.agent`). Also has `python3` + `sympy`/`numpy` for the
+  numerical scratchpad. **No SafeVerify here.**
 * **`scorer`** — a separate, trusted container (`apn-scorer`) the agent never
   writes to, where SafeVerify validates the final proof. The scorer writes the
   submitted proof (from the store) into this clean container and checks it, so
@@ -125,9 +124,11 @@ Useful flags:
 - `-T gated=true` — SafeVerify-gated submissions (see above).
 - `--epochs N` — N independent attempts per problem, each in its own sandbox.
 
-Any Inspect-supported model works; the paper used Gemini 3.1 Pro for proving. The
-first compile in each sample's sandbox imports Mathlib + FC (~1–2 minutes); after
-that the warm Pantograph server makes compiles fast.
+Any Inspect-supported model works; the paper used Gemini 3.1 Pro for proving.
+The first `Server.create()` in a fresh sandbox takes ~45s (Mathlib + FC load
+into a `pantograph-repl`); the OS page cache makes subsequent fresh-Server
+spawns ~2s, and a long-lived `Server` reused across compiles in one Python
+process answers each `check_compile_async` in ~2ms.
 
 ### Running on Hawk
 

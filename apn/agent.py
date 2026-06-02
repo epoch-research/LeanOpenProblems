@@ -1,8 +1,10 @@
 """The Lean-proving solver: a thin wrapper around Inspect's ``deepagent``.
 
 The agent is given the proof file in the sandbox plus tools -- the built-in
-``text_editor`` to edit it, ``lean_check`` to compile it, and ``bash`` (python)
-to explore -- and left to prove the theorem. ``deepagent`` runs its own loop and
+``text_editor`` to edit it and ``bash`` for everything else (PyPantograph is
+installed in the agent image, so the agent compiles Lean by driving
+``pantograph.Server`` from Python; numeric exploration goes through the same
+shell) -- and left to prove the theorem. ``deepagent`` runs its own loop and
 submits when done.
 
 Submissions can be *gated*: with ``max_attempts`` > 1, Inspect's native
@@ -21,8 +23,7 @@ from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox
 
 from apn.prompts import LEAN_INSTRUCTIONS, LITERATURE_INSTRUCTIONS, render_task
-from apn.tools import arxiv_search, arxiv_source, bash, lean_check
-from apn.verifier.base import LeanVerifier
+from apn.tools import arxiv_search, arxiv_source, bash
 
 # Path of the proof file inside the sample's sandbox.
 PROOF_PATH = "/tmp/apn_proof.lean"
@@ -57,7 +58,6 @@ def submit() -> Tool:
 
 @solver
 def lean_prover(
-    verifier: LeanVerifier,
     model: str | None = None,
     max_attempts: int = 1,
     literature: bool = False,
@@ -70,7 +70,6 @@ def lean_prover(
     the solver keeps no state of its own.
 
     Args:
-        verifier: In-loop compiler for the ``lean_check`` tool.
         model: Optional model override for the agent.
         max_attempts: With ``> 1``, enables *gated submit* via Inspect's native
             ``attempts``: each submission is re-scored by the task scorer
@@ -91,10 +90,9 @@ def lean_prover(
 
         tools = [
             text_editor(),
-            lean_check(verifier, PROOF_PATH),
-            # Shell access to the workspace image, so the agent can run `python3`
-            # to explore numerically (compute sequence terms, check small cases)
-            # before committing to a Lean proof.
+            # Shell access to the workspace image: the agent drives PyPantograph
+            # from python3 to compile the proof file, and the same shell is its
+            # numeric scratchpad (sympy/numpy are baked in).
             bash(timeout=120),
         ]
         instructions = LEAN_INSTRUCTIONS

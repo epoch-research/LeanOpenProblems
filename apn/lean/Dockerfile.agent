@@ -1,6 +1,7 @@
-# Agent workspace: apn-lean-base + PyPantograph (warm compiler for the agent's
-# `lean_check`), preloading the FormalConjectures imports. Deliberately does NOT
-# contain SafeVerify -- the trusted checker lives in the scorer image.
+# Agent workspace: apn-lean-base + PyPantograph + numerical Python libs. The
+# agent drives Lean by ``import pantograph`` from python3 -- there is no warm
+# daemon and no host-side wrapper. Deliberately does NOT contain SafeVerify --
+# the trusted checker lives in the scorer image.
 #
 #   docker build -t apn-agent -f Dockerfile.agent .
 FROM apn-lean-base
@@ -19,12 +20,5 @@ RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
 # python3 in this image). sympy/numpy are very useful for the number-theory
 # problems; the sandbox has no network, so they must be baked in here.
 RUN pip3 install --break-system-packages --no-cache-dir numpy sympy
-
-# Preload the FC problem imports so the warm repl already has them; the daemon
-# reads its import set from this env var.
-ENV APN_LEAN_IMPORTS=FormalConjectures.Util.ProblemImports
-
-COPY apn_lean.py /opt/apn/apn_lean.py
-RUN chmod +x /opt/apn/apn_lean.py
 
 CMD ["sleep", "infinity"]

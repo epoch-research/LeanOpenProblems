@@ -59,15 +59,17 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Runtime libs for the Lean toolchain, plus the build tools the derived images
 # need (the agent builds PyPantograph; the scorer builds SafeVerify) and python3
-# (the in-sandbox daemon / SafeVerify runner / the agent's bash scratchpad).
+# (the agent uses it to drive PyPantograph and as a numerical scratchpad; the
+# scorer runs SafeVerify through it).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
         python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # The Lean/lake toolchain (binaries + the v4.27.0 toolchain). The image ENV PATH
-# above covers non-login execs (how sandbox().exec / the daemon run); add a
-# profile snippet so *login* shells (e.g. `bash -lc`) also find lake/lean.
+# above covers non-login execs (how ``sandbox().exec`` and the agent's PyPantograph
+# subprocess run); add a profile snippet so *login* shells (e.g. ``bash -lc``)
+# also find lake/lean.
 COPY --from=builder /root/.elan /root/.elan
 RUN echo 'export PATH=/root/.elan/bin:$PATH' > /etc/profile.d/elan.sh
 
