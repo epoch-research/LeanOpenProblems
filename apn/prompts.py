@@ -26,6 +26,8 @@ You have a `bash` tool giving you a shell in the workspace. From there:
   environment introspection, and so on. The FormalConjectures Lean project
   lives at `/workspace/leanproject` with Mathlib + the FC oleans pre-built;
   the relevant import is `FormalConjectures.Util.ProblemImports`.
+  PyPantograph documentation and worked example scripts are at
+  `/opt/pypantograph-docs`.
 
 Rules:
 - Do NOT change any statement (theorem names, hypotheses, goals) or any

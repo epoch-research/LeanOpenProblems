@@ -9,12 +9,20 @@ FROM apn-lean-base
 # PyPantograph commit b8608f3 pins Pantograph v0.3.13, whose repl targets Lean
 # v4.27.0 -- matching this track's Mathlib + FormalConjectures oleans. (The repl
 # must be built with the same toolchain that produced the oleans it loads.)
+# The clone is removed after install so the only importable `pantograph` is the
+# installed package (a lingering source tree would shadow it for any python
+# started inside /opt/PyPantograph, and the source tree lacks the built repl).
 ARG PYPANTOGRAPH_COMMIT=b8608f3
 RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
     && cd /opt/PyPantograph \
     && git checkout "${PYPANTOGRAPH_COMMIT}" \
     && git submodule update --init --recursive \
-    && pip3 install --break-system-packages --no-cache-dir .
+    && pip3 install --break-system-packages --no-cache-dir . \
+    && cd / && rm -rf /opt/PyPantograph
+
+# In-sandbox PyPantograph reference for the agent (the sandbox has no network).
+# Vendored from the same pinned commit -- see pypantograph-docs/README.md.
+COPY pypantograph-docs /opt/pypantograph-docs
 
 # Python libraries for the agent's numerical scratchpad (the `bash` tool runs
 # python3 in this image). sympy/numpy are very useful for the number-theory
