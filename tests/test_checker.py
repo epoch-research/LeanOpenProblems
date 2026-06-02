@@ -82,21 +82,23 @@ def _checker(
 async def test_check_accepts_when_all_steps_pass(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Each call begins with a workspace-clear exec, then compiles target,
+    # compiles submission, runs safe_verify -- four commands in the happy path.
     checker, sb = _checker(
-        monkeypatch, [_ok(), _ok(), _ok("SafeVerify check passed.")]
+        monkeypatch, [_ok(), _ok(), _ok(), _ok("SafeVerify check passed.")]
     )
     outcome = await checker.check("the target", "the submission")
     assert outcome.ok
     assert outcome.stage == "safeverify"
-    # Both files were written into the score dir, three commands ran.
     assert len(sb.written) == 2
-    assert len(sb.commands) == 3
+    assert len(sb.commands) == 4
+    assert sb.commands[0][:2] == ["rm", "-rf"]
 
 
 async def test_check_raises_when_target_fails_to_compile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    checker, _ = _checker(monkeypatch, [_fail(1, "bad spec")])
+    checker, _ = _checker(monkeypatch, [_ok(), _fail(1, "bad spec")])
     with pytest.raises(RuntimeError, match="target spec"):
         await checker.check("the target", "the submission")
 
@@ -104,7 +106,9 @@ async def test_check_raises_when_target_fails_to_compile(
 async def test_check_rejects_when_submission_fails_to_compile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    checker, _ = _checker(monkeypatch, [_ok(), _fail(1, "unknown identifier")])
+    checker, _ = _checker(
+        monkeypatch, [_ok(), _ok(), _fail(1, "unknown identifier")]
+    )
     outcome = await checker.check("the target", "the submission")
     assert not outcome.ok
     assert outcome.stage == "compile_submission"
@@ -117,7 +121,7 @@ async def test_check_rejects_on_safeverify_failure(
     # Both plain check failures and replay-time rejections (unsafe constant,
     # kernel type-check failure) exit nonzero: a rejection, not an infra error.
     checker, _ = _checker(
-        monkeypatch, [_ok(), _ok(), _fail(1, "SafeVerify check failed.")]
+        monkeypatch, [_ok(), _ok(), _ok(), _fail(1, "SafeVerify check failed.")]
     )
     outcome = await checker.check("the target", "the submission")
     assert not outcome.ok
@@ -129,10 +133,10 @@ async def test_check_raises_on_signal_death(
 ) -> None:
     # Exit 137 = SIGKILL (e.g. the OOM killer): not a verdict, so it must
     # raise rather than score the proof INCORRECT -- wherever it happens.
-    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _fail(137)])
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _fail(137)])
     with pytest.raises(RuntimeError, match="137"):
         await checker.check("the target", "the submission")
-    checker, _ = _checker(monkeypatch, [_ok(), _fail(137)])
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _fail(137)])
     with pytest.raises(RuntimeError, match="137"):
         await checker.check("the target", "the submission")
 

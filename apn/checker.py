@@ -76,6 +76,10 @@ class SandboxSafeVerify:
 
     async def check(self, target: str, submission: str) -> CheckOutcome:
         sb = sandbox(self._sandbox_name)
+        # Clear any artifacts from a previous call (.olean/.ilean/.lean, plus
+        # whatever lake leaves behind) before staging this one, so a crashed
+        # prior call can't bleed a stale submission.olean into this verdict.
+        await self._exec(["rm", "-rf", SCORE_DIR])
         files = {"target": target, "submission": submission}
         for stem, source in files.items():
             await sb.write_file(f"{SCORE_DIR}/{stem}.lean", source)
