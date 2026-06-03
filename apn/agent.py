@@ -22,7 +22,7 @@ from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox
 
-from apn.prompts import LEAN_INSTRUCTIONS, LITERATURE_INSTRUCTIONS, render_task
+from apn.prompts import LITERATURE_INSTRUCTIONS, lean_instructions, render_task
 from apn.tools import arxiv_search, arxiv_source, bash
 
 # Path of the proof file inside the sample's sandbox.
@@ -95,7 +95,7 @@ def lean_prover(
             # numeric scratchpad (sympy/numpy are baked in).
             bash(timeout=300),
         ]
-        instructions = LEAN_INSTRUCTIONS
+        instructions = lean_instructions(state.token_limit)
         if literature:
             # Literature access, gated to papers predating the benchmark paper so
             # they can't surface a later solution to these still-open conjectures.
