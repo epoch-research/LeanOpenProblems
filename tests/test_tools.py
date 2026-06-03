@@ -6,7 +6,7 @@ import pytest
 from inspect_ai.util import ExecResult
 
 import apn.tools as tools_mod
-from apn.prompts import LEAN_INSTRUCTIONS, render_task
+from apn.prompts import lean_instructions, render_task
 from apn.tools import bash
 
 
@@ -16,11 +16,19 @@ def test_render_task_references_path() -> None:
 
 
 def test_instructions_mention_lean_and_pypantograph() -> None:
-    assert "Lean 4" in LEAN_INSTRUCTIONS
-    assert "pantograph" in LEAN_INSTRUCTIONS.lower()
+    instructions = lean_instructions(token_limit=None)
+    assert "Lean 4" in instructions
+    assert "pantograph" in instructions.lower()
     # Statement-integrity rule must still be present (it's the one substantive
     # constraint the agent gets from the prompt rather than from the verifier).
-    assert "statement" in LEAN_INSTRUCTIONS
+    assert "statement" in instructions
+
+
+def test_instructions_token_budget_rendering() -> None:
+    # With a configured limit, the budget is disclosed with thousands separators.
+    assert "100,000,000 tokens" in lean_instructions(token_limit=100_000_000)
+    # Without one, the budget sentence is omitted entirely.
+    assert "tokens" not in lean_instructions(token_limit=None).split("Facts about")[1]
 
 
 def _exec_result(returncode: int, stdout: str = "", stderr: str = "") -> ExecResult[str]:
