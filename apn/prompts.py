@@ -76,11 +76,8 @@ Facts about this task:
   that feels like "weeks of work" is the normal shape of success here, and you
   have the budget for it.
 
-* **The verifier has no loopholes.** It kernel-checks the exact statements and
-  the axioms of every declaration. `sorry`/`sorryAx`, new or renamed axioms,
-  `opaque`/`partial`/`unsafe` tricks, redefining library notions, and linter
-  suppression are all detected and rejected. Time spent hunting for a bypass is
-  wasted budget. The only path to an accepted submission is a genuine proof.
+* **The verifier has no loopholes.** Time spent hunting for a bypass is wasted
+  budget. The only path to an accepted submission is a genuine proof.
 
 If you get stuck, work like a good mathematician who is stuck:
 
