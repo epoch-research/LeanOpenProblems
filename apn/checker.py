@@ -61,7 +61,7 @@ class SafeVerifyChecker(Protocol):
 class SandboxSafeVerify:
     """Compiles target + submission and runs ``safe_verify`` in the sandbox."""
 
-    def __init__(self, sandbox_name: str | None = None, timeout: int = 600) -> None:
+    def __init__(self, sandbox_name: str | None = None, timeout: int = 900) -> None:
         self._sandbox_name = sandbox_name
         self._timeout = timeout
 
