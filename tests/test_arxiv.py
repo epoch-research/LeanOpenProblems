@@ -13,7 +13,7 @@ import pytest
 import apn.tools as apn_tools
 
 
-def _stub_meta(monkeypatch: pytest.MonkeyPatch, meta_by_id: dict[str, dict]) -> None:
+def _stub_meta(monkeypatch: pytest.MonkeyPatch, meta_by_id: dict[str, dict[str, str]]) -> None:
     monkeypatch.setattr(apn_tools, "_arxiv_meta", lambda aid: meta_by_id.get(aid, {}))
 
 
@@ -33,7 +33,8 @@ def test_post_cutoff_paper_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     safe_id, note = apn_tools._resolve_safe_version("2605.00001")
     assert safe_id is None
-    assert "Refused" in note
+    assert "first submitted 2026-05-10" in note
+    assert "papers submitted before 2026-05-01 are available" in note
 
 
 def test_post_cutoff_revision_pins_to_newest_pre_cutoff_version(

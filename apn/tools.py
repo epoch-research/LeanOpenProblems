@@ -91,7 +91,8 @@ def _http_get(url: str) -> bytes:
     # parallelism you'd add a throttle/retry here.
     req = urllib.request.Request(url, headers={"User-Agent": "apn-bench/0.1"})
     with urllib.request.urlopen(req, timeout=30) as response:
-        return response.read()
+        data: bytes = response.read()
+        return data
 
 
 def _arxiv_meta(aid: str) -> dict[str, str]:
