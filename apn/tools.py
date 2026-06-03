@@ -141,35 +141,70 @@ def _resolve_safe_version(aid: str) -> tuple[str | None, str]:
 
 
 @tool
-def arxiv_search(max_results: int = 5) -> Tool:
+def arxiv_search() -> Tool:
     """Build a tool that searches arXiv (papers before the benchmark paper)."""
 
-    async def execute(query: str) -> str:
-        """Search arXiv for papers. Returns id, title, authors, and abstract.
+    async def execute(
+        query: str = "",
+        id_list: str = "",
+        start: int = 0,
+        max_results: int = 10,
+        sort_by: str = "relevance",
+        sort_order: str = "descending",
+    ) -> str:
+        """Search arXiv via its export API (http://export.arxiv.org/api/query).
+
+        `query` uses the standard arXiv API query language: field prefixes
+        `ti:` (title), `au:` (author), `abs:` (abstract), `co:` (comment),
+        `jr:` (journal reference), `cat:` (subject category), `rn:` (report
+        number), `all:`; operators `AND`, `OR`, `ANDNOT`; parentheses for
+        grouping; double quotes for phrases.
+
+        This API searches metadata (title, abstract, ...) only, not full text,
+        and strips punctuation when tokenizing, so math notation is not
+        searchable. Search a concept's words, not its formula (`Mersenne`,
+        not `2^k-1`).
 
         Only papers submitted before the benchmark paper are returned (later
         work could state a solution to these still-open conjectures). Use the
         returned id with `arxiv_source` to read a paper's full LaTeX source.
 
         Args:
-            query: An arXiv query, e.g. `au:erdos AND ti:sequence`, `ti:"sum of
-                divisors"`, or free text.
+            query: An arXiv API `search_query`, e.g.
+                `abs:"primitive root" AND cat:math.NT`.
+            id_list: Comma-delimited arXiv ids to restrict to (or, with an
+                empty query, to look up directly).
+            start: 0-based result offset, for paging.
+            max_results: Number of results to return (API slices are capped
+                at 2000 per call).
+            sort_by: `relevance`, `lastUpdatedDate`, or `submittedDate`.
+            sort_order: `ascending` or `descending`.
 
         Returns:
-            One block per hit (id, title, authors, abstract), or a no-results note.
+            The total match count, then one block per hit (id, title, authors,
+            date, primary category, abstract).
         """
-        qs = urllib.parse.urlencode(
-            {
-                "search_query": f"({query}) AND submittedDate:[190001010000 TO {_CUTOFF_API}]",
-                "start": 0,
-                "max_results": max_results,
-            }
-        )
+        params: dict[str, str | int] = {
+            # The cutoff filter must constrain every result, including pure
+            # id_list lookups, so it always contributes a search_query term.
+            "search_query": (
+                f"({query}) AND " if query else ""
+            )
+            + f"submittedDate:[190001010000 TO {_CUTOFF_API}]",
+            "start": start,
+            "max_results": max_results,
+            "sortBy": sort_by,
+            "sortOrder": sort_order,
+        }
+        if id_list:
+            params["id_list"] = id_list
+        qs = urllib.parse.urlencode(params)
         try:
             raw = await asyncio.to_thread(_http_get, f"{_ARXIV_API}?{qs}")
             feed = ET.fromstring(raw)
         except Exception as exc:  # network / parse failure -> tell the model
             raise ToolError(f"arXiv search failed: {exc}") from exc
+        total = feed.findtext("{http://a9.com/-/spec/opensearch/1.1/}totalResults", "?")
         blocks = []
         for entry in feed.findall(f"{_ATOM}entry"):
             aid = entry.findtext(f"{_ATOM}id", "").rsplit("/abs/", 1)[-1]
@@ -177,9 +212,15 @@ def arxiv_search(max_results: int = 5) -> Tool:
             authors = ", ".join(
                 a.findtext(f"{_ATOM}name", "") for a in entry.findall(f"{_ATOM}author")
             )
+            published = entry.findtext(f"{_ATOM}published", "")[:10]
+            category = entry.find("{http://arxiv.org/schemas/atom}primary_category")
+            cat_term = category.get("term", "") if category is not None else ""
             summary = " ".join(entry.findtext(f"{_ATOM}summary", "").split())
-            blocks.append(f"## {aid}\n{title}\n{authors}\n\n{summary}")
-        return "\n\n".join(blocks) or "No results."
+            blocks.append(
+                f"## {aid}\n{title}\n{authors}\n{published} [{cat_term}]\n\n{summary}"
+            )
+        header = f"{total} total matches."
+        return header + "\n\n" + "\n\n".join(blocks) if blocks else "No results."
 
     return execute
 
