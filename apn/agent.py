@@ -11,13 +11,23 @@ Submissions can be *gated*: with ``max_attempts`` > 1, Inspect's native
 ``attempts`` mechanism re-runs the task scorer (SafeVerify) on each submission
 and, if it isn't accepted, tells the model to keep going -- up to ``max_attempts``
 or until a token/time limit. The model is told only that it was incorrect (the
-``incorrect_message`` below), not why, so it cannot probe the verifier for gaps.
+``incorrect_message`` below), not why, so it cannot probe the verifier for gaps
+-- with one exception: if the submission made SafeVerify run out of memory or
+time, it is told that much (but not which, nor any amount), so it can aim for a
+cheaper proof instead of guessing blindly.
 """
 
 from __future__ import annotations
 
-from inspect_ai.agent import AgentAttempts, AgentSubmit, deepagent, run
+from inspect_ai.agent import (
+    AgentAttempts,
+    AgentState,
+    AgentSubmit,
+    deepagent,
+    run,
+)
 from inspect_ai.model import CompactionSummary, get_model
+from inspect_ai.scorer import Score
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox
@@ -35,6 +45,34 @@ INCORRECT_MESSAGE = (
     "Your submission did not pass verification. Keep working to find a correct, "
     "complete proof."
 )
+
+# The one exception to the opaque policy: when the submission made SafeVerify
+# run out of memory or time (rather than being rejected on the merits), tell the
+# model that much -- but nothing more. It learns to look for a cheaper proof
+# without learning which limit it hit, the amount, or any other detail it could
+# turn into a probe. OOM and timeout deliberately share this one wording so the
+# model cannot even tell which of the two occurred.
+RESOURCE_INCORRECT_MESSAGE = (
+    "Your submission did not pass verification: checking it ran out of memory or "
+    "timed out. Keep working to find a correct, complete proof that is also "
+    "cheaper to check."
+)
+
+# SafeVerify stages (see apn.checker) that mean the agent's proof was too
+# expensive to *verify*, as opposed to wrong. Only these get the more
+# informative message; every other rejection stays opaque.
+_RESOURCE_STAGES = frozenset({"safeverify_resource", "safeverify_timeout"})
+
+
+async def gated_incorrect_message(state: AgentState, scores: list[Score]) -> str:
+    """Pick the reply for a rejected gated submission.
+
+    Opaque by default; the resource message only when a score's ``stage`` marks
+    a SafeVerify OOM/timeout (``state`` is unused -- the verdict is all we need).
+    """
+    if any((s.metadata or {}).get("stage") in _RESOURCE_STAGES for s in scores):
+        return RESOURCE_INCORRECT_MESSAGE
+    return INCORRECT_MESSAGE
 
 
 @tool
@@ -107,10 +145,12 @@ def lean_prover(
             instructions=instructions,
             memory=False,
             # Gating: re-score each submission with the task scorer (SafeVerify);
-            # on failure the model is told only INCORRECT_MESSAGE (no verifier
-            # output) and keeps going. max_attempts=1 disables this.
+            # on failure the model is told only that it failed (no verifier
+            # output) and keeps going. gated_incorrect_message keeps that opaque
+            # except for a SafeVerify OOM/timeout, where it adds an amount-free
+            # "ran out of memory or timed out". max_attempts=1 disables this.
             attempts=AgentAttempts(
-                attempts=max_attempts, incorrect_message=INCORRECT_MESSAGE
+                attempts=max_attempts, incorrect_message=gated_incorrect_message
             ),
             # Name it distinctly from the subagents' "submit" tool and keep the
             # call in the message history. keep_in_messages=True stops react from
