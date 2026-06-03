@@ -47,10 +47,17 @@ class FakeSandbox:
 # --------------------------------------------------------------------------- #
 
 
-class ScriptedSandbox:
-    """A scorer-sandbox stub: records writes, returns scripted exec results."""
+# A scripted step is either an ExecResult the fake exec returns, or an
+# exception the fake exec raises -- the sandbox provider *raises* (rather than
+# returns) on a timeout (TimeoutError) and on an undecodable output byte
+# (UnicodeDecodeError), so the checker has to catch those at the .exec() call.
+Step = ExecResult[str] | BaseException
 
-    def __init__(self, results: list[ExecResult[str]]) -> None:
+
+class ScriptedSandbox:
+    """A scorer-sandbox stub: records writes, returns/raises scripted steps."""
+
+    def __init__(self, results: list[Step]) -> None:
         self._results = list(results)
         self.written: dict[str, str] = {}
         self.commands: list[list[str]] = []
@@ -60,7 +67,10 @@ class ScriptedSandbox:
 
     async def exec(self, cmd: list[str], **kwargs: object) -> ExecResult[str]:
         self.commands.append(cmd)
-        return self._results.pop(0)
+        step = self._results.pop(0)
+        if isinstance(step, BaseException):
+            raise step
+        return step
 
 
 def _ok(stderr: str = "") -> ExecResult[str]:
@@ -71,8 +81,20 @@ def _fail(returncode: int, stderr: str = "") -> ExecResult[str]:
     return ExecResult(success=False, returncode=returncode, stdout="", stderr=stderr)
 
 
+def _timeout() -> TimeoutError:
+    # Matches the k8s sandbox provider's message; it raises a builtin
+    # TimeoutError on exit code 124 (k8s_sandbox/_pod/execute.py).
+    return TimeoutError("Command timed out after 900s. ExecResult(returncode=124)")
+
+
+def _decode_error() -> UnicodeDecodeError:
+    # The provider decodes command output before returning it; a non-utf8 byte
+    # raises UnicodeDecodeError out of .exec() (it never reaches our code).
+    return UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+
+
 def _checker(
-    monkeypatch: pytest.MonkeyPatch, results: list[ExecResult[str]]
+    monkeypatch: pytest.MonkeyPatch, results: list[Step]
 ) -> tuple[SandboxSafeVerify, ScriptedSandbox]:
     sb = ScriptedSandbox(results)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
@@ -128,17 +150,88 @@ async def test_check_rejects_on_safeverify_failure(
     assert outcome.stage == "safeverify"
 
 
-async def test_check_raises_on_signal_death(
+# --------------------------------------------------------------------------- #
+# Attribution: failures of the *reference* code (compiling the trusted target  #
+# spec) are our problem -> raise and error the sample. Failures of the agent's #
+# *submission* (its compile, or safe_verify replaying it) are a verdict on the #
+# agent's code -> return a rejection so the agent is told, not error the       #
+# sample. This holds for resource deaths (OOM/137, timeout) and decode errors  #
+# alike, which is exactly where the old "raise on any signal, anywhere" was    #
+# wrong: those deaths were almost always the agent's expensive proof term.     #
+# --------------------------------------------------------------------------- #
+
+
+async def test_check_raises_on_target_signal_death(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Exit 137 = SIGKILL (e.g. the OOM killer): not a verdict, so it must
-    # raise rather than score the proof INCORRECT -- wherever it happens.
-    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _fail(137)])
+    # 137 (OOM/SIGKILL) while compiling the *target* spec: reference side, so
+    # it is our infrastructure failing -> raise, never a verdict.
+    checker, _ = _checker(monkeypatch, [_ok(), _fail(137)])
     with pytest.raises(RuntimeError, match="137"):
         await checker.check("the target", "the submission")
+
+
+async def test_check_raises_on_target_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A timeout compiling the trusted target spec is also reference-side: the
+    # raised TimeoutError must propagate, not be swallowed into a verdict.
+    checker, _ = _checker(monkeypatch, [_ok(), _timeout()])
+    with pytest.raises(TimeoutError):
+        await checker.check("the target", "the submission")
+
+
+async def test_check_rejects_on_submission_compile_signal_death(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # 137 compiling the *submission*: the agent's code was too expensive to
+    # compile. A rejection the agent is told about, not an errored sample.
     checker, _ = _checker(monkeypatch, [_ok(), _ok(), _fail(137)])
-    with pytest.raises(RuntimeError, match="137"):
-        await checker.check("the target", "the submission")
+    outcome = await checker.check("the target", "the submission")
+    assert not outcome.ok
+    assert outcome.stage == "compile_submission_resource"
+
+
+async def test_check_rejects_on_submission_compile_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _timeout()])
+    outcome = await checker.check("the target", "the submission")
+    assert not outcome.ok
+    assert outcome.stage == "compile_submission_timeout"
+
+
+async def test_check_rejects_on_safeverify_signal_death(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # 137 inside safe_verify replaying the submission: safe_verify's un-memoized
+    # rebuildExpr blew up on the agent's proof term. Agent-attributable ->
+    # rejection, not a raise (it is deterministic; rerunning cannot help).
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _fail(137)])
+    outcome = await checker.check("the target", "the submission")
+    assert not outcome.ok
+    assert outcome.stage == "safeverify_resource"
+
+
+async def test_check_rejects_on_safeverify_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _timeout()])
+    outcome = await checker.check("the target", "the submission")
+    assert not outcome.ok
+    assert outcome.stage == "safeverify_timeout"
+
+
+async def test_check_rejects_on_safeverify_decode_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A non-utf8 byte in safe_verify's output makes the provider raise
+    # UnicodeDecodeError out of .exec(); that is the agent's submission output,
+    # so it is a rejection, not a scaffold crash that errors the sample.
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _decode_error()])
+    outcome = await checker.check("the target", "the submission")
+    assert not outcome.ok
+    assert outcome.stage == "safeverify_decode"
 
 
 # --------------------------------------------------------------------------- #

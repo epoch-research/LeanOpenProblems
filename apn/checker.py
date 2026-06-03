@@ -11,21 +11,31 @@ interface is::
     lake env safe_verify target.olean submission.olean   # exit 0 = accepted
 
 This module drives those commands in the trusted scorer sandbox, one
-``sandbox().exec`` per step, and maps the exit codes to a verdict:
+``sandbox().exec`` per step, and maps the result to a verdict. The governing
+rule is *whose code failed*:
 
-* target fails to compile -> the *spec* is broken: infrastructure error, raise;
-* submission fails to compile -> rejection (``stage="compile_submission"``);
-* ``safe_verify`` exit 0 -> accepted; nonzero -> rejection (``stage="safeverify"``);
-* any step killed by a signal (exit >= 128, e.g. 137 = SIGKILL from the OOM
-  killer) or timing out -> not a verdict: raise, so the sample errors out and
-  is rerun/inspected rather than silently scoring a possibly valid proof as
-  INCORRECT.
+* **Reference side** -- compiling the trusted, fixed target spec. If that fails
+  for any reason (nonzero exit, OOM/signal kill, timeout) it is *our* bug, no
+  verdict is possible -> raise, so the sample errors out and is rerun/inspected.
+* **Agent side** -- compiling the submission, and ``safe_verify`` replaying it.
+  Any failure here is a verdict on the agent's code, never an infra raise:
+    - submission won't compile -> ``stage="compile_submission"``;
+    - ``safe_verify`` exit 0 -> accepted; plain nonzero -> ``stage="safeverify"``;
+    - OOM / signal kill (exit >= 128) -> ``stage="*_resource"``;
+    - timeout (provider raises ``TimeoutError``) -> ``stage="*_timeout"``;
+    - undecodable output (provider raises ``UnicodeDecodeError``) ->
+      ``stage="*_decode"``.
 
-Note that an OOM here can be triggered by a perfectly legitimate proof:
-safe_verify's memory use on a submission can vastly exceed the agent-side
+Why agent-side resource deaths are a verdict, not a raise: an OOM or timeout
+here is almost always the agent's expensive proof term, not our infrastructure.
+safe_verify's memory/time use on a submission can vastly exceed the agent-side
 compile cost (its un-memoized rebuildExpr expands pointer-shared proof terms,
-e.g. from ``ring``, exponentially). See the scorer mem_limit comment in
-apn/task.py for measurements; such failures are deterministic per submission.
+e.g. from ``ring``, exponentially). These failures are *deterministic* per
+submission, so raising-and-rerunning can never resolve them -- it just discards
+the sample. Telling the agent its submission could not be verified lets it
+produce a cheaper proof. See the scorer mem_limit comment in apn/task.py for
+measurements. (The reference target spec is small and fixed, so it does not hit
+these limits; if it ever did, that is genuinely our problem -> raise.)
 """
 
 from __future__ import annotations
@@ -65,50 +75,86 @@ class SandboxSafeVerify:
         self._sandbox_name = sandbox_name
         self._timeout = timeout
 
-    async def _exec(self, cmd: list[str]) -> tuple[int, str]:
+    async def _exec_reference(self, cmd: list[str]) -> tuple[int, str]:
+        """Run a *reference-side* step (workspace cleanup, target compile).
+
+        Any failure is our infrastructure: a signal kill (exit >= 128) raises,
+        and a ``TimeoutError`` / ``UnicodeDecodeError`` from the provider is left
+        to propagate. The caller turns a nonzero exit into a raise too.
+        """
         result = await sandbox(self._sandbox_name).exec(
             cmd, cwd=PROJECT, timeout=self._timeout
         )
         output = (result.stdout + "\n" + result.stderr).strip()
-        # Exit >= 128 means the process died from a signal (128 + N) -- e.g.
-        # 137 = SIGKILL from the OOM killer. That is not a verdict on the
-        # proof; treat it as an infrastructure failure wherever it happens.
         if result.returncode >= 128:
             raise RuntimeError(
-                f"SafeVerify step {cmd[:3]} was killed (exit {result.returncode}) "
-                f"before returning a verdict. Output tail:\n{output}"
+                f"Reference SafeVerify step {cmd[:3]} was killed "
+                f"(exit {result.returncode}). Output tail:\n{output}"
             )
         return result.returncode, output
+
+    async def _exec_submission(self, cmd: list[str]) -> tuple[str, str]:
+        """Run an *agent-side* step (submission compile, safe_verify replay).
+
+        Returns ``(mode, output)`` where ``mode`` is one of ``"ok"`` (exit 0),
+        ``"exit"`` (plain nonzero), ``"resource"`` (signal kill, e.g. 137 OOM),
+        ``"timeout"``, or ``"decode"``. Failures map to a verdict, never a raise:
+        a timeout and an undecodable byte are *raised* by the sandbox provider
+        (so they are caught here at the ``.exec()`` call), while an OOM comes
+        back as a returned exit code >= 128.
+        """
+        try:
+            result = await sandbox(self._sandbox_name).exec(
+                cmd, cwd=PROJECT, timeout=self._timeout
+            )
+        except TimeoutError as exc:
+            return "timeout", str(exc)
+        except UnicodeDecodeError as exc:
+            return "decode", str(exc)
+        output = (result.stdout + "\n" + result.stderr).strip()
+        if result.returncode >= 128:
+            return "resource", f"killed (exit {result.returncode})\n{output}"
+        if result.returncode != 0:
+            return "exit", output
+        return "ok", output
 
     async def check(self, target: str, submission: str) -> CheckOutcome:
         sb = sandbox(self._sandbox_name)
         # Clear any artifacts from a previous call (.olean/.ilean/.lean, plus
         # whatever lake leaves behind) before staging this one, so a crashed
         # prior call can't bleed a stale submission.olean into this verdict.
-        await self._exec(["rm", "-rf", SCORE_DIR])
+        await self._exec_reference(["rm", "-rf", SCORE_DIR])
         files = {"target": target, "submission": submission}
         for stem, source in files.items():
             await sb.write_file(f"{SCORE_DIR}/{stem}.lean", source)
 
-        # The target spec is trusted, fixed data: if it fails to compile that
-        # is our problem, not the agent's.
-        returncode, output = await self._exec(
+        # The target spec is trusted, fixed data: if it fails to compile -- or
+        # dies to a signal/timeout -- that is our problem, not the agent's, so
+        # _exec_reference raises (a timeout propagates as TimeoutError).
+        returncode, output = await self._exec_reference(
             ["lake", "env", "lean", "-o", f"{SCORE_DIR}/target.olean", f"{SCORE_DIR}/target.lean"]
         )
         if returncode != 0:
             raise RuntimeError(f"target spec failed to compile:\n{output}")
 
-        returncode, output = await self._exec(
+        # Everything below operates on the agent's submission: a failure is a
+        # verdict on the agent's code, reported back, never an errored sample.
+        mode, output = await self._exec_submission(
             ["lake", "env", "lean", "-o", f"{SCORE_DIR}/submission.olean", f"{SCORE_DIR}/submission.lean"]
         )
-        if returncode != 0:
+        if mode in ("resource", "timeout", "decode"):
+            return CheckOutcome(ok=False, stage=f"compile_submission_{mode}", detail=output)
+        if mode != "ok":
             return CheckOutcome(ok=False, stage="compile_submission", detail=output)
 
-        # safe_verify exits 0 only on the verification-passed path; any other
-        # exit means it ran and rejected (a plain check failure or a
+        # safe_verify exits 0 only on the verification-passed path; a plain
+        # nonzero exit means it ran and rejected (a plain check failure or a
         # replay-time rejection: unsafe/partial constant, kernel type-check
-        # failure, missing imports, ...).
-        returncode, output = await self._exec(
+        # failure, missing imports, ...). An OOM/timeout/decode death here is
+        # the agent's expensive proof term -- also a rejection, not a raise.
+        mode, output = await self._exec_submission(
             ["lake", "env", SAFE_VERIFY_BIN, f"{SCORE_DIR}/target.olean", f"{SCORE_DIR}/submission.olean"]
         )
-        return CheckOutcome(ok=returncode == 0, stage="safeverify", detail=output)
+        if mode in ("resource", "timeout", "decode"):
+            return CheckOutcome(ok=False, stage=f"safeverify_{mode}", detail=output)
+        return CheckOutcome(ok=mode == "ok", stage="safeverify", detail=output)
