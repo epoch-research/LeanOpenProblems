@@ -118,10 +118,8 @@ LITERATURE_INSTRUCTIONS = """\
 
 You can consult the mathematical literature with `arxiv_search` (find papers by
 keyword/author/title) and `arxiv_source` (download a paper's full LaTeX source
-into the workspace, then read it with the text editor or bash). These cover
-papers published before this problem set was assembled, so they will not contain
-a ready-made solution -- use them for relevant techniques, definitions, and prior
-results, not for the answer."""
+into the workspace, then read it with the text editor or bash). Use them for
+relevant techniques, definitions, and prior results."""
 
 
 def render_task(path: str) -> str:

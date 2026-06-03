@@ -120,8 +120,8 @@ def _resolve_safe_version(aid: str) -> tuple[str | None, str]:
         return None, f"arXiv '{aid}' was not found via the API."
     if meta["published"] >= _CUTOFF_DATE:
         return None, (
-            f"Refused: arXiv {meta['id']} first appeared {meta['published']}, not "
-            f"before the benchmark paper (these conjectures are open as of 2026-05)."
+            f"arXiv {meta['id']} was first submitted {meta['published']}; only "
+            f"papers submitted before {_CUTOFF_DATE} are available."
         )
     if meta["updated"] < _CUTOFF_DATE:
         return meta["id"], f"{meta['id']} (submitted {meta['updated']})."
@@ -134,8 +134,8 @@ def _resolve_safe_version(aid: str) -> tuple[str | None, str]:
         vmeta = _arxiv_meta(f"{base}v{version}")
         if vmeta and vmeta["updated"] < _CUTOFF_DATE:
             return f"{base}v{version}", (
-                f"latest version postdates the benchmark paper; pinned to "
-                f"{base}v{version} (submitted {vmeta['updated']})."
+                f"pinned to {base}v{version} (submitted {vmeta['updated']}); only "
+                f"versions submitted before {_CUTOFF_DATE} are available."
             )
     return None, f"arXiv {meta['id']}: no version submitted before {_CUTOFF_DATE}."
 
@@ -165,9 +165,8 @@ def arxiv_search() -> Tool:
         searchable. Search a concept's words, not its formula (`Mersenne`,
         not `2^k-1`).
 
-        Only papers submitted before the benchmark paper are returned (later
-        work could state a solution to these still-open conjectures). Use the
-        returned id with `arxiv_source` to read a paper's full LaTeX source.
+        Only papers submitted before 2026-05-01 are returned. Use the returned
+        id with `arxiv_source` to read a paper's full LaTeX source.
 
         Args:
             query: An arXiv API `search_query`, e.g.
@@ -233,10 +232,9 @@ def arxiv_source(dest_dir: str = "/tmp/arxiv", sandbox_name: str | None = None) 
         """Download an arXiv paper's source and unpack it into the workspace.
 
         The whole source archive is placed under a per-paper directory; read the
-        files with the text editor or `bash`. Papers not predating the benchmark
-        paper are refused (they could contain a solution to these open
-        conjectures); if the latest version is too recent, the newest pre-cutoff
-        version is fetched instead.
+        files with the text editor or `bash`. Only papers submitted before
+        2026-05-01 are available; for a paper whose latest version is more
+        recent, the newest version from before that date is fetched instead.
 
         Args:
             arxiv_id: e.g. `2301.00001`, `2301.00001v2`, or `math/0211159`.
