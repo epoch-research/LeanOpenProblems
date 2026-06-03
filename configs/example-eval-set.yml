@@ -1,6 +1,6 @@
 # Schema reference for eval-set config:
 # https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
-name: oeis-proved38
+retry_attempts: 0  # Disable retries while we're still working out the kinks
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@develop
     name: apn
@@ -80,9 +80,6 @@ models:
     name: google
     items:
       - name: gemini-3.1-pro-preview
-        args:
-          config:
-            max_connections: 2
 token_limit: 100_000_000
 
 secrets:
@@ -93,7 +90,7 @@ secrets:
     description: "The ECR repo containing the LeanOpenProblems sandbox images"
 
 runner:
-  memory: 64Gi
+  memory: 200Gi
   environment:
     # TODO: Remove once default in Hawk
     INSPECT_LOG_CONDENSE: "true"
