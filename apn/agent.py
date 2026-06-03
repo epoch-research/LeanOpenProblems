@@ -93,7 +93,7 @@ def lean_prover(
             # Shell access to the workspace image: the agent drives PyPantograph
             # from python3 to compile the proof file, and the same shell is its
             # numeric scratchpad (sympy/numpy are baked in).
-            bash(timeout=600),
+            bash(timeout=300),
         ]
         instructions = LEAN_INSTRUCTIONS
         if literature:
