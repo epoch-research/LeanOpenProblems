@@ -200,7 +200,7 @@ requires-dist = [{ name = "inspect-ai", specifier = ">=0.3.229" }]
 [package.metadata.requires-dev]
 dev = [
     { name = "anthropic", specifier = ">=0.105.2" },
-    { name = "hawk", extras = ["cli"], git = "https://github.com/METR/hawk?subdirectory=hawk&tag=v2026.05.04" },
+    { name = "hawk", extras = ["cli"], git = "https://github.com/METR/hawk?subdirectory=hawk&tag=v2026.06.01" },
     { name = "mypy", specifier = ">=2.1.0" },
     { name = "openai", specifier = ">=2.38.0" },
     { name = "pytest", specifier = ">=8.0" },
@@ -508,7 +508,7 @@ wheels = [
 [[package]]
 name = "hawk"
 version = "2.0.0"
-source = { git = "https://github.com/METR/hawk?subdirectory=hawk&tag=v2026.05.04#94396c8cb9544c0b5bca1c26cae73c68055ed717" }
+source = { git = "https://github.com/METR/hawk?subdirectory=hawk&tag=v2026.06.01#86bb7d7c791dead06a3135931db1ce9c3576da16" }
 dependencies = [
     { name = "pydantic" },
     { name = "ruamel-yaml" },

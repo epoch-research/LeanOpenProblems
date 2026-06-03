@@ -36,7 +36,7 @@ dev = [
 override-dependencies = ["inspect-ai"]
 
 [tool.uv.sources]
-hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v2026.05.04" }
+hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v2026.06.01" }
 
 [tool.mypy]
 python_version = "3.13"
