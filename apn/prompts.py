@@ -74,8 +74,9 @@ Rules:
   submission that alters a statement or definition is rejected.
 - All required imports are already present; do NOT add or remove `import`
   statements.
-- Do not introduce new `axiom`s, and leave no `sorry` in the declaration you are
-  submitting (a proof of `foo`, or your `foo.disproof`).
+- Your submission may depend only on Lean's three standard axioms (`propext`,
+  `Classical.choice`, `Quot.sound`). Do not introduce new `axiom`s, and do not use tactics that add other axioms. 
+- Leave no `sorry` in the declaration you are submitting (a proof of `foo`, or your `foo.disproof`).
 - You must still discharge the definitions and test lemmas whichever way you go:
   a disproof does not excuse you from the file's sanity-check lemmas.
 
