@@ -2,6 +2,45 @@
 
 from __future__ import annotations
 
+# Verbatim copy of `negateExpr` from apn/lean/safeverify/SafeVerify/Util.lean.
+# The disproof checker there (`checkNegatedTheorem`) applies this function to the
+# target theorem's type and kernel-checks the agent's `foo.disproof` against the
+# result, so we show the agent the exact source. Keep this in sync with Util.lean.
+NEGATE_EXPR_SOURCE = """\
+structure NegateConfig where
+  distrib : Bool := false
+deriving Inhabited
+
+/-- Takes an expression `e` and outputs the negation of `e`, pushing `not` accross
+`e`. For example, occurences of `¬ ∀ a, p a` are replaced by `∃ a, ¬ p a`. -/
+private def negateExpr (cfg : NegateConfig) (e : Expr) : MetaM Expr := do
+  let e := (← instantiateMVars e).cleanupAnnotations
+  handler e
+where handler (e : Expr) : MetaM Expr := do
+  match e with
+  | .app (.app (.const ``And _) p) q =>
+    if cfg.distrib then
+      return (mkOr (← handler p) (← handler q))
+    else
+      return (.forallE `_  p (← handler  q) .default)
+  | .forallE name ty body binfo =>
+    let body' : Expr := .lam name ty (← handler body) binfo
+    return (← mkAppM ``Exists #[body'])
+  | .app (.app (.const ``Or _) p) q =>
+    return (mkAnd (← handler p) (← handler q))
+  | .app (.app (.const ``Exists _) _) (.lam name btype body binfo) =>
+    return .forallE name btype (← handler body) binfo
+  | .lam name btype body binfo =>
+    return .lam name btype (← handler body) binfo
+  -- handle `≠` separately
+  | .app (.app (.app (.const ``Ne lvls) α) p) q =>
+    return .app (.app (.app (.const ``Eq lvls) α) p) q
+  | .app (.const ``Not _) p =>
+    return p
+  | _ =>
+    return mkNot e"""
+
+
 def lean_instructions(token_limit: int | None) -> str:
     """The agent's system instructions.
 
@@ -57,18 +96,15 @@ You may settle each conjecture `foo` in one of two ways:
   `sorry` counts as a forbidden axiom. The verifier accepts a proof of `foo` *or*
   a complete `foo.disproof`.
 
-  The negation must be written in **negation-normal form** -- push the `¬`
-  inward rather than leaving a leading `¬`:
-    - `∀ x, P x`        disproves as `∃ x, ¬ P x`   (and `¬∃` becomes `∀¬`)
-    - `P ∧ Q`           disproves as `P → ¬ Q`
-    - `P ∨ Q`           disproves as `¬ P ∧ ¬ Q`
-    - `a ≠ b`           disproves as `a = b`        (and `¬¬P` becomes `P`)
-    - anything else `R` disproves as `¬ R`
-  Apply this recursively to the whole statement, carrying the original
-  hypotheses as the leading binders. For example, to disprove
-  `theorem foo (n : ℕ) (h : 0 < n) : P n` add
-  `theorem foo.disproof : ∃ n, 0 < n ∧ ¬ P n := ...`. The verifier checks your
-  negation is definitionally the negation of the original, so match this form.
+  The verifier does not guess what "the negation" means: it runs the exact Lean
+  function below on `foo`'s full type (hypotheses included), with the default
+  config (`distrib := false`), and then checks with that your
+  `foo.disproof`'s type is definitionally equal to the
+  result. Write your `foo.disproof` statement to match what this produces:
+
+```lean
+{NEGATE_EXPR_SOURCE}
+```
 
 Rules:
 - Do NOT change or weaken any statement (theorem names, hypotheses, goals) or
