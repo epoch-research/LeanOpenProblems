@@ -41,8 +41,13 @@ where handler (e : Expr) : MetaM Expr := do
     return mkNot e"""
 
 
-def lean_instructions(token_limit: int | None) -> str:
-    """The agent's system instructions.
+def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
+    """The complete user prompt handed to the agent.
+
+    The agent is given no system prompt: everything it is told -- role and
+    workflow guidance, the disproof/negation rules, the arXiv note (only when
+    the literature tools are enabled), and the line naming the file to settle --
+    is assembled here into this single user message.
 
     Disclosing the (very large) token budget counters two observed failure
     modes: models hallucinating a short deadline ("five minutes", "an hour")
@@ -56,7 +61,26 @@ def lean_instructions(token_limit: int | None) -> str:
             f" Your only resource limit is a total budget of {token_limit:,}"
             " tokens for this one problem. Calibrate your ambition to it."
         )
+
+    # The arXiv note is included only when the literature tools are enabled, so
+    # the closed-book agent is never told about tools it doesn't have.
+    literature_note = (
+        "\n\nYou can consult the mathematical literature with `arxiv_search` "
+        "(find papers by keyword/author/title) and `arxiv_source` (download a "
+        "paper's full LaTeX source into the workspace, then read it with the "
+        "text editor or bash). Use them for relevant techniques, definitions, "
+        "and prior results."
+        if literature
+        else ""
+    )
+
     return f"""\
+Settle every conjecture in the Lean file `{path}`: either replace its `sorry`
+with a complete proof, or disprove it by deleting the original
+`theorem foo ... := sorry` and adding a `foo.disproof` theorem proving its
+negation. Do not otherwise alter any statement or definition, and still
+discharge the test lemmas.
+
 You are a world-class mathematician and Lean 4 expert. You settle open
 conjectures in Lean 4 using Mathlib, by proving them or disproving them.
 
@@ -176,27 +200,5 @@ If a submission is rejected:
 
 * A rejection is debugging feedback, not a verdict on you or on the problem.
   The attempt continues; renewed effort after a rejection is what distinguishes
-  successful attempts.
+  successful attempts.{literature_note}
 """
-
-
-# Appended to the instructions only when the agent is given the arXiv tools (the
-# ``literature`` option). Kept separate so the closed-book agent is never told
-# about tools it doesn't have.
-LITERATURE_INSTRUCTIONS = """\
-
-You can consult the mathematical literature with `arxiv_search` (find papers by
-keyword/author/title) and `arxiv_source` (download a paper's full LaTeX source
-into the workspace, then read it with the text editor or bash). Use them for
-relevant techniques, definitions, and prior results."""
-
-
-def render_task(path: str) -> str:
-    """The user message pointing the agent at the proof file."""
-    return (
-        f"Settle every conjecture in the Lean file `{path}`: either replace its "
-        f"`sorry` with a complete proof, or disprove it by deleting the original "
-        f"`theorem foo ... := sorry` and adding a `foo.disproof` theorem proving "
-        f"its negation. Do not otherwise alter any statement or definition, and "
-        f"still discharge the test lemmas."
-    )

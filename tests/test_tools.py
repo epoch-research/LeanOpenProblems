@@ -6,46 +6,56 @@ import pytest
 from inspect_ai.util import ExecResult
 
 import apn.tools as tools_mod
-from apn.prompts import lean_instructions, render_task
+from apn.prompts import user_prompt
 from apn.tools import bash
 
-
-def test_render_task_references_path() -> None:
-    rendered = render_task("/tmp/apn_proof.lean")
-    assert "/tmp/apn_proof.lean" in rendered
+PROOF_PATH = "/tmp/apn_proof.lean"
 
 
-def test_instructions_mention_lean_and_pypantograph() -> None:
-    instructions = lean_instructions(token_limit=None)
-    assert "Lean 4" in instructions
-    assert "pantograph" in instructions.lower()
+def test_user_prompt_references_path() -> None:
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    assert PROOF_PATH in rendered
+
+
+def test_user_prompt_mentions_lean_and_pypantograph() -> None:
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    assert "Lean 4" in rendered
+    assert "pantograph" in rendered.lower()
     # Statement-integrity rule must still be present (it's the one substantive
     # constraint the agent gets from the prompt rather than from the verifier).
-    assert "statement" in instructions
+    assert "statement" in rendered
 
 
-def test_instructions_explain_disproof_convention() -> None:
+def test_user_prompt_explains_disproof_convention() -> None:
     # The agent must know it can disprove, and how: the `foo.disproof` naming
-    # convention and the negation-normal-form the verifier expects.
-    instructions = lean_instructions(token_limit=None)
-    assert "disprove" in instructions.lower()
-    assert "foo.disproof" in instructions
-    assert "negation-normal form" in instructions
-    # The canonical ∀ -> ∃¬ rewrite is the one the agent will hit most often.
-    assert "∃ x, ¬ P x" in instructions
+    # convention and the literal `negateExpr` the verifier applies to the target.
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    assert "disprove" in rendered.lower()
+    assert "foo.disproof" in rendered
+    assert "negateExpr" in rendered
 
 
-def test_render_task_mentions_prove_or_disprove() -> None:
-    rendered = render_task("/tmp/apn_proof.lean")
+def test_user_prompt_mentions_prove_or_disprove() -> None:
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
     assert "disproof" in rendered
     assert "Settle" in rendered
 
 
-def test_instructions_token_budget_rendering() -> None:
+def test_user_prompt_token_budget_rendering() -> None:
     # With a configured limit, the budget is disclosed with thousands separators.
-    assert "100,000,000 tokens" in lean_instructions(token_limit=100_000_000)
+    assert "100,000,000 tokens" in user_prompt(
+        PROOF_PATH, token_limit=100_000_000, literature=False
+    )
     # Without one, the budget sentence is omitted entirely.
-    assert "tokens" not in lean_instructions(token_limit=None).split("Facts about")[1]
+    facts = user_prompt(PROOF_PATH, token_limit=None, literature=False).split("Facts about")[1]
+    assert "tokens" not in facts
+
+
+def test_user_prompt_literature_note_gated() -> None:
+    # The arXiv tools are mentioned only when literature access is enabled, so a
+    # closed-book agent is never told about tools it doesn't have.
+    assert "arxiv_search" not in user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    assert "arxiv_search" in user_prompt(PROOF_PATH, token_limit=None, literature=True)
 
 
 def _exec_result(returncode: int, stdout: str = "", stderr: str = "") -> ExecResult[str]:

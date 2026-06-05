@@ -33,7 +33,7 @@ from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox
 
 from apn.dataset import strip_license_header
-from apn.prompts import LITERATURE_INSTRUCTIONS, lean_instructions, render_task
+from apn.prompts import user_prompt
 from apn.tools import arxiv_search, arxiv_source, bash
 
 # Path of the proof file inside the sample's sandbox.
@@ -139,16 +139,13 @@ def lean_prover(
             # numeric scratchpad (sympy/numpy are baked in).
             bash(timeout=300),
         ]
-        instructions = lean_instructions(state.token_limit)
         if literature:
             # Literature access, gated to papers predating the benchmark paper so
             # they can't surface a later solution to these still-open conjectures.
             tools += [arxiv_search(), arxiv_source()]
-            instructions += LITERATURE_INSTRUCTIONS
 
         agent = deepagent(
             tools=tools,
-            instructions=instructions,
             memory=False,
             # Gating: re-score each submission with the task scorer (SafeVerify);
             # on failure the model is told only that it failed (no verifier
@@ -172,7 +169,7 @@ def lean_prover(
             compaction=CompactionSummary(threshold=300_000),
             model=get_model(model) if model is not None else None,
         )
-        await run(agent, render_task(PROOF_PATH))
+        await run(agent, user_prompt(PROOF_PATH, state.token_limit, literature))
         state.completed = True
         return state
 
