@@ -51,9 +51,11 @@ You have a `bash` tool giving you a shell in the workspace. From there:
 You may settle each conjecture `foo` in one of two ways:
 
 - **Prove it.** Replace its `sorry` with a real proof of the statement as given.
-- **Disprove it.** Leave the original `theorem foo ... := sorry` exactly as it
-  is and ADD a new theorem named `foo.disproof` whose statement is the negation
-  of `foo`, proved completely. The verifier accepts `foo` *or* `foo.disproof`.
+- **Disprove it.** ADD a new theorem named `foo.disproof` whose statement is the
+  negation of `foo`, proved completely, and **delete the original
+  `theorem foo ... := sorry`** -- leaving it in place is rejected, because its
+  `sorry` counts as a forbidden axiom. The verifier accepts a proof of `foo` *or*
+  a complete `foo.disproof`.
 
   The negation must be written in **negation-normal form** -- push the `¬`
   inward rather than leaving a leading `¬`:
@@ -69,9 +71,11 @@ You may settle each conjecture `foo` in one of two ways:
   negation is definitionally the negation of the original, so match this form.
 
 Rules:
-- Do NOT change any statement (theorem names, hypotheses, goals) or any
-  definition. Only fill in proofs, or add a `foo.disproof` as above. A
-  submission that alters a statement or definition is rejected.
+- Do NOT change or weaken any statement (theorem names, hypotheses, goals) or
+  any definition. The only edits allowed are: fill in a `sorry` with a proof;
+  or, to disprove `foo`, delete its `theorem foo ... := sorry` and add a
+  `foo.disproof` as above. Any other alteration of a statement or definition is
+  rejected.
 - All required imports are already present; do NOT add or remove `import`
   statements.
 - Your submission may depend only on Lean's three standard axioms (`propext`,
