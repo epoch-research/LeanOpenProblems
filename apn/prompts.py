@@ -195,7 +195,8 @@ def render_task(path: str) -> str:
     """The user message pointing the agent at the proof file."""
     return (
         f"Settle every conjecture in the Lean file `{path}`: either replace its "
-        f"`sorry` with a complete proof, or add a `foo.disproof` theorem proving "
-        f"its negation. Keep all original statements and definitions unchanged, "
-        f"and still discharge the test lemmas."
+        f"`sorry` with a complete proof, or disprove it by deleting the original "
+        f"`theorem foo ... := sorry` and adding a `foo.disproof` theorem proving "
+        f"its negation. Do not otherwise alter any statement or definition, and "
+        f"still discharge the test lemmas."
     )
