@@ -136,8 +136,8 @@ Rules:
   or, to disprove `foo`, delete its `theorem foo ... := sorry` and add a
   `foo.disproof` as above. Any other alteration of a statement or definition is
   rejected.
-- All required imports are already present; do NOT add or remove `import`
-  statements.
+- All required imports are already present (`FormalConjectures.Util.ProblemImports`
+  transitively pulls in all of Mathlib and the other utilities); do NOT add or remove `import` statements.
 - Your submission may depend only on Lean's three standard axioms (`propext`,
   `Classical.choice`, `Quot.sound`). Do not introduce new `axiom`s, and do not use tactics that add other axioms. 
 - Leave no `sorry` in the declaration you are submitting (a proof of `foo`, or your `foo.disproof`).
