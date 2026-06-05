@@ -23,6 +23,46 @@ OEIS_MAPPING_FILE = OEIS_DIR / "THEOREM_MAPPING.txt"
 _OEIS_NUM_RE = re.compile(r"^(\d+)_")
 
 
+def strip_license_header(text: str) -> str:
+    """Drop a leading Lean copyright/license block comment to save the agent tokens.
+
+    Every Formal Conjectures file opens with the same ``/- ... -/`` Apache banner
+    (484/484 OEIS files) before the imports -- pure boilerplate the agent never
+    needs but pays for on every read. We remove it before writing the file to the
+    sandbox (see :mod:`apn.agent`); the scorer's target keeps the original text.
+
+    Only a *leading* ``/-`` block comment that mentions "Copyright" is removed:
+    a ``/--``/``/-!`` doc comment, a non-copyright comment, or a file with no
+    leading comment is returned unchanged. Nested ``/- -/`` is honoured so the
+    matching close is found correctly.
+    """
+    stripped = text.lstrip()
+    if not stripped.startswith("/-") or stripped.startswith("/--"):
+        return text
+    depth = 0
+    i = 0
+    end = -1
+    n = len(stripped)
+    while i < n - 1:
+        pair = stripped[i : i + 2]
+        if pair == "/-":
+            depth += 1
+            i += 2
+        elif pair == "-/":
+            depth -= 1
+            i += 2
+            if depth == 0:
+                end = i
+                break
+        else:
+            i += 1
+    if end == -1:  # unterminated comment -- leave the file untouched
+        return text
+    if "copyright" not in stripped[:end].lower():
+        return text
+    return stripped[end:].lstrip()
+
+
 def oeis_id_from_filename(filename: str) -> str | None:
     """The OEIS A-number for an ``OEIS/Auto`` file (its leading digits).
 

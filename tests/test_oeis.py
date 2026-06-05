@@ -6,7 +6,58 @@ from apn.dataset import (
     oeis_dataset,
     oeis_id_from_filename,
     parse_oeis_mapping,
+    strip_license_header,
 )
+
+_LICENSE = (
+    "/-\n"
+    "Copyright 2026 The Formal Conjectures Authors.\n"
+    "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+    "-/\n"
+)
+_BODY = "import FormalConjectures.Util.ProblemImports\n\ntheorem t : True := by sorry\n"
+
+
+def test_strip_license_header_removes_banner() -> None:
+    assert strip_license_header(_LICENSE + "\n" + _BODY) == _BODY
+
+
+def test_strip_license_header_noop_without_banner() -> None:
+    # No leading comment at all -- returned unchanged.
+    assert strip_license_header(_BODY) == _BODY
+
+
+def test_strip_license_header_keeps_doc_comment() -> None:
+    # A `/--` doc comment is content, not a license banner -- never stripped,
+    # even though it would match `/-`.
+    doc = "/-- A268597: smallest x. -/\nnoncomputable def f := 0\n"
+    assert strip_license_header(doc) == doc
+
+
+def test_strip_license_header_keeps_non_copyright_block() -> None:
+    other = "/-\nJust a note, no license here.\n-/\nimport X\n"
+    assert strip_license_header(other) == other
+
+
+def test_strip_license_header_leaves_unterminated_comment() -> None:
+    broken = "/-\nCopyright but never closed\nimport X\n"
+    assert strip_license_header(broken) == broken
+
+
+def test_strip_license_header_handles_nested_block() -> None:
+    nested = "/-\nCopyright /- nested -/ still header\n-/\nimport X\n"
+    assert strip_license_header(nested) == "import X\n"
+
+
+def test_strip_license_header_on_real_dataset_file() -> None:
+    metadata = oeis_dataset(names=["oeis_268597_conjecture_0"])[0].metadata
+    assert metadata is not None
+    sketch = metadata["sketch"]
+    stripped = strip_license_header(sketch)
+    assert "Copyright" in sketch  # the banner is present in the source
+    assert "Copyright" not in stripped
+    assert stripped.startswith("import FormalConjectures.Util.ProblemImports")
+    assert "theorem oeis_268597_conjecture_0" in stripped
 
 
 def test_oeis_id_from_filename() -> None:

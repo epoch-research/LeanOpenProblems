@@ -32,6 +32,7 @@ from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox
 
+from apn.dataset import strip_license_header
 from apn.prompts import LITERATURE_INSTRUCTIONS, lean_instructions, render_task
 from apn.tools import arxiv_search, arxiv_source, bash
 
@@ -123,7 +124,12 @@ def lean_prover(
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        sketch = state.metadata.get("sketch") or state.input_text
+        # Strip the copyright/license banner before the agent ever sees the file:
+        # it is identical boilerplate across every conjecture and pure token
+        # waste in the agent's context. The scorer still compiles the original
+        # sketch as its target, so verification is unaffected (comments don't
+        # reach the olean anyway).
+        sketch = strip_license_header(state.metadata.get("sketch") or state.input_text)
         await sandbox().write_file(PROOF_PATH, sketch)
 
         tools = [
