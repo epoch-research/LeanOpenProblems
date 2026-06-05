@@ -8,13 +8,17 @@ interface is::
 
     lake env lean -o target.olean target.lean        # compile the spec
     lake env lean -o submission.olean submission.lean
-    lake env safe_verify --disproofs target.olean submission.olean  # exit 0 = accepted
+    lake env safe_verify --disproofs --save out.json target.olean submission.olean
 
 ``--disproofs`` lets the agent *resolve* a conjecture either way: a target
 theorem ``foo`` is accepted by a proof of ``foo`` itself, **or** by a separate
 ``foo.disproof`` whose type SafeVerify checks is the negation of ``foo``'s
 statement (kernel ``isDefEq`` against its negation-normal-form). The "or" lives
 inside ``safe_verify``, so this module's verdict mapping is unchanged.
+
+``--save`` dumps a per-declaration JSON report (kind, axioms, failure mode),
+which this module reads back and attaches to the :class:`CheckOutcome` (and
+thence the score metadata) for offline analysis.
 
 This module drives those commands in the trusted scorer sandbox, one
 ``sandbox().exec`` per step, and maps the result to a verdict. The governing
@@ -46,8 +50,9 @@ these limits; if it ever did, that is genuinely our problem -> raise.)
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from inspect_ai.util import sandbox
 
@@ -55,6 +60,7 @@ from inspect_ai.util import sandbox
 # files live inside the lake project so `lake env lean -o` resolves imports.
 PROJECT = "/workspace/leanproject"
 SCORE_DIR = f"{PROJECT}/_apn_score"
+REPORT_PATH = f"{SCORE_DIR}/outcome.json"
 SAFE_VERIFY_BIN = "/opt/apn/safeverify/.lake/build/bin/safe_verify"
 
 
@@ -65,6 +71,12 @@ class CheckOutcome:
     ok: bool
     stage: str
     detail: str
+    # safe_verify's ``--save`` JSON: one entry per target declaration, recording
+    # the target/submission kind + axioms and the per-declaration failure mode
+    # (``None`` on success). Present only when safe_verify actually ran and wrote
+    # it (so ``None`` when the submission never compiled, or safe_verify died to
+    # a resource limit before writing).
+    report: list[dict[str, Any]] | None = None
 
 
 @runtime_checkable
@@ -174,8 +186,34 @@ class SandboxSafeVerify:
         safe_verify_cmd = ["lake", "env", SAFE_VERIFY_BIN]
         if self._allow_disproofs:
             safe_verify_cmd.append("--disproofs")
+        # --save makes safe_verify dump a per-declaration JSON report (kind,
+        # axioms, failure mode), written whether it accepts or rejects.
+        safe_verify_cmd += ["--save", REPORT_PATH]
         safe_verify_cmd += [f"{SCORE_DIR}/target.olean", f"{SCORE_DIR}/submission.olean"]
         mode, output = await self._exec_submission(safe_verify_cmd)
+        report = await self._read_report()
         if mode in ("resource", "timeout", "decode"):
-            return CheckOutcome(ok=False, stage=f"safeverify_{mode}", detail=output)
-        return CheckOutcome(ok=mode == "ok", stage="safeverify", detail=output)
+            return CheckOutcome(
+                ok=False, stage=f"safeverify_{mode}", detail=output, report=report
+            )
+        return CheckOutcome(
+            ok=mode == "ok", stage="safeverify", detail=output, report=report
+        )
+
+    async def _read_report(self) -> list[dict[str, Any]] | None:
+        """Best-effort read of safe_verify's ``--save`` JSON from the sandbox.
+
+        safe_verify writes it whenever it runs (accept or reject), and ``check``
+        clears ``SCORE_DIR`` up front, so a present file is always this call's.
+        A missing or unparseable file is not an error -- it just means no report
+        (e.g. safe_verify was OOM-killed before writing), so we return ``None``.
+        """
+        try:
+            raw = await sandbox(self._sandbox_name).read_file(REPORT_PATH)
+        except FileNotFoundError:
+            return None
+        try:
+            parsed = json.loads(raw)
+        except ValueError:
+            return None
+        return parsed if isinstance(parsed, list) else None

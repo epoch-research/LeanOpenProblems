@@ -45,7 +45,11 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
             value=CORRECT if outcome.ok else INCORRECT,
             answer=submission,
             explanation=outcome.detail,
-            metadata={"stage": outcome.stage},
+            # stage drives the gated-submit message (see apn.agent); report is
+            # safe_verify's per-declaration --save JSON (None when it didn't run
+            # or wrote nothing) for offline analysis of how each proof/disproof
+            # was judged.
+            metadata={"stage": outcome.stage, "safeverify_report": outcome.report},
         )
 
     return score

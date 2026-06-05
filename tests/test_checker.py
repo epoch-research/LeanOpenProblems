@@ -25,11 +25,16 @@ SKETCH = "import Mathlib\ntheorem tgt : True := by sorry\n"
 
 
 class StubChecker:
-    def __init__(self, ok: bool) -> None:
+    def __init__(
+        self, ok: bool, report: list[dict[str, object]] | None = None
+    ) -> None:
         self._ok = ok
+        self._report = report
 
     async def check(self, target: str, submission: str) -> CheckOutcome:
-        return CheckOutcome(ok=self._ok, stage="stub", detail="stub outcome")
+        return CheckOutcome(
+            ok=self._ok, stage="stub", detail="stub outcome", report=self._report
+        )
 
 
 class FakeSandbox:
@@ -55,12 +60,19 @@ Step = ExecResult[str] | BaseException
 
 
 class ScriptedSandbox:
-    """A scorer-sandbox stub: records writes, returns/raises scripted steps."""
+    """A scorer-sandbox stub: records writes, returns/raises scripted steps.
 
-    def __init__(self, results: list[Step]) -> None:
+    ``report`` scripts the safe_verify ``--save`` JSON the checker reads back:
+    a string is returned from ``read_file``, ``None`` (the default) raises
+    ``FileNotFoundError`` (safe_verify wrote nothing).
+    """
+
+    def __init__(self, results: list[Step], report: str | None = None) -> None:
         self._results = list(results)
+        self._report = report
         self.written: dict[str, str] = {}
         self.commands: list[list[str]] = []
+        self.reads: list[str] = []
 
     async def write_file(self, file: str, contents: str) -> None:
         self.written[file] = contents
@@ -71,6 +83,12 @@ class ScriptedSandbox:
         if isinstance(step, BaseException):
             raise step
         return step
+
+    async def read_file(self, file: str, text: bool = True) -> str:
+        self.reads.append(file)
+        if self._report is None:
+            raise FileNotFoundError(file)
+        return self._report
 
 
 def _ok(stderr: str = "") -> ExecResult[str]:
@@ -97,8 +115,9 @@ def _checker(
     monkeypatch: pytest.MonkeyPatch,
     results: list[Step],
     allow_disproofs: bool = True,
+    report: str | None = None,
 ) -> tuple[SandboxSafeVerify, ScriptedSandbox]:
-    sb = ScriptedSandbox(results)
+    sb = ScriptedSandbox(results, report=report)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
     return SandboxSafeVerify(allow_disproofs=allow_disproofs), sb
 
@@ -131,7 +150,8 @@ async def test_check_passes_disproofs_flag_to_safe_verify(
     assert outcome.ok
     safe_verify_cmd = sb.commands[3]
     assert "--disproofs" in safe_verify_cmd
-    # The flag precedes the two positional olean paths.
+    # --save requests the JSON report; the two olean paths stay positional last.
+    assert "--save" in safe_verify_cmd
     assert safe_verify_cmd[-2].endswith("target.olean")
     assert safe_verify_cmd[-1].endswith("submission.olean")
 
@@ -146,6 +166,47 @@ async def test_check_omits_disproofs_flag_when_disabled(
     )
     await checker.check("the target", "the submission")
     assert "--disproofs" not in sb.commands[3]
+
+
+async def test_check_attaches_safeverify_report(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # safe_verify's --save JSON is read back and attached to the outcome.
+    report = '[{"targetInfo": {"constInfo": {"kind": "theorem"}}, "failureMode": null}]'
+    checker, sb = _checker(
+        monkeypatch,
+        [_ok(), _ok(), _ok(), _ok("SafeVerify check passed.")],
+        report=report,
+    )
+    outcome = await checker.check("the target", "the submission")
+    assert outcome.ok
+    assert outcome.report == [
+        {"targetInfo": {"constInfo": {"kind": "theorem"}}, "failureMode": None}
+    ]
+    assert sb.reads == [checker_mod.REPORT_PATH]
+
+
+async def test_check_report_is_none_when_safe_verify_wrote_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A resource death can leave no report file; a missing read is not an error.
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _fail(137)])
+    outcome = await checker.check("the target", "the submission")
+    assert outcome.stage == "safeverify_resource"
+    assert outcome.report is None
+
+
+async def test_check_report_is_none_when_json_is_malformed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, _ = _checker(
+        monkeypatch,
+        [_ok(), _ok(), _ok(), _fail(1, "SafeVerify check failed.")],
+        report="not json{",
+    )
+    outcome = await checker.check("the target", "the submission")
+    assert not outcome.ok
+    assert outcome.report is None
 
 
 async def test_check_raises_when_target_fails_to_compile(
@@ -303,3 +364,13 @@ async def test_scorer_incorrect_when_checker_rejects(
 ) -> None:
     score = await _score(StubChecker(False), "the proof", monkeypatch)
     assert score.value == INCORRECT
+
+
+async def test_scorer_records_stage_and_report_in_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report: list[dict[str, object]] = [{"failureMode": None}]
+    score = await _score(StubChecker(True, report=report), "the proof", monkeypatch)
+    assert score.metadata is not None
+    assert score.metadata["stage"] == "stub"
+    assert score.metadata["safeverify_report"] == report
