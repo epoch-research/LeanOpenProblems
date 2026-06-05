@@ -24,6 +24,23 @@ def test_instructions_mention_lean_and_pypantograph() -> None:
     assert "statement" in instructions
 
 
+def test_instructions_explain_disproof_convention() -> None:
+    # The agent must know it can disprove, and how: the `foo.disproof` naming
+    # convention and the negation-normal-form the verifier expects.
+    instructions = lean_instructions(token_limit=None)
+    assert "disprove" in instructions.lower()
+    assert "foo.disproof" in instructions
+    assert "negation-normal form" in instructions
+    # The canonical ∀ -> ∃¬ rewrite is the one the agent will hit most often.
+    assert "∃ x, ¬ P x" in instructions
+
+
+def test_render_task_mentions_prove_or_disprove() -> None:
+    rendered = render_task("/tmp/apn_proof.lean")
+    assert "disproof" in rendered
+    assert "Settle" in rendered
+
+
 def test_instructions_token_budget_rendering() -> None:
     # With a configured limit, the budget is disclosed with thousands separators.
     assert "100,000,000 tokens" in lean_instructions(token_limit=100_000_000)

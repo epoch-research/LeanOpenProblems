@@ -41,7 +41,8 @@ apn/
                        the agent from python3, not wrapped here.
   prompts.py           Instructions + task message for the agent.
   checker.py           Host-side interface to SafeVerify (the anti-cheat).
-  scorer.py            Re-validates the final proof; correct iff complete proof.
+  scorer.py            Re-validates the final file; correct iff every conjecture
+                       is settled (a complete proof, or a complete foo.disproof).
   dataset.py           OEIS conjectures (theorem + sorry) -> Inspect Samples.
   task.py              The apn_oeis Inspect task.
   data/oeis/           Vendored OEIS/Auto dataset (484 files / 492 conjectures).
@@ -57,11 +58,16 @@ apn/
    for everything else: `import pantograph` from python3 to compile the file
    or drive interactive tactics, and the same shell as a numerical scratchpad
    (sympy/numpy). It iterates on the Lean compiler feedback until it submits.
-3. The scorer independently re-validates the final file with **SafeVerify** in a
-   separate trusted sandbox: every declaration (the definition, the test lemmas,
-   and the conjecture) must be reproduced **verbatim**, be `sorry`-free, and use
-   only permitted axioms. The kernel-level replay defends against statement
-   weakening, axiom injection, and definition tampering.
+3. The agent settles each conjecture in one of two ways: **prove** it (fill its
+   `sorry`), or **disprove** it by adding a `foo.disproof` theorem stating the
+   negation. The scorer independently re-validates the final file with
+   **SafeVerify** in a separate trusted sandbox (run with `--disproofs`): the
+   definitions and test lemmas must be reproduced **verbatim** and proved
+   `sorry`-free, and each conjecture `foo` is accepted by a proof of `foo` *or*
+   by a `foo.disproof` whose type SafeVerify checks (by kernel `isDefEq`) is the
+   negation-normal-form negation of `foo`. The kernel-level replay defends
+   against statement weakening, axiom injection, and definition tampering, and
+   the `isDefEq` negation check stops a disproof from weakening the statement.
 4. **Gated submit (optional, `-T gated=true`):** submissions are checked by
    SafeVerify *during* the loop; a failed submission is rejected and the agent
    must keep working (until a limit), and it is told only that verification

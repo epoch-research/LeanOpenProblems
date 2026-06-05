@@ -8,7 +8,13 @@ interface is::
 
     lake env lean -o target.olean target.lean        # compile the spec
     lake env lean -o submission.olean submission.lean
-    lake env safe_verify target.olean submission.olean   # exit 0 = accepted
+    lake env safe_verify --disproofs target.olean submission.olean  # exit 0 = accepted
+
+``--disproofs`` lets the agent *resolve* a conjecture either way: a target
+theorem ``foo`` is accepted by a proof of ``foo`` itself, **or** by a separate
+``foo.disproof`` whose type SafeVerify checks is the negation of ``foo``'s
+statement (kernel ``isDefEq`` against its negation-normal-form). The "or" lives
+inside ``safe_verify``, so this module's verdict mapping is unchanged.
 
 This module drives those commands in the trusted scorer sandbox, one
 ``sandbox().exec`` per step, and maps the result to a verdict. The governing
@@ -71,9 +77,22 @@ class SafeVerifyChecker(Protocol):
 class SandboxSafeVerify:
     """Compiles target + submission and runs ``safe_verify`` in the sandbox."""
 
-    def __init__(self, sandbox_name: str | None = None, timeout: int = 900) -> None:
+    def __init__(
+        self,
+        sandbox_name: str | None = None,
+        timeout: int = 900,
+        allow_disproofs: bool = True,
+    ) -> None:
         self._sandbox_name = sandbox_name
         self._timeout = timeout
+        # When set, pass ``--disproofs`` so a submission may *disprove* a target
+        # theorem ``foo`` by supplying ``foo.disproof`` whose type is SafeVerify's
+        # negation-normal-form of ``foo``'s statement (``∀`` -> ``∃¬``, ``∧`` ->
+        # ``→¬``, ``≠`` -> ``=``, ...), proved sorry-free with the standard
+        # axioms. SafeVerify checks that negation by kernel ``isDefEq`` and
+        # accepts ``foo`` *or* ``foo.disproof`` for the target; the definitions
+        # and test lemmas must still be reproduced and proved either way.
+        self._allow_disproofs = allow_disproofs
 
     async def _exec_reference(self, cmd: list[str]) -> tuple[int, str]:
         """Run a *reference-side* step (workspace cleanup, target compile).
@@ -152,9 +171,11 @@ class SandboxSafeVerify:
         # replay-time rejection: unsafe/partial constant, kernel type-check
         # failure, missing imports, ...). An OOM/timeout/decode death here is
         # the agent's expensive proof term -- also a rejection, not a raise.
-        mode, output = await self._exec_submission(
-            ["lake", "env", SAFE_VERIFY_BIN, f"{SCORE_DIR}/target.olean", f"{SCORE_DIR}/submission.olean"]
-        )
+        safe_verify_cmd = ["lake", "env", SAFE_VERIFY_BIN]
+        if self._allow_disproofs:
+            safe_verify_cmd.append("--disproofs")
+        safe_verify_cmd += [f"{SCORE_DIR}/target.olean", f"{SCORE_DIR}/submission.olean"]
+        mode, output = await self._exec_submission(safe_verify_cmd)
         if mode in ("resource", "timeout", "decode"):
             return CheckOutcome(ok=False, stage=f"safeverify_{mode}", detail=output)
         return CheckOutcome(ok=mode == "ok", stage="safeverify", detail=output)

@@ -143,9 +143,12 @@ def apn_oeis(
     Replicates the paper's OEIS evaluation: each sample is an autoformalized OEIS
     conjecture from Formal Conjectures (``OEIS/Auto``). The agent must discharge
     the embedded *test lemmas* (small-term checks guarding against
-    misformalization) as well as the conjecture; SafeVerify then re-validates the
-    whole file (every definition, test lemma, and the conjecture must be
-    reproduced verbatim and proved sorry-free with only permitted axioms).
+    misformalization) and then *settle* the conjecture -- either prove it or
+    disprove it by supplying a ``foo.disproof`` of its negation. SafeVerify then
+    re-validates the whole file (every definition and test lemma reproduced
+    verbatim and proved sorry-free with only permitted axioms; the conjecture
+    accepted via a proof or a kernel-checked negation) -- see
+    :class:`~apn.checker.SandboxSafeVerify`.
 
     Runs against the Formal Conjectures Lean v4.27 sandbox (built automatically
     by docker compose from ``apn/lean/Dockerfile``).

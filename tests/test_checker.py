@@ -94,11 +94,13 @@ def _decode_error() -> UnicodeDecodeError:
 
 
 def _checker(
-    monkeypatch: pytest.MonkeyPatch, results: list[Step]
+    monkeypatch: pytest.MonkeyPatch,
+    results: list[Step],
+    allow_disproofs: bool = True,
 ) -> tuple[SandboxSafeVerify, ScriptedSandbox]:
     sb = ScriptedSandbox(results)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
-    return SandboxSafeVerify(), sb
+    return SandboxSafeVerify(allow_disproofs=allow_disproofs), sb
 
 
 async def test_check_accepts_when_all_steps_pass(
@@ -115,6 +117,35 @@ async def test_check_accepts_when_all_steps_pass(
     assert len(sb.written) == 2
     assert len(sb.commands) == 4
     assert sb.commands[0][:2] == ["rm", "-rf"]
+
+
+async def test_check_passes_disproofs_flag_to_safe_verify(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # By default the agent may disprove a conjecture, so safe_verify is invoked
+    # with --disproofs (it then accepts foo OR foo.disproof for each target).
+    checker, sb = _checker(
+        monkeypatch, [_ok(), _ok(), _ok(), _ok("SafeVerify check passed.")]
+    )
+    outcome = await checker.check("the target", "the submission")
+    assert outcome.ok
+    safe_verify_cmd = sb.commands[3]
+    assert "--disproofs" in safe_verify_cmd
+    # The flag precedes the two positional olean paths.
+    assert safe_verify_cmd[-2].endswith("target.olean")
+    assert safe_verify_cmd[-1].endswith("submission.olean")
+
+
+async def test_check_omits_disproofs_flag_when_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, sb = _checker(
+        monkeypatch,
+        [_ok(), _ok(), _ok(), _ok("SafeVerify check passed.")],
+        allow_disproofs=False,
+    )
+    await checker.check("the target", "the submission")
+    assert "--disproofs" not in sb.commands[3]
 
 
 async def test_check_raises_when_target_fails_to_compile(
