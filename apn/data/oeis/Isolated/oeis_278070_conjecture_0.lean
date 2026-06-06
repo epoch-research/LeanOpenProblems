@@ -28,8 +28,6 @@ def A278070 (n : ℕ) : ℕ :=
   (Finset.range (n + 1)).sum fun k =>
     (n.choose k) * ((n + k).pred.choose k) * (k.factorial)
 
- -- Skipping detailed proof, since the goal is formalization of the conjecture.
-
 /--
 We conjecture that a(n+k) == a(n) (mod k) for all n and k.
 If true, then for each k, the sequence a(n) taken modulo k is a periodic sequence and the period divides k.

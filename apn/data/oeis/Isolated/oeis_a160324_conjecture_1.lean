@@ -34,8 +34,6 @@ $p_6(z) = 2z^2 - z$ is the $z$-th hexagonal number.
 -/
 def hexagonal (z : ℕ) : ℕ := polygonal_number 6 z
 
- -- This lemma would require careful definition of `a * (x * (x - 1) / 2) + x` for Nat division
-
 /--
 A160324: Number of ways to express $n$ as the sum of a square, a pentagonal number and a hexagonal number.
 $$a(n) = \left| \left\{(x, y, z) \in \mathbb{N}^3 : x^2 + p_5(y) + p_6(z) = n \right\} \right|$$

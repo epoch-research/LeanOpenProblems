@@ -193,16 +193,54 @@ def _attached_start(src: bytes, line_starts: list[int], decl_start: int, gap_sta
     return attached
 
 
+def _trailing_comment_end(
+    src: bytes, line_starts: list[int], decl_end: int, region_end: int
+) -> int:
+    """Byte offset up to which line-comment trivia hanging *directly off* a cut
+    declaration extends: its same-line ``-- ...`` comment plus any immediately
+    following ``--`` comment lines, stopping at the first blank or non-comment
+    line, and never past ``region_end`` (the start of the next unit).
+
+    Returns ``decl_end`` when nothing abuts -- so cutting a declaration with no
+    trailing comment changes nothing (the bare gap is preserved exactly as
+    before). The ``region_end`` bound guarantees we never consume a comment the
+    leading-attachment pass already gave to the next kept declaration, and
+    stopping at the first blank line preserves blank-separated/floating comments
+    (which may document the next kept decl). Only plain ``--`` comments are
+    stripped; ``/- ... -/`` and ``/-- ... -/`` blocks are left untouched.
+    """
+    n = len(src)
+    li = bisect.bisect_right(line_starts, decl_end) - 1
+    line_end = line_starts[li + 1] if li + 1 < len(line_starts) else n
+    tail = src[decl_end:line_end].decode("utf-8", "replace").strip()
+    if tail and not tail.startswith("--"):
+        return decl_end  # code (not a line comment) follows on the decl's line
+    consumed = min(line_end, region_end) if tail else decl_end
+    idx = li + 1
+    while idx < len(line_starts) and line_starts[idx] < region_end:
+        start = line_starts[idx]
+        end = line_starts[idx + 1] if idx + 1 < len(line_starts) else n
+        text = src[start:end].decode("utf-8", "replace").strip()
+        if text == "" or not text.startswith("--"):
+            break
+        consumed = min(end, region_end)
+        idx += 1
+    return consumed
+
+
 def isolate(src: bytes, filerec: dict, flags: list[bool]) -> bytes:
     """Reconstruct the file keeping only the commands flagged ``True``.
 
     Each command spans ``[declStart, declEnd)`` for its own text (doc-comment
     included) plus the inter-command *gap* trivia. A command's *unit* is its
     attached leading comment block + its text; cutting a command drops its unit
-    (so a comment documenting a removed theorem goes with it) while the free
-    trivia between units -- blank lines, detached comments -- is always kept (so
-    a comment documenting a *kept* definition is never lost). :func:`tidy` then
-    collapses the blank-line runs left behind.
+    (so a comment documenting a removed theorem goes with it) *and* the line
+    comments hanging directly off its tail (a same-line ``-- ...`` after the
+    proof, plus following ``--`` lines up to the first blank line -- see
+    :func:`_trailing_comment_end`). The remaining gap trivia -- blank lines and
+    blank-separated/floating comments -- is always kept, so a comment documenting
+    a *kept* definition is never lost. :func:`tidy` then collapses the blank-line
+    runs left behind.
     """
     commands = filerec["commands"]
     if not commands:
@@ -216,10 +254,15 @@ def isolate(src: bytes, filerec: dict, flags: list[bool]) -> bytes:
     out = bytearray(src[: attached[0]])  # preamble (license, imports, ...)
     n = len(commands)
     for i, c in enumerate(commands):
-        if flags[i]:
-            out += src[attached[i] : c["declEnd"]]  # the kept unit (comments + decl)
+        decl_end = c["declEnd"]
         next_unit = attached[i + 1] if i + 1 < n else len(src)
-        out += src[c["declEnd"] : next_unit]  # free trivia (always kept)
+        if flags[i]:
+            out += src[attached[i] : decl_end]  # the kept unit (comments + decl)
+            out += src[decl_end:next_unit]  # its trailing trivia travels with it
+        else:
+            # Cut: also drop the line comments hanging off this decl's tail; keep
+            # the rest of the gap (blanks / floating comments) verbatim.
+            out += src[_trailing_comment_end(src, line_starts, decl_end, next_unit) : next_unit]
     return bytes(out)
 
 

@@ -33,8 +33,6 @@ noncomputable def a (n : ℕ) : ℕ :=
   else
     0
 
- -- Simplified to avoid compilation error on numerical proof
-
 /--
 Conjecture from OEIS A064313, entry %C:
 Usually (perhaps always?) $\lfloor n^2/(4\pi) - \pi/12 \rfloor$ for a polygon of circumference $n$.

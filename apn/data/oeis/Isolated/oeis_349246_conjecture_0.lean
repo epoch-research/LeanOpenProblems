@@ -30,10 +30,6 @@ def A349246 (n : ℕ) : ℕ :=
   Finset.sum B $ fun t =>
     if w^8 + x^4 + 2 * y^4 + 4 * z^4 + t * (t + 1) = n then 1 else 0
 
- -- placeholder for the provided proof block
-
- -- placeholder for the provided proof block
-
 /-- Conjecture: a(n) > 0 for all n = 0,1,2,.... -/
 theorem oeis_349246_conjecture_0 (n : ℕ) : A349246 n > 0 := by
   sorry

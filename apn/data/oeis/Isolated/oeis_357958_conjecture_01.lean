@@ -50,5 +50,3 @@ a(p) ≡ a(1) (mod p^5) for all primes p ≥ 5.
 theorem oeis_357958_conjecture_01 :
   ∀ (p : ℕ), Nat.Prime p → 5 ≤ p → (a p) ≡ (a 1) [MOD p^5] :=
 by sorry
-
- -- The exponent is 3*r + 3, which is p^(3*r + 3) or p^3 * p^(3*r). The formalization p^(3*r + 3) is easier.

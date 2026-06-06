@@ -39,8 +39,6 @@ noncomputable def a (n : ℕ) : ℕ :=
   -- Nat.sInf of the empty set is 0, correctly handling the non-existence case a(2)=0.
   sInf candidates
 
- -- Proof is trivial: {1} is a set of 1 divisor of 1, sum=1, lcm=1.
-
 -- A081512: Smallest number $m$ such that $m$ is the sum of $n$ distinct divisors $d_1, \dots, d_n$ of $m$.
 noncomputable def a081512 (n : ℕ) : ℕ :=
   let candidates : Set ℕ :=
