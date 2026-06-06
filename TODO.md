@@ -2,75 +2,7 @@
 
 ## Known bugs
 
-### 1. SafeVerify rejects valid proofs that reproduce a target's pattern-matching `def` (private-name / module-name mismatch)
-
-**Severity:** high — silently scores correct submissions as incorrect (`I`).
-
-**Symptom.** A submission that genuinely proves the target (compiles, sorry-free,
-axiom-clean) is rejected by `safe_verify`. The recorded scorer explanation shows:
-
-```
-Found a problem ... with declaration _private._apn_score.target.0.a.match_1.eq_1: declaration not found in submission
-Found a problem ... with declaration _private._apn_score.target.0.a.match_1.splitter: declaration not found in submission
-Found a problem ... with declaration _private._apn_score.target.0.A258667_inner_sum: declaration not found in submission
-...
-```
-(`metadata.stage == "safeverify"`.)
-
-**Root cause.** `processFileDeclarations` (`apn/lean/safeverify/Main.lean:17`) collects
-*every* declaration of kind `theorem`/`def`/`opaque`/`inductive`/`constructor` from
-the target olean, with **no filtering of private or compiler-generated declarations**.
-`checkTargets` (`apn/lean/safeverify/Main.lean:90`) then requires each target name to be
-present in the submission under a **name-identical** lookup.
-
-When the target spec defines a function by pattern matching (e.g. `def a (n : ℕ) := match n with ...`),
-Lean auto-generates private equational lemmas (`a.match_1`, `a.match_1.eq_*`,
-`.splitter`, `._arg_pusher`). Their mangled names embed the **module (file) name**:
-- target compiled as `_apn_score/target.lean`     → `_private._apn_score.`**`target`**`.0.a.match_1.eq_1`
-- submission compiled as `_apn_score/submission.lean` → `_private._apn_score.`**`submission`**`.0.a.match_1.eq_1`
-
-These can never match across the two differently-named files, so SafeVerify reports
-`declaration not found in submission` for every such lemma and rejects the sample.
-The same mismatch cascades to the main `def` when it *references* a private helper:
-`A258667` is reported as `definition type or value mismatch` because its body refers to
-`A258667_inner_sum`, whose private name differs only in the module component. The agent
-cannot avoid this: it may not rename/alter definitions, and the file name is fixed by
-the scorer, not the agent.
-
-**Trigger condition.** Any target spec whose definitions generate private
-auto-generated declarations — a non-trivial `match` (multiple cases / nested patterns /
-`termination_by` well-founded recursion), or explicit `private def`/`private lemma`
-helpers in the spec. Specs with only theorems, or whose `def`s are simple enough not to
-emit a separately-stored `match_1` (e.g. a 2-case structural recursion), are unaffected —
-which is why most samples still score correctly.
-
-**Reproduced E2E** in the scorer image (`…:LeanOpenProblems_scorer_0.1.2`) with the exact
-`A028859` def (`match n with | 0 => 1 | 1 => 3 | (n+2) => 2*a(n+1)+2*a n; termination_by n`):
-a submission that reproduces the def verbatim and proves its theorem (`by simp [a]`) is
-rejected with `_private._apn_score.tg.0.a.match_1.eq_1: declaration not found` (and
-`.eq_2/.eq_3/.splitter/._arg_pusher`) — the target module name `tg` baked into the name
-cannot appear in the submission module `sg`.
-
-**Blast radius** (run `oeis-38vs40-v1-1zgnbauzxorcnmhi`, 6 model runs, 233 samples,
-149 rejected): **25 rejections carry this `_private … not found in submission`
-signature, spanning 9 distinct problems** — i.e. ~1 in 6 of all rejections is (at
-least partly) this bug, on problems whose spec defines a pattern-matching function.
-Affected problem IDs:
-`oeis_103311_conjecture_0`, `oeis_2897_conjecture_0`, `oeis_319303_conjecture_0`,
-`oeis_339602_conjecture_1`, `oeis_340737_conjecture_0`, `oeis_A028859_conjecture_1`,
-`oeis_A258667_conjecture_0`, `oeis_a103885_conjecture_0`, `oeis_a279612_conjecture_i`.
-(`103311`, `A028859`, `A258667` are the cleanest: agents had complete, axiom-clean,
-sorry-free proofs. For others the signature is in the final submission's verdict.)
-
-**Possible fixes** (in vendored `apn/lean/safeverify/Main.lean`):
-- Skip private / compiler-generated names when building `targetDecls` (e.g. via
-  `Lean.isPrivateName` / `Name.isInternalDetail`). Auto-generated equational lemmas are
-  an elaboration artifact — reproducing the `def` identically regenerates equivalents,
-  so they need not be matched by name.
-- Or: normalize/strip the `_private._apn_score.<file>.<idx>` prefix before comparison.
-- Or: compile target and submission under the *same* module name so private mangling agrees.
-
-### 2. SafeVerify peak memory is effectively unbounded on legitimate proofs (un-memoized `rebuildExpr`)
+### 1. SafeVerify peak memory is effectively unbounded on legitimate proofs (un-memoized `rebuildExpr`)
 
 **Severity:** medium — causes deterministic scorer OOM kills (infra errors / lost samples),
 not mis-scoring. Already documented in code; tracked here for visibility.
@@ -91,7 +23,7 @@ not mis-scoring. Already documented in code; tracked here for visibility.
 - Memoize `rebuildExpr` so shared sub-terms are copied once.
 - Skip the redundant `importModules` in the import-superset check.
 
-### 3. Disproof negation-matching accepts only one syntactic encoding of the negation
+### 2. Disproof negation-matching accepts only one syntactic encoding of the negation
 
 **Severity:** medium — the verifier accepts a disproof only if it is written in `negateExpr`'s
 exact shape, rejecting the encoding a mathematician would write first. The prompt works around

@@ -71,11 +71,16 @@ class ScriptedSandbox:
         self._results = list(results)
         self._report = report
         self.written: dict[str, str] = {}
+        # Ordered log of every write -- ``written`` collapses repeated writes to
+        # the same path, but the target and submission deliberately share one
+        # source path, so the sequence matters.
+        self.writes: list[tuple[str, str]] = []
         self.commands: list[list[str]] = []
         self.reads: list[str] = []
 
     async def write_file(self, file: str, contents: str) -> None:
         self.written[file] = contents
+        self.writes.append((file, contents))
 
     async def exec(self, cmd: list[str], **kwargs: object) -> ExecResult[str]:
         self.commands.append(cmd)
@@ -133,9 +138,34 @@ async def test_check_accepts_when_all_steps_pass(
     outcome = await checker.check("the target", "the submission")
     assert outcome.ok
     assert outcome.stage == "safeverify"
-    assert len(sb.written) == 2
+    # Two source writes (target, then submission), then four commands:
+    # clear, compile target, compile submission, safe_verify.
+    assert len(sb.writes) == 2
     assert len(sb.commands) == 4
     assert sb.commands[0][:2] == ["rm", "-rf"]
+
+
+async def test_check_compiles_both_from_same_source_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Load-bearing for private-name matching: the target and submission must
+    # compile from the SAME source path so Lean gives them the same module name
+    # (otherwise a pattern-matching def's private `_private.<module>.0.a.match_1`
+    # lemmas mangle differently and SafeVerify's exact-name match rejects a
+    # faithful proof). See SandboxSafeVerify.check's comment.
+    checker, sb = _checker(
+        monkeypatch, [_ok(), _ok(), _ok(), _ok("SafeVerify check passed.")]
+    )
+    await checker.check("THE TARGET", "THE SUBMISSION")
+    # Target written first, then the submission overwrites it -- both at SOURCE.
+    assert sb.writes == [
+        (checker_mod.SOURCE, "THE TARGET"),
+        (checker_mod.SOURCE, "THE SUBMISSION"),
+    ]
+    # Each compile reads that one shared source but emits a distinct olean.
+    target_compile, submission_compile = sb.commands[1], sb.commands[2]
+    assert target_compile[-2:] == [checker_mod.TARGET_OLEAN, checker_mod.SOURCE]
+    assert submission_compile[-2:] == [checker_mod.SUBMISSION_OLEAN, checker_mod.SOURCE]
 
 
 async def test_check_passes_disproofs_flag_to_safe_verify(

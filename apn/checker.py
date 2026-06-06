@@ -6,9 +6,12 @@ submission against the target spec at the kernel level (same name/kind/type for
 every target declaration, ``sorry``-free, only the standard axioms). Its raw
 interface is::
 
-    lake env lean -o target.olean target.lean        # compile the spec
-    lake env lean -o submission.olean submission.lean
+    lake env lean -o target.olean     spec.lean      # compile the spec
+    lake env lean -o submission.olean spec.lean      # same source path (see check)
     lake env safe_verify --disproofs --save out.json target.olean submission.olean
+
+Both files compile from the *same* source path so Lean gives them the same
+module name; this is load-bearing for private-name matching -- see ``check``.
 
 ``--disproofs`` lets the agent *resolve* a conjecture either way: a target
 theorem ``foo`` is accepted by a proof of ``foo`` itself, **or** by a separate
@@ -60,6 +63,11 @@ from inspect_ai.util import sandbox
 # files live inside the lake project so `lake env lean -o` resolves imports.
 PROJECT = "/workspace/leanproject"
 SCORE_DIR = f"{PROJECT}/_apn_score"
+# The target and the submission both compile from this one source path, one
+# after the other (see SandboxSafeVerify.check for why), to two distinct oleans.
+SOURCE = f"{SCORE_DIR}/spec.lean"
+TARGET_OLEAN = f"{SCORE_DIR}/target.olean"
+SUBMISSION_OLEAN = f"{SCORE_DIR}/submission.olean"
 REPORT_PATH = f"{SCORE_DIR}/outcome.json"
 SAFE_VERIFY_BIN = "/opt/apn/safeverify/.lake/build/bin/safe_verify"
 
@@ -155,23 +163,46 @@ class SandboxSafeVerify:
         # whatever lake leaves behind) before staging this one, so a crashed
         # prior call can't bleed a stale submission.olean into this verdict.
         await self._exec_reference(["rm", "-rf", SCORE_DIR])
-        files = {"target": target, "submission": submission}
-        for stem, source in files.items():
-            await sb.write_file(f"{SCORE_DIR}/{stem}.lean", source)
+
+        # Compile the target and the submission from the *same* source path
+        # (SOURCE), one after the other, so Lean assigns them the same module
+        # name. Lean derives a file's module name from its path relative to the
+        # project root and bakes that name into every private / compiler-
+        # generated declaration: a pattern-matching ``def a`` emits equational
+        # lemmas that mangle to ``_private.<module>.0.a.match_1.eq_1`` (and
+        # ``.splitter`` / ``._arg_pusher``). SafeVerify matches each target
+        # declaration against the submission by *exact name*, so if the two
+        # files compiled under different module names (``...target...`` vs
+        # ``...submission...``) those private lemmas could never match and a
+        # faithful, sorry-free proof was rejected as "declaration not found".
+        # Sharing the source path makes the module name -- and thus every
+        # mangled private name -- identical, while ``-o`` still writes two
+        # distinct oleans. Those private lemmas are a pure function of (module
+        # name, def) and do not depend on the proof body, so the sorry-bodied
+        # target and the real-proof submission produce byte-identical private
+        # names (verified against the toolchain). SafeVerify reads the two
+        # oleans by path and replays them into separate environments, so the
+        # shared module name causes no collision. Do NOT split this back into
+        # target.lean / submission.lean: that silently reintroduces the
+        # mismatch.
 
         # The target spec is trusted, fixed data: if it fails to compile -- or
         # dies to a signal/timeout -- that is our problem, not the agent's, so
         # _exec_reference raises (a timeout propagates as TimeoutError).
+        await sb.write_file(SOURCE, target)
         returncode, output = await self._exec_reference(
-            ["lake", "env", "lean", "-o", f"{SCORE_DIR}/target.olean", f"{SCORE_DIR}/target.lean"]
+            ["lake", "env", "lean", "-o", TARGET_OLEAN, SOURCE]
         )
         if returncode != 0:
             raise RuntimeError(f"target spec failed to compile:\n{output}")
 
         # Everything below operates on the agent's submission: a failure is a
         # verdict on the agent's code, reported back, never an errored sample.
+        # Overwrite the shared source with the submission so it compiles under
+        # the same module name as the target above.
+        await sb.write_file(SOURCE, submission)
         mode, output = await self._exec_submission(
-            ["lake", "env", "lean", "-o", f"{SCORE_DIR}/submission.olean", f"{SCORE_DIR}/submission.lean"]
+            ["lake", "env", "lean", "-o", SUBMISSION_OLEAN, SOURCE]
         )
         if mode in ("resource", "timeout", "decode"):
             return CheckOutcome(ok=False, stage=f"compile_submission_{mode}", detail=output)
@@ -189,7 +220,7 @@ class SandboxSafeVerify:
         # --save makes safe_verify dump a per-declaration JSON report (kind,
         # axioms, failure mode), written whether it accepts or rejects.
         safe_verify_cmd += ["--save", REPORT_PATH]
-        safe_verify_cmd += [f"{SCORE_DIR}/target.olean", f"{SCORE_DIR}/submission.olean"]
+        safe_verify_cmd += [TARGET_OLEAN, SUBMISSION_OLEAN]
         mode, output = await self._exec_submission(safe_verify_cmd)
         report = await self._read_report()
         if mode in ("resource", "timeout", "decode"):
