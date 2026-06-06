@@ -126,10 +126,20 @@ RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
 COPY pypantograph-docs /opt/pypantograph-docs
 COPY pantograph-docs /opt/pantograph-docs
 
-# Python libraries for the agent's numerical scratchpad (the `bash` tool runs
-# python3 in this image). sympy/numpy are very useful for the number-theory
-# problems; the sandbox has no network, so they must be baked in here.
-RUN pip3 install --break-system-packages --no-cache-dir numpy sympy
+# Numerical/symbolic scratchpad for the agent (the `bash` tool runs python3 in
+# this image). The sandbox has no network, so everything is baked in here.
+#   - sagemath: a full computer algebra system on the `sage` command, bundling
+#     PARI/GP, FLINT, Maxima, GAP and Singular -- far stronger than sympy for
+#     number theory (factoring, modular arithmetic, elliptic curves, continued
+#     fractions) and the dialect much of OEIS's own reference code is written in.
+#   - python3-{numpy,sympy,mpmath}: importable directly from `python3` (sympy =
+#     exact symbolic, mpmath = arbitrary precision with pslq/identify). Pulled
+#     from apt alongside sagemath so all versions resolve mutually consistent
+#     (a pip --break-system-packages upgrade could outrun what Sage expects).
+# This ~1.5 GB install is its own cached layer.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        sagemath python3-numpy python3-sympy python3-mpmath \
+    && rm -rf /var/lib/apt/lists/*
 
 CMD ["sleep", "infinity"]
 

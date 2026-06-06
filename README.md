@@ -63,7 +63,8 @@ apn/
    file with `text_editor` and uses `bash`
    for everything else: `import pantograph` from python3 to compile the file
    or drive interactive tactics, and the same shell as a numerical scratchpad
-   (sympy/numpy). It iterates on the Lean compiler feedback until it submits.
+   (sympy/numpy, plus `sage` for a full CAS). It iterates on the Lean compiler
+   feedback until it submits.
 3. The agent settles each conjecture in one of two ways: **prove** it (fill its
    `sorry`), or **disprove** it by adding a `foo.disproof` theorem stating the
    negation. The scorer independently re-validates the final file with
@@ -92,7 +93,8 @@ sample gets **two** sandboxes from a shared base image:
   agent compiles Lean by importing `pantograph` from python3 and creating a
   `Server` itself (~2s per fresh server with the page cache warm; see the
   `agent` stage of `apn/lean/Dockerfile`). Also has `python3` + `sympy`/`numpy`
-  for the numerical scratchpad. **No SafeVerify here.**
+  and `sage` (SageMath: PARI/GP, FLINT, Maxima, GAP, Singular) for the
+  numerical/symbolic scratchpad. **No SafeVerify here.**
 * **`scorer`** — a separate, trusted container (`apn-scorer`) the agent never
   writes to, where SafeVerify validates the final proof. The scorer writes the
   submitted proof (from the store) into this clean container and checks it, so

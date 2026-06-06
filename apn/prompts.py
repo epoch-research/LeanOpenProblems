@@ -108,6 +108,10 @@ You have a `bash` tool giving you a shell in the workspace. From there:
   identity on small cases, guess a closed form, sanity-check it on small cases.
   Python results carry no formal weight; every claim must still be proved in
   Lean.
+- `sage` (SageMath) is also installed: a full computer algebra system, much
+  stronger than sympy for number theory. It bundles PARI/GP, FLINT, Maxima, GAP
+  and Singular. Run an expression with `sage -c '...'` or pipe a script to
+  `sage`.
 - [PyPantograph](https://github.com/lenianiva/PyPantograph) is also installed
   (`import pantograph`); it exposes Lean 4 via `pantograph.Server` -- file
   compilation, interactive `goal_start` / `goal_tactic`, `load_sorry` drafting,
