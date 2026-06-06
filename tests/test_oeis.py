@@ -108,20 +108,20 @@ def test_oeis_dataset_names_filter_unknown() -> None:
     assert len(oeis_dataset(names=["does_not_exist"])) == 0
 
 
-def test_available_subsets_ships_proved38_and_random40() -> None:
-    assert {"proved38", "random40"} <= set(available_subsets())
+def test_available_subsets_ships_proved38_and_unproved40() -> None:
+    assert {"proved38", "unproved40"} <= set(available_subsets())
 
 
 def test_load_subset_sizes_and_disjoint() -> None:
     proved = load_subset("proved38")
-    random40 = load_subset("random40")
+    unproved40 = load_subset("unproved40")
     assert len(proved) == 38
-    assert len(random40) == 40
+    assert len(unproved40) == 40
     # No duplicate names within a subset.
     assert len(set(proved)) == 38
-    assert len(set(random40)) == 40
-    # random40 is sampled from the complement of proved38 -- disjoint.
-    assert set(proved).isdisjoint(random40)
+    assert len(set(unproved40)) == 40
+    # unproved40 is sampled from the complement of proved38 -- disjoint.
+    assert set(proved).isdisjoint(unproved40)
 
 
 def test_load_subset_strips_comments_and_resolves_to_real_conjectures() -> None:

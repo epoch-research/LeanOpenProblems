@@ -1,4 +1,4 @@
-# random40 -- a random sample of 40 OEIS conjectures NOT in the published APN
+# unproved40 -- a random sample of 40 OEIS conjectures NOT in the published APN
 # OEIS proof-output set (the proved38 subset). Seed: 20260603. Pool size:
 # 454 = 492 - 38. One conjecture theorem name per line; blank lines and
 # #-comments are ignored. Referenced by name from configs/example-eval-set.yml.

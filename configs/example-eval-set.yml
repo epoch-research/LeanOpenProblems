@@ -1,7 +1,6 @@
 # Schema reference for eval-set config:
 # https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
 retry_attempts: 0  # Disable retries while we're still working out the kinks
-name: oeis-38vs40-v3
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@develop
     name: apn
@@ -12,15 +11,15 @@ tasks:
       - name: apn_oeis
         args:
           gated: true
-          literature: false
+          literature: true
           # 38 OEIS conjectures with published APN proof outputs.
           subset: proved38
       - name: apn_oeis
         args:
           gated: true
-          literature: false
+          literature: true
           # 40 random OEIS conjectures not in the published APN proof-output set.
-          subset: random40
+          subset: unproved40
 epochs: 1
 models:
   - package: openai
