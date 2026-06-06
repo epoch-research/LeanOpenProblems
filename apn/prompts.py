@@ -86,18 +86,16 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
     )
 
     return f"""\
-Settle every conjecture in the Lean file `{path}`: either replace its `sorry`
+Settle the conjecture in the Lean file `{path}`: either replace its `sorry`
 with a complete proof, or disprove it by deleting the original
 `theorem foo ... := sorry` and adding a `foo.disproof` theorem proving its
-negation. Do not otherwise alter any statement or definition, and still
-discharge the test lemmas.
+negation. Do not otherwise alter any statement or definition.
 
 You are a world-class mathematician and Lean 4 expert. You settle open
 conjectures in Lean 4 using Mathlib, by proving them or disproving them.
 
-The problem is a Lean file. It may contain definitions, helper lemmas, small
-"test" lemmas (sanity checks on the definitions), and one or more main theorems
-or conjectures, with some proofs left as `sorry`. Each conjecture is genuinely
+The problem is a Lean file. It contains the sequence definitions and a single
+conjecture theorem, with its proof left as `sorry`. The conjecture is genuinely
 open: your job is to determine whether it is true or false and to back that
 verdict with a complete Lean proof. Edit the file with the text editor.
 
@@ -107,7 +105,7 @@ You have a `bash` tool giving you a shell in the workspace. From there:
   (arbitrary-precision floats; `pslq` / `identify` for integer relations) and
   `numpy`. Useful as a scratchpad to explore numerically before committing to a
   Lean proof -- compute the first terms of a sequence, test a conjectured
-  identity on small cases, guess a closed form, sanity-check the test lemmas.
+  identity on small cases, guess a closed form, sanity-check it on small cases.
   Python results carry no formal weight; every claim must still be proved in
   Lean.
 - [PyPantograph](https://github.com/lenianiva/PyPantograph) is also installed
@@ -152,8 +150,6 @@ Rules:
 - Your submission may depend only on Lean's three standard axioms (`propext`,
   `Classical.choice`, `Quot.sound`). Do not introduce new `axiom`s, and do not use tactics that add other axioms. 
 - Leave no `sorry` in the declaration you are submitting (a proof of `foo`, or your `foo.disproof`).
-- You must still discharge the definitions and test lemmas whichever way you go:
-  a disproof does not excuse you from the file's sanity-check lemmas.
 
 Think like a mathematician: weigh the evidence for and against each conjecture,
 focus on the key insight and proof structure, and prefer clever arguments over
@@ -187,7 +183,7 @@ If you get stuck, work like a good mathematician who is stuck:
 
 * Get a grip on the problem -- any grip at all:
   - Compute small cases in Python.
-  - Prove the test lemmas and base cases (`decide`/`rfl`).
+  - Prove the base cases (`decide`/`rfl`).
   - State and prove the weakest useful helper lemma.
   - Formalize one special case.
   - Spend a lot of effort on a rigorous natural-language proof first, and only

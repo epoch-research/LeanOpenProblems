@@ -111,7 +111,7 @@ class SandboxSafeVerify:
         # ``→¬``, ``≠`` -> ``=``, ...), proved sorry-free with the standard
         # axioms. SafeVerify checks that negation by kernel ``isDefEq`` and
         # accepts ``foo`` *or* ``foo.disproof`` for the target; the definitions
-        # and test lemmas must still be reproduced and proved either way.
+        # must still be reproduced either way.
         self._allow_disproofs = allow_disproofs
 
     async def _exec_reference(self, cmd: list[str]) -> tuple[int, str]:
