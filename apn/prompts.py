@@ -66,7 +66,7 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
     # runs), where /corpus exists; the closed-book image has no /corpus at all,
     # so the closed-book agent is never told about a corpus it doesn't have.
     literature_note = (
-        "\n\nAn offline corpus of pure-mathematics arXiv papers is mounted at "
+        "\n\nAn offline corpus of around 200,000 pure-mathematics arXiv papers is mounted at "
         "`/corpus`, searchable with `rg` from bash (no network). It has two "
         "parts:\n"
         "- `/corpus/metadata.jsonl` -- one JSON record per paper "
