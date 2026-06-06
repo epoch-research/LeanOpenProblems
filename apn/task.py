@@ -130,10 +130,18 @@ services:
 
 
 def get_compose_file(literature: bool = False) -> Path:
-    # Distinct filenames so the closed-book and literature composes (different
-    # default images) coexist without clobbering each other.
-    name = "compose-corpus.yaml" if literature else "compose.yaml"
-    compose_path = COMPOSE_FILES_DIR / _docker_tag_component(__version__) / name
+    # Both variants are named compose.yaml, isolated in per-variant subdirs so the
+    # closed-book and literature composes (different default images) coexist
+    # without clobbering each other. The basename matters: k8s_sandbox (Hawk)
+    # only treats a sandbox config as a compose file when its name *ends* in
+    # "compose.yaml"/"compose.yml" (is_docker_compose_file); anything else (e.g.
+    # the old "compose-corpus.yaml") is fed to the agent-env Helm chart verbatim
+    # as a values file, whose schema rejects compose keys like build / mem_limit /
+    # network_mode / init / entrypoint.
+    variant = "corpus" if literature else "closed-book"
+    compose_path = (
+        COMPOSE_FILES_DIR / _docker_tag_component(__version__) / variant / "compose.yaml"
+    )
     compose_path.parent.mkdir(parents=True, exist_ok=True)
     content = get_compose_file_content(literature)
     if not compose_path.exists() or compose_path.read_text() != content:
