@@ -29,12 +29,20 @@ Search* (arXiv:2605.22763v1) — the "OEIS Problems" evaluation (44/492 solved).
 `scripts/generate_isolated.py`, which drives the Lean declaration-range extractor
 in `apn/lean/extract_ranges/` (cuts are made with Lean's own parser/elaborator,
 not text matching). There is no local Lean toolchain, so it runs in the Lean
-Docker image (`apn/lean/Dockerfile` `generate` stage). It self-validates: every
-isolated file elaborates cleanly, contains exactly the one target theorem with
-its statement byte-for-byte preserved, and (for the paper's solved problems)
-matches the published challenge file's statement. The committed `Isolated/` files
-are the trusted artifact (as `Auto/` is); CI guards them with pure-Python
-structural invariants in `tests/test_oeis.py`.
+Docker image (`apn/lean/Dockerfile` `generate` stage). The script only *writes*
+the files; validation lives in the tests.
+
+The committed `Isolated/` files are the trusted artifact (as `Auto/` is) and are
+guarded on two levels. `tests/test_oeis.py` has always-on pure-Python structural
+invariants (every conjecture has a spec; it imports the FC library and declares
+its target; one theorem per spec bar the documented dependency-lemma case).
+`tests/test_oeis_isolation.py` is the authoritative gate: it brings up a Lean
+container and confirms every isolated file elaborates cleanly under the scorer's
+exact `lake env lean -o`, contains exactly the target theorem (+ its
+definitional-dependency lemmas) with its statement byte-for-byte preserved, and
+-- for the paper's solved problems -- matches the published challenge file's
+statement. (Shared cut logic and Docker plumbing live in
+`scripts/oeis_isolation.py`, imported by both the script and the tests.)
 
 ## Source and pinning
 
