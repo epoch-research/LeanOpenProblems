@@ -217,6 +217,10 @@ class SandboxSafeVerify:
         safe_verify_cmd = ["lake", "env", SAFE_VERIFY_BIN]
         if self._allow_disproofs:
             safe_verify_cmd.append("--disproofs")
+        # --verbose makes safe_verify print detailed type-information on a
+        # mismatch (target vs submission constant info), which lands in the
+        # rejection ``detail`` for offline diagnosis.
+        safe_verify_cmd.append("--verbose")
         # --save makes safe_verify dump a per-declaration JSON report (kind,
         # axioms, failure mode), written whether it accepts or rejects.
         safe_verify_cmd += ["--save", REPORT_PATH]
