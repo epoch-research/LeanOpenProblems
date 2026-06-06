@@ -41,8 +41,8 @@ apn/
                        sandbox, runs an agent (deepagent or react; text_editor
                        + bash) via build_agent, reads the result back. Optional
                        SafeVerify-gated submit.
-  tools.py             bash + arxiv tools. PyPantograph is invoked directly by
-                       the agent from python3, not wrapped here.
+  tools.py             the bash tool. PyPantograph is invoked directly by the
+                       agent from python3, not wrapped here.
   prompts.py           Instructions + task message for the agent.
   checker.py           Host-side interface to SafeVerify (the anti-cheat).
   scorer.py            Re-validates the final file; correct iff every conjecture
@@ -50,7 +50,8 @@ apn/
   dataset.py           OEIS conjectures (theorem + sorry) -> Inspect Samples.
   task.py              The apn_oeis Inspect task.
   data/oeis/           Vendored OEIS/Auto dataset (484 files / 492 conjectures).
-  lean/                Docker images + SafeVerify.
+  lean/                Docker images + SafeVerify + build_corpus.py (the offline
+                       arXiv-math grep corpus for literature runs).
 ```
 
 ### How a proof search runs

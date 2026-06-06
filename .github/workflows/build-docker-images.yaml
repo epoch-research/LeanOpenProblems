@@ -36,7 +36,9 @@ jobs:
           fi
           {
             echo "BASE_IMAGE_TAG=LeanOpenProblems_base_${image_version}"
+            echo "CORPUS_IMAGE_TAG=LeanOpenProblems_corpus_${image_version}"
             echo "AGENT_IMAGE_TAG=LeanOpenProblems_agent_${image_version}"
+            echo "AGENT_CORPUS_IMAGE_TAG=LeanOpenProblems_agent_corpus_${image_version}"
             echo "SCORER_IMAGE_TAG=LeanOpenProblems_scorer_${image_version}"
           } >> "$GITHUB_ENV"
 
@@ -52,7 +54,7 @@ jobs:
         id: image_tags
         run: |-
           repository="${IMAGE_NAME#*/}"
-          for image in base agent scorer; do
+          for image in base corpus agent agent_corpus scorer; do
             tag_var="${image^^}_IMAGE_TAG"
             tag="${!tag_var}"
             if aws ecr describe-images \
@@ -89,6 +91,21 @@ jobs:
             -t "${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
             .
 
+      # The corpus stage is self-contained (FROM debian, downloads pinned public
+      # HF datasets) and frozen at a 2022 snapshot, so it's built once and reused
+      # across versions via the registry cache -- no base build context needed.
+      - name: Build and push corpus image
+        if: steps.image_tags.outputs.corpus_exists != 'true'
+        working-directory: apn/lean
+        run: |-
+          docker buildx build \
+            --target corpus \
+            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${CORPUS_IMAGE_TAG}" \
+            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${CORPUS_IMAGE_TAG}" \
+            --push \
+            -t "${IMAGE_NAME}:${CORPUS_IMAGE_TAG}" \
+            .
+
       - name: Build and push agent image
         if: steps.image_tags.outputs.agent_exists != 'true'
         working-directory: apn/lean
@@ -100,6 +117,23 @@ jobs:
             --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_IMAGE_TAG}" \
             --push \
             -t "${IMAGE_NAME}:${AGENT_IMAGE_TAG}" \
+            .
+
+      # agent_corpus = agent + the corpus layer; override both upstream stages
+      # with their pushed images so neither is rebuilt here.
+      - name: Build and push agent_corpus image
+        if: steps.image_tags.outputs.agent_corpus_exists != 'true'
+        working-directory: apn/lean
+        run: |-
+          docker buildx build \
+            --target agent_corpus \
+            --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
+            --build-context "agent=docker-image://${IMAGE_NAME}:${AGENT_IMAGE_TAG}" \
+            --build-context "corpus=docker-image://${IMAGE_NAME}:${CORPUS_IMAGE_TAG}" \
+            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_CORPUS_IMAGE_TAG}" \
+            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_CORPUS_IMAGE_TAG}" \
+            --push \
+            -t "${IMAGE_NAME}:${AGENT_CORPUS_IMAGE_TAG}" \
             .
 
       - name: Build and push scorer image
@@ -119,5 +153,7 @@ jobs:
         run: |-
           echo "LEAN_OPEN_PROBLEMS_IMAGE_NAME=${IMAGE_NAME}"
           echo "Base image: ${IMAGE_NAME}:${BASE_IMAGE_TAG}"
+          echo "Corpus image: ${IMAGE_NAME}:${CORPUS_IMAGE_TAG}"
           echo "Agent image: ${IMAGE_NAME}:${AGENT_IMAGE_TAG}"
+          echo "Agent-corpus image: ${IMAGE_NAME}:${AGENT_CORPUS_IMAGE_TAG}"
           echo "Scorer image: ${IMAGE_NAME}:${SCORER_IMAGE_TAG}"

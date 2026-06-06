@@ -52,10 +52,10 @@ def test_user_prompt_token_budget_rendering() -> None:
 
 
 def test_user_prompt_literature_note_gated() -> None:
-    # The arXiv tools are mentioned only when literature access is enabled, so a
-    # closed-book agent is never told about tools it doesn't have.
-    assert "arxiv_search" not in user_prompt(PROOF_PATH, token_limit=None, literature=False)
-    assert "arxiv_search" in user_prompt(PROOF_PATH, token_limit=None, literature=True)
+    # The /corpus note is included only on literature runs, so a closed-book
+    # agent (whose image has no /corpus) is never told about a corpus it lacks.
+    assert "/corpus" not in user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    assert "/corpus" in user_prompt(PROOF_PATH, token_limit=None, literature=True)
 
 
 def _exec_result(returncode: int, stdout: str = "", stderr: str = "") -> ExecResult[str]:

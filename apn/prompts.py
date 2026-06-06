@@ -62,14 +62,25 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
             " tokens for this one problem. Calibrate your ambition to it."
         )
 
-    # The arXiv note is included only when the literature tools are enabled, so
-    # the closed-book agent is never told about tools it doesn't have.
+    # The corpus note is included only for the agent-corpus image (literature
+    # runs), where /corpus exists; the closed-book image has no /corpus at all,
+    # so the closed-book agent is never told about a corpus it doesn't have.
     literature_note = (
-        "\n\nYou can consult the mathematical literature with `arxiv_search` "
-        "(find papers by keyword/author/title) and `arxiv_source` (download a "
-        "paper's full LaTeX source into the workspace, then read it with the "
-        "text editor or bash). Use them for relevant techniques, definitions, "
-        "and prior results."
+        "\n\nAn offline corpus of pure-mathematics arXiv papers is mounted at "
+        "`/corpus`, searchable with `rg` from bash (no network). It has two "
+        "parts:\n"
+        "- `/corpus/metadata.jsonl` -- one JSON record per paper "
+        "(`id`, `file`, `title`, `authors`, `categories`, `update_date`, "
+        "`abstract`). Grep this first to find papers by topic.\n"
+        "- `/corpus/src/<id>/` -- that paper's LaTeX *source* files. Grep/read "
+        "these for the actual mathematics.\n"
+        "Two-stage search works best: find candidate papers by topic in "
+        "`metadata.jsonl` (e.g. `rg -i 'primitive root' /corpus/metadata.jsonl`), "
+        "then read the `file` directory of the hits. You are searching LaTeX "
+        "source, not rendered math: search prose and command/environment names "
+        "(`\\\\begin{theorem}`, `\\\\mathbb{R}`, `Mersenne`), not typeset "
+        "formulas. The corpus is a 2022 snapshot, so it predates recent work and "
+        "omits some papers -- a miss is not proof a result doesn't exist."
         if literature
         else ""
     )

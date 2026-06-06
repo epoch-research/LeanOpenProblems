@@ -46,7 +46,7 @@ from inspect_ai.util import sandbox
 
 from apn.dataset import strip_license_header
 from apn.prompts import user_prompt
-from apn.tools import arxiv_search, arxiv_source, bash
+from apn.tools import bash
 
 # Path of the proof file inside the sample's sandbox.
 PROOF_PATH = "/tmp/apn_proof.lean"
@@ -174,11 +174,13 @@ def lean_prover(
             (up to this many attempts, or until a token/time limit). With ``1``
             (default), the first submission ends the loop and is validated only
             by the final scorer.
-        literature: If true, give the agent ``arxiv_search`` / ``arxiv_source``
-            (the network call runs host-side; the sandbox stays airgapped). Both
-            are gated to papers predating the benchmark paper, but they still
-            change the run condition (literature-augmented vs. closed-book), so
-            this is off by default.
+        literature: If true, tell the agent about the offline arXiv corpus at
+            ``/corpus`` and run against the agent-corpus image that contains it
+            (the task wires the image; the tool set is unchanged -- the agent
+            greps ``/corpus`` with its ``bash`` shell). The corpus is a 2022
+            snapshot, so it predates the benchmark paper and can't leak a later
+            solution. Off by default: it's a literature-augmented run condition,
+            reported separately from the closed-book numbers.
         agent_type: Which agent loop to run -- ``"deep"`` for Inspect's
             ``deepagent`` or ``"react"`` for its plain react agent. Both get the
             same tools, gating, submit tool, and prompt; see :func:`build_agent`.
@@ -197,13 +199,11 @@ def lean_prover(
             text_editor(),
             # Shell access to the workspace image: the agent drives PyPantograph
             # from python3 to compile the proof file, and the same shell is its
-            # numeric scratchpad (sympy/numpy are baked in).
+            # numeric scratchpad (sympy/numpy are baked in). On a literature run
+            # the same shell also has the offline arXiv corpus at /corpus to grep
+            # (the task selects the agent-corpus image; the tool set is the same).
             bash(timeout=300),
         ]
-        if literature:
-            # Literature access, gated to papers predating the benchmark paper so
-            # they can't surface a later solution to these still-open conjectures.
-            tools += [arxiv_search(), arxiv_source()]
 
         agent = build_agent(
             agent_type,

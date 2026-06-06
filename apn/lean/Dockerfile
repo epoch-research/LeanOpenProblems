@@ -134,6 +134,43 @@ RUN pip3 install --break-system-packages --no-cache-dir numpy sympy
 CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
+# corpus: build the offline arXiv-math grep corpus (apn/lean/build_corpus.py).  #
+# Self-contained -- downloads two pinned public HF datasets at build time and   #
+# explodes them into /corpus (src/<id>/*.tex + metadata.jsonl). Network is      #
+# needed only here, at build time; the runtime sandbox stays airgapped. Built   #
+# once and pushed as its own image (like `base`), then consumed by agent_corpus #
+# via COPY --from; the HF download cache is dropped so it never bloats /corpus. #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS corpus
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+# huggingface_hub is pinned <1.0 (the requests/urllib3 line, not the 1.x httpx
+# line): httpx's strict URL parser crashes on an IPv6 CIDR in a NO_PROXY env var
+# (e.g. the one OrbStack injects into builds), whereas urllib3 tolerates it.
+RUN pip3 install --break-system-packages --no-cache-dir "huggingface_hub<1.0" pyarrow
+
+COPY build_corpus.py /tmp/build_corpus.py
+RUN python3 /tmp/build_corpus.py --out /corpus --cache-dir /tmp/hfcache \
+    && rm -rf /tmp/hfcache /tmp/build_corpus.py /root/.cache
+
+# --------------------------------------------------------------------------- #
+# agent_corpus: the agent workspace + the offline literature corpus at /corpus. #
+# Used for the `literature` run condition; the plain `agent` image has no       #
+# /corpus, so the closed-book condition is hermetic. The ~13 GB COPY is its own #
+# layer (cached independently of the agent layers); ripgrep makes grep fast.    #
+# --------------------------------------------------------------------------- #
+FROM agent AS agent_corpus
+
+RUN apt-get update && apt-get install -y --no-install-recommends ripgrep \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=corpus /corpus /corpus
+
+CMD ["sleep", "infinity"]
+
+# --------------------------------------------------------------------------- #
 # scorer: SafeVerify, built with the v4.27.0 toolchain so it can replay/verify  #
 # v4.27.0 oleans. No Pantograph here.                                          #
 # --------------------------------------------------------------------------- #
