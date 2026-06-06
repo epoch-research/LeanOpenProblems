@@ -26,8 +26,11 @@ described under *Not yet implemented*.
 
 ## Architecture
 
-The agent is deliberately thin: it is Inspect's built-in
-[`deepagent`](https://inspect.aisi.org.uk) given the proof file plus a few tools.
+The agent is deliberately thin: it is an Inspect built-in agent given the proof
+file plus a few tools. Two loops are supported, selected with the task's
+`agent_type` argument — Inspect's [`deepagent`](https://inspect.aisi.org.uk)
+(the default) or its plain `react` agent — and both run with the same tools,
+prompt, and SafeVerify gating, so swapping the loop changes nothing else.
 The bespoke parts of the paper (EVOLVE-marker editing, a `ProofSketch` model, an
 explicit episode/Ralph loop, and hand-rolled parallel subagents) are gone; what
 remains is Lean integration and a strict scorer.
@@ -35,8 +38,9 @@ remains is Lean integration and a strict scorer.
 ```
 apn/
   agent.py             lean_prover solver: writes the proof file into the
-                       sandbox, runs a deepagent (text_editor + bash), reads
-                       the result back. Optional SafeVerify-gated submit.
+                       sandbox, runs an agent (deepagent or react; text_editor
+                       + bash) via build_agent, reads the result back. Optional
+                       SafeVerify-gated submit.
   tools.py             bash + arxiv tools. PyPantograph is invoked directly by
                        the agent from python3, not wrapped here.
   prompts.py           Instructions + task message for the agent.
@@ -53,8 +57,9 @@ apn/
 
 1. The input is a Lean file: a sequence definition, small-term **test lemmas**,
    and a conjecture — proofs left as `sorry`.
-2. `lean_prover` writes it into the sample's `default` sandbox and runs a
-   `deepagent`. The agent edits the file with `text_editor` and uses `bash`
+2. `lean_prover` writes it into the sample's `default` sandbox and runs the
+   configured agent (`deepagent` by default, or `react`). The agent edits the
+   file with `text_editor` and uses `bash`
    for everything else: `import pantograph` from python3 to compile the file
    or drive interactive tactics, and the same shell as a numerical scratchpad
    (sympy/numpy). It iterates on the Lean compiler feedback until it submits.
@@ -170,8 +175,8 @@ uv run pytest      # unit tests (no Docker or network)
 
 The unit tests cover the pure logic (the scorer's verdict mapping, the daemon's
 parsers, the dataset loader, prompts) with no Docker or network. The agent itself
-is `deepagent`, so it is validated by running a real eval against the Lean
-sandbox (above).
+is an Inspect built-in (`deepagent` or `react`), so it is validated by running a
+real eval against the Lean sandbox (above).
 
 ## Not yet implemented
 

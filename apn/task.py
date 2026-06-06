@@ -24,7 +24,7 @@ from pathlib import Path
 from inspect_ai import Task, task
 
 from apn import __version__
-from apn.agent import lean_prover
+from apn.agent import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
 from apn.dataset import oeis_dataset
 from apn.scorer import proof_scorer
@@ -137,6 +137,7 @@ def apn_oeis(
     names: str | list[str] | None = None,
     gated: bool = False,
     literature: bool = False,
+    agent_type: AgentType = "deep",
 ) -> Task:
     """Prove the autoformalized OEIS conjectures from the paper (44/492).
 
@@ -163,6 +164,9 @@ def apn_oeis(
             (gated to papers predating the benchmark paper). Off by default --
             this is a distinct, literature-augmented run condition that should be
             reported separately from the closed-book numbers.
+        agent_type: Which agent loop to run -- ``"deep"`` (default) for Inspect's
+            ``deepagent`` or ``"react"`` for its plain react agent. Both run with
+            the same tools, gating, and prompt.
     """
     if names is None:
         name_list = None
@@ -177,6 +181,7 @@ def apn_oeis(
         solver=lean_prover(
             max_attempts=99_999_999 if gated else 1,
             literature=literature,
+            agent_type=agent_type,
         ),
         scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
         sandbox=("docker", str(get_compose_file())),
