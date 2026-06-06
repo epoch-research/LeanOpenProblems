@@ -134,27 +134,53 @@ RUN pip3 install --break-system-packages --no-cache-dir numpy sympy
 CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
-# corpus: build the offline arXiv-math grep corpus (apn/lean/build_corpus.py).  #
-# Self-contained -- downloads two pinned public HF datasets at build time and   #
-# explodes them into /corpus (src/<id>/*.tex + metadata.jsonl). Network is      #
-# needed only here, at build time; the runtime sandbox stays airgapped. Built   #
-# once and pushed as its own image (like `base`), then consumed by agent_corpus #
-# via COPY --from; the HF download cache is dropped so it never bloats /corpus. #
+# corpus: build the offline arXiv-math grep corpus from two pinned public HF    #
+# datasets at build time (network is needed only here; the runtime sandbox stays #
+# airgapped). Four stages, split so the work caches at the right granularity:    #
+#   1-2. corpus_fetch_src / corpus_fetch_meta -- pure downloads (~9 GB), one per  #
+#        source, each cached on its own; nothing but fetch.py runs here.          #
+#   3.   corpus_build -- reads the two downloads and does the explode + join.     #
+#        Editing the join logic re-runs ONLY this stage; the downloads stay       #
+#        cached (the COPY --from layers precede the script COPY).                 #
+#   4.   corpus -- FROM scratch, carrying only /corpus. This is the artifact       #
+#        image agent_corpus copies from; built once and pushed like `base`.       #
+# huggingface_hub is pinned <1.0 (requests/urllib3, not the 1.x httpx line):      #
+# httpx's strict URL parser crashes on an IPv6 CIDR in a NO_PROXY env var (e.g.    #
+# the one OrbStack injects into builds), whereas urllib3 tolerates it.            #
 # --------------------------------------------------------------------------- #
-FROM debian:bookworm-slim AS corpus
-
+FROM debian:bookworm-slim AS corpus_fetch_src
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 python3-pip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-# huggingface_hub is pinned <1.0 (the requests/urllib3 line, not the 1.x httpx
-# line): httpx's strict URL parser crashes on an IPv6 CIDR in a NO_PROXY env var
-# (e.g. the one OrbStack injects into builds), whereas urllib3 tolerates it.
-RUN pip3 install --break-system-packages --no-cache-dir "huggingface_hub<1.0" pyarrow
+RUN pip3 install --break-system-packages --no-cache-dir "huggingface_hub<1.0"
+COPY fetch.py /tmp/fetch.py
+RUN python3 /tmp/fetch.py --repo proofpile --dest /shards --cache-dir /tmp/hfcache \
+    && rm -rf /tmp/hfcache /root/.cache
 
+FROM debian:bookworm-slim AS corpus_fetch_meta
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --break-system-packages --no-cache-dir "huggingface_hub<1.0"
+COPY fetch.py /tmp/fetch.py
+RUN python3 /tmp/fetch.py --repo metadata --dest /meta --cache-dir /tmp/hfcache \
+    && rm -rf /tmp/hfcache /root/.cache
+
+FROM debian:bookworm-slim AS corpus_build
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --break-system-packages --no-cache-dir pyarrow
+# COPY the downloads first so they stay cached when only the join script changes.
+COPY --from=corpus_fetch_src /shards /shards
+COPY --from=corpus_fetch_meta /meta /meta
 COPY build_corpus.py /tmp/build_corpus.py
-RUN python3 /tmp/build_corpus.py --out /corpus --cache-dir /tmp/hfcache \
-    && rm -rf /tmp/hfcache /tmp/build_corpus.py /root/.cache
+RUN python3 /tmp/build_corpus.py --shards-dir /shards --meta-dir /meta --out /corpus
+
+FROM scratch AS corpus
+COPY --from=corpus_build /corpus /corpus
 
 # --------------------------------------------------------------------------- #
 # agent_corpus: the agent workspace + the offline literature corpus at /corpus. #

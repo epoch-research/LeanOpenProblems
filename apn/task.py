@@ -8,7 +8,7 @@ The sandbox images are built automatically by docker compose at eval startup
 from the multi-stage apn/lean/Dockerfile (and rebuilt when it changes); the
 first local run pays the full Lean + Mathlib build. With ``literature=True`` the
 agent runs against the agent-corpus image, which additionally bakes in the
-offline arXiv-math corpus at /corpus (apn/lean/build_corpus.py) -- its first
+offline arXiv-math corpus at /corpus (apn/lean/fetch.py + build_corpus.py) -- its first
 build also pays the corpus download. In production, LEAN_OPEN_PROBLEMS_IMAGE_NAME
 points at the registry that CI pushed the images to.
 

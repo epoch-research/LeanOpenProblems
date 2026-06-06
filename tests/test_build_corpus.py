@@ -1,10 +1,11 @@
 """Tests for the arXiv-id parsing in the corpus builder.
 
 ``apn/lean/build_corpus.py`` is a build-time script (run inside the Docker
-``corpus`` stage), not part of the ``apn`` package, so we load it by path. The
-parsing of proof-pile ``meta.file`` paths into canonical arXiv ids drives both
-the src/ layout and the metadata join, so it's worth pinning down -- especially
-the pre-2007 id scheme and path-traversal rejection.
+``corpus_build`` stage), not part of the ``apn`` package, so we load it by path.
+The parsing of proof-pile ``meta.file`` paths into canonical arXiv ids drives
+both the src/ layout and the metadata join, so it's worth pinning down --
+especially the pre-2007 id scheme and path-traversal rejection. (Importing the
+module is cheap: pyarrow is imported lazily, only inside build_metadata.)
 """
 
 from __future__ import annotations
@@ -51,7 +52,7 @@ def test_safe_id_replaces_slash() -> None:
 
 
 def test_safe_rest_strips_and_rejects_traversal() -> None:
-    assert bc._safe_rest("sections/./a.tex") == "sections/a.tex"
-    assert bc._safe_rest("/abs/a.tex") == "abs/a.tex"
-    assert bc._safe_rest("../escape.tex") is None
-    assert bc._safe_rest("") is None
+    assert bc.safe_rest("sections/./a.tex") == "sections/a.tex"
+    assert bc.safe_rest("/abs/a.tex") == "abs/a.tex"
+    assert bc.safe_rest("../escape.tex") is None
+    assert bc.safe_rest("") is None

@@ -50,8 +50,8 @@ apn/
   dataset.py           OEIS conjectures (theorem + sorry) -> Inspect Samples.
   task.py              The apn_oeis Inspect task.
   data/oeis/           Vendored OEIS/Auto dataset (484 files / 492 conjectures).
-  lean/                Docker images + SafeVerify + build_corpus.py (the offline
-                       arXiv-math grep corpus for literature runs).
+  lean/                Docker images + SafeVerify + fetch.py/build_corpus.py
+                       (the offline arXiv-math grep corpus for literature runs).
 ```
 
 ### How a proof search runs

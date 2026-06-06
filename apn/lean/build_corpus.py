@@ -1,34 +1,27 @@
 #!/usr/bin/env python3
-"""Build the offline arXiv-math grep corpus baked into the agent-corpus image.
+"""Processing stage of the corpus build: join the downloaded data into /corpus.
 
-The agent's sandbox has no network, so the literature it can consult must be on
-disk. This script produces that on-disk corpus from two public, pinned sources:
+Reads the proof-pile shards and metadata parquet that the two fetch stages
+already downloaded (``--shards-dir`` / ``--meta-dir``, populated by fetch.py) and
+writes the final artifacts -- no network here, so editing this never re-runs the
+downloads:
 
-  * hoskinson-center/proof-pile -- a 2022 snapshot whose ``arxiv`` subset is
-    pure-math arXiv LaTeX *source*, filtered to .tex, English-only, junk
-    dropped. Being a 2022 snapshot makes it leak-safe by construction: it
-    physically cannot contain a solution to a conjecture that is still open as
-    of the benchmark paper (arXiv:2605.22763, May 2026). We deliberately do NOT
-    top it up with newer papers -- that would reintroduce the leak risk.
-  * librarian-bots/arxiv-metadata-snapshot -- a CC0 mirror of the Cornell/Kaggle
-    arXiv metadata dump (title, authors, abstract, categories, dates), joined on
-    arXiv id to give the agent a topic-search surface the .tex bodies lack.
+    out/src/<id>/<file>.tex   per-paper LaTeX source trees (latest version),
+                              preserving each paper's \\input/\\include files
+                              rather than flattening them into one blob.
+    out/metadata.jsonl        one JSON record per src/ paper: every field from
+                              the metadata dump, plus a synthetic `file` pointing
+                              at the paper's src/ dir.
 
-Output layout (``--out``)::
+The agent greps the result with plain ``rg``/``cat``: grep ``metadata.jsonl`` to
+find papers by topic, then read their ``src/<id>/`` directory. The 2022
+proof-pile snapshot is leak-safe by construction (it predates the benchmark
+paper), so we don't top it up with newer papers.
 
-    corpus/
-      src/<id>.tex      one file per paper (latest version, sections concat'd)
-      metadata.jsonl    one JSON record per paper present in src/
+Local eyeball (after fetch.py populated ./shards and ./meta)::
 
-The agent greps this with plain ``rg``/``cat`` in its bash shell -- there are no
-bespoke tools. Two-stage search: grep ``metadata.jsonl`` to find papers by
-topic/category, then grep their ``src/<id>.tex`` for the actual mathematics.
-
-Both source revisions are pinned below for reproducible image builds. Run inside
-the Dockerfile ``corpus`` stage; for a local eyeball::
-
-    uv run --with huggingface_hub --with pyarrow \\
-        python apn/lean/build_corpus.py --out ./corpus --shards 1 --no-metadata
+    uv run --with pyarrow python apn/lean/build_corpus.py \\
+        --shards-dir ./shards --meta-dir ./meta --out ./corpus
 """
 
 from __future__ import annotations
@@ -42,24 +35,9 @@ import sys
 from collections.abc import Iterator
 from pathlib import Path
 
-# Pinned source revisions (see module docstring). Bump deliberately; the image
-# tag is keyed on apn.__version__, so a corpus change rides a version bump.
-PROOF_PILE_REPO = "hoskinson-center/proof-pile"
-PROOF_PILE_REV = "490b980249446f2f3bd2df3a8cf085d0f2de240a"
-METADATA_REPO = "librarian-bots/arxiv-metadata-snapshot"
-METADATA_REV = "489d966b008f003cb3a5d3482041b7ed1946cd58"
-
-# proof-pile ships a single "default" config split across these gzipped JSONL
-# shards; the arxiv subset is interleaved (rows where meta.config == "arxiv").
-PROOF_PILE_SHARDS = (
-    [f"train/proofpile_train_{i}.jsonl.gz" for i in range(21)]
-    + ["dev/proofpile_dev.jsonl.gz", "test/proofpile_test.jsonl.gz"]
-)
-METADATA_SHARDS = [f"data/train-{i:05d}-of-00010.parquet" for i in range(10)]
-
 # Benchmark paper's month; the corpus must predate it. The 2022 snapshot is
 # already safely below this -- the check is a cheap tripwire, not the defense.
-_CUTOFF_DATE = "2026-05-01"
+CUTOFF_DATE = "2026-05-01"
 
 
 def parse_arxiv_path(file_field: str) -> tuple[str, int, str] | None:
@@ -89,11 +67,19 @@ def parse_arxiv_path(file_field: str) -> tuple[str, int, str] | None:
 
 
 def safe_id(canonical: str) -> str:
-    """Filesystem-safe form of an arXiv id (the src/ filename stem)."""
+    """Filesystem-safe form of an arXiv id (the src/<id> directory name)."""
     return canonical.replace("/", "_")
 
 
-def _iter_arxiv_rows(shard_paths: list[Path]) -> Iterator[tuple[str, int, str, str]]:
+def safe_rest(rest: str) -> str | None:
+    """Sanitize a paper-relative path; reject traversal/absolute paths."""
+    parts = [p for p in rest.split("/") if p not in ("", ".")]
+    if not parts or any(p == ".." for p in parts):
+        return None
+    return "/".join(parts)
+
+
+def iter_arxiv_rows(shard_paths: list[Path]) -> Iterator[tuple[str, int, str, str]]:
     """Yield ``(canonical_id, version, rest, text)`` for every arxiv .tex row."""
     for shard in shard_paths:
         with gzip.open(shard, "rt", encoding="utf-8", errors="replace") as fh:
@@ -115,50 +101,19 @@ def _iter_arxiv_rows(shard_paths: list[Path]) -> Iterator[tuple[str, int, str, s
                 yield canonical, version, rest, row.get("text", "")
 
 
-def download_shards(repo: str, rev: str, names: list[str], cache_dir: str | None) -> list[Path]:
-    from huggingface_hub import hf_hub_download  # type: ignore[import-not-found]
-
-    paths = []
-    for name in names:
-        print(f"  downloading {repo}@{rev[:8]} {name}", flush=True)
-        paths.append(
-            Path(
-                hf_hub_download(
-                    repo_id=repo,
-                    filename=name,
-                    revision=rev,
-                    repo_type="dataset",
-                    cache_dir=cache_dir,
-                )
-            )
-        )
-    return paths
-
-
-def _safe_rest(rest: str) -> str | None:
-    """Sanitize a paper-relative path; reject traversal/absolute paths."""
-    parts = [p for p in rest.split("/") if p not in ("", ".")]
-    if not parts or any(p == ".." for p in parts):
-        return None
-    return "/".join(parts)
-
-
 def build_source(shard_paths: list[Path], out: Path, max_papers: int | None) -> dict[str, str]:
     """Explode arxiv rows into ``out/src/<id>/<original-path>.tex``.
 
     Each proof-pile row is one source file, written back at its original path
-    under a per-paper directory -- so a paper's ``\\input``/``\\include`` tree is
-    preserved as real sibling files, not flattened into one blob. Only the latest
-    version of each paper is kept. Returns ``{canonical_id: relative_paper_dir}``
-    for the papers written, to drive the metadata join.
+    under a per-paper directory. Only the latest version of each paper is kept.
+    Returns ``{canonical_id: "src/<dir>"}`` to drive the metadata join.
 
     Pass 1 finds the latest version per id (small: id -> int). Pass 2 streams the
-    rows again and writes each chosen-version file -- bounded memory, no
-    full-corpus buffering.
+    rows again and writes each chosen-version file -- bounded memory.
     """
     print("pass 1/2: resolving latest version per paper", flush=True)
     best: dict[str, int] = {}
-    for canonical, version, _rest, _text in _iter_arxiv_rows(shard_paths):
+    for canonical, version, _rest, _text in iter_arxiv_rows(shard_paths):
         if version > best.get(canonical, 0):
             best[canonical] = version
     print(f"  {len(best)} distinct papers", flush=True)
@@ -176,15 +131,14 @@ def build_source(shard_paths: list[Path], out: Path, max_papers: int | None) -> 
     print("pass 2/2: writing src/<id>/<file>.tex", flush=True)
     written: dict[str, str] = {}
     files = 0
-    for canonical, version, rest, text in _iter_arxiv_rows(shard_paths):
+    for canonical, version, rest, text in iter_arxiv_rows(shard_paths):
         if canonical not in keep or version != best[canonical]:
             continue
-        rel_rest = _safe_rest(rest)
+        rel_rest = safe_rest(rest)
         if rel_rest is None:
             continue
         sid = safe_id(canonical)
-        paper_dir = src_dir / sid
-        dest = paper_dir / rel_rest
+        dest = src_dir / sid / rel_rest
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
         written[canonical] = f"src/{sid}"
@@ -216,7 +170,7 @@ def build_metadata(meta_paths: list[Path], written: dict[str, str], out: Path) -
                 records[aid] = record
                 upd = cols["update_date"][i]
                 upd_s = upd.isoformat()[:10] if hasattr(upd, "isoformat") else str(upd)[:10]
-                if upd_s >= _CUTOFF_DATE:
+                if upd_s >= CUTOFF_DATE:
                     late += 1  # a later metadata revision; the paper itself is 2022
 
     path = out / "metadata.jsonl"
@@ -229,41 +183,38 @@ def build_metadata(meta_paths: list[Path], written: dict[str, str], out: Path) -
     print(
         f"  wrote {len(records)} records to {path} "
         f"({missing} src papers had no metadata match; "
-        f"{late} have a post-{_CUTOFF_DATE} update_date)",
+        f"{late} have a post-{CUTOFF_DATE} update_date)",
         flush=True,
     )
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", type=Path, default=Path("corpus"), help="output directory")
-    ap.add_argument("--cache-dir", default=None, help="HF download cache dir")
-    ap.add_argument(
-        "--shards", type=int, default=None,
-        help="limit to the first N proof-pile shards (smoke test; yields partial "
-        "papers since a paper's sections may span shards)",
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    ap.add_argument("--shards-dir", type=Path, required=True, help="dir of proof-pile .jsonl.gz")
+    ap.add_argument("--meta-dir", type=Path, required=True, help="dir of metadata .parquet")
+    ap.add_argument("--out", type=Path, default=Path("corpus"), help="output directory")
     ap.add_argument("--max-papers", type=int, default=None, help="cap papers written (smoke test)")
-    ap.add_argument("--no-metadata", action="store_true", help="skip the metadata join")
     args = ap.parse_args()
 
+    shard_paths = sorted(args.shards_dir.rglob("*.jsonl.gz"))
+    if not shard_paths:
+        print(f"no .jsonl.gz under {args.shards_dir} -- run fetch.py --repo proofpile", file=sys.stderr)
+        return 1
     args.out.mkdir(parents=True, exist_ok=True)
-
-    shard_names = PROOF_PILE_SHARDS[: args.shards] if args.shards else PROOF_PILE_SHARDS
-    print(f"=== proof-pile: {len(shard_names)} shard(s) ===", flush=True)
-    shard_paths = download_shards(PROOF_PILE_REPO, PROOF_PILE_REV, shard_names, args.cache_dir)
+    print(f"=== source: {len(shard_paths)} shard(s) ===", flush=True)
     written = build_source(shard_paths, args.out, args.max_papers)
     if not written:
         print("no papers written", file=sys.stderr)
         return 1
 
-    if args.no_metadata:
-        print("skipping metadata (--no-metadata)", flush=True)
-    else:
-        print(f"=== metadata: {len(METADATA_SHARDS)} shard(s) ===", flush=True)
-        meta_paths = download_shards(METADATA_REPO, METADATA_REV, METADATA_SHARDS, args.cache_dir)
-        build_metadata(meta_paths, written, args.out)
-
+    meta_paths = sorted(args.meta_dir.rglob("*.parquet"))
+    if not meta_paths:
+        print(f"no .parquet under {args.meta_dir} -- run fetch.py --repo metadata", file=sys.stderr)
+        return 1
+    print(f"=== metadata: {len(meta_paths)} shard(s) ===", flush=True)
+    build_metadata(meta_paths, written, args.out)
     print("done.", flush=True)
     return 0
 

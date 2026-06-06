@@ -5,8 +5,9 @@ agent a shell in the workspace where PyPantograph is installed and the Mathlib +
 FormalConjectures oleans are baked into the image, so it can drive
 ``pantograph.Server`` from Python directly. On the *agent-corpus* image the
 shell also has an offline arXiv-math corpus baked in at ``/corpus`` (built by
-``apn/lean/build_corpus.py``), which the agent searches with plain ``rg``/``cat``
--- no bespoke tool. Statement integrity and the axiom guard are enforced by
+``apn/lean/fetch.py`` + ``apn/lean/build_corpus.py``), which the agent searches
+with plain ``rg``/``cat`` -- no bespoke tool. Statement integrity and the axiom
+guard are enforced by
 SafeVerify at scoring time, not inside the tools.
 """
 
