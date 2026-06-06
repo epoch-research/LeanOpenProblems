@@ -28,7 +28,7 @@ from inspect_ai import Task, task
 from apn import __version__
 from apn.agent import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
-from apn.dataset import oeis_dataset
+from apn.dataset import load_subset, oeis_dataset
 from apn.scorer import proof_scorer
 
 COMPOSE_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_compose"
@@ -143,7 +143,7 @@ def get_compose_file(literature: bool = False) -> Path:
 
 @task
 def apn_oeis(
-    names: str | list[str] | None = None,
+    subset: str | None = None,
     gated: bool = False,
     literature: bool = False,
     agent_type: AgentType = "react",
@@ -164,8 +164,11 @@ def apn_oeis(
     by docker compose from ``apn/lean/Dockerfile``).
 
     Args:
-        names: Optional comma-separated list of conjecture theorem names to keep
-            (a smoke subset); defaults to all 492.
+        subset: Optional name of a predefined OEIS subset (a ``*.txt`` file under
+            ``apn/data/oeis/subsets/``, e.g. ``"proved38"`` or ``"random40"``) to
+            restrict the run to; defaults to all 492. Using a named subset rather
+            than an inline name list keeps eval-set configs terse and gives each
+            subset a stable, distinct Inspect task identifier.
         gated: If true, submissions are gated by SafeVerify -- a submission that
             fails verification is rejected and the agent must keep working (until
             a limit), and it is told only that verification failed (not why).
@@ -179,11 +182,7 @@ def apn_oeis(
             ``deepagent`` or ``"react"`` for its plain react agent. Both run with
             the same tools, gating, and prompt.
     """
-    if names is None:
-        name_list = None
-    else:
-        raw = names.split(",") if isinstance(names, str) else names
-        name_list = [n.strip() for n in raw if n.strip()]
+    name_list = load_subset(subset) if subset is not None else None
     # When gated, the agent re-runs the (task) scorer on every submission via
     # Inspect's `attempts`, bounded only by the token limit; otherwise the first
     # submission ends the loop and is validated once by the final scorer.

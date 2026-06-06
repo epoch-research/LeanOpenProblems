@@ -1,0 +1,44 @@
+# random40 -- a random sample of 40 OEIS conjectures NOT in the published APN
+# OEIS proof-output set (the proved38 subset). Seed: 20260603. Pool size:
+# 454 = 492 - 38. One conjecture theorem name per line; blank lines and
+# #-comments are ignored. Referenced by name from configs/example-eval-set.yml.
+oeis_319303_conjecture_0
+oeis_218585_conjecture_0
+oeis_296075_conjecture_0
+oeis_a103885_conjecture_0
+oeis_217703_conjecture_i
+oeis_70518_conjecture_0
+oeis_212334_conjecture_0
+oeis_352628_conjecture_0
+oeis_a279612_conjecture_i
+oeis_322072_conjecture_0
+oeis_248802_conjecture_5
+oeis_274007_conjecture_i
+oeis_a120424_conjecture_0
+oeis_217317_conjecture_0
+oeis_a361714_conjecture_2
+oeis_a108129_conjecture_0
+A262446_conjecture_verified_upto_10e5
+oeis_247824_conjecture_0
+oeis_338019_conjecture_0
+oeis_a275150_conjecture_2_sun
+oeis_A067857_conjecture_0
+oeis_A105751_conjecture_Moll_2
+oeis_237413_conjecture_0
+oeis_352286_conjecture_1
+oeis_a341092_conjecture
+oeis_357569_conjecture_0
+oeis_228591_conjecture_0
+oeis_333562_conjecture_0_congruence
+oeis_166944_conjecture_0
+oeis_348295_conjecture_0
+oeis_179537_conjecture_sun_part2a_mod_n
+oeis_a153330_conjecture_2
+oeis_306250_conjecture_0
+oeis_a185150_conjecture_2
+oeis_196698_conjecture_2
+oeis_71532_conjecture_0
+oeis_282459_conjecture_0
+oeis_333096_conjecture_0
+oeis_326746_conjecture_0
+oeis_339602_conjecture_1

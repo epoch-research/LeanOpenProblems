@@ -130,7 +130,8 @@ Each sample is an autoformalized OEIS conjecture from Formal Conjectures
 cost (these are open problems, so the agent will often run until the limit).
 Useful flags:
 
-- `-T names=oeis_268597_conjecture_0,...` — restrict to a subset (a smoke set).
+- `-T subset=proved38` — restrict to a named subset (`apn/data/oeis/subsets/*.txt`;
+  ships `proved38` and `random40`).
 - `-T gated=true` — SafeVerify-gated submissions (see above).
 - `--epochs N` — N independent attempts per problem, each in its own sandbox.
 

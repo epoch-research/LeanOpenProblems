@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import pytest
+
 from apn.dataset import (
+    available_subsets,
+    load_subset,
     oeis_dataset,
     oeis_id_from_filename,
     parse_oeis_mapping,
@@ -102,3 +106,31 @@ def test_oeis_dataset_sample_shape() -> None:
 
 def test_oeis_dataset_names_filter_unknown() -> None:
     assert len(oeis_dataset(names=["does_not_exist"])) == 0
+
+
+def test_available_subsets_ships_proved38_and_random40() -> None:
+    assert {"proved38", "random40"} <= set(available_subsets())
+
+
+def test_load_subset_sizes_and_disjoint() -> None:
+    proved = load_subset("proved38")
+    random40 = load_subset("random40")
+    assert len(proved) == 38
+    assert len(random40) == 40
+    # No duplicate names within a subset.
+    assert len(set(proved)) == 38
+    assert len(set(random40)) == 40
+    # random40 is sampled from the complement of proved38 -- disjoint.
+    assert set(proved).isdisjoint(random40)
+
+
+def test_load_subset_strips_comments_and_resolves_to_real_conjectures() -> None:
+    names = load_subset("proved38")
+    assert all(not n.startswith("#") for n in names)
+    # Every name in the subset resolves to a real conjecture in the dataset.
+    assert len(oeis_dataset(names=names)) == len(names)
+
+
+def test_load_subset_unknown_raises() -> None:
+    with pytest.raises(ValueError, match="Unknown OEIS subset"):
+        load_subset("does_not_exist")

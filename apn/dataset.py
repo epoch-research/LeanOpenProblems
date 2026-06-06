@@ -19,8 +19,37 @@ from inspect_ai.dataset import MemoryDataset, Sample
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 OEIS_AUTO_DIR = OEIS_DIR / "Auto"
 OEIS_MAPPING_FILE = OEIS_DIR / "THEOREM_MAPPING.txt"
+OEIS_SUBSETS_DIR = OEIS_DIR / "subsets"
 
 _OEIS_NUM_RE = re.compile(r"^(\d+)_")
+
+
+def available_subsets() -> list[str]:
+    """Names of the predefined OEIS subsets (one ``<name>.txt`` per subset)."""
+    if not OEIS_SUBSETS_DIR.is_dir():
+        return []
+    return sorted(p.stem for p in OEIS_SUBSETS_DIR.glob("*.txt"))
+
+
+def load_subset(name: str) -> list[str]:
+    """Resolve a named OEIS subset to its list of conjecture theorem names.
+
+    Subsets are plain-text files under ``apn/data/oeis/subsets/`` (one theorem
+    name per line; blank lines and ``#`` comments ignored), so a curated smoke
+    set lives in the package rather than being pasted inline into eval-set
+    configs. See :func:`available_subsets`.
+    """
+    path = OEIS_SUBSETS_DIR / f"{name}.txt"
+    if not path.is_file():
+        raise ValueError(
+            f"Unknown OEIS subset {name!r}; available: {available_subsets()}"
+        )
+    names: list[str] = []
+    for line in path.read_text().splitlines():
+        entry = line.split("#", 1)[0].strip()
+        if entry:
+            names.append(entry)
+    return names
 
 
 def strip_license_header(text: str) -> str:
