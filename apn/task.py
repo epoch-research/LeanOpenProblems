@@ -137,7 +137,7 @@ def apn_oeis(
     names: str | list[str] | None = None,
     gated: bool = False,
     literature: bool = False,
-    agent_type: AgentType = "deep",
+    agent_type: AgentType = "react",
 ) -> Task:
     """Prove the autoformalized OEIS conjectures from the paper (44/492).
 
