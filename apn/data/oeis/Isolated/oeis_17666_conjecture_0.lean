@@ -27,6 +27,7 @@ noncomputable def A017666 (n : ℕ) : ℕ :=
   if n = 0 then 1
   else n / Nat.gcd n (sigma 1 n)
 
+-- Definition for A000079: Powers of 2.
 /-- A000079: Powers of 2 (including $2^0 = 1$). -/
 @[reducible]
 def is_A000079 (n : ℕ) : Prop := ∃ k : ℕ, n = 2^k

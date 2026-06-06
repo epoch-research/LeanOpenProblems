@@ -31,6 +31,7 @@ def A103885 (n : ℕ) : ℕ :=
     let r : ℕ := n - 1
     (range (n + 1)).sum (fun k => (n.choose k) * ((2 * n + k - 1).choose r))
 
+-- The sequence b(n) = a(m*n) lifted to ℝ
 noncomputable def A103885_subsequence_real (m n : ℕ) : ℝ :=
   (A103885 (m * n) : ℝ)
 

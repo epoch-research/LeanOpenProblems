@@ -43,7 +43,6 @@ The sequence u(n) defined by u(n) = A005259(n)^25 * A005258(n-1)^14, used in Con
 def u (n : ℕ) : ℕ :=
   (A005259_seq n) ^ 25 * (A005258_seq (n - 1)) ^ 14
 
--- The example theorems are included for completeness but are not strictly necessary for the formalization request.
 /--
 OEIS A357958 Conjecture 1:
 a(p) ≡ a(1) (mod p^5) for all primes p ≥ 5.
@@ -51,3 +50,5 @@ a(p) ≡ a(1) (mod p^5) for all primes p ≥ 5.
 theorem oeis_357958_conjecture_01 :
   ∀ (p : ℕ), Nat.Prime p → 5 ≤ p → (a p) ≡ (a 1) [MOD p^5] :=
 by sorry
+
+ -- The exponent is 3*r + 3, which is p^(3*r + 3) or p^3 * p^(3*r). The formalization p^(3*r + 3) is easier.

@@ -35,13 +35,14 @@ def A271513 (n : ℕ) : ℕ :=
             1
           else 0
 
--- Sanity checks from the problem description, kept as stubs.
+-- Definition of the set of exceptional numbers $S$ for Conjecture (i).
 def unique_counts_set_A271513_base : Finset ℕ :=
   {0, 3, 11, 23, 43, 47, 67, 83, 107, 155, 323, 683, 803}
 
 def belongs_to_unique_counts_set_A271513 (n : ℕ) : Prop :=
   n ∈ unique_counts_set_A271513_base ∨ ∃ k : ℕ, (n = 4^k * 22 ∨ n = 4^k * 38)
 
+-- Predicate for Conjecture (ii) and (iii)
 /--
 A natural number n can be written as a sum of four squares $w^2 + x^2 + y^2 + z^2$
 such that $a x^2 + b y^2 + c z^2$ is a square, where $w, x, y, z$ are integers.

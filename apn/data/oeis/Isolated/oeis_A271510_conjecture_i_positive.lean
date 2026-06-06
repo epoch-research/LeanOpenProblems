@@ -46,6 +46,7 @@ def A271510 (n : ℕ) : ℕ :=
     -- Constraint 3: $x^2 + 8y^2 + 16z^2$ is a square.
     is_square (x ^ 2 + 8 * y ^ 2 + 16 * z ^ 2)
 
+-- A standard definition for "is a square" on ℕ
 def is_square (k : ℕ) : Prop := ∃ m : ℕ, k = m^2
 
 /--

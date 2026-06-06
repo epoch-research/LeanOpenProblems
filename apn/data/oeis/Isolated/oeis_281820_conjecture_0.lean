@@ -52,7 +52,6 @@ noncomputable def A281821 (n : ℕ) : ℕ :=
   let sum_q : ℚ := Finset.sum (Finset.range (n + 1)) A281820_term
   sum_q.den
 
--- Placeholders for proof checks, not required to be proven.
 open Real BigOperators
 
 /-- Apery's constant $\zeta(3) = \sum_{n=1}^\infty 1/n^3$. -/

@@ -44,7 +44,6 @@ def A135508 (n : ℕ) : ℕ :=
     -- The final result is always a natural number.
     (x_n_plus_1 / x_n) - 2
 
--- We do not need to prove the base cases, but we keep them for context.
 /--
 Conjecture: For prime p such that p-2 is not a prime, a(p-1) = p.
 p-2 in natural numbers is $\max(0, p-2)$.

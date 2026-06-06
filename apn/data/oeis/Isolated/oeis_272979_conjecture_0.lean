@@ -31,6 +31,7 @@ def A272979 (n : ℕ) : ℕ :=
         (Finset.range (n + 1)).sum fun w =>
           if x^2 + 2 * y^2 + 3 * z^3 + 4 * w^4 = n then 1 else 0
 
+-- Definition of the predicate for representing a number n
 def is_representable (a b c d n : ℕ) : Prop :=
   ∃ x y z w : ℕ, a * x^2 + b * y^2 + c * z^3 + d * w^4 = n
 

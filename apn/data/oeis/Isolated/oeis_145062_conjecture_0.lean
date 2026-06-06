@@ -64,5 +64,3 @@ The conjecture states that the sequence a (A145062) is a shift of `sequence_s_in
 theorem oeis_145062_conjecture_0 :
   ∃ k : ℤ, ∀ n : ℕ, a n = sequence_s_int (n + k) :=
 by sorry
-
--- Simplification of introductory theorems for acceptance

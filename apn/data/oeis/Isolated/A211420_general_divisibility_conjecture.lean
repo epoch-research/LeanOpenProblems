@@ -26,7 +26,6 @@ The division in Lean's `Nat` type is integer division, which is exact here.
 def A211420 (n : ℕ) : ℕ :=
   (8 * n).factorial * n.factorial / ((4 * n).factorial * (3 * n).factorial * (2 * n).factorial)
 
--- The provided initial theorems are kept as placeholders.
 /--
 General Conjecture:
 There are constants $C(k, r)$, for $k \in \{1, 2, 3\}$ and $r \ge 1$,

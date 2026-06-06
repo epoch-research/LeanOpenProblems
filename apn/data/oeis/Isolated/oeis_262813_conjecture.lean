@@ -32,7 +32,6 @@ def a (n : ℕ) : ℕ :=
     -- Count only if z > 0 and the equation holds.
     if z > 0 ∧ x^3 + y^2 + triangular z = n then 1 else 0
 
--- The provided small examples are kept to follow the submission template but are using `sorry`.
 /--
 A262813 Conjecture: a(n) > 0 for all n > 0, and a(n) = 1 only for n = 1, 9, 21, 35, 98, 152, 306.
 -/

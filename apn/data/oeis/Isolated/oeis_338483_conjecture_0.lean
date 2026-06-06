@@ -36,7 +36,6 @@ noncomputable def a (n : ℕ) : ℕ :=
   -- sInf requires Classical.choice and returns the smallest element of the set.
   sInf {m : ℕ | A047983_count m = n}
 
--- Example terms from the OEIS page (proofs omitted as they are not required for the submission)
 /--
 A338483: Are there prime terms greater than 31?
 --/

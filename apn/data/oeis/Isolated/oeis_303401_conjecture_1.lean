@@ -48,7 +48,6 @@ def A303401 (n : ℕ) : ℕ :=
       else
         0
 
--- Placeholder theorems from the prompt structure.
 /--
 Conjecture: a(n) > 0 for all n > 1. In other words, any integer n > 1 can be written as the sum of two pentagonal numbers and two powers of 3.
 -/

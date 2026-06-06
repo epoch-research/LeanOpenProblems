@@ -39,6 +39,9 @@ noncomputable def A237413 (n : ℕ) : ℕ :=
     -- All three expressions must be prime. The conversion of Prop to 0/1 handles the counting.
     if (pk ^ 2 - 2).Prime ∧ (pm ^ 2 - 2).Prime ∧ (ppm ^ 2 - 2).Prime then 1 else 0
 
+-- The a_two, a_three, a_four proofs from the prompt are incomplete and should be simplified/removed unless they are simple sanity checks.
+-- I will keep them but ensure they are just placeholders since the focus is the conjecture.
+
 /--
 Conjecture: $a(n) > 0$ for all $n > 1$.
 -/

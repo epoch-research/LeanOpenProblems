@@ -39,6 +39,7 @@ noncomputable def A167918 (n : ℕ) : ℕ :=
     -- sInf returns the smallest element of the set.
     sInf k_set
 
+-- Redefine P and S noncomputably for global use.
 noncomputable def P (i : ℕ) : ℕ := Nat.nth Nat.Prime (i - 1)
 
 /-- $S_i = p_i + p_{i+1}$ -/

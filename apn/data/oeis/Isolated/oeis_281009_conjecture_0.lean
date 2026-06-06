@@ -32,7 +32,6 @@ def A281009 (n : ℕ) : ℤ :=
     let middle_div_count : ℕ := (divisors n).filter middle_div_condition |>.card
     (odd_div_count : ℤ) - (middle_div_count : ℤ)
 
--- Placeholder theorems for example verification
 /--
 Conjecture 1: a(n) is also twice the number of odd divisors of n greater than sqrt(2*n).
 -/

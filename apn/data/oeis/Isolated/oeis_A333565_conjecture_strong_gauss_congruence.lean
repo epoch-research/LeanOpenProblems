@@ -38,7 +38,6 @@ def A333565 (n : ℕ) : ℕ :=
   -- The result is guaranteed to be a natural number.
   a_n_int.toNat
 
--- The provided simple theorems are kept as placeholders.
 /--
 We conjecture that this sequence satisfies the stronger congruences
 $a(n \cdot p^k) \equiv a(n \cdot p^{k-1}) \pmod{p^{3k}}$

@@ -31,6 +31,8 @@ def a : ℕ → ℕ
     -- Since current_idx is odd and >= 3, current_idx - 2 is safely in ℕ.
     prev_a + Nat.gcd (current_idx - 2) prev_a
 
+-- Start of the conjecture formalization
+
 /-- The difference sequence $d_n = a(n) - a(n-1)$. D is defined for n >= 2. -/
 def d (n : ℕ) : ℕ := a n - a (n-1)
 

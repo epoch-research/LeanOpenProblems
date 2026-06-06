@@ -35,7 +35,7 @@ noncomputable def A261627 (n : ℕ) : ℕ :=
     Nat.Prime (n + k)
   ) (primesBelow (n + 1))
 
--- Placeholder theorems from OEIS data, kept for completeness but do not affect the main task.
+-- Formal definition of the strong Goldbach conjecture (every even number >= 4 is a sum of two primes).
 def goldbach_conjecture : Prop :=
   ∀ (m : ℕ), 4 ≤ m ∧ Even m →
     ∃ p q, Nat.Prime p ∧ Nat.Prime q ∧ m = p + q

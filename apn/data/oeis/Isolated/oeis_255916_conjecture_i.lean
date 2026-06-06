@@ -51,6 +51,7 @@ noncomputable def a (n : ℕ) : ℕ :=
       Finset.sum Y_set fun y =>
         if generalized_heptagonal_num k + octagonal_num x + nonagonal_num y = n then 1 else 0
 
+-- General polygonal number definitions for the conjecture
 section PolygonalNumbers
 
 open Int

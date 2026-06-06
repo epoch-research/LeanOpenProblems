@@ -24,8 +24,6 @@ Then $a(n) = F(n)+M(n)-1 = 2^{2^n} + 2^n - 1$.
 -/
 def a (n : ℕ) : ℕ := 2 ^ (2 ^ n) + 2 ^ n - 1
 
--- These theorems were meant for illustration and cause issues with the compiler environment.
--- They are retained here without body for completeness or defined as `rfl`.
 /--
 The first 5 entries are primes. Are there infinitely many primes in this sequence?
 -/

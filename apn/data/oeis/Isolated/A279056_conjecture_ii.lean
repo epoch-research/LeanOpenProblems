@@ -48,7 +48,6 @@ def A279056 (n : ℕ) : ℕ :=
     w^2 + x^2 + y^2 + z^2 = n ∧
     square_cond
 
--- Placeholder theorems from the original prompt (modified to avoid immediate failure by using sorry)
 /--
 Define the count for part (ii) of the conjecture:
 Number of ways to write $n$ as $w^2 + x^2 + y^2 + z^2$ with $w$ a positive integer

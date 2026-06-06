@@ -31,6 +31,7 @@ def a (n : ℕ) : ℤ :=
     (centralBinom m : ℤ) *
     ((-8 : ℤ) ^ m)
 
+-- The sum in the conjecture is $S(n) = \sum_{k=0}^{n-1} (-1)^k (4k+1) 48^{n-1-k} a(k)$.
 def conjecture_sum (n : ℕ) : ℤ :=
   Finset.sum (range n) fun k =>
     let k_int : ℤ := k;

@@ -21,7 +21,8 @@ A248802: Smallest prime factor of $2^{(2^n+2)} + 3$.
 -/
 def a (n : ℕ) : ℕ := (2 ^ (2 ^ n + 2) + 3).minFac
 
--- The provided examples (optional, but good practice to keep if they were given)
+-- Helper definitions for the "covered" conditions based on the index k, where k = 58*n + 26.
+
 /-- An index k is covered by Conjecture 1 if k = 10m + 2 for some m >= 0, predicting a(k)=67. -/
 def covered_by_C1 (k : ℕ) : Prop := ∃ m : ℕ, k = 10 * m + 2
 

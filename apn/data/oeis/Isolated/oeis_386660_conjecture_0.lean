@@ -24,6 +24,7 @@ A386660: $a(n) = \sum_{k=1}^n \binom{n}{k} \pmod{2^k}$.
 def a (n : ℕ) : ℕ :=
   (Finset.Icc 1 n).sum fun k => (n.choose k) % (2 ^ k)
 
+-- Conjecture based on OEIS A386660, comment C.
 /--
 oeis_386660_conjecture_0: The limit of $a(n)^{1/n}$ exists.
 The numerical evidence suggests a limit of approximately $1.7086...$

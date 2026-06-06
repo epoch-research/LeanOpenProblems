@@ -43,7 +43,6 @@ The sequence u(n) defined by u(n) = A005259(n)^25 * A005258(n-1)^14, used in Con
 def u (n : ℕ) : ℕ :=
   (A005259_seq n) ^ 25 * (A005258_seq (n - 1)) ^ 14
 
--- The example theorems are included for completeness but are not strictly necessary for the formalization request.
 /--
 OEIS A357958 Conjecture 2:
 a(p^r) ≡ a(p^(r-1)) ( mod p^(3*r+3) ) for r ≥ 2 and for all primes p ≥ 3.

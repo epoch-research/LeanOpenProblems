@@ -41,7 +41,6 @@ noncomputable def A153330 (n : ℕ) : ℤ :=
   if n = 0 then 0 -- The sequence is defined for $n \ge 1$.
   else (A006577_steps (n + 1) : ℤ) - (A006577_steps n : ℤ)
 
--- Test theorems provided in prompt (not required for submission, but kept for completeness of context)
 /-- The set of indices $n \ge 1$ for which $\text{A153330}(n)$ equals a given value $v$. -/
 def A153330_indices (v : ℤ) : Set ℕ :=
   {n : ℕ | n > 0 ∧ A153330 n = v}

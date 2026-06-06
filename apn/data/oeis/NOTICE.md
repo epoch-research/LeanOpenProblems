@@ -11,8 +11,11 @@ Search* (arXiv:2605.22763v1) — the "OEIS Problems" evaluation (44/492 solved).
 - `THEOREM_MAPPING.txt` — maps each conjecture theorem name to its file(s).
 - `Isolated/<conjecture>.lean` — **derived, one per conjecture (492).** Each is
   the per-conjecture *challenge file*: the source file's definitions plus the
-  single target theorem, with every other `theorem`/`lemma` removed (sibling
-  conjectures *and* test lemmas). This restores per-conjecture scoring — the
+  single target conjecture, with every other `theorem`/`lemma` removed (sibling
+  conjectures *and* test lemmas). A `theorem`/`lemma` is kept only if a retained
+  definition depends on it (e.g. a nonemptiness proof passed to `Finset.min'`),
+  so the spec still compiles; the conjecture to settle is always the lone target.
+  This restores per-conjecture scoring — the
   benchmark unit is the conjecture, but SafeVerify requires every theorem in the
   target file to be discharged, so a sample about conjecture *T* was previously
   gated on *all* conjectures in its file. Reproduces the shape of the paper's

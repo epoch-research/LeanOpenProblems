@@ -48,7 +48,6 @@ noncomputable def A271644 (n : ℕ) : ℕ :=
               else 0
     )
 
--- The provided theorems are likely for testing, but I'll keep them as stubs.
 /--
 Conjecture: (i) a(n) > 0 for all n > 0, and a(n) = 1 only for n = 3, 7, 15, 47, 71, 379, 4^k (k = 0,1,2,...).
 -/

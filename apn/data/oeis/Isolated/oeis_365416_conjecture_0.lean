@@ -31,6 +31,8 @@ Defined for $n \ge 1$.
 noncomputable def a (n : ℕ) : ℕ :=
   (n - 1).nth A365416_condition
 
+-- Formalization of the conjecture
+
 /--
 Predicate for a number to be a prime power with exponent strictly greater than 1.
 This is equivalent to being a composite prime power (a perfect power whose base is prime).

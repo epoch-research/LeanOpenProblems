@@ -51,7 +51,8 @@ noncomputable def a (n : ℕ) : ℕ :=
         ((Finset.range (2 * n + 2)).filter (fun k => k > 0 ∧ S k = target_m)).card
       else 0
 
--- The trivial proofs are not the goal, replace with sorry to avoid compilation issues.
+-- Formalization of the claim about verification status for Conjecture 1.
+-- The claim: "Conjecture 1 verified up to 10^10"
 theorem A308403.conjecture_1_verified_up_to_10_pow_10 :
     ∀ n : ℕ, 2 < n ∧ n ≤ 10000000000 → a n > 0 := by
   sorry

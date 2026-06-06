@@ -40,6 +40,16 @@ def reachable_zeroless_factorials : ℕ → Finset ℕ
       {prod, remove_zeros prod}
 
 -- The set of reachable values is always nonempty.
+lemma reachable_nonempty (n : ℕ) : (reachable_zeroless_factorials n).Nonempty := by
+  induction n with
+  | zero => exact Finset.singleton_nonempty 1
+  | succ n ih =>
+    rcases ih with ⟨m, hm⟩ -- Get a guaranteed element m from the previous set
+    let prod := (n + 1) * m
+    -- We show that `prod` is an element of the current set using `mem_biUnion`.
+    -- prod is in {prod, ...} and m is in the previous set, so prod is in the overall union.
+    exact ⟨prod, Finset.mem_biUnion.mpr ⟨m, hm, Finset.mem_insert_self prod _⟩⟩
+
 /--
 A374265: Minimized zeroless factorials.
 $a(n)$ is the smallest $f(n)$ such that $f(0) = 1$ and for $i > 0$,

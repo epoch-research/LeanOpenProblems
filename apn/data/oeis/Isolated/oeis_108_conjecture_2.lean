@@ -23,6 +23,7 @@ A000108 Catalan numbers: C(n) = binomial(2n,n)/(n+1).
 -/
 def a (n : ℕ) : ℕ := (Nat.choose (2 * n) n) / (n + 1)
 
+-- Reciprocal of the n-th Catalan number as a rational number.
 def a_rat (n : ℕ) : ℚ := (a n : ℚ)⁻¹
 
 /-- The sum $\sum_{i=j}^k \frac{1}{a(i)}$ of reciprocals of Catalan numbers. -/

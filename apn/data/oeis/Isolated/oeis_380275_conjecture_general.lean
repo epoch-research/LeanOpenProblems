@@ -38,6 +38,8 @@ noncomputable def a (n : ℕ) : ℕ :=
 
   Finset.sum (Finset.range (max_degree + 1)) fun k => (P.coeff k) ^ 4
 
+-- [END USER PROVIDED CODE]
+
 /-- Generalized sequence: Sum of $k$-th powers of coefficients of $q$-factorial.
 We cast to $\mathbb{R}$ for asymptotic analysis. -/
 noncomputable def A_k_n (k n : ℕ) : ℝ :=

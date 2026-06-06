@@ -49,6 +49,12 @@ structure DeclRec where
   of the spec's *definitions*, not a conjecture to cut, so the assembler keeps
   it. -/
   isInstance : Bool
+  /-- The *file-local* constants this declaration references in its type/value
+  (constants defined earlier in the same file). Lets the assembler keep any
+  `theorem`/`lemma` that a kept declaration depends on -- e.g. a nonemptiness
+  `lemma` passed to `Finset.min'` inside a sequence `def` is a definitional
+  dependency, not a conjecture/test lemma, so it must survive isolation. -/
+  deps : Array String
   /-- For theorems, the elaborated statement as a raw `Expr` string (independent
   of `pp` options, so it is comparable across files); "" for other kinds. Used
   for the oracle cross-check against the paper's published challenge files. -/
@@ -56,7 +62,18 @@ structure DeclRec where
 deriving ToJson
 
 structure CmdRec where
+  /-- Byte offset where this command's leading trivia begins (the parser's
+  `cmdPos`; the previous command's tail trivia is attributed here). -/
   startByte : Nat
+  /-- Byte offset of the command syntax's first token -- the doc-comment if
+  present, else the keyword (`stx.getPos?`). Plain `--` comments before it live
+  in `[startByte, declStart)`. -/
+  declStart : Nat
+  /-- Byte offset just past the command's last token (`stx.getTailPos?`), before
+  any trailing trivia. -/
+  declEnd : Nat
+  /-- Byte offset where the next command's leading trivia begins (the parser's
+  position after this command; includes this command's trailing trivia). -/
   endByte : Nat
   decls : Array DeclRec
 deriving ToJson
@@ -69,6 +86,31 @@ structure FileRec where
   this is empty, which makes re-extraction a full elaboration gate. -/
   errors : Array String
 deriving ToJson
+
+/-- The type/value expressions of a constant, for dependency analysis. -/
+def declExprs : ConstantInfo → Array Expr
+  | .defnInfo v => #[v.type, v.value]
+  | .thmInfo v => #[v.type, v.value]
+  | .opaqueInfo v => #[v.type, v.value]
+  | .axiomInfo v => #[v.type]
+  | .inductInfo v => #[v.type]
+  | .ctorInfo v => #[v.type]
+  | .recInfo v => #[v.type]
+  | .quotInfo v => #[v.type]
+
+/-- The file-local constants `ci` references (defined earlier in this file, hence
+present in `after`'s local constant map `map₂`), excluding itself. Lean forbids
+forward references, so a declaration's local dependencies are always already in
+`map₂` when it is elaborated. -/
+def localDeps (after : Environment) (name : Name) (ci : ConstantInfo) : Array String := Id.run do
+  let mut seen : Std.HashSet Name := {}
+  let mut out : Array String := #[]
+  for e in declExprs ci do
+    for c in e.getUsedConstants do
+      if c != name && !seen.contains c && (after.constants.map₂.find? c).isSome then
+        seen := seen.insert c
+        out := out.push c.toString
+  return out
 
 /-- The new, source-ranged declarations introduced going from `before` to
 `after`. A constant is "new" if it is in `after`'s local constant map but not
@@ -87,7 +129,8 @@ def newRangedDecls (before after : Environment) (fileName : String) (fileMap : F
         -- candidates), so we only pay for them there.
         let isInstance ← if kind == "theorem" then Lean.Meta.isInstance name else pure false
         let type := if kind == "theorem" then toString ci.type else ""
-        return acc.push { name := name.toString, kind, isInstance, type }
+        let deps := localDeps after name ci
+        return acc.push { name := name.toString, kind, isInstance, deps, type }
       | none => return acc
   let result ← (metaM.run' |>.run' { fileName, fileMap } { env := after }).toBaseIO
   match result with
@@ -103,8 +146,11 @@ def processOne : FrontendM (CmdRec × Bool) := do
   let after := st.commandState.env
   let inputCtx := (← read).inputCtx
   let decls ← newRangedDecls before after inputCtx.fileName inputCtx.fileMap
+  let stx := st.commands.back!
   let cmdRec : CmdRec := {
     startByte := st.cmdPos.byteIdx
+    declStart := (stx.getPos?.getD st.cmdPos).byteIdx
+    declEnd := (stx.getTailPos?.getD st.parserState.pos).byteIdx
     endByte := st.parserState.pos.byteIdx
     decls := decls
   }

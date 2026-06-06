@@ -51,6 +51,7 @@ def A340726 (n : ℕ) : ℕ :=
   | 20 => 1297210320
   | _ => 0
 
+-- We use an opaque predicate to stand in for the set of all possible total resistances.
 opaque IsResistanceOfNUnitResistors (R : ℚ) (n : ℕ) : Prop
 
 /-- Multiplies the numerator by the denominator of a rational number written in lowest terms.

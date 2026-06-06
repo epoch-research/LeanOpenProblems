@@ -35,6 +35,7 @@ def A219055 (n : ℕ) : ℕ :=
     (n - (1 + n % 2) * q - 6).Prime      -- p - 6 must be prime
   ) (Finset.range n)
 
+-- Formal definition of Goldbach's Conjecture
 def goldbach_conjecture : Prop :=
   ∀ n : ℕ, 4 ≤ n → Even n → ∃ p q : ℕ, p.Prime ∧ q.Prime ∧ n = p + q
 

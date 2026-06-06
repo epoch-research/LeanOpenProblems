@@ -51,7 +51,6 @@ noncomputable def a (n : ℕ) : ℕ :=
         ((Finset.range (2 * n + 2)).filter (fun k => k > 0 ∧ S k = target_m)).card
       else 0
 
--- The trivial proofs are not the goal, replace with sorry to avoid compilation issues.
 /--
 The claim that "Conjecture 2 holds up to $10^{10}$ for all cases except $\{2, 12\}$ since $4551086841$ cannot be written as $2^i + 12^j + \mathrm{A008347}(k)$."
 

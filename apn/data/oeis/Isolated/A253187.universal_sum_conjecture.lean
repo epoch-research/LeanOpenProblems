@@ -50,6 +50,7 @@ def A253187 (n : ℕ) : ℕ :=
       else
         0
 
+-- Generalized polygonal number formula, $\frac{(k-2)z^2 - (k-4)z}{2}$, for $z \in \mathbb{Z}$.
 def polygonal_num_val (k : ℕ) (z : ℤ) : ℤ :=
   if k ≥ 3 then
     let k' : ℤ := k

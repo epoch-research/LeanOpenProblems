@@ -47,6 +47,7 @@ noncomputable def a (n : ℕ) : ℕ :=
   -- The sequence is 1-indexed, so we find the (n-1)-th 0-indexed position k, and add 1.
   (n - 1).nth (fun k => A284851_value k = 0) + 1
 
+-- The constant r = (3 + sqrt(3)) / 3
 noncomputable def r : ℝ := (3 + Real.sqrt 3) / 3
 
 /--

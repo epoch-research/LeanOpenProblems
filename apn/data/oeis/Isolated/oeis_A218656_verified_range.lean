@@ -25,7 +25,6 @@ This is equivalent to the number of $k \in \{1, \dots, n\}$ such that $k^4 + (2n
 def a (n : ℕ) : ℕ :=
   card ((Icc 1 n).filter fun k : ℕ => Nat.Prime (k ^ 4 + (2 * n + 1 - k) ^ 4))
 
--- Note: These theorems provided in the context are intentionally kept unchanged.
 /--
 Auxiliary theorem formalizing the empirical claim about the verification range
 for the $x^4 + y^4$ case.

@@ -43,7 +43,6 @@ def A262880 (n : ℕ) : ℕ :=
     -- Constraints: w > 0, 0 <= x <= y, and the sum equals n.
     w > 0 ∧ x ≤ y ∧ triangle_number w + x^3 + y^3 + 2 * (z^3) = n)
 
--- The required theorems from the prompt
 /-- The set of coefficient pairs (b, c) for Conjecture (i). -/
 def A262880_Conjecture1_Pairs : Finset (ℕ × ℕ) :=
   (List.toFinset (

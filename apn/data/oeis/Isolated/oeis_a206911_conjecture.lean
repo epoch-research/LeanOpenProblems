@@ -33,7 +33,8 @@ noncomputable def A206911 (n : ℕ) : ℕ :=
   -- Final rank: n + count.
   n + count_log_terms.toNat
 
--- The existing theorems follow, confirming definition consistency.
+-- Formalization of the conjecture.
+
 /-- The difference sequence of A206911. Always an integer, should be 2 or 3 based on the conjecture. -/
 noncomputable def A206911_diff (n : ℕ) : ℤ :=
   (A206911 (n + 1) : ℤ) - (A206911 n : ℤ)

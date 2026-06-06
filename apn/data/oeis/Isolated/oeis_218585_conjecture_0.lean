@@ -26,7 +26,6 @@ def A218585 (n : ℕ) : ℕ :=
     let y := n - x
     if Nat.Prime (x * x + x * y + y * y) then 1 else 0
 
--- Basic sequence values (keeping these as they were in the prompt)
 /-- Conjecture: a(n)>0 for all n>1 with the only exception n=8. -/
 theorem oeis_218585_conjecture_0 :
   (∀ n : ℕ, 1 < n → n ≠ 8 → A218585 n > 0) ∧ (A218585 8 = 0) := by

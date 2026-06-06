@@ -36,7 +36,7 @@ noncomputable def a (n : ℕ) : ℕ :=
     -- The division is exact, since the result is an integer sequence.
     numerator / denominator
 
--- We omit the proof placeholders for the example theorems
+-- The formalization of the conjecture C A091669 from Jan 19 2020.
 /--
 Conjecture A091669: (for $n > 2$), if $n \mid a(n-1) + 2^{n-2}$, then $n$ is a prime
 for which 2 is a primitive root modulo $n$ (A001122).

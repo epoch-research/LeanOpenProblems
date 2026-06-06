@@ -46,6 +46,8 @@ def A258667 (n : ℕ) : ℕ :=
     sign * fac_term * A258667_inner_sum n k
   ).natAbs
 
+-- Start of formalization of the conjecture
+
 noncomputable def nat_fac_to_real (n : ℕ) : ℝ := (Nat.factorial n : ℝ)
 
 /-- The denominator term $k! (n-1)_k$ represented as a Real number. -/

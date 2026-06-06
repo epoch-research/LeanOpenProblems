@@ -28,6 +28,7 @@ noncomputable def A217785 (n : ℕ) : ℕ :=
   let S : Set ℕ := {s | n < s ∧ Nat.Prime (P_n s)}
   sInf S
 
+-- Definition of the polynomial $s_n(x) = \sum_{k=0}^n (k+1)x^k$ over ℤ[X]
 noncomputable def s_poly (n : ℕ) : Polynomial ℤ :=
   Finset.sum (Finset.range (n + 1)) fun k => C (k + 1 : ℤ) * X ^ k
 

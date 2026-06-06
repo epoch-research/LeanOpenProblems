@@ -32,7 +32,6 @@ noncomputable def a (n : ℕ) : ℕ :=
   else
     0
 
--- Keeping the structure of the provided snippet but marking proofs as sorry
 /--
 Conjecture: If n is prime, then a(n) = 2. Conjecture: If n is composite, then a(n) > 2.
 Equivalently, for $n > 1$, $a(n)=2$ if and only if $n$ is prime.

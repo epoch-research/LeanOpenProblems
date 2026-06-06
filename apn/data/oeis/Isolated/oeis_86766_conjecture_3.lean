@@ -41,7 +41,6 @@ noncomputable def a (n : ℕ) : ℕ :=
     -- `sInf S` returns the minimum element of $S$. For Set ℕ, sInf ∅ = 0.
     sInf S
 
--- Auxiliary theorems provided in the initial context, simplified to `sorry`.
 /-- The smallest integer $m>1$ such that $a(10^m) \neq 0$. If no such $m$ exists, this value is $0$. -/
 noncomputable def smallest_m_for_a10pow_nonzero : ℕ :=
   sInf {m : ℕ | 1 < m ∧ a (10 ^ m) ≠ 0}

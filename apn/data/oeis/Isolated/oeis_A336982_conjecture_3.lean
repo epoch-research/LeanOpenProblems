@@ -47,6 +47,7 @@ noncomputable def a (n : ℕ) : ℕ :=
   else
     0
 
+-- Helper function for the integer version of T_coeff, which is needed for ZMOD arithmetic.
 /--
 T_k(b, c) from A336982 as an integer.
 It is the coefficient of $x^k$ in the expansion of $(x^2 + b x + c)^k$.

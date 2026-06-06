@@ -26,15 +26,23 @@ the ``theorem`` commands whose declaration is not the target and keep everything
 else verbatim. There is no local Lean toolchain, so the extractor runs in the
 Lean Docker image; this script drives it over ``docker exec``.
 
+A ``theorem``/``lemma`` is kept iff it is the target *or* a definitional
+dependency: a kept ``def`` may pass a ``lemma`` as a proof term (e.g. a
+nonemptiness proof to ``Finset.min'``), so such lemmas are pulled in via a
+dependency closure and survive. Only theorems nothing kept depends on (sibling
+conjectures, sanity/test lemmas) are cut.
+
 Validation gates (all hard unless noted):
   1. Every mapped conjecture name resolves to exactly one ``theorem`` decl.
-  2. Re-extracting each isolated file shows exactly one ``theorem`` and it is the
-     target -- and the file elaborates with no error-severity messages (this
-     subsumes a compile check; ``sorry`` is a warning, not an error).
+  2. Re-extracting each isolated file shows the target theorem present, and the
+     surviving theorem/lemma commands are exactly those planned (target + its
+     dependency lemmas) -- no leftover sibling conjecture or test lemma.
   3. The isolated target's elaborated type equals the source target's type
      (isolation never edits the statement).
   4. No isolated-filename collisions.
-  5. Oracle cross-check (confidence, non-fatal): for the paper's solved problems,
+  5. **Compile gate (authoritative):** every isolated file compiles with the
+     scorer's exact ``lake env lean -o`` command, in parallel in the container.
+  6. Oracle cross-check (confidence, non-fatal): for the paper's solved problems,
      our isolated target's type matches that file's ``target_theorem_0`` type.
 
 Setup (one-time, since there is no local Lean toolchain). Start a Lean container
@@ -144,27 +152,104 @@ def resolve_target(name: str, filerec: dict) -> dict:
     return hits[0]
 
 
-def isolate(src: bytes, filerec: dict, target_decl_name: str) -> bytes:
-    """Drop the source spans of every standalone theorem command except the target's.
+def dependency_closure(filerec: dict, target_decl_name: str) -> set[str]:
+    """Names that must be kept: the spec's definitions + the target, plus every
+    declaration any of those transitively depends on.
 
-    The extractor's command spans cleanly partition the post-header region (each
-    command's end == the next command's start, leading doc-comment included), so
-    we reconstruct = header + the kept commands' spans concatenated. A command is
-    dropped iff it is a standalone theorem/lemma declaration (:func:`is_theorem_command`)
-    whose decl is not the target; everything else (defs, structures, axioms,
-    ``open``/``namespace``, comments) is kept verbatim.
+    The seed is every declaration of a non-theorem command (defs, structures and
+    their projections/recursors, ``instance``s, axioms) together with the target
+    theorem. We then follow ``deps`` (file-local references) to a fixed point, so
+    a ``theorem``/``lemma`` that a kept definition uses -- e.g. a nonemptiness
+    proof passed to ``Finset.min'`` -- is pulled in and survives. Only theorems
+    nothing kept depends on (sibling conjectures, sanity/test lemmas) are cut.
+    """
+    deps = {d["name"]: d["deps"] for c in filerec["commands"] for d in c["decls"]}
+    seed: set[str] = {
+        d["name"]
+        for c in filerec["commands"]
+        if not is_theorem_command(c)
+        for d in c["decls"]
+    }
+    seed |= {d["name"] for d in theorem_decls(filerec) if matches_name(d["name"], target_decl_name)}
+    closure = set(seed)
+    stack = list(seed)
+    while stack:
+        for dep in deps.get(stack.pop(), []):
+            if dep not in closure:
+                closure.add(dep)
+                stack.append(dep)
+    return closure
+
+
+def kept_flags(filerec: dict, closure: set[str]) -> list[bool]:
+    """Per-command keep decision: every non-theorem command is kept; a theorem
+    command is kept iff one of its declarations is in the dependency closure
+    (the target, or a definitional-dependency lemma)."""
+    return [
+        (not is_theorem_command(c)) or any(d["name"] in closure for d in c["decls"])
+        for c in filerec["commands"]
+    ]
+
+
+def _line_starts(src: bytes) -> list[int]:
+    """Byte offset of the start of each line in ``src``."""
+    starts = [0]
+    for i, b in enumerate(src):
+        if b == 0x0A:
+            starts.append(i + 1)
+    return starts
+
+
+def _attached_start(src: bytes, line_starts: list[int], decl_start: int, gap_start: int) -> int:
+    """Byte offset where the comment block *attached* to a declaration begins.
+
+    A contiguous run of ``--`` comment lines immediately above the declaration
+    (no blank line between them and it, and not crossing into the previous
+    declaration's text at ``gap_start``) documents that declaration and travels
+    with it. Returns ``decl_start`` when there is no such block.
+    """
+    import bisect
+
+    li = bisect.bisect_right(line_starts, decl_start) - 1
+    attached = decl_start
+    li -= 1
+    while li >= 0 and line_starts[li] >= gap_start:
+        end = line_starts[li + 1] if li + 1 < len(line_starts) else len(src)
+        line = src[line_starts[li] : end].decode("utf-8", "replace").strip()
+        if line == "" or not line.startswith("--"):
+            break
+        attached = line_starts[li]
+        li -= 1
+    return attached
+
+
+def isolate(src: bytes, filerec: dict, flags: list[bool]) -> bytes:
+    """Reconstruct the file keeping only the commands flagged ``True``.
+
+    Each command spans ``[declStart, declEnd)`` for its own text (doc-comment
+    included) plus the inter-command *gap* trivia. A command's *unit* is its
+    attached leading comment block + its text; cutting a command drops its unit
+    (so a comment documenting a removed theorem goes with it) while the free
+    trivia between units -- blank lines, detached comments -- is always kept (so
+    a comment documenting a *kept* definition is never lost). :func:`tidy` then
+    collapses the blank-line runs left behind.
     """
     commands = filerec["commands"]
     if not commands:
         return src
-    kept = [
-        c
-        for c in commands
-        if not (is_theorem_command(c) and all(d["name"] != target_decl_name for d in c["decls"]))
-    ]
-    out = bytearray(src[: commands[0]["startByte"]])
-    for c in kept:
-        out += src[c["startByte"] : c["endByte"]]
+    line_starts = _line_starts(src)
+    attached = []
+    for i, c in enumerate(commands):
+        gap_start = commands[i - 1]["declEnd"] if i > 0 else 0
+        attached.append(_attached_start(src, line_starts, c["declStart"], gap_start))
+
+    out = bytearray(src[: attached[0]])  # preamble (license, imports, ...)
+    n = len(commands)
+    for i, c in enumerate(commands):
+        if flags[i]:
+            out += src[attached[i] : c["declEnd"]]  # the kept unit (comments + decl)
+        next_unit = attached[i + 1] if i + 1 < n else len(src)
+        out += src[c["declEnd"] : next_unit]  # free trivia (always kept)
     return bytes(out)
 
 
@@ -200,6 +285,49 @@ def run_extractor(files: list[Path], container: str, exe: str) -> list[dict]:
     raise RuntimeError(f"no JSON in extractor stdout:\n{proc.stdout[-2000:]}")
 
 
+# Compiles each isolated file with the scorer's exact command
+# (``lake env lean -o``) in parallel; echoes the stem of any that fail. This is
+# the authoritative correctness gate -- it is the same elaboration the scorer
+# runs on every target at eval time.
+_COMPILE_SCRIPT = r"""
+set -u
+PROJ=/workspace/leanproject
+WORK="$PROJ/_apn_gen"
+rm -rf "$WORK"; mkdir -p "$WORK"
+cd "$PROJ"
+compile_one() {
+  local f="$1" stem
+  stem=$(basename "$f" .lean)
+  cp "$f" "$WORK/$stem.lean"
+  if ! lake env lean -o "$WORK/$stem.olean" "$WORK/$stem.lean" >/dev/null 2>&1; then
+    echo "$stem"
+  fi
+  rm -f "$WORK/$stem.lean" "$WORK/$stem.olean" "$WORK/$stem.ilean"
+}
+export -f compile_one
+export WORK PROJ
+xargs -P "${APN_COMPILE_JOBS:-4}" -I{} bash -c 'compile_one "{}"' < "$1"
+rm -rf "$WORK"
+"""
+
+
+def compile_all(files: list[Path], container: str) -> list[str]:
+    """Compile every isolated file in the container; return the failing stems."""
+    list_path = REPO / "_audit" / "_compile_list.txt"
+    script_path = REPO / "_audit" / "_compile_all.sh"
+    list_path.parent.mkdir(exist_ok=True)
+    list_path.write_text("\n".join(host_to_container(p) for p in files) + "\n")
+    script_path.write_text(_COMPILE_SCRIPT)
+    cmd = [
+        "docker", "exec", container, "bash",
+        host_to_container(script_path), host_to_container(list_path),
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"compile driver failed (rc={proc.returncode}):\n{proc.stderr[-3000:]}")
+    return sorted(s for s in proc.stdout.split() if s)
+
+
 # --------------------------------------------------------------------------- #
 # Driver.                                                                      #
 # --------------------------------------------------------------------------- #
@@ -216,11 +344,6 @@ def main() -> None:
     print(f"Extracting decl ranges from {len(source_files)} source files...", flush=True)
     ranges = run_extractor([AUTO_DIR / f for f in source_files], args.container, exe)
     by_file = {Path(fr["file"]).name: fr for fr in ranges}
-    for fr in ranges:
-        if fr["errors"]:
-            print(f"  WARN source {Path(fr['file']).name} elaboration errors:")
-            for e in fr["errors"][:3]:
-                print("    " + e.splitlines()[0])
 
     ISOLATED_DIR.mkdir(exist_ok=True)
     for old in ISOLATED_DIR.glob("*.lean"):
@@ -228,13 +351,22 @@ def main() -> None:
 
     written: dict[str, str] = {}
     src_types: dict[str, str] = {}
+    planned_thms: dict[str, list[str]] = {}  # theorem-command decls expected to survive
     for name, files in mapping:
         filerec = by_file[files[0]]
-        target = resolve_target(name, filerec)
+        target = resolve_target(name, filerec)  # gate 1: unique target theorem
+        closure = dependency_closure(filerec, target["name"])
+        flags = kept_flags(filerec, closure)
         src_types[name] = target["type"]
-        iso = tidy(isolate((AUTO_DIR / files[0]).read_bytes(), filerec, target["name"]))
+        planned_thms[name] = sorted(
+            d["name"]
+            for c, keep in zip(filerec["commands"], flags)
+            if keep and is_theorem_command(c)
+            for d in c["decls"]
+        )
+        iso = tidy(isolate((AUTO_DIR / files[0]).read_bytes(), filerec, flags))
         out = ISOLATED_DIR / f"{name}.lean"
-        if out.name in written:  # gate 4
+        if out.name in written:  # gate 4: no filename collisions
             raise SystemExit(f"isolated-filename collision: {out.name}")
         written[out.name] = name
         out.write_bytes(iso)
@@ -245,27 +377,33 @@ def main() -> None:
     failures = 0
     for fr in iso_ranges:
         name = Path(fr["file"]).stem
-        if fr["errors"]:  # gate 2 (elaboration)
-            failures += 1
-            print(f"  FAIL {name}: elaboration errors:\n    " + "\n    ".join(fr["errors"][:2]))
-            continue
         thms = theorem_command_decls(fr)
-        if len(thms) != 1:  # gate 2 (single theorem command)
+        target_hits = [d for d in thms if matches_name(d["name"], name)]
+        if len(target_hits) != 1:  # gate 2a: target present exactly once
             failures += 1
-            print(f"  FAIL {name}: {len(thms)} theorem commands remain: {[d['name'] for d in thms]}")
+            print(f"  FAIL {name}: target appears {len(target_hits)}x among {[d['name'] for d in thms]}")
             continue
-        if not matches_name(thms[0]["name"], name):  # gate 2 (it is the target)
+        remaining = sorted(d["name"] for d in thms)
+        if remaining != planned_thms[name]:  # gate 2b: only target (+ dep lemmas) survive
             failures += 1
-            print(f"  FAIL {name}: remaining theorem {thms[0]['name']} is not the target")
+            print(f"  FAIL {name}: theorem commands {remaining} != planned {planned_thms[name]}")
             continue
-        if thms[0]["type"] != src_types[name]:  # gate 3 (statement preserved)
+        if target_hits[0]["type"] != src_types[name]:  # gate 3: statement preserved
             failures += 1
-            print(f"  FAIL {name}: target type changed during isolation")
+            print(f"  FAIL {name}: target statement changed during isolation")
             continue
-        iso_types[name] = thms[0]["type"]
+        iso_types[name] = target_hits[0]["type"]
     if failures:
-        raise SystemExit(f"{failures} isolated file(s) failed validation.")
-    print(f"All {len(iso_types)} isolated files valid: one target theorem, clean elaboration, statement preserved.")
+        raise SystemExit(f"{failures} isolated file(s) failed structural validation.")
+    print(f"Structural checks passed for all {len(iso_types)} files. Compiling (authoritative gate)...", flush=True)
+
+    failed = compile_all(sorted(ISOLATED_DIR.glob("*.lean")), args.container)
+    if failed:
+        print(f"  {len(failed)} isolated file(s) FAILED to compile:")
+        for stem in failed:
+            print(f"    {stem}")
+        raise SystemExit(f"{len(failed)} isolated file(s) failed the compile gate.")
+    print(f"All {len(written)} isolated files compile cleanly.")
 
     if not args.skip_oracle:
         oracle_cross_check(iso_types, args.container, exe)

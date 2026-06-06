@@ -57,5 +57,3 @@ theorem oeis_51293_conjecture_0 :
       )
       atTop
       (nhds 0) := by sorry
-
--- Example assertions provided in the problem statement, using `decide` where possible.

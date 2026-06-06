@@ -25,7 +25,6 @@ noncomputable def a (n : ℕ) : ℤ :=
   let product_term (k : ℕ) : ℂ := 1 + (k : ℂ) * I
   Int.floor (((Finset.range (n + 1)).prod product_term).im)
 
--- Formalized as 'by sorry' as proofs are not required.
 open Nat
 
 section AsymptoticConjectures

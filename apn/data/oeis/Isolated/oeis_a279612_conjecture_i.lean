@@ -48,6 +48,7 @@ def a (n : ℕ) : ℕ :=
       else 0
     else 0
 
+-- The set of special multipliers q.
 private def Q : Finset ℕ := {1, 2, 3, 6, 7, 8, 12, 15, 27, 31, 47, 72, 76, 92, 111, 127}
 
 /--

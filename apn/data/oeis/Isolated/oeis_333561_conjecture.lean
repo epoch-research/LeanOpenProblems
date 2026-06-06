@@ -26,6 +26,8 @@ def a (n : ℕ) : ℕ :=
   Finset.sum (Finset.range (2 * n + 1)) fun k : ℕ =>
     Nat.choose (3 * n) (2 * n - k) * Nat.choose (n + k - 1) k
 
+ -- We must keep the focus on the conjecture formalization
+
 /-- We conjecture that this sequence satisfies the supercongruences
 a(n*p^k) == a(n*p^(k-1)) ( mod p^(3*k) ) for prime p >= 5 and positive integers n and k.
 -/

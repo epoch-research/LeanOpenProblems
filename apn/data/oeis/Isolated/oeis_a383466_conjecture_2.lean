@@ -25,6 +25,8 @@ def a : ℕ → ℕ
   | 0 => 1
   | k + 1 => 5 * (k + 1) * (2 * (k + 1) - 1) + 2
 
+-- We define abstract geometric concepts using axioms.
+-- This is the preferred way to introduce non-fully formalized concepts for conjecture statements.
 noncomputable section
 
 /--

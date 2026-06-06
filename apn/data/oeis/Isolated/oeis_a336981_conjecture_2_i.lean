@@ -57,7 +57,7 @@ noncomputable def a (n : ℕ) : ℚ :=
 
     numerator_sum / divisor
 
--- Sanity checks - replacing former failing proofs with `sorry`
+-- Definition for t(k) for the infinite sum
 /--
 $$t(k) = \frac{4290k+367}{3136^k} \cdot \binom{2k}{k} \cdot T_k(14, 1) \cdot T_k(17, 16)$$
 -/

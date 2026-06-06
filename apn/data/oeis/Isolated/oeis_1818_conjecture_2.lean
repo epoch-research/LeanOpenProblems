@@ -24,6 +24,8 @@ A001818: Squares of double factorials: $(1 \cdot 3 \cdot 5 \cdot \dots \cdot (2n
 def a (n : ℕ) : ℕ :=
   ((range n).prod (fun k => 2 * k + 1)) ^ 2
 
+-- Define the characteristic function f(j, k) for the matrix entries.
+-- Indices i and j here are the 1-based indices {1, ..., p-1}.
 noncomputable def f_entry {p : ℕ} (i j : ℕ) : ZMod (p ^ 2) :=
   let R := ZMod (p ^ 2)
   if i = j then

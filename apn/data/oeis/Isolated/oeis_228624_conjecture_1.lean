@@ -31,6 +31,7 @@ noncomputable def a (n : ℕ) : ℤ :=
     if (Nat.sqrt sum_one_based) ^ 2 = sum_one_based then 1 else 0
   M.det
 
+-- Definition of a perfect cube for natural numbers
 def is_perfect_cube (k : ℕ) : Prop :=
   ∃ m : ℕ, m ^ 3 = k
 

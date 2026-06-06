@@ -53,7 +53,6 @@ def A270966 (n : ℕ) : ℕ :=
     -- 4. The remainder $n - (x^2 + y^2)$ must be a generalized pentagonal number.
     is_generalized_pentagonal (n - x_sq_y_sq)
 
--- Placeholder theorems from the prompt, kept to satisfy the instructions' context.
 /--
 OEIS A270966 Conjecture:
 (i) a(n) > 0 for all n > 0, and a(n) = 1 only for n = 1, 49, 608.

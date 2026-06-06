@@ -25,6 +25,7 @@ $$ a(n) = \min \{ m \in \mathbb{N}_{>0} \mid 2^n \mid \phi(m) \} $$
 noncomputable def a (n : ℕ) : ℕ :=
   sInf { m : ℕ | m > 0 ∧ 2 ^ n ∣ totient m }
 
+-- Formalization of the conjecture
 /--
 A053576 a(8589934592) is the first unknown term; it is $2^{8589934593}$ if $F(33) = 2^{2^{33}}+1$ is composite or $F(33)$ otherwise. - Charles R Greathouse IV, Jul 15 2013
 -/

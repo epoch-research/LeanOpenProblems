@@ -63,7 +63,6 @@ noncomputable def A282091 (n : ℕ) : ℕ :=
   )
   |>.card
 
--- Proof stubs for context, as provided in the prompt
 /--
   Conjecture (i) from OEIS A282091:
   a(n) > 0 for all n = 0,1,2,....

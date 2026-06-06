@@ -34,8 +34,6 @@ noncomputable def a (n : ℕ) : ℕ :=
 
   2 * n + floor_term_sqrt + floor_term_div
 
--- The provided theorems (a_one, a_two, etc.) are included to ensure context integrity,
--- though their proofs are omitted for brevity and focus on the conjecture formalization.
 open scoped BigOperators
 
 /-- The set of coefficients $\tilde{c}_i$ for the linear recurrence relation of order 21.

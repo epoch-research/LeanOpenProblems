@@ -24,7 +24,7 @@ We use `Nat.choose (2 * n) n` for the central binomial coefficient.
 -/
 def a (n : ℕ) : ℕ := (Nat.choose (2 * n) n) ^ 3
 
--- The boilerplate theorems provided in the prompt, adapted to the definition.
+-- Define the set of variables {x, y, z}
 abbrev Vars := Fin 3
 
 /--

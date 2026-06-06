@@ -32,7 +32,8 @@ is the coefficient of $x^k$ in the expansion of $(x^2+x+1)^k$.
 def a (n : ℕ) : ℕ :=
   Finset.sum (Finset.range (n + 1)) fun k => (n.choose k) ^ 2 * T k * T (n - k)
 
--- Sanity checks using sorry since proof is not the goal
+-- Helper definitions for the conjecture
+
 /--
 The sum $S = \sum_{k=0}^{p-1} a(k)/(-4)^k$ defined as an element of $\mathbb{Z} / p^2 \mathbb{Z}$.
 -/

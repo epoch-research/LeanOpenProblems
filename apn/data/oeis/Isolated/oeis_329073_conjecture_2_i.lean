@@ -78,6 +78,8 @@ def A329073_b (n : ℕ) : ℤ :=
 
     sum_val / N_int
 
+-- Remaining placeholder theorems for A329073 omitted for brevity, as requested.
+
 /--
 A329073 Conjecture 2: (i) For any n > 0, the number b(n):=(1/n)*Sum_{k=0..n-1} (40k+27)*(-6)^(n-1-k)*T_k(4,1)*T_k(1,-1)^2 is an integer. Moreover, b(n) is odd if and only if n is a power of two.
 -/

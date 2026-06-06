@@ -39,6 +39,7 @@ noncomputable def a (n : ℕ) : ℚ :=
     )
     (-1 : ℚ)^m_plus_one + (1 / 2) * sum_val
 
+-- We formally define an eventually periodic sequence.
 /-- A sequence `f` is eventually periodic with period `P` if after some index `N`, `f(n + P) = f(n)`. -/
 def eventually_periodic {α : Type*} (f : ℕ → α) (P : ℕ) : Prop :=
   ∃ N : ℕ, ∀ n : ℕ, N ≤ n → f (n + P) = f n
