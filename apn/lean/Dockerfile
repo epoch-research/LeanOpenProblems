@@ -57,15 +57,17 @@ RUN lake exe cache get \
 # `FormalConjectures` lib pattern, so the agent can author its proof across
 # modules: an entry module `Submission.Spec` plus any helper modules it imports,
 # built graph-aware with `lake build Submission.Spec`. The glob picks up every
-# module under `Submission/`; `warn.sorry = false` keeps the placeholder (and
-# the agent's in-progress drafts) from failing the build on a `sorry`. The
-# placeholder entry module only needs to compile -- the agent and the scorer
-# overwrite it. The Submission oleans are NOT pre-built (produced at runtime).
-# This step deliberately follows the heavy Mathlib build so it does not
-# invalidate that layer's cache (it depends on nothing the build produces).
-RUN mkdir -p Submission \
-    && printf 'import FormalConjectures.Util.ProblemImports\n' > Submission/Spec.lean \
-    && printf '\n[[lean_lib]]\nname = "Submission"\nglobs = ["Submission.+"]\n[lean_lib.leanOptions]\nwarn.sorry = false\n' >> lakefile.toml
+# module under `Submission/`; `warn.sorry = false` keeps the agent's in-progress
+# drafts (and the scorer's intermediate state) from failing the build on a
+# `sorry`. Only the lakefile registration is baked: the `Submission/` directory
+# and its `Spec.lean` are created at *runtime* by the Python scaffold -- the
+# solver writes the entry module before the agent runs, and the checker clears
+# and recreates the whole subtree on every call (see apn.agent / apn.checker).
+# Lake tolerates a registered lib whose glob matches nothing until then, so no
+# placeholder file is needed. This step deliberately follows the heavy Mathlib
+# build so it does not invalidate that layer's cache (it depends on nothing the
+# build produces).
+RUN printf '\n[[lean_lib]]\nname = "Submission"\nglobs = ["Submission.+"]\n[lean_lib.leanOptions]\nwarn.sorry = false\n' >> lakefile.toml
 
 # --------------------------------------------------------------------------- #
 # base: copy in only what runtime needs.                                       #
@@ -102,12 +104,12 @@ COPY --from=builder /workspace/leanproject/lakefile.toml \
                     /workspace/leanproject/lake-manifest.json ./
 COPY --from=builder /workspace/leanproject/.lake ./.lake
 
-# The Submission/ source root (registered as the `Submission` lean_lib in the
-# lakefile above). Carries the placeholder entry module; the agent authors its
-# proof here and the scorer ingests only this subtree's *.lean contents. Both
-# the agent and scorer images (FROM base) get it, and it is root-writable so the
-# agent can edit/add modules and the scorer can stage submissions into it.
-COPY --from=builder /workspace/leanproject/Submission ./Submission
+# Note: the `Submission/` source root is NOT copied in. It carries no baked
+# content -- the lean_lib is registered in the lakefile above, and the Python
+# scaffold creates the directory and the entry module at runtime (the solver
+# writes Spec.lean before the agent runs; the checker clears and recreates the
+# subtree on every call). Both runtime writers `mkdir -p` the directory, so it
+# need not pre-exist in the image.
 
 # The proving-library SOURCE the agent legitimately proves *with* (imported into
 # every problem's scope, like Mathlib). The conjecture problem files and the

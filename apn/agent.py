@@ -27,6 +27,7 @@ cheaper proof instead of guessing blindly.
 
 from __future__ import annotations
 
+import logging
 from typing import Callable, Literal, Sequence
 
 from inspect_ai.agent import (
@@ -49,6 +50,8 @@ from apn.filetree import build_tree_from_tar, read_submission_tar
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
 from apn.tools import bash
+
+logger = logging.getLogger(__name__)
 
 # Played back to the model when a gated submission fails verification. Note it
 # deliberately reveals nothing about *why* (no SafeVerify output), so the model
@@ -160,9 +163,8 @@ def lean_prover(
 ) -> Solver:
     """Prove the sample's theorem with an Inspect agent.
 
-    Writes the initial Lean file (from ``metadata['sketch']``, else the sample
-    input) into the sandbox at the entry module ``Submission/Spec.lean`` and
-    runs the agent. The proof is the agent's ``Submission/`` subtree (entry
+    Writes the initial Lean file (the sample's ``metadata['sketch']``) into the
+    sandbox at the entry module ``Submission/Spec.lean`` and runs the agent. The proof is the agent's ``Submission/`` subtree (entry
     module plus any helper modules it adds); the scorer reads it back from there
     (see :mod:`apn.scorer`). After the agent finishes, the solver records the
     final subtree as a display tree on ``state.metadata["submission_contents"]``
@@ -189,12 +191,14 @@ def lean_prover(
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        # Strip the copyright/license banner before the agent ever sees the file:
-        # it is identical boilerplate across every conjecture and pure token
-        # waste in the agent's context. The scorer still compiles the original
-        # sketch as its target, so verification is unaffected (comments don't
-        # reach the olean anyway).
-        sketch = strip_license_header(state.metadata.get("sketch") or state.input_text)
+        # metadata["sketch"] is the single source of the conjecture spec (set by
+        # the dataset; same text the scorer verifies against). Strip the
+        # copyright/license banner before the agent ever sees the file: it is
+        # identical boilerplate across every conjecture and pure token waste in
+        # the agent's context. The scorer still compiles the original sketch as
+        # its target, so verification is unaffected (comments don't reach the
+        # olean anyway).
+        sketch = strip_license_header(state.metadata["sketch"])
         await sandbox().write_file(ENTRY_PATH, sketch)
 
         tools = [
@@ -242,6 +246,12 @@ def lean_prover(
             tar = await read_submission_tar(sandbox())
             state.metadata["submission_contents"] = build_tree_from_tar(tar)
         except Exception:
+            logger.warning(
+                "Failed to read agent Submission/ subtree for the display tree; "
+                "recording an empty tree (scoring is unaffected -- the scorer "
+                "reads the submission independently)",
+                exc_info=True,
+            )
             state.metadata["submission_contents"] = {}
 
         state.completed = True

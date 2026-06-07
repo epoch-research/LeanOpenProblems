@@ -116,9 +116,12 @@ from `Spec.lean` (or from other helpers). Structure a long proof across several
 modules if that helps. Build and type-check your work in-loop with
 `lake build Submission.Spec` from the `bash` tool, which compiles the entry
 module and all the helper modules it imports, in dependency order. Only files
-under `Submission/` are part of your submission; only the entry module's
-declarations are checked against the conjecture, but a `sorry` or custom axiom
-anywhere in the imported tree still rejects the whole submission.
+under `Submission/` are part of your submission, and only the entry module's
+declarations are matched against the conjecture. The soundness check is
+transitive: any `sorry` or non-standard axiom your proof actually depends on --
+whether in `Spec.lean` or in any helper module it (transitively) imports --
+rejects the whole submission. You cannot discharge a goal the proof relies on
+with `sorry` or a custom `axiom` by hiding it in a helper.
 
 You have a `bash` tool giving you a shell in the workspace. From there:
 

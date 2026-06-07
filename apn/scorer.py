@@ -76,10 +76,11 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
 
         # Hand the raw tar to the checker, which unpacks it in its own sandbox
         # and builds (no Python decode on the verification path). The target is
-        # the trusted spec the conjecture was posed as (metadata["sketch"], else
-        # the sample input) -- never the agent's Spec.lean, which it may have
-        # weakened; safe_verify matches the submission against this target.
-        target_spec = state.metadata.get("sketch") or state.input_text
+        # the trusted spec the conjecture was posed as -- metadata["sketch"], the
+        # single source set by the dataset -- never the agent's Spec.lean, which
+        # it may have weakened; safe_verify matches the submission against this
+        # target.
+        target_spec = state.metadata["sketch"]
         outcome = await checker.check(target_spec, tar)
         return Score(
             value=CORRECT if outcome.ok else INCORRECT,
@@ -115,7 +116,9 @@ def _write_submission_sidecar(state: TaskState, attempt: int, tar: bytes) -> Non
             return
         sidecar_dir = UPath(active.log_location).parent / "artifacts" / state.uuid
         sidecar_dir.mkdir(parents=True, exist_ok=True)
-        with (sidecar_dir / f"attempt-{attempt}.tar").open("wb") as f:
+        # Zero-pad the attempt index (PortBench's sidecar convention) so the
+        # files sort lexicographically in attempt order.
+        with (sidecar_dir / f"attempt-{attempt:05d}.tar").open("wb") as f:
             f.write(tar)
     except Exception:
         logger.warning("Failed to write submission sidecar", exc_info=True)
