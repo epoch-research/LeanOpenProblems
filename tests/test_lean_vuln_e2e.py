@@ -1,0 +1,308 @@
+"""End-to-end Lean *soundness* tests, written from the agent's point of view.
+
+Every case supplies **only the agent's ``Submission/`` file tree** (a ``{relative
+path: contents}`` dict) plus the trusted target spec. The tree is written into the
+live **agent** sandbox and scored by the **real** :func:`apn.scorer.proof_scorer`,
+which tars it from that sandbox (``read_submission_tar``) and verifies it in the
+**scorer** sandbox via :class:`~apn.checker.SandboxSafeVerify`. So each test
+exercises the exact production path an agent submission travels -- nothing is
+reimplemented, and the verdict is the one a real eval would record.
+
+This is the security counterpart to ``test_multifile_proof.py`` (which checks
+plumbing/acceptance). Here we assert the *secure* verdict for a battery of
+cheating attempts and honest baselines:
+
+* **must REJECT** -- sorry/custom-axiom/native_decide (forbidden axioms), a
+  weakened or missing target statement, an ``unsafe`` constant, an import-superset
+  violation, and a kernel-bypassing constant injected into the *entry* module
+  (caught by replay);
+* **must ACCEPT** -- honest single-file, multi-file-via-helper, definition
+  reproduction, and a genuine disproof;
+* **known vulnerability (xfail, strict)** -- a kernel-invalid constant injected
+  into a *helper* module. safe_verify kernel-replays only the entry module and
+  *trusts* imported helper oleans, so such a constant is accepted, letting the
+  agent prove ``False`` (hence anything) or "disprove" a true target. These
+  ``xfail(strict=True)`` cases document the hole and will fail loudly (XPASS) the
+  moment it is closed -- the signal to delete the marker.
+
+Memory: these deliberately import only ``Init`` (+ ``Lean`` where a metaprogram
+needs it), not Mathlib, so safe_verify's footprint stays well under a modest
+Docker memory limit. Docker is part of the test environment, so -- like the
+sibling suite -- these always run; the first run builds the image, later runs hit
+the layer cache.
+"""
+
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+
+import pytest
+
+from inspect_ai.model import ModelName
+from inspect_ai.scorer import CORRECT, Target
+from inspect_ai.solver import TaskState
+from inspect_ai.util._sandbox.context import (
+    cleanup_sandbox_environments_sample,
+    init_sandbox_environments_sample,
+)
+from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
+
+import apn.checker as checker_mod
+import apn.scorer as scorer_mod
+from apn.checker import SandboxSafeVerify
+from apn.layout import SUBMISSION_DIR
+from apn.scorer import proof_scorer
+from apn.task import get_compose_file
+
+# --------------------------------------------------------------------------- #
+# Building blocks for the submission trees.                                    #
+# --------------------------------------------------------------------------- #
+# Add `fakeFalse : False := True.intro` to the environment WITHOUT a kernel
+# check (`debug.skipKernelTC` routes addDecl through addDeclWithoutChecking).
+# The Declaration is built by hand so the *elaborator* never sees the type/value
+# mismatch either. The result carries no axioms, so the transitive axiom guard
+# does not catch it; only a kernel *replay* would -- which safe_verify does for
+# the entry module but not for imported helpers. From any `False` you derive any
+# false proposition via `.elim`.
+INJECT = (
+    "import Lean\n"
+    "open Lean Elab Command\n"
+    "set_option debug.skipKernelTC true in\n"
+    "run_cmd do\n"
+    "  let decl : Declaration := .thmDecl {\n"
+    "    name := `fakeFalse, levelParams := [],\n"
+    "    type := .const ``False [], value := .const ``True.intro [], all := [`fakeFalse] }\n"
+    "  liftCoreM (addDecl decl)\n"
+)
+IMPORT_AUX = "import Submission.Helpers.Aux\n"
+
+
+@dataclass(frozen=True)
+class Case:
+    label: str
+    target: str
+    files: dict[str, str]
+    secure_accept: bool
+    # True for confirmed-but-unfixed holes: the secure assertion is expected to
+    # fail today (xfail, strict) and will XPASS -> fail once the fix lands.
+    vuln: bool = False
+
+
+CASES: list[Case] = [
+    # ----------------------------- must REJECT ----------------------------- #
+    Case(
+        "entry_injection_caught_by_replay",
+        "theorem tgt : False := by sorry\n",
+        {"Spec.lean": INJECT + "\ntheorem tgt : False := fakeFalse\n"},
+        secure_accept=False,
+    ),
+    Case(
+        "sorry_in_entry",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {"Spec.lean": "theorem tgt : 2 + 2 = 4 := by sorry\n"},
+        secure_accept=False,
+    ),
+    Case(
+        "sorry_in_helper",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {
+            "Helpers/Aux.lean": "theorem aux : 2 + 2 = 4 := by sorry\n",
+            "Spec.lean": IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n",
+        },
+        secure_accept=False,
+    ),
+    Case(
+        "custom_axiom_in_helper",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {
+            "Helpers/Aux.lean": "axiom bad : 2 + 2 = 4\ntheorem aux : 2 + 2 = 4 := bad\n",
+            "Spec.lean": IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n",
+        },
+        secure_accept=False,
+    ),
+    Case(
+        "native_decide_forbidden_axiom",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {"Spec.lean": "theorem tgt : 2 + 2 = 4 := by native_decide\n"},
+        secure_accept=False,
+    ),
+    Case(
+        "weakened_statement",
+        "theorem tgt : ∀ n : Nat, n + 0 = n := by sorry\n",
+        {"Spec.lean": "theorem tgt : True := trivial\n"},
+        secure_accept=False,
+    ),
+    Case(
+        "missing_target_theorem",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {"Spec.lean": "theorem other : True := trivial\n"},
+        secure_accept=False,
+    ),
+    Case(
+        "unsafe_constant_in_entry",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {"Spec.lean": "unsafe def loop : Nat := loop\ntheorem tgt : 2 + 2 = 4 := by decide\n"},
+        secure_accept=False,
+    ),
+    Case(
+        "import_superset_violation",
+        "import Lean\ntheorem tgt : True := by sorry\n",
+        {"Spec.lean": "theorem tgt : True := trivial\n"},
+        secure_accept=False,
+    ),
+    # ----------------------------- must ACCEPT ----------------------------- #
+    Case(
+        "honest_single_file",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {"Spec.lean": "theorem tgt : 2 + 2 = 4 := by decide\n"},
+        secure_accept=True,
+    ),
+    Case(
+        "honest_multi_file_helper",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {
+            "Helpers/Aux.lean": "theorem aux : 2 + 2 = 4 := by decide\n",
+            "Spec.lean": IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n",
+        },
+        secure_accept=True,
+    ),
+    Case(
+        "honest_def_reproduction",
+        "def foo : Nat := 7\ntheorem tgt : foo = 7 := by sorry\n",
+        {"Spec.lean": "def foo : Nat := 7\ntheorem tgt : foo = 7 := by decide\n"},
+        secure_accept=True,
+    ),
+    Case(
+        "honest_disproof",
+        "theorem tgt : 2 + 2 = 5 := by sorry\n",
+        {"Spec.lean": "theorem tgt.disproof : 2 + 2 ≠ 5 := by decide\n"},
+        secure_accept=True,
+    ),
+    # ------------- known vulnerability: trusted imported helper ------------- #
+    Case(
+        "vuln_unchecked_helper_proves_false",
+        "theorem tgt : False := by sorry\n",
+        {
+            "Helpers/Aux.lean": INJECT,
+            "Spec.lean": IMPORT_AUX + "theorem tgt : False := fakeFalse\n",
+        },
+        secure_accept=False,
+        vuln=True,
+    ),
+    Case(
+        "vuln_unchecked_helper_proves_false_arith",
+        "theorem tgt : 2 + 2 = 5 := by sorry\n",
+        {
+            "Helpers/Aux.lean": INJECT,
+            "Spec.lean": IMPORT_AUX + "theorem tgt : 2 + 2 = 5 := fakeFalse.elim\n",
+        },
+        secure_accept=False,
+        vuln=True,
+    ),
+    Case(
+        "vuln_unchecked_helper_disproves_truth",
+        "theorem tgt : 2 + 2 = 4 := by sorry\n",
+        {
+            "Helpers/Aux.lean": INJECT,
+            "Spec.lean": IMPORT_AUX + "theorem tgt.disproof : 2 + 2 ≠ 4 := fun _ => fakeFalse\n",
+        },
+        secure_accept=False,
+        vuln=True,
+    ),
+]
+
+
+def _params() -> list:
+    out = []
+    for c in CASES:
+        marks = (
+            pytest.mark.xfail(
+                strict=True,
+                reason="trusted-helper hole: safe_verify replays only the entry "
+                "module and trusts imported helper oleans (see module docstring). "
+                "Delete this marker once the fix lands.",
+            )
+            if c.vuln
+            else ()
+        )
+        out.append(pytest.param(c, id=c.label, marks=marks))
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Harness: write the agent's tree into the live agent sandbox, run the real    #
+# scorer (which verifies in the scorer sandbox).                               #
+# --------------------------------------------------------------------------- #
+@asynccontextmanager
+async def _sandboxes():
+    """Bring up the production compose; yield ``(agent_env, scorer_env)``.
+
+    Same lifecycle as ``test_multifile_proof._scorer_env`` but exposes both the
+    default (agent) sandbox -- where the submission tree is staged and tarred --
+    and the scorer sandbox where verification runs. Per-test bring-up isolates an
+    OOM/crash to a single case.
+    """
+    compose = str(get_compose_file(literature=False))
+    task_name = "pytest_lean_vuln_e2e"
+    await DockerSandboxEnvironment.task_init(task_name, compose)
+    try:
+        envs = await init_sandbox_environments_sample(
+            sandboxenv_type=DockerSandboxEnvironment,
+            task_name=task_name,
+            config=compose,
+            files={},
+            setup=None,
+            metadata={},
+        )
+        try:
+            yield envs["default"], envs["scorer"]
+        finally:
+            await cleanup_sandbox_environments_sample(
+                type="docker",
+                task_name=task_name,
+                config=compose,
+                environments=envs,
+                interrupted=False,
+            )
+    finally:
+        await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
+
+
+async def _write_tree(env, files: dict[str, str]) -> None:
+    """Stage ``files`` (paths relative to ``Submission/``) in the agent sandbox."""
+    await env.exec(["rm", "-rf", SUBMISSION_DIR])
+    await env.exec(["mkdir", "-p", SUBMISSION_DIR])
+    for rel, content in files.items():
+        await env.write_file(f"{SUBMISSION_DIR}/{rel}", content)
+
+
+@pytest.mark.parametrize("case", _params())
+async def test_scorer_verdict(case: Case, monkeypatch: pytest.MonkeyPatch) -> None:
+    async with _sandboxes() as (agent_env, scorer_env):
+        await _write_tree(agent_env, case.files)
+        # The real scorer reads the tree from the agent (default) sandbox and
+        # hands the tar to the checker, which builds/verifies in the scorer
+        # sandbox. Point each module's `sandbox` at the matching live env.
+        monkeypatch.setattr(scorer_mod, "sandbox", lambda *a, **k: agent_env)
+        monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: scorer_env)
+
+        state = TaskState(
+            model=ModelName("mockllm/model"),
+            sample_id=case.label,
+            epoch=1,
+            input=case.target,
+            messages=[],
+            metadata={"sketch": case.target},
+        )
+        score = await proof_scorer(SandboxSafeVerify(sandbox_name="scorer"))(
+            state, Target("")
+        )
+
+    accepted = score.value == CORRECT
+    detail = (score.explanation or "")[-800:]
+    assert accepted == case.secure_accept, (
+        f"{case.label}: scorer {'ACCEPTED' if accepted else 'REJECTED'} but secure "
+        f"behaviour is to {'ACCEPT' if case.secure_accept else 'REJECT'}.\n"
+        f"stage={(score.metadata or {}).get('stage')}\n{detail}"
+    )
