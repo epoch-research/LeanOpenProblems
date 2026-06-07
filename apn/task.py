@@ -26,7 +26,7 @@ from pathlib import Path
 from inspect_ai import Task, task
 
 from apn import __version__
-from apn.agent import AgentType, lean_prover
+from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
 from apn.dataset import load_subset, oeis_dataset
 from apn.scorer import proof_scorer

@@ -12,7 +12,7 @@ from __future__ import annotations
 from inspect_ai.agent import AgentState
 from inspect_ai.scorer import INCORRECT, Score
 
-from apn.agent import (
+from apn.solver import (
     INCORRECT_MESSAGE,
     RESOURCE_INCORRECT_MESSAGE,
     gated_incorrect_message,
