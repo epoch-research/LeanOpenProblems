@@ -1,6 +1,13 @@
 # proved38 -- the 38 OEIS conjectures with published AlphaProof Nexus proof
 # outputs. One conjecture theorem name per line; blank lines and #-comments are
 # ignored. Referenced by name from configs/example-eval-set.yml.
+#
+# Why 38 and not 44: the paper claims "proved 44/492 OEIS conjectures", but the
+# released results repo (reference_sources/alphaproof-nexus-results/APNOutputs/
+# OEIS) ships exactly 38 Lean proof files, each proving a single conjecture
+# (`target_theorem_0`)
+# The 6-conjecture gap (44 - 38) appears to be a paper miscount (or 6 proofs that
+# were simply never published)
 A224515_conjecture_existence
 A309132_conjecture_carmichael
 A382590_conjecture_kth_prime_factor_is_eventually_periodic
