@@ -281,6 +281,22 @@ def host_to_container(path: Path) -> str:
     return f"{CONTAINER_REPO}/{path.resolve().relative_to(REPO)}"
 
 
+def parse_extractor_output(stdout: str) -> list[dict]:
+    """Parse the extractor's JSON array from its stdout.
+
+    ``extract_ranges`` prints one compact JSON line (after any ``lake`` build
+    noise); take the last line that starts with ``[``. Pure -- shared by the
+    subprocess caller below (the generation script) and the Inspect-sandbox
+    caller (``tests/test_oeis_isolation.py``), which differ only in how they run
+    the exe in a container.
+    """
+    for line in reversed(stdout.splitlines()):
+        line = line.strip()
+        if line.startswith("["):
+            return json.loads(line)
+    raise RuntimeError(f"no JSON in extractor stdout:\n{stdout[-2000:]}")
+
+
 def run_extractor(files: list[Path], container: str, exe: str) -> list[dict]:
     """Run ``extract_ranges`` over ``files`` (under ``lake env``) and parse JSON."""
     cpaths = [host_to_container(p) for p in files]
@@ -290,20 +306,17 @@ def run_extractor(files: list[Path], container: str, exe: str) -> list[dict]:
         raise RuntimeError(
             f"extractor failed (rc={proc.returncode}).\nSTDERR tail:\n{proc.stderr[-3000:]}"
         )
-    # The exe prints one compact JSON line to stdout; take the last '['-line.
-    for line in reversed(proc.stdout.splitlines()):
-        line = line.strip()
-        if line.startswith("["):
-            return json.loads(line)
-    raise RuntimeError(f"no JSON in extractor stdout:\n{proc.stdout[-2000:]}")
+    return parse_extractor_output(proc.stdout)
 
 
 # Compiles each isolated file with the scorer's exact command (``lake env lean
 # -o``) in parallel; echoes the stem of any that fail. The script is fed on
 # stdin and the file list as positional args, so no host scratch files are
 # needed. This is the authoritative correctness gate -- the same elaboration the
-# scorer runs on every target at eval time.
-_COMPILE_SCRIPT = r"""
+# scorer runs on every target at eval time. Exported (not ``_``-private) because
+# the test drives it through the Inspect sandbox; the subprocess caller below
+# (the generation script) and the test share this one script verbatim.
+COMPILE_SCRIPT = r"""
 set -u
 PROJ=/workspace/leanproject
 WORK="$PROJ/_apn_gen"
@@ -329,7 +342,7 @@ def compile_all(files: list[Path], container: str) -> list[str]:
     """Compile every isolated file in the container; return the failing stems."""
     cpaths = [host_to_container(p) for p in files]
     cmd = ["docker", "exec", "-i", container, "bash", "-s", "--", *cpaths]
-    proc = subprocess.run(cmd, input=_COMPILE_SCRIPT, capture_output=True, text=True)
+    proc = subprocess.run(cmd, input=COMPILE_SCRIPT, capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError(f"compile driver failed (rc={proc.returncode}):\n{proc.stderr[-3000:]}")
     return sorted(s for s in proc.stdout.split() if s)
