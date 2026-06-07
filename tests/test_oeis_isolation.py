@@ -39,7 +39,6 @@ Dockerfile; subsequent runs reuse the docker layer cache.
 
 from __future__ import annotations
 
-import asyncio
 import io
 import tarfile
 import tempfile
@@ -48,6 +47,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 from inspect_ai.util._sandbox.context import (
     cleanup_sandbox_environments_sample,
     init_sandbox_environments_sample,
@@ -68,7 +68,6 @@ from scripts.oeis_isolation import (
     COMPILE_SCRIPT,
     ISOLATED_DIR,
     MAPPING_FILE,
-    REF_DIR,
     matches_name,
     parse_extractor_output,
     parse_mapping,
@@ -76,6 +75,12 @@ from scripts.oeis_isolation import (
     theorem_command_decls,
     theorem_decls,
 )
+
+# The paper's published challenge files (the oracle cross-checks our isolated
+# target's elaborated type against each one's ``target_theorem_0``). Vendored and
+# committed under tests/data (NOT read from the gitignored ``reference_sources/``
+# clone, which is absent in CI) -- see tests/data/gold_proofs/README.md.
+REF_DIR = Path(__file__).resolve().parent / "data" / "gold_proofs"
 
 
 # --------------------------------------------------------------------------- #
@@ -200,37 +205,40 @@ def mapping() -> list[tuple[str, list[str]]]:
     return entries
 
 
-@pytest.fixture(scope="session")
-def iso_data(mapping) -> IsoData:
+@pytest_asyncio.fixture(loop_scope="module", scope="module")
+async def iso_data(mapping) -> IsoData:
     """Bring the sandbox up once and run every Lean step inside it: extract the
     Auto sources, the Isolated files, and the reference challenge files, then
-    compile every Isolated file. The whole pipeline runs under a single
-    ``asyncio.run`` so no live sandbox handle crosses an async boundary; the
-    (sync) gate tests below just assert against this precomputed data."""
+    compile every Isolated file.
 
-    async def gather() -> IsoData:
-        async with _generate_env() as env:
-            source_files = sorted({files[0] for _, files in mapping})
-            auto = await _extract(env, [AUTO_DIR / f for f in source_files])
-            iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
-            iso = await _extract(env, iso_files)
-            ref_files = sorted(REF_DIR.glob("*.lean"))
-            ref = await _extract(env, ref_files) if ref_files else []
-            failures = await _compile_all(env, iso_files)
-        return IsoData(
-            auto_ranges={fr["file"].rsplit("/", 1)[-1]: fr for fr in auto},
-            iso_ranges={fr["file"].rsplit("/", 1)[-1][: -len(".lean")]: fr for fr in iso},
-            ref_ranges=ref,
-            compile_failures=failures,
-        )
-
-    return asyncio.run(gather())
+    An async, module-scoped fixture (with the gate tests on the same module-scoped
+    event loop) -- the only safe way to drive Inspect's sandbox lifecycle from
+    pytest. Driving it from a plain fixture via ``asyncio.run`` would spin up a
+    second event loop that Inspect's loop-bound globals deadlock against; sharing
+    pytest-asyncio's own loop avoids that. The gates below just assert against the
+    returned data, so they need no further sandbox access."""
+    async with _generate_env() as env:
+        source_files = sorted({files[0] for _, files in mapping})
+        auto = await _extract(env, [AUTO_DIR / f for f in source_files])
+        iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
+        iso = await _extract(env, iso_files)
+        ref_files = sorted(REF_DIR.glob("*.lean"))
+        ref = await _extract(env, ref_files) if ref_files else []
+        failures = await _compile_all(env, iso_files)
+    return IsoData(
+        auto_ranges={fr["file"].rsplit("/", 1)[-1]: fr for fr in auto},
+        iso_ranges={fr["file"].rsplit("/", 1)[-1][: -len(".lean")]: fr for fr in iso},
+        ref_ranges=ref,
+        compile_failures=failures,
+    )
 
 
 # --------------------------------------------------------------------------- #
-# Gates.                                                                       #
+# Gates. Async + module-scoped loop so they share the one sandbox bring-up      #
+# above; the bodies are pure assertions over the precomputed ``iso_data``.      #
 # --------------------------------------------------------------------------- #
-def test_isolated_files_are_structurally_correct(mapping, iso_data) -> None:
+@pytest.mark.asyncio(loop_scope="module")
+async def test_isolated_files_are_structurally_correct(mapping, iso_data) -> None:
     """Each isolated file carries exactly the target + its dependency lemmas (the
     cut's prediction), with the target's statement preserved verbatim."""
     failures: list[str] = []
@@ -254,7 +262,8 @@ def test_isolated_files_are_structurally_correct(mapping, iso_data) -> None:
     assert not failures, "structural validation failed:\n  " + "\n  ".join(failures)
 
 
-def test_isolated_files_compile(iso_data) -> None:
+@pytest.mark.asyncio(loop_scope="module")
+async def test_isolated_files_compile(iso_data) -> None:
     """The authoritative gate: every isolated file compiles with the scorer's
     exact ``lake env lean -o`` command."""
     assert not iso_data.compile_failures, (
@@ -263,7 +272,8 @@ def test_isolated_files_compile(iso_data) -> None:
     )
 
 
-def test_oracle_matches_published_challenge_files(iso_data) -> None:
+@pytest.mark.asyncio(loop_scope="module")
+async def test_oracle_matches_published_challenge_files(iso_data) -> None:
     """For each solved problem the paper published, our isolated target's
     elaborated type matches its ``target_theorem_0`` (the paper renames the
     conjecture). Confirms isolation reproduces the published challenge statement."""

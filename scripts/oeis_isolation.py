@@ -40,7 +40,6 @@ OEIS_DIR = REPO / "apn" / "data" / "oeis"
 AUTO_DIR = OEIS_DIR / "Auto"
 ISOLATED_DIR = OEIS_DIR / "Isolated"
 MAPPING_FILE = OEIS_DIR / "THEOREM_MAPPING.txt"
-REF_DIR = REPO / "reference_sources" / "alphaproof-nexus-results" / "APNOutputs" / "OEIS"
 
 # Paths/identifiers inside the Lean container.
 CONTAINER_REPO = "/repo"
