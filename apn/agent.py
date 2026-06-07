@@ -94,6 +94,26 @@ async def gated_incorrect_message(state: AgentState, scores: list[Score]) -> str
     return INCORRECT_MESSAGE
 
 
+def _warn_if_ignored_formalizations(state: TaskState) -> None:
+    """Warn when this sample's conjecture had more than one upstream formalization.
+
+    The dataset uses the first file and records the rest in
+    ``metadata['unused_formalization_files']``. Warning here (run time, per
+    evaluated sample) rather than at dataset build keeps it scoped to the
+    samples actually run -- not those Inspect drops via ``--sample-id``/``--limit``.
+    """
+    unused = state.metadata.get("unused_formalization_files")
+    if unused:
+        logger.warning(
+            "Conjecture %s had multiple upstream formalizations; using the "
+            "first, ignoring %s. Redundant autoformalization candidates left in "
+            "upstream for unknown reason; rare (3/492, only 1 a substantive "
+            "difference).",
+            state.sample_id,
+            ", ".join(unused),
+        )
+
+
 @tool
 def submit() -> Tool:
     """A no-argument submit tool.
@@ -200,19 +220,7 @@ def lean_prover(
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        # A few conjectures map to more than one upstream formalization file; the
-        # dataset uses the first and records the rest here. Warn at run time (not
-        # at dataset build) so this only fires for samples actually evaluated.
-        unused = state.metadata.get("unused_formalization_files")
-        if unused:
-            logger.warning(
-                "Conjecture %s had multiple upstream formalizations; using the "
-                "first, ignoring %s. Redundant autoformalization candidates left "
-                "in upstream for unknown reason; rare (3/492, only 1 a substantive difference).",
-                state.sample_id,
-                ", ".join(unused),
-            )
-
+        _warn_if_ignored_formalizations(state)
         # metadata["sketch"] is the single source of the conjecture spec (set by
         # the dataset; same text the scorer verifies against). The dataset has
         # already stripped the copyright/license banner, so this is written to
