@@ -34,11 +34,17 @@ from inspect_ai.agent import (
     AgentAttempts,
     AgentState,
     AgentSubmit,
+    as_solver,
     deepagent,
     react,
-    run,
 )
-from inspect_ai.model import CompactionStrategy, CompactionSummary, Model, get_model
+from inspect_ai.model import (
+    ChatMessageUser,
+    CompactionStrategy,
+    CompactionSummary,
+    Model,
+    get_model,
+)
 from inspect_ai.scorer import Score
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, tool
@@ -136,7 +142,9 @@ def build_agent(
     elif agent_type == "react":
         constructor = react
     else:
-        raise ValueError(f"Unknown agent_type {agent_type!r}; expected 'deep' or 'react'.")
+        raise ValueError(
+            f"Unknown agent_type {agent_type!r}; expected 'deep' or 'react'."
+        )
     # deepagent layers extras (memory, subagents, todo_write) on top of react;
     # we leave all of them at their defaults so the two loops differ only in the
     # loop itself.
@@ -167,7 +175,7 @@ def lean_prover(
     ``state.metadata["submission_contents"]`` (see :mod:`apn.scorer`). The
     capture lives in the scorer, not here, because the scorer always runs after
     the agent -- including when a token/time limit terminates it -- whereas code
-    after this solver's ``run`` is skipped on a limit.
+    after the agent runs is skipped on a limit.
 
     Args:
         model: Optional model override for the agent.
@@ -235,13 +243,30 @@ def lean_prover(
             compaction=CompactionSummary(threshold=300_000),
             model=get_model(model) if model is not None else None,
         )
-        # Run the agent. The agent authors its proof under Submission/; the
-        # scorer reads that subtree back -- both to verify it and to record it as
-        # a display tree on the sample metadata (see apn.scorer). Nothing to
-        # collect here: the scorer always runs after the agent, including when a
-        # token/time limit terminates it (the common exit for open problems),
-        # whereas any code placed after this run() would be skipped on a limit.
-        await run(agent, user_prompt(ENTRY_PATH, state.token_limit, literature))
+        # Seed the conversation with the task prompt, then run the agent *as a
+        # solver*. We replace state.messages (rather than append) so the agent
+        # sees exactly the prompt -- the sample input is the raw spec text, which
+        # is already written to the sandbox file above and would only be
+        # duplicative in context. as_solver runs the agent on state.messages and
+        # copies the resulting conversation + output back into TaskState in a
+        # finally, so the full transcript reaches the sample log (and the
+        # viewer's Messages tab) even when a token/time limit terminates the
+        # agent -- the common exit for open problems. (Using run() here would run
+        # the agent on an isolated state that never propagates back; on a limit
+        # it re-raises and the conversation is lost entirely.)
+        #
+        # The agent authors its proof under Submission/; the scorer reads that
+        # subtree back to verify it and to record it as a display tree on the
+        # sample metadata (see apn.scorer). The scorer always runs after the
+        # agent, including on a limit, whereas any code after the agent call
+        # would be skipped on a limit.
+        state.messages = [
+            ChatMessageUser(
+                content=user_prompt(ENTRY_PATH, state.token_limit, literature),
+                source="input",
+            )
+        ]
+        state = await as_solver(agent)(state, generate)
 
         state.completed = True
         return state
