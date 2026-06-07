@@ -1,6 +1,6 @@
 # type: ignore
 """
-Bump version in both pyproject.toml and apn/__init__.py.
+Bump version in pyproject.toml, apn/__init__.py, and uv.lock.
 Usage: python scripts/bump_version.py [rc|release|major|minor|patch]
 
 The CI image tags (LeanOpenProblems_*_<version>) are keyed on apn.__version__,
@@ -17,6 +17,7 @@ Use 'release' to promote an RC to a final version:
 
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 # PEP 440 release candidate format: X.Y.ZrcN
@@ -96,6 +97,51 @@ def update_file(file_path: Path, prefix: str, old_version: str, new_version: str
     file_path.write_text(new_content)
 
 
+def update_uv_lock(lock_path: Path, old_version: str, new_version: str) -> None:
+    """Bump the project's own version in ``uv.lock``.
+
+    uv has no command to rewrite just the version: ``uv lock`` always re-runs
+    resolution (even ``--offline`` only resolves from cache), so we edit the
+    lockfile directly. Only the ``apn`` package entry (``source = { editable =
+    "." }``) carries the project version and nothing depends on it, so that one
+    line is the entire change.
+
+    ``tomllib`` parses the file to confirm there's exactly one ``apn`` package at
+    ``old_version`` -- a structural check, not a blind pattern match. The write
+    itself is a minimal text edit (no stdlib TOML *writer* exists, and a
+    third-party one would reformat the whole lockfile): a regex anchored on
+    ``name = "apn"`` immediately followed by its ``version`` line, uv's stable
+    layout, so the diff is exactly one line and no other package is touched.
+    """
+    content = lock_path.read_text()
+
+    apn_packages = [
+        pkg for pkg in tomllib.loads(content).get("package", []) if pkg.get("name") == "apn"
+    ]
+    if len(apn_packages) != 1:
+        raise ValueError(
+            f"Expected exactly one 'apn' package in {lock_path}, found {len(apn_packages)}"
+        )
+    found_version = apn_packages[0].get("version")
+    if found_version != old_version:
+        raise ValueError(
+            f"uv.lock has apn version {found_version!r}, expected {old_version!r}; "
+            "is it in sync with pyproject.toml?"
+        )
+
+    pattern = re.compile(
+        r'(?m)^(name = "apn"\nversion = ")' + re.escape(old_version) + r'(")'
+    )
+    new_content, n = pattern.subn(rf"\g<1>{new_version}\g<2>", content)
+    if n != 1:
+        raise ValueError(
+            f"Failed to update apn version in {lock_path}: "
+            f"expected exactly one match, found {n}"
+        )
+
+    lock_path.write_text(new_content)
+
+
 def main():
     if len(sys.argv) > 2:
         print(
@@ -116,6 +162,7 @@ def main():
     repo_root = Path(__file__).parent.parent
     pyproject_path = repo_root / "pyproject.toml"
     init_py_path = repo_root / "apn" / "__init__.py"
+    uv_lock_path = repo_root / "uv.lock"
 
     # Read current version from pyproject.toml
     pyproject_content = pyproject_path.read_text()
@@ -140,6 +187,9 @@ def main():
 
     update_file(init_py_path, "__version__", old_version_str, new_version_str)
     print(f"Updated {init_py_path}")
+
+    update_uv_lock(uv_lock_path, old_version_str, new_version_str)
+    print(f"Updated {uv_lock_path}")
 
 
 if __name__ == "__main__":
