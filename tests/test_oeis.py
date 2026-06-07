@@ -105,7 +105,6 @@ def test_oeis_dataset_sample_shape() -> None:
     assert sample.id == "oeis_268597_conjecture_0"
     assert sample.metadata is not None
     assert sample.metadata["oeis_id"] == "A268597"
-    assert sample.metadata["target_declarations"] == ["oeis_268597_conjecture_0"]
     # The isolated spec is the sketch and the input; it imports the FC library.
     sketch = sample.metadata["sketch"]
     assert "import FormalConjectures.Util.ProblemImports" in sketch

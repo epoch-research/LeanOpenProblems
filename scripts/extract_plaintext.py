@@ -386,9 +386,6 @@ def _write_info(sample: EvalSample, out) -> None:
         "model_usage": sample.model_dump(include={"model_usage"}, mode="json")["model_usage"],
         # apn/OEIS-specific provenance (see apn.dataset.oeis_dataset).
         "oeis_id": metadata.get("oeis_id"),
-        "source_file": metadata.get("source_file"),
-        "alt_files": metadata.get("alt_files"),
-        "target_declarations": metadata.get("target_declarations"),
     }
     json.dump(info, out, indent=2, ensure_ascii=False, default=str)
     out.write("\n")
