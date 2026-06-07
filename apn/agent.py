@@ -27,6 +27,7 @@ cheaper proof instead of guessing blindly.
 
 from __future__ import annotations
 
+import logging
 from typing import Callable, Literal, Sequence
 
 from inspect_ai.agent import (
@@ -53,6 +54,8 @@ from inspect_ai.util import sandbox
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
 from apn.tools import bash
+
+logger = logging.getLogger(__name__)
 
 # Played back to the model when a gated submission fails verification. Note it
 # deliberately reveals nothing about *why* (no SafeVerify output), so the model
@@ -197,6 +200,19 @@ def lean_prover(
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
+        # A few conjectures map to more than one upstream formalization file; the
+        # dataset uses the first and records the rest here. Warn at run time (not
+        # at dataset build) so this only fires for samples actually evaluated.
+        unused = state.metadata.get("unused_formalization_files")
+        if unused:
+            logger.warning(
+                "Conjecture %s had multiple upstream formalizations; using the "
+                "first, ignoring %s. Redundant autoformalization candidates left "
+                "in upstream for unknown reason; rare (3/492, only 1 a substantive difference).",
+                state.sample_id,
+                ", ".join(unused),
+            )
+
         # metadata["sketch"] is the single source of the conjecture spec (set by
         # the dataset; same text the scorer verifies against). The dataset has
         # already stripped the copyright/license banner, so this is written to

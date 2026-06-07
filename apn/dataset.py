@@ -159,17 +159,18 @@ def oeis_dataset(
         # scorer compiles it as the verification target (a leading comment never
         # reaches the olean).
         text = strip_license_header((isolated / f"{name}.lean").read_text())
-        samples.append(
-            Sample(
-                input=text,
-                id=name,
-                metadata={
-                    "sketch": text,
-                    # OEIS id derived from the upstream Auto filename's leading
-                    # digits (files[0]); the conjecture name doesn't reliably
-                    # carry an A-number. The sample's own identity is ``id``.
-                    "oeis_id": oeis_id_from_filename(files[0]),
-                },
-            )
-        )
+        metadata = {
+            "sketch": text,
+            # OEIS id derived from the upstream Auto filename's leading digits
+            # (files[0]); the conjecture name doesn't reliably carry an A-number.
+            # The sample's own identity is ``id``.
+            "oeis_id": oeis_id_from_filename(files[0]),
+        }
+        # A few conjectures (3/492, only 1 a substantive difference) map to more
+        # than one upstream file; we use files[0] and record the rest so the
+        # solver can warn at run time -- warning at build time would fire even for
+        # samples Inspect later drops via --sample-id/--limit.
+        if len(files) > 1:
+            metadata["unused_formalization_files"] = files[1:]
+        samples.append(Sample(input=text, id=name, metadata=metadata))
     return MemoryDataset(samples, name="oeis")
