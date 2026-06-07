@@ -49,6 +49,13 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
     the literature tools are enabled), and the line naming the file to settle --
     is assembled here into this single user message.
 
+    Args:
+        path: Absolute path of the entry module ``Submission/Spec.lean`` inside
+            the agent's sandbox (``apn.layout.ENTRY_PATH``), the file holding the
+            conjecture. The agent edits it by this absolute path with
+            ``text_editor`` and may add sibling helper modules under
+            ``Submission/`` that it ``import``s.
+
     Disclosing the (very large) token budget counters two observed failure
     modes: models hallucinating a short deadline ("five minutes", "an hour")
     and models pacing themselves for a normal-length session. When no token
@@ -98,6 +105,20 @@ The problem is a Lean file. It contains the sequence definitions and a single
 conjecture theorem, with its proof left as `sorry`. The conjecture is genuinely
 open: your job is to determine whether it is true or false and to back that
 verdict with a complete Lean proof. Edit the file with the text editor.
+
+You work inside the Lake project at `/workspace/leanproject`, in its registered
+`Submission/` source root. The conjecture lives in the entry module
+`Submission/Spec.lean` (Lean module `Submission.Spec`), at the path above. You
+do not have to keep the whole proof in one file: you may add your own helper
+modules under `Submission/` -- for example `Submission/Helpers/Parity.lean`
+(module `Submission.Helpers.Parity`) -- and `import Submission.Helpers.Parity`
+from `Spec.lean` (or from other helpers). Structure a long proof across several
+modules if that helps. Build and type-check your work in-loop with
+`lake build Submission.Spec` from the `bash` tool, which compiles the entry
+module and all the helper modules it imports, in dependency order. Only files
+under `Submission/` are part of your submission; only the entry module's
+declarations are checked against the conjecture, but a `sorry` or custom axiom
+anywhere in the imported tree still rejects the whole submission.
 
 You have a `bash` tool giving you a shell in the workspace. From there:
 
@@ -149,16 +170,20 @@ Rules:
   or, to disprove `foo`, delete its `theorem foo ... := sorry` and add a
   `foo.disproof` as above. Any other alteration of a statement or definition is
   rejected.
-- All required imports are already present (`FormalConjectures.Util.ProblemImports`
-  transitively pulls in all of Mathlib and the other utilities); do NOT add or remove `import` statements.
+- Keep the `FormalConjectures.Util.ProblemImports` import and the conjecture
+  itself in `Spec.lean`. That one import transitively pulls in all of Mathlib
+  and the other utilities, so you need no other library imports. You MAY add
+  `import Submission.…` lines for your own helper modules; do not otherwise add
+  or remove library `import` statements.
 - Your submission may depend only on Lean's three standard axioms (`propext`,
   `Classical.choice`, `Quot.sound`). Do not introduce new `axiom`s, and do not use tactics that add other axioms. 
 - Leave no `sorry` in the declaration you are submitting (a proof of `foo`, or your `foo.disproof`).
 
 Think like a mathematician: weigh the evidence for and against each conjecture,
 focus on the key insight and proof structure, and prefer clever arguments over
-brute-force casework. Submit once the file compiles and the conjecture is settled
-(proved, or a complete `foo.disproof`) with no `sorry` in your submission.
+brute-force casework. Submit once `lake build Submission.Spec` succeeds and the
+conjecture is settled (proved, or a complete `foo.disproof`) with no `sorry`
+anywhere in your `Submission/` tree.
 
 Facts about this task:
 

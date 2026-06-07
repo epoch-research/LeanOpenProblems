@@ -3,10 +3,12 @@
 This is the apn counterpart of a generic Inspect log dumper, adapted to how
 this repo runs. Two things differ from a vanilla extractor:
 
-* **The proof is one file, not a workspace tree.** The agent edits a single Lean
-  file in the sandbox (``apn.agent.PROOF_PATH``); the scorer reads it back and
-  stores the final text in ``score.answer``. So instead of reconstructing a
-  directory we just write that submission out as ``submission.lean``.
+* **The proof is a workspace subtree.** The agent authors its proof under
+  ``Submission/`` (entry module ``Spec.lean`` plus any helper modules); the
+  solver records the final subtree as a nested tree on
+  ``sample.metadata["submission_contents"]`` (see :mod:`apn.filetree`). We
+  materialize it back to disk under ``Submission/`` (the entry module is
+  ``Submission/Spec.lean``).
 
 * **The transcript lives in events, not ``sample.messages``.** ``apn.agent``
   runs the proving agent via ``inspect_ai.agent.run`` in its own ``AgentState``,
@@ -300,16 +302,40 @@ def _write_compactions(messages: list[ChatMessage], out) -> None:
         emit(f"--- Compaction {seq}/{len(summaries)} (after message {idx + 1}) ---", body, "")
 
 
-def _proof_submission(sample: EvalSample) -> str | None:
-    """The agent's final proof text, taken from the proof scorer's answer."""
-    scores = sample.scores or {}
-    proof = scores.get("proof_scorer")
-    if proof and proof.answer:
-        return proof.answer
-    for score in scores.values():
-        if score.answer:
-            return score.answer
-    return None
+def _write_sample_workspace(sample: EvalSample, sample_dir: Path) -> int:
+    """Materialize the agent's final ``Submission/`` subtree under ``sample_dir``.
+
+    The solver sets ``sample.metadata["submission_contents"]`` once per sample
+    to a nested ``FileTreeForLogViewer`` (dirs -> nested dicts, files -> str
+    leaves; see :mod:`apn.filetree`); we walk it back to disk under
+    ``<sample_dir>/Submission/``. Returns the number of files written.
+
+    Mirrors PortBench's ``_write_sample_workspace`` but reads sample *metadata*
+    (not the store, which event-logs every write) and drops the legacy
+    ``format``/``content`` leaf branch -- this repo only ever emits string leaves.
+    """
+    src = (sample.metadata or {}).get("submission_contents")
+    if not isinstance(src, dict) or not src:
+        return 0
+
+    written = 0
+    submission_dir = sample_dir / "Submission"
+
+    def _write_tree(node: dict, parent: Path) -> None:
+        nonlocal written
+        for name, value in sorted(node.items()):
+            path = parent / name
+            if isinstance(value, str):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(value)
+                written += 1
+            elif isinstance(value, dict):
+                _write_tree(value, path)
+            else:
+                raise TypeError(f"Unexpected type {type(value).__name__} for {path}")
+
+    _write_tree(src, submission_dir)
+    return written
 
 
 def _write_scores(sample: EvalSample, out) -> None:
@@ -434,9 +460,12 @@ def _extract_eval_file(
         write("scores.txt", lambda f: _write_scores(sample, f))
         write("scores.json", lambda f: _write_scores_json(sample, f))
 
-        submission = _proof_submission(sample)
-        if submission is not None:
-            write("submission.lean", lambda f: f.write(submission))
+        n_files = _write_sample_workspace(sample, sample_dir)
+        if n_files:
+            print(
+                f"{stem}: wrote {n_files} file(s) -> {sample_dir / 'Submission'}",
+                file=sys.stderr,
+            )
 
 
 def main():

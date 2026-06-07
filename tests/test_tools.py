@@ -6,15 +6,28 @@ import pytest
 from inspect_ai.util import ExecResult
 
 import apn.tools as tools_mod
+from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
 from apn.tools import bash
 
-PROOF_PATH = "/tmp/apn_proof.lean"
+# The solver passes the absolute entry-module path (Submission/Spec.lean).
+PROOF_PATH = ENTRY_PATH
 
 
 def test_user_prompt_references_path() -> None:
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
     assert PROOF_PATH in rendered
+
+
+def test_user_prompt_explains_multi_module_layout() -> None:
+    # The agent must know it can split the proof across Submission/ modules and
+    # build them with `lake build Submission.Spec`.
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    assert "Submission/" in rendered
+    assert "lake build Submission.Spec" in rendered
+    assert "Submission.Spec" in rendered
+    # The relaxed import rule: own helper imports are allowed, library ones not.
+    assert "import Submission" in rendered
 
 
 def test_user_prompt_mentions_lean_and_pypantograph() -> None:

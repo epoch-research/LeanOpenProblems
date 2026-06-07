@@ -45,11 +45,10 @@ from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, 
 from inspect_ai.util import sandbox
 
 from apn.dataset import strip_license_header
+from apn.filetree import build_tree_from_tar, read_submission_tar
+from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
 from apn.tools import bash
-
-# Path of the proof file inside the sample's sandbox.
-PROOF_PATH = "/tmp/apn_proof.lean"
 
 # Played back to the model when a gated submission fails verification. Note it
 # deliberately reveals nothing about *why* (no SafeVerify output), so the model
@@ -162,9 +161,12 @@ def lean_prover(
     """Prove the sample's theorem with an Inspect agent.
 
     Writes the initial Lean file (from ``metadata['sketch']``, else the sample
-    input) into the sandbox and runs the agent. The proof is the edited file in
-    the sandbox; the scorer reads it back from there (see :mod:`apn.scorer`), so
-    the solver keeps no state of its own.
+    input) into the sandbox at the entry module ``Submission/Spec.lean`` and
+    runs the agent. The proof is the agent's ``Submission/`` subtree (entry
+    module plus any helper modules it adds); the scorer reads it back from there
+    (see :mod:`apn.scorer`). After the agent finishes, the solver records the
+    final subtree as a display tree on ``state.metadata["submission_contents"]``
+    (set once, so it does not bloat the per-call event log).
 
     Args:
         model: Optional model override for the agent.
@@ -193,7 +195,7 @@ def lean_prover(
         # sketch as its target, so verification is unaffected (comments don't
         # reach the olean anyway).
         sketch = strip_license_header(state.metadata.get("sketch") or state.input_text)
-        await sandbox().write_file(PROOF_PATH, sketch)
+        await sandbox().write_file(ENTRY_PATH, sketch)
 
         tools = [
             text_editor(),
@@ -230,7 +232,18 @@ def lean_prover(
             compaction=CompactionSummary(threshold=300_000),
             model=get_model(model) if model is not None else None,
         )
-        await run(agent, user_prompt(PROOF_PATH, state.token_limit, literature))
+        await run(agent, user_prompt(ENTRY_PATH, state.token_limit, literature))
+
+        # Record the final Submission/ subtree as a display tree for the Inspect
+        # log viewer -- set ONCE here (not per scorer call) so it doesn't bloat
+        # the event log. Best-effort: a read failure just yields an empty tree
+        # (the scorer ingests and rejects the real submission independently).
+        try:
+            tar = await read_submission_tar(sandbox())
+            state.metadata["submission_contents"] = build_tree_from_tar(tar)
+        except Exception:
+            state.metadata["submission_contents"] = {}
+
         state.completed = True
         return state
 

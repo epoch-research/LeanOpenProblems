@@ -53,6 +53,20 @@ WORKDIR /workspace/leanproject
 RUN lake exe cache get \
     && lake build FormalConjectures.Util.ProblemImports
 
+# Register a `Submission/` source root as its own lean_lib, mirroring the FC
+# `FormalConjectures` lib pattern, so the agent can author its proof across
+# modules: an entry module `Submission.Spec` plus any helper modules it imports,
+# built graph-aware with `lake build Submission.Spec`. The glob picks up every
+# module under `Submission/`; `warn.sorry = false` keeps the placeholder (and
+# the agent's in-progress drafts) from failing the build on a `sorry`. The
+# placeholder entry module only needs to compile -- the agent and the scorer
+# overwrite it. The Submission oleans are NOT pre-built (produced at runtime).
+# This step deliberately follows the heavy Mathlib build so it does not
+# invalidate that layer's cache (it depends on nothing the build produces).
+RUN mkdir -p Submission \
+    && printf 'import FormalConjectures.Util.ProblemImports\n' > Submission/Spec.lean \
+    && printf '\n[[lean_lib]]\nname = "Submission"\nglobs = ["Submission.+"]\n[lean_lib.leanOptions]\nwarn.sorry = false\n' >> lakefile.toml
+
 # --------------------------------------------------------------------------- #
 # base: copy in only what runtime needs.                                       #
 # --------------------------------------------------------------------------- #
@@ -87,6 +101,13 @@ COPY --from=builder /workspace/leanproject/lakefile.toml \
                     /workspace/leanproject/lean-toolchain \
                     /workspace/leanproject/lake-manifest.json ./
 COPY --from=builder /workspace/leanproject/.lake ./.lake
+
+# The Submission/ source root (registered as the `Submission` lean_lib in the
+# lakefile above). Carries the placeholder entry module; the agent authors its
+# proof here and the scorer ingests only this subtree's *.lean contents. Both
+# the agent and scorer images (FROM base) get it, and it is root-writable so the
+# agent can edit/add modules and the scorer can stage submissions into it.
+COPY --from=builder /workspace/leanproject/Submission ./Submission
 
 # The proving-library SOURCE the agent legitimately proves *with* (imported into
 # every problem's scope, like Mathlib). The conjecture problem files and the
