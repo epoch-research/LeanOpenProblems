@@ -60,15 +60,16 @@ def test_strip_license_header_handles_nested_block() -> None:
     assert strip_license_header(nested) == "import X\n"
 
 
-def test_strip_license_header_on_real_dataset_file() -> None:
-    metadata = oeis_dataset(names=["oeis_268597_conjecture_0"])[0].metadata
-    assert metadata is not None
-    sketch = metadata["sketch"]
-    stripped = strip_license_header(sketch)
-    assert "Copyright" in sketch  # the banner is present in the source
-    assert "Copyright" not in stripped
-    assert stripped.startswith("import FormalConjectures.Util.ProblemImports")
-    assert "theorem oeis_268597_conjecture_0" in stripped
+def test_dataset_sketch_has_license_banner_stripped() -> None:
+    # The dataset strips the copyright banner at the source, so the sketch the
+    # agent writes and the scorer compiles -- and the log UI shows -- starts at
+    # the first real line.
+    sample = oeis_dataset(names=["oeis_268597_conjecture_0"])[0]
+    assert sample.metadata is not None
+    sketch = sample.metadata["sketch"]
+    assert "Copyright" not in sketch
+    assert sketch.startswith("import FormalConjectures.Util.ProblemImports")
+    assert "theorem oeis_268597_conjecture_0" in sketch
 
 
 def test_oeis_id_from_filename() -> None:

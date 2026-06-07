@@ -50,7 +50,6 @@ from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, tool
 from inspect_ai.util import sandbox
 
-from apn.dataset import strip_license_header
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
 from apn.tools import bash
@@ -199,13 +198,10 @@ def lean_prover(
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         # metadata["sketch"] is the single source of the conjecture spec (set by
-        # the dataset; same text the scorer verifies against). Strip the
-        # copyright/license banner before the agent ever sees the file: it is
-        # identical boilerplate across every conjecture and pure token waste in
-        # the agent's context. The scorer still compiles the original sketch as
-        # its target, so verification is unaffected (comments don't reach the
-        # olean anyway).
-        sketch = strip_license_header(state.metadata["sketch"])
+        # the dataset; same text the scorer verifies against). The dataset has
+        # already stripped the copyright/license banner, so this is written to
+        # the entry file as-is.
+        sketch = state.metadata["sketch"]
         await sandbox().write_file(ENTRY_PATH, sketch)
 
         tools = [

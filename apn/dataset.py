@@ -152,7 +152,13 @@ def oeis_dataset(
     for name, files in entries:
         if names is not None and name not in names:
             continue
-        text = (isolated / f"{name}.lean").read_text()
+        # Strip the Apache copyright banner here, at the single source: it is
+        # identical boilerplate across every conjecture, pure token waste in the
+        # agent's context, and clutter in the log UI. Both consumers downstream
+        # are unaffected -- the agent writes this text as its entry file, and the
+        # scorer compiles it as the verification target (a leading comment never
+        # reaches the olean).
+        text = strip_license_header((isolated / f"{name}.lean").read_text())
         samples.append(
             Sample(
                 input=text,
