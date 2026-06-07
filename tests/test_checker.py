@@ -477,6 +477,39 @@ async def test_scorer_metadata_has_no_tree(
     assert score.metadata["safeverify_report"] == report
 
 
+async def test_scorer_records_submission_tree_on_sample_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The scorer builds the display tree from the same tar it reads and stores it
+    # on *sample* metadata (so the log viewer / extract_plaintext can render it),
+    # not on Score.metadata. This is the reliable capture point -- the scorer runs
+    # even when a limit terminated the agent, unlike anything after the solver's
+    # run(). build_tree nests helper subdirs.
+    import io
+    import tarfile
+
+    buf = io.BytesIO()
+    files = {
+        "Spec.lean": "import X\ntheorem tgt := by sorry\n",
+        "Helpers/Aux.lean": "theorem aux := trivial\n",
+    }
+    with tarfile.open(fileobj=buf, mode="w") as tf:
+        for name, content in files.items():
+            data = content.encode()
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tf.addfile(info, io.BytesIO(data))
+
+    state = _state()
+    monkeypatch.setattr(scorer_mod, "sandbox", lambda *a, **k: FakeSandbox(buf.getvalue()))
+    await proof_scorer(StubChecker(True))(state, Target(""))
+
+    assert state.metadata["submission_contents"] == {
+        "Spec.lean": "import X\ntheorem tgt := by sorry\n",
+        "Helpers": {"Aux.lean": "theorem aux := trivial\n"},
+    }
+
+
 async def test_scorer_writes_attempt_sidecar(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:

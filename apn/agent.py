@@ -27,7 +27,6 @@ cheaper proof instead of guessing blindly.
 
 from __future__ import annotations
 
-import logging
 from typing import Callable, Literal, Sequence
 
 from inspect_ai.agent import (
@@ -46,12 +45,9 @@ from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, 
 from inspect_ai.util import sandbox
 
 from apn.dataset import strip_license_header
-from apn.filetree import build_tree_from_tar, read_submission_tar
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
 from apn.tools import bash
-
-logger = logging.getLogger(__name__)
 
 # Played back to the model when a gated submission fails verification. Note it
 # deliberately reveals nothing about *why* (no SafeVerify output), so the model
@@ -164,11 +160,14 @@ def lean_prover(
     """Prove the sample's theorem with an Inspect agent.
 
     Writes the initial Lean file (the sample's ``metadata['sketch']``) into the
-    sandbox at the entry module ``Submission/Spec.lean`` and runs the agent. The proof is the agent's ``Submission/`` subtree (entry
-    module plus any helper modules it adds); the scorer reads it back from there
-    (see :mod:`apn.scorer`). After the agent finishes, the solver records the
-    final subtree as a display tree on ``state.metadata["submission_contents"]``
-    (set once, so it does not bloat the per-call event log).
+    sandbox at the entry module ``Submission/Spec.lean`` and runs the agent. The
+    proof is the agent's ``Submission/`` subtree (entry module plus any helper
+    modules it adds); the scorer reads it back from there both to verify it and
+    to record the final subtree as a display tree on
+    ``state.metadata["submission_contents"]`` (see :mod:`apn.scorer`). The
+    capture lives in the scorer, not here, because the scorer always runs after
+    the agent -- including when a token/time limit terminates it -- whereas code
+    after this solver's ``run`` is skipped on a limit.
 
     Args:
         model: Optional model override for the agent.
@@ -236,23 +235,13 @@ def lean_prover(
             compaction=CompactionSummary(threshold=300_000),
             model=get_model(model) if model is not None else None,
         )
+        # Run the agent. The agent authors its proof under Submission/; the
+        # scorer reads that subtree back -- both to verify it and to record it as
+        # a display tree on the sample metadata (see apn.scorer). Nothing to
+        # collect here: the scorer always runs after the agent, including when a
+        # token/time limit terminates it (the common exit for open problems),
+        # whereas any code placed after this run() would be skipped on a limit.
         await run(agent, user_prompt(ENTRY_PATH, state.token_limit, literature))
-
-        # Record the final Submission/ subtree as a display tree for the Inspect
-        # log viewer -- set ONCE here (not per scorer call) so it doesn't bloat
-        # the event log. Best-effort: a read failure just yields an empty tree
-        # (the scorer ingests and rejects the real submission independently).
-        try:
-            tar = await read_submission_tar(sandbox())
-            state.metadata["submission_contents"] = build_tree_from_tar(tar)
-        except Exception:
-            logger.warning(
-                "Failed to read agent Submission/ subtree for the display tree; "
-                "recording an empty tree (scoring is unaffected -- the scorer "
-                "reads the submission independently)",
-                exc_info=True,
-            )
-            state.metadata["submission_contents"] = {}
 
         state.completed = True
         return state

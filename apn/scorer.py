@@ -10,13 +10,25 @@ agent's sandbox (not from any solver-written store), so this scorer gives the
 same verdict whether Inspect runs it at the end of a sample or mid-loop on each
 gated submission (the ``attempts`` mechanism -- see :func:`apn.agent.lean_prover`).
 
-Per attempt this scorer: tars ``Submission/`` from the live agent sandbox;
-writes an attempt-indexed ``attempt-N.tar`` sidecar next to the eval log for
-audit; and hands the raw tar to the checker, which unpacks and builds it in its
-own sandbox. The verdict's ``stage``/report go on ``Score.metadata``; the full
-tree never does (it would bloat the event log over up to ``max_attempts``
-attempts). The solver sets the nested display tree once per sample instead (see
-:mod:`apn.agent`).
+Per attempt this scorer tars ``Submission/`` from the live agent sandbox once,
+then uses those bytes three ways: writes an attempt-indexed ``attempt-N.tar``
+sidecar next to the eval log for audit; records a nested display tree on the
+*sample* metadata (``submission_contents``) for the log viewer and
+``scripts/extract_plaintext``; and hands the raw tar to the checker, which
+unpacks and builds it in its own sandbox.
+
+The display tree is recorded here, not in the solver, on purpose. The scorer
+always runs after the agent -- including when a token/time limit terminates it
+(the common exit for open problems, which run until the limit) -- whereas code
+placed after the solver's ``run(agent, ...)`` is skipped when a limit raises out
+of it, so a solver-side capture is empty on almost every real sample. It goes on
+*sample* metadata rather than ``Score.metadata`` to stay out of the event log:
+``Score.metadata`` is written per ScoreEvent (so a tree there is copied once per
+gated attempt), while ``state.metadata`` writes are not individually
+event-logged -- only a solver's net state diff is (via ``SolverTranscript``, and
+scoring is not wrapped in one) -- so re-setting it each attempt costs nothing and
+only the final value reaches ``EvalSample.metadata``. The verdict's
+``stage``/report still go on ``Score.metadata`` (small, per-attempt).
 
 Known, accepted security hole (out of scope, like the pre-existing root-code-exec
 hole in :mod:`apn.checker`): the tar is produced by ``tar`` running in the
@@ -49,7 +61,7 @@ from inspect_ai.solver import TaskState
 from inspect_ai.util import sandbox, store
 
 from apn.checker import SafeVerifyChecker
-from apn.filetree import read_submission_tar
+from apn.filetree import build_tree_from_tar, read_submission_tar
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +82,25 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
         # (error the sample) rather than masking it as a rejection.
         tar = await read_submission_tar(sandbox())
 
-        # An audit sidecar of exactly what was scored, next to the eval log.
-        # Never fail scoring on a sidecar error.
+        # Record exactly what was scored, two display ways from the one tar
+        # already read (both best-effort -- neither may fail scoring):
+        #   * an audit sidecar of the raw tar, next to the eval log;
+        #   * a nested display tree on the *sample* metadata for the Inspect log
+        #     viewer and scripts/extract_plaintext.
+        # This capture lives in the scorer, not the solver, for two reasons.
+        # (1) Reliability: the scorer always runs after the agent -- including
+        # when a token/time limit terminates it (the common exit for open
+        # problems) -- whereas any code after the solver's `run(agent, ...)` is
+        # skipped when a limit raises out of it. (2) It reuses this one tar read.
+        # Putting the tree on sample metadata (not Score.metadata) is what keeps
+        # the event log small: Score.metadata is written per ScoreEvent, so a
+        # tree there would be copied once per gated attempt; state.metadata
+        # writes are not individually event-logged (only a solver's net diff is,
+        # via SolverTranscript, and scoring isn't wrapped in one), so re-setting
+        # it each gated attempt adds nothing -- only the final value reaches
+        # EvalSample.metadata.
         _write_submission_sidecar(state, attempt, tar)
+        _record_submission_tree(state, tar)
 
         # Hand the raw tar to the checker, which unpacks it in its own sandbox
         # and builds (no Python decode on the verification path). The target is
@@ -86,7 +114,7 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
             value=CORRECT if outcome.ok else INCORRECT,
             # No answer: it is purely cosmetic, and the agent's submission is
             # already recorded in full as the nested display tree on sample
-            # metadata (set once by the solver, see apn.agent).
+            # metadata (set by _record_submission_tree above).
             explanation=outcome.detail,
             # stage drives the gated-submit message (see apn.agent); report is
             # safe_verify's per-declaration --save JSON (None when it didn't run
@@ -96,6 +124,23 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
         )
 
     return score
+
+
+def _record_submission_tree(state: TaskState, tar: bytes) -> None:
+    """Set the agent's ``Submission/`` subtree as a display tree on sample metadata.
+
+    Builds a nested :data:`~apn.filetree.FileTreeForLogViewer` from the scored
+    tar and stores it on ``state.metadata["submission_contents"]`` for the Inspect
+    log viewer and ``scripts/extract_plaintext``.
+    """
+    try:
+        state.metadata["submission_contents"] = build_tree_from_tar(tar)
+    except Exception:
+        logger.warning(
+            "Failed to build the Submission/ display tree from the scored tar; "
+            "recording an empty tree (scoring is unaffected)",
+            exc_info=True,
+        )
 
 
 def _write_submission_sidecar(state: TaskState, attempt: int, tar: bytes) -> None:

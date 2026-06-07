@@ -10,7 +10,7 @@ The tar bytes are used two ways, which must not be conflated:
   unpacks them straight into its own sandbox and builds (see :mod:`apn.checker`).
   Nothing decodes the tar in Python on that path.
 * For **display**, :func:`build_tree_from_tar` turns the bytes into a nested
-  :data:`FileTreeForLogViewer` that the solver sets on
+  :data:`FileTreeForLogViewer` that the scorer sets on
   ``state.metadata["submission_contents"]`` so the Inspect log viewer renders an
   expandable tree (same shape as PortBench's ``workspace_src_contents``). This is
   cosmetic; nothing functional depends on it.
