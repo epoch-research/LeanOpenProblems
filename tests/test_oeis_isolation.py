@@ -116,7 +116,7 @@ async def _generate_env():
 
     Per-session bring-up/tear-down through Inspect's sandbox lifecycle (the same
     path a real eval uses); the docker cache keeps repeat runs cheap. Mirrors
-    ``tests/test_singlefile_proof.py::_scorer_env``.
+    ``tests/test_singlefile_proof.py::_sandbox_envs``.
     """
     compose = _generate_compose_file()
     task_name = "pytest_oeis_isolation"

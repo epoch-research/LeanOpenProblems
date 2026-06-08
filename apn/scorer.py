@@ -30,17 +30,14 @@ scoring is not wrapped in one) -- so re-setting it each attempt costs nothing an
 only the final value reaches ``EvalSample.metadata``. The verdict's
 ``stage``/report still go on ``Score.metadata`` (small, per-attempt).
 
-Known, accepted security hole (out of scope, like the pre-existing root-code-exec
-hole in :mod:`apn.checker`): the tar is produced by ``tar`` running in the
-agent's own sandbox, which the agent owns as root, so its bytes are untrusted.
-A forged regular-file member with a traversal name (e.g. ``../_apn_score/
-target.olean``) would, when staged under ``SUBMISSION_DIR`` in the scorer
-sandbox, escape and could clobber a trusted artifact before verification -- a
-Zip-Slip. We do **not** guard against it here: it requires the agent to tamper
-with its own ``tar`` (a real but unlikely capability), and the deeper issue --
-that compiling any submission already runs arbitrary code as root in the scorer
-sandbox -- subsumes it. Both are tracked as a single separate hardening effort
-(non-root build, hash-pinned target), not patched piecemeal.
+The tar is produced by ``tar`` in the agent's own sandbox (agent-owned as root),
+so its bytes are untrusted -- but the checker unpacks and compiles it in a
+throwaway, untrusted ``compile`` sandbox, never the trusted scorer (see
+:mod:`apn.checker`). So a forged traversal member (a Zip-Slip) or compile-time
+code execution is contained there, where no trusted ``target.olean`` or
+``safe_verify`` binary exists and there is no path to the scorer. The remaining
+attack surface is a memory-safety bug in ``safe_verify``'s deserialization of the
+agent-influenced olean -- a far higher bar; see the checker module docstring.
 """
 
 from __future__ import annotations

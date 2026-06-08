@@ -72,13 +72,15 @@ def _tar_of(files: dict[str, str]) -> bytes:
 
 
 @asynccontextmanager
-async def _scorer_env():
-    """Bring up the production compose and yield the live ``scorer`` env.
+async def _sandbox_envs():
+    """Bring up the production compose and yield the live sandbox-env dict.
 
     Uses Inspect's sandbox lifecycle against ``apn.task.get_compose_file`` (which
     builds from ``apn/lean/Dockerfile``), so the image is current by construction.
-    Per-test bring-up/tear-down -- simple and correct; the docker cache keeps
-    repeat runs cheap (this is the same trade-off PortBench's test harness makes).
+    The checker needs both the untrusted ``compile`` sandbox and the trusted
+    ``scorer`` sandbox, so we expose the whole ``{name: env}`` dict. Per-test
+    bring-up/tear-down -- simple and correct; the docker cache keeps repeat runs
+    cheap (the same trade-off PortBench's test harness makes).
     """
     compose = str(get_compose_file(literature=False))
     task_name = "pytest_singlefile_scorer"
@@ -93,7 +95,7 @@ async def _scorer_env():
             metadata={},
         )
         try:
-            yield envs["scorer"]
+            yield envs
         finally:
             await cleanup_sandbox_environments_sample(
                 type="docker",
@@ -107,13 +109,15 @@ async def _scorer_env():
 
 
 async def _check(monkeypatch, target: str, submission: dict[str, str]):
-    """Run the real checker against a freshly built scorer sandbox.
+    """Run the real checker against freshly built compile + scorer sandboxes.
 
     ``submission`` is given as ``{relative path: contents}`` for readability and
-    packed into the tar the checker actually consumes.
+    packed into the tar the checker actually consumes. ``checker_mod.sandbox`` is
+    pointed at the live envs by name, so ``sandbox("compile")`` /
+    ``sandbox("scorer")`` resolve to the matching containers.
     """
-    async with _scorer_env() as env:
-        monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
+    async with _sandbox_envs() as envs:
+        monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: envs[name])
         return await SandboxSafeVerify(sandbox_name="scorer").check(
             target, _tar_of(submission)
         )

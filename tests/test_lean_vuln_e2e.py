@@ -27,17 +27,15 @@ cheating attempts and honest baselines:
   change re-enables helper imports, they fail loudly;
 * **must ACCEPT** -- honest single-file, definition reproduction, and a genuine
   disproof;
-* **known vulnerability (xfail, strict)** -- *root code execution.* The
-  submission is compiled (``lake env lean -o``) as root in the **same** sandbox
-  that holds the trusted ``target.olean`` and the ``safe_verify`` binary, BEFORE
-  ``safe_verify`` runs. A compile-time ``#eval`` of an IO action overwrites the
-  ``safe_verify`` binary with a script that always exits 0, so a bogus proof
-  (here ``sorry`` of a false target) is accepted. This documents the need for
-  the separate-compilation-sandbox design -- compile the submission in an
-  untrusted sandbox, run ``safe_verify`` in a trusted one whose TCB
-  (target.olean + the verifier binary) is read-only / hash-pinned. The
-  ``xfail(strict=True)`` case fails loudly (XPASS) the moment that lands -- the
-  signal to delete the marker.
+* **must REJECT -- root code execution.** A compile-time ``#eval`` overwrites the
+  ``safe_verify`` binary with a script that always exits 0, trying to get a bogus
+  proof (here ``sorry`` of a false target) accepted. The compile/scorer split
+  defeats it: that ``#eval`` runs in the throwaway, untrusted ``compile`` sandbox
+  and tampers only with that copy of the binary, while the trusted ``scorer``
+  sandbox -- which never elaborates agent Lean -- runs its own intact
+  ``safe_verify`` and catches the ``sorryAx``. (Before the split this was an
+  ``xfail(strict)`` documenting the hole; it is now an ordinary regression guard
+  that fails loudly if the sandboxes are ever recombined.)
 
 Memory: these deliberately import only ``Init`` (+ ``Lean`` where a metaprogram
 needs it), not Mathlib, so safe_verify's footprint stays well under a modest
@@ -111,9 +109,6 @@ class Case:
     target: str
     files: dict[str, str]
     secure_accept: bool
-    # Set for a confirmed-but-unfixed hole: the secure assertion is expected to
-    # fail today, so the case is xfail(strict) and XPASSes -> fails once fixed.
-    xfail_reason: str | None = None
 
 
 CASES: list[Case] = [
@@ -229,39 +224,24 @@ CASES: list[Case] = [
         },
         secure_accept=False,
     ),
-    # ---- root code execution: TCB tamper during compile (xfail, strict) ---- #
+    # ---- root code execution: TCB tamper during compile (now REJECTED) ---- #
     # The submission's compile-time #eval overwrites the safe_verify binary with
-    # `exit 0`, so its `sorry` proof of the FALSE target 2+2=5 is accepted. The
-    # secure verdict is REJECT (an intact verifier catches the sorryAx); the hole
-    # makes it ACCEPT, so this is xfail(strict) until the separate-compilation
-    # sandbox lands.
+    # `exit 0`, attempting to get its `sorry` proof of the FALSE target 2+2=5
+    # accepted. With the compile/scorer split this #eval runs in the throwaway
+    # compile sandbox and tampers only with that copy of safe_verify; the trusted
+    # scorer runs its own intact verifier, which catches the sorryAx -> REJECT.
+    # (Before the split this was an accepted-by-the-hole xfail.)
     Case(
         "root_exec_overwrites_safe_verify",
         "theorem tgt : 2 + 2 = 5 := by sorry\n",
         {"Spec.lean": TAMPER_SAFE_VERIFY + "theorem tgt : 2 + 2 = 5 := by sorry\n"},
         secure_accept=False,
-        xfail_reason=(
-            "root-code-exec hole: the submission is compiled as root in the same "
-            "sandbox as the trusted target.olean + safe_verify binary, so a "
-            "compile-time `#eval` overwrites safe_verify with `exit 0` and the "
-            "bogus proof is accepted. Needs the separate-compilation-sandbox "
-            "design (compile untrusted; verify in a trusted sandbox with a "
-            "read-only / hash-pinned TCB). Delete this marker once that lands."
-        ),
     ),
 ]
 
 
 def _params() -> list:
-    out = []
-    for c in CASES:
-        marks = (
-            pytest.mark.xfail(strict=True, reason=c.xfail_reason)
-            if c.xfail_reason
-            else ()
-        )
-        out.append(pytest.param(c, id=c.label, marks=marks))
-    return out
+    return [pytest.param(c, id=c.label) for c in CASES]
 
 
 # --------------------------------------------------------------------------- #
@@ -270,12 +250,13 @@ def _params() -> list:
 # --------------------------------------------------------------------------- #
 @asynccontextmanager
 async def _sandboxes():
-    """Bring up the production compose; yield ``(agent_env, scorer_env)``.
+    """Bring up the production compose; yield the live ``{name: env}`` dict.
 
-    Same lifecycle as ``test_singlefile_proof._scorer_env`` but exposes both the
-    default (agent) sandbox -- where the submission tree is staged and tarred --
-    and the scorer sandbox where verification runs. Per-test bring-up isolates an
-    OOM/crash to a single case.
+    Same lifecycle as ``test_singlefile_proof._sandbox_envs``. Exposes the default
+    (agent) sandbox -- where the submission tree is staged and tarred -- plus the
+    untrusted ``compile`` and trusted ``scorer`` sandboxes the checker spans.
+    Per-test bring-up isolates an OOM/crash (and any compile-time tamper) to a
+    single case.
     """
     compose = str(get_compose_file(literature=False))
     task_name = "pytest_lean_vuln_e2e"
@@ -290,7 +271,7 @@ async def _sandboxes():
             metadata={},
         )
         try:
-            yield envs["default"], envs["scorer"]
+            yield envs
         finally:
             await cleanup_sandbox_environments_sample(
                 type="docker",
@@ -313,13 +294,16 @@ async def _write_tree(env, files: dict[str, str]) -> None:
 
 @pytest.mark.parametrize("case", _params())
 async def test_scorer_verdict(case: Case, monkeypatch: pytest.MonkeyPatch) -> None:
-    async with _sandboxes() as (agent_env, scorer_env):
+    async with _sandboxes() as envs:
+        agent_env = envs["default"]
         await _write_tree(agent_env, case.files)
         # The real scorer reads the tree from the agent (default) sandbox and
-        # hands the tar to the checker, which builds/verifies in the scorer
-        # sandbox. Point each module's `sandbox` at the matching live env.
+        # hands the tar to the checker, which compiles in the untrusted `compile`
+        # sandbox and verifies in the trusted `scorer` sandbox. Point the scorer's
+        # `sandbox` at the agent env, and the checker's at the live env named in
+        # its call (`sandbox("compile")` / `sandbox("scorer")`).
         monkeypatch.setattr(scorer_mod, "sandbox", lambda *a, **k: agent_env)
-        monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: scorer_env)
+        monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: envs[name])
 
         state = TaskState(
             model=ModelName("mockllm/model"),

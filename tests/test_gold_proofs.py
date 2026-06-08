@@ -93,12 +93,14 @@ def _tar_of(files: dict[str, str]) -> bytes:
 
 
 @asynccontextmanager
-async def _scorer_env():
-    """Bring up the production compose and yield the live ``scorer`` env.
+async def _sandbox_envs():
+    """Bring up the production compose and yield the live ``{name: env}`` dict.
 
-    Mirrors ``tests/test_singlefile_proof.py::_scorer_env``: Inspect's sandbox
+    Mirrors ``tests/test_singlefile_proof.py::_sandbox_envs``: Inspect's sandbox
     lifecycle against ``apn.task.get_compose_file`` (which builds from
-    ``apn/lean/Dockerfile``), so the image is current by construction.
+    ``apn/lean/Dockerfile``), so the image is current by construction. The checker
+    spans the untrusted ``compile`` and trusted ``scorer`` sandboxes, so we expose
+    the whole dict.
     """
     compose = str(get_compose_file(literature=False))
     task_name = "pytest_gold_proofs_scorer"
@@ -113,7 +115,7 @@ async def _scorer_env():
             metadata={},
         )
         try:
-            yield envs["scorer"]
+            yield envs
         finally:
             await cleanup_sandbox_environments_sample(
                 type="docker",
@@ -150,10 +152,14 @@ def _gold_submission(stem: str, theorem: str) -> str:
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
-async def scorer_env():
-    """The live ``scorer`` sandbox, brought up once and shared by every case."""
-    async with _scorer_env() as env:
-        yield env
+async def sandbox_envs():
+    """The live sandbox-env dict, brought up once and shared by every case.
+
+    Shared (not per-case) is safe here: all gold proofs are honest, and the
+    checker clears the compile + score scratch dirs on every call.
+    """
+    async with _sandbox_envs() as envs:
+        yield envs
 
 
 def test_gold_proofs_present() -> None:
@@ -163,9 +169,9 @@ def test_gold_proofs_present() -> None:
 
 @pytest.mark.asyncio(loop_scope="module")
 @pytest.mark.parametrize("stem", GOLD_STEMS)
-async def test_gold_proof_verifies(stem: str, scorer_env, monkeypatch) -> None:
+async def test_gold_proof_verifies(stem: str, sandbox_envs, monkeypatch) -> None:
     """Each published gold proof is accepted by safe_verify against our spec."""
-    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: scorer_env)
+    monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: sandbox_envs[name])
     target = (ISOLATED_DIR / f"{stem}.lean").read_text()
     submission = _gold_submission(stem, _target_theorem(target))
     outcome = await SandboxSafeVerify(sandbox_name="scorer").check(

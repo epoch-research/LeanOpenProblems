@@ -1,12 +1,14 @@
 """Tests for the SafeVerify checker's exec orchestration and the scorer wiring.
 
-``SandboxSafeVerify`` stages the single-file submission by unpacking the agent's
-tar directly in the scorer sandbox: it clears the prior artifacts, compiles the
-trusted target at the entry path ``Submission/Spec.lean`` (``-o target.olean``),
-removes that entry file, unpacks the submission tar into ``Submission/``, checks
-the entry module is present, compiles it standalone the same way (``-o
-submission.olean``), and runs ``safe_verify`` on the two oleans. A fake sandbox
-scripts each step's exit code to verify the verdict mapping; the real
+``SandboxSafeVerify`` runs in two phases across two sandboxes. In the UNTRUSTED
+``compile`` sandbox (5 execs): clear scratch, unpack the submission tar into
+``Submission/``, check the entry module is present, and compile it standalone
+(``-o submission.olean``) -- this elaborates agent Lean, so it is isolated here.
+It then reads the olean bytes out. In the TRUSTED ``scorer`` sandbox (4 execs):
+clear scratch, compile the trusted target at ``Submission/Spec.lean`` (``-o
+target.olean``), write the submission olean in, and run ``safe_verify`` on the
+two oleans -- no agent Lean is elaborated here. A fake sandbox (serving both
+names) scripts the flat global exec order to verify the verdict mapping; the real
 ``safe_verify`` exe is validated against the toolchain. The scorer tests use a
 stub checker and a fake workspace sandbox to verify the ``Submission/`` tar is
 collected and handed to the checker as raw bytes.
@@ -79,17 +81,30 @@ class FakeSandbox:
 Step = ExecResult[str] | BaseException
 
 
-class ScriptedSandbox:
-    """A scorer-sandbox stub: records writes, returns/raises scripted steps.
+_OLEAN_BYTES = b"compiled-submission-olean-bytes"
 
-    ``report`` scripts the safe_verify ``--save`` JSON the checker reads back:
-    a string is returned from ``read_file``, ``None`` (the default) raises
-    ``FileNotFoundError`` (safe_verify wrote nothing).
+
+class ScriptedSandbox:
+    """A stub serving BOTH the compile and scorer sandboxes (the monkeypatched
+    ``sandbox(name)`` returns this same object for either name). It records the
+    flat global sequence of writes/execs/reads and returns/raises scripted steps.
+
+    ``read_file`` dispatches on the path: the compile-sandbox olean read returns
+    ``olean`` bytes (or raises ``FileNotFoundError`` when ``olean is None`` -- a
+    clean compile that left no readable olean), and the scorer-sandbox report read
+    returns ``report`` (a string) or raises ``FileNotFoundError`` when it is
+    ``None`` (safe_verify wrote nothing).
     """
 
-    def __init__(self, results: list[Step], report: str | None = None) -> None:
+    def __init__(
+        self,
+        results: list[Step],
+        report: str | None = None,
+        olean: bytes | None = _OLEAN_BYTES,
+    ) -> None:
         self._results = list(results)
         self._report = report
+        self._olean = olean
         self.written: dict[str, object] = {}
         self.writes: list[tuple[str, object]] = []
         self.commands: list[list[str]] = []
@@ -106,8 +121,12 @@ class ScriptedSandbox:
             raise step
         return step
 
-    async def read_file(self, file: str, text: bool = True) -> str:
+    async def read_file(self, file: str, text: bool = True) -> str | bytes:
         self.reads.append(file)
+        if file == checker_mod.COMPILE_SUBMISSION_OLEAN:
+            if self._olean is None:
+                raise FileNotFoundError(file)
+            return self._olean
         if self._report is None:
             raise FileNotFoundError(file)
         return self._report
@@ -138,17 +157,19 @@ def _checker(
     results: list[Step],
     allow_disproofs: bool = True,
     report: str | None = None,
+    olean: bytes | None = _OLEAN_BYTES,
 ) -> tuple[SandboxSafeVerify, ScriptedSandbox]:
-    sb = ScriptedSandbox(results, report=report)
+    sb = ScriptedSandbox(results, report=report, olean=olean)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
     return SandboxSafeVerify(allow_disproofs=allow_disproofs), sb
 
 
-# The eight execs of the happy path, in order: clear, mkdir, compile target,
-# remove target entry, unpack submission, check entry present, compile submission
-# (standalone, same as target), run safe_verify.
+# The nine execs of the happy path, in global order. COMPILE sandbox (5): clear,
+# mkdir, unpack submission, check entry present, compile submission. Then the
+# olean is read out. SCORER sandbox (4): clear, mkdir, compile trusted target,
+# run safe_verify.
 def _accept_steps() -> list[Step]:
-    return [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok("SafeVerify check passed.")]
+    return [_ok()] * 8 + [_ok("SafeVerify check passed.")]
 
 
 async def test_check_accepts_when_all_steps_pass(
@@ -158,72 +179,96 @@ async def test_check_accepts_when_all_steps_pass(
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert outcome.ok
     assert outcome.stage == "safeverify"
-    # Two writes (target spec, then the submission tar bytes), then eight
-    # commands: clear, mkdir, compile target, rm entry, untar, test entry,
-    # compile submission, safe_verify.
-    assert len(sb.writes) == 2
-    assert len(sb.commands) == 8
+    # Three writes (submission tar, then target spec, then the submission olean
+    # copied into the scorer); nine commands (5 compile-sandbox + 4 scorer).
+    assert len(sb.writes) == 3
+    assert len(sb.commands) == 9
     assert sb.commands[0][:2] == ["rm", "-rf"]
     assert sb.commands[1][:2] == ["mkdir", "-p"]
 
 
-async def test_check_compiles_target_at_entry_path_and_unpacks_submission(
+async def test_check_compiles_in_two_phases_across_sandboxes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Load-bearing for private-name matching: BOTH the target and the submission
-    # are compiled standalone at the entry path Submission/Spec.lean (so Lean
-    # gives each module name Submission.Spec). See SandboxSafeVerify.check.
+    # Phase 1 (UNTRUSTED compile sandbox): unpack + compile the submission to an
+    # olean. Phase 2 (TRUSTED scorer sandbox): compile the trusted target at the
+    # same entry path (so Lean gives each module name Submission.Spec -- load-
+    # bearing for private-name matching) and run safe_verify on the two oleans.
     checker, sb = _checker(monkeypatch, _accept_steps())
     await checker.check("THE TARGET", b"THE TAR")
-    # Target spec written to the entry path; submission tar written to its stage.
-    assert sb.writes[0] == (checker_mod.ENTRY_PATH, "THE TARGET")
-    assert sb.writes[1] == (checker_mod.SUBMISSION_TAR, b"THE TAR")
-    # Target compiled standalone to TARGET_OLEAN from the entry rel path.
+
+    # --- compile phase --------------------------------------------------------
+    # Submission tar staged in the compile sandbox, unpacked into SUBMISSION_DIR.
+    assert sb.writes[0] == (checker_mod.COMPILE_SUBMISSION_TAR, b"THE TAR")
+    assert sb.commands[0][:2] == ["rm", "-rf"]
+    assert sb.commands[1][:2] == ["mkdir", "-p"]
     assert sb.commands[2] == [
+        "tar", "-xf", checker_mod.COMPILE_SUBMISSION_TAR, "-C", checker_mod.SUBMISSION_DIR
+    ]
+    assert sb.commands[3] == ["test", "-f", checker_mod.ENTRY_PATH]
+    # Submission compiled standalone to the compile-sandbox olean.
+    assert sb.commands[4] == [
+        "lake", "env", "lean", "-o",
+        checker_mod.COMPILE_SUBMISSION_OLEAN, checker_mod.ENTRY_REL,
+    ]
+    # The produced olean is read out of the compile sandbox.
+    assert checker_mod.COMPILE_SUBMISSION_OLEAN in sb.reads
+
+    # --- verify phase ---------------------------------------------------------
+    # Trusted target written + compiled standalone at the SAME entry path.
+    assert sb.writes[1] == (checker_mod.ENTRY_PATH, "THE TARGET")
+    assert sb.commands[5][:2] == ["rm", "-rf"]
+    assert sb.commands[6][:2] == ["mkdir", "-p"]
+    assert sb.commands[7] == [
         "lake", "env", "lean", "-o", checker_mod.TARGET_OLEAN, checker_mod.ENTRY_REL
     ]
-    # The target entry file is removed before unpacking the submission over it.
-    assert sb.commands[3] == ["rm", "-f", checker_mod.ENTRY_PATH]
-    # Submission unpacked into SUBMISSION_DIR.
-    assert sb.commands[4] == [
-        "tar", "-xf", checker_mod.SUBMISSION_TAR, "-C", checker_mod.SUBMISSION_DIR
-    ]
-    # Entry module presence checked, then compiled standalone at the same entry
-    # path the target used (its olean lands at SUBMISSION_OLEAN).
-    assert sb.commands[5] == ["test", "-f", checker_mod.ENTRY_PATH]
-    assert sb.commands[6] == [
-        "lake", "env", "lean", "-o", checker_mod.SUBMISSION_OLEAN, checker_mod.ENTRY_REL
-    ]
+    # The olean read out of the compile sandbox is written into the scorer.
+    assert sb.writes[2] == (checker_mod.SUBMISSION_OLEAN, _OLEAN_BYTES)
     # safe_verify runs on the two oleans, target then submission.
-    assert sb.commands[7][-2:] == [checker_mod.TARGET_OLEAN, checker_mod.SUBMISSION_OLEAN]
+    assert sb.commands[8][-2:] == [checker_mod.TARGET_OLEAN, checker_mod.SUBMISSION_OLEAN]
 
 
 async def test_check_rejects_when_untar_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A malformed/forged submission archive: clear, mkdir, target ok, rm entry,
-    # then `tar -xf` fails -> a verdict on the agent's code, not a raise.
-    checker, sb = _checker(monkeypatch, [_ok(), _ok(), _ok(), _ok(), _fail(2, "tar: bad")])
+    # A malformed/forged submission archive: clear, mkdir, then `tar -xf` fails
+    # in the compile sandbox -> a verdict on the agent's code, not a raise.
+    checker, sb = _checker(monkeypatch, [_ok(), _ok(), _fail(2, "tar: bad")])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "compile_submission"
-    # The submission was never compiled after the untar failed (its olean appears
-    # only in the submission compile and safe_verify, neither of which ran).
-    assert not any(checker_mod.SUBMISSION_OLEAN in c for c in sb.commands)
+    # Nothing ran past the failed untar (no compile, no olean read, no verify).
+    assert len(sb.commands) == 3
+    assert sb.reads == []
 
 
 async def test_check_rejects_when_entry_module_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A submission whose tar omits Spec.lean: the post-unpack `test -f` (the 6th
-    # command) fails -> rejected as a verdict, NOT raised, and we must NOT fall
-    # through to leaving the trusted target text in place (it was rm'd at step 4).
-    checker, sb = _checker(monkeypatch, [_ok(), _ok(), _ok(), _ok(), _ok(), _fail(1)])
+    # A submission whose tar omits Spec.lean: the post-unpack `test -f` (4th
+    # command) fails -> rejected as a verdict, NOT raised. Nothing is compiled.
+    checker, sb = _checker(monkeypatch, [_ok(), _ok(), _ok(), _fail(1)])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "compile_submission"
     assert "entry module missing" in outcome.detail
-    assert not any(checker_mod.SUBMISSION_OLEAN in c for c in sb.commands)
+    assert len(sb.commands) == 4
+    assert sb.reads == []
+
+
+async def test_check_rejects_when_compiled_olean_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A clean compile (5 ok execs) that leaves no readable olean -- e.g. a
+    # backgrounded process the #eval spawned deleted it -> a verdict on the
+    # agent's code, never reaching the scorer.
+    checker, sb = _checker(monkeypatch, [_ok()] * 5, olean=None)
+    outcome = await checker.check("the target", SUBMISSION_TAR)
+    assert not outcome.ok
+    assert outcome.stage == "compile_submission"
+    assert "no readable olean" in outcome.detail
+    # The compile sandbox ran its 5 execs; the scorer phase never started.
+    assert len(sb.commands) == 5
 
 
 async def test_check_passes_disproofs_flag_to_safe_verify(
@@ -234,7 +279,7 @@ async def test_check_passes_disproofs_flag_to_safe_verify(
     checker, sb = _checker(monkeypatch, _accept_steps())
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert outcome.ok
-    safe_verify_cmd = sb.commands[7]
+    safe_verify_cmd = sb.commands[8]
     assert "--disproofs" in safe_verify_cmd
     # --save requests the JSON report; the two olean paths stay positional last.
     assert "--save" in safe_verify_cmd
@@ -247,7 +292,7 @@ async def test_check_omits_disproofs_flag_when_disabled(
 ) -> None:
     checker, sb = _checker(monkeypatch, _accept_steps(), allow_disproofs=False)
     await checker.check("the target", SUBMISSION_TAR)
-    assert "--disproofs" not in sb.commands[7]
+    assert "--disproofs" not in sb.commands[8]
 
 
 async def test_check_attaches_safeverify_report(
@@ -261,16 +306,15 @@ async def test_check_attaches_safeverify_report(
     assert outcome.report == [
         {"targetInfo": {"constInfo": {"kind": "theorem"}}, "failureMode": None}
     ]
-    assert sb.reads == [checker_mod.REPORT_PATH]
+    # Two reads: the compile-sandbox olean, then the scorer-sandbox report.
+    assert sb.reads == [checker_mod.COMPILE_SUBMISSION_OLEAN, checker_mod.REPORT_PATH]
 
 
 async def test_check_report_is_none_when_safe_verify_wrote_nothing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # A resource death can leave no report file; a missing read is not an error.
-    checker, _ = _checker(
-        monkeypatch, [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _fail(137)]
-    )
+    checker, _ = _checker(monkeypatch, [_ok()] * 8 + [_fail(137)])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert outcome.stage == "safeverify_resource"
     assert outcome.report is None
@@ -281,7 +325,7 @@ async def test_check_report_is_none_when_json_is_malformed(
 ) -> None:
     checker, _ = _checker(
         monkeypatch,
-        [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _fail(1, "SafeVerify check failed.")],
+        [_ok()] * 8 + [_fail(1, "SafeVerify check failed.")],
         report="not json{",
     )
     outcome = await checker.check("the target", SUBMISSION_TAR)
@@ -292,8 +336,9 @@ async def test_check_report_is_none_when_json_is_malformed(
 async def test_check_raises_when_target_fails_to_compile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # clear, mkdir, then the target compile fails.
-    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _fail(1, "bad spec")])
+    # Compile phase ok (5 execs), olean read ok, scorer clear+mkdir, then the
+    # trusted-target compile (8th exec) fails -> our infra, so raise.
+    checker, _ = _checker(monkeypatch, [_ok()] * 7 + [_fail(1, "bad spec")])
     with pytest.raises(RuntimeError, match="target spec"):
         await checker.check("the target", SUBMISSION_TAR)
 
@@ -301,11 +346,10 @@ async def test_check_raises_when_target_fails_to_compile(
 async def test_check_rejects_when_submission_fails_to_compile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # clear, mkdir, target ok, rm entry, untar ok, test entry ok, then `lake
-    # build` fails.
+    # compile: clear, mkdir, untar ok, test entry ok, then `lake env lean` (5th
+    # exec) fails -> a verdict on the agent's code.
     checker, _ = _checker(
-        monkeypatch,
-        [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _fail(1, "unknown identifier")],
+        monkeypatch, [_ok(), _ok(), _ok(), _ok(), _fail(1, "unknown identifier")]
     )
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
@@ -319,8 +363,7 @@ async def test_check_rejects_on_safeverify_failure(
     # Both plain check failures and replay-time rejections (unsafe constant,
     # kernel type-check failure) exit nonzero: a rejection, not an infra error.
     checker, _ = _checker(
-        monkeypatch,
-        [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _fail(1, "SafeVerify check failed.")],
+        monkeypatch, [_ok()] * 8 + [_fail(1, "SafeVerify check failed.")]
     )
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
@@ -340,9 +383,9 @@ async def test_check_rejects_on_safeverify_failure(
 async def test_check_raises_on_target_signal_death(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # 137 (OOM/SIGKILL) while compiling the *target* spec: reference side, so
-    # it is our infrastructure failing -> raise, never a verdict.
-    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _fail(137)])
+    # 137 (OOM/SIGKILL) while compiling the *target* spec (8th exec, scorer
+    # phase): reference side, so it is our infrastructure failing -> raise.
+    checker, _ = _checker(monkeypatch, [_ok()] * 7 + [_fail(137)])
     with pytest.raises(RuntimeError, match="137"):
         await checker.check("the target", SUBMISSION_TAR)
 
@@ -352,7 +395,7 @@ async def test_check_raises_on_target_timeout(
 ) -> None:
     # A timeout compiling the trusted target spec is also reference-side: the
     # raised TimeoutError must propagate, not be swallowed into a verdict.
-    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _timeout()])
+    checker, _ = _checker(monkeypatch, [_ok()] * 7 + [_timeout()])
     with pytest.raises(TimeoutError):
         await checker.check("the target", SUBMISSION_TAR)
 
@@ -360,11 +403,10 @@ async def test_check_raises_on_target_timeout(
 async def test_check_rejects_on_submission_compile_signal_death(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # 137 building the *submission*: the agent's code was too expensive to
-    # compile. A rejection the agent is told about, not an errored sample.
-    checker, _ = _checker(
-        monkeypatch, [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _fail(137)]
-    )
+    # 137 compiling the *submission* (5th exec, compile phase): the agent's code
+    # was too expensive to compile. A rejection the agent is told about, not an
+    # errored sample.
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _ok(), _fail(137)])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "compile_submission_resource"
@@ -373,9 +415,7 @@ async def test_check_rejects_on_submission_compile_signal_death(
 async def test_check_rejects_on_submission_compile_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    checker, _ = _checker(
-        monkeypatch, [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _timeout()]
-    )
+    checker, _ = _checker(monkeypatch, [_ok(), _ok(), _ok(), _ok(), _timeout()])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "compile_submission_timeout"
@@ -384,12 +424,10 @@ async def test_check_rejects_on_submission_compile_timeout(
 async def test_check_rejects_on_safeverify_signal_death(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # 137 inside safe_verify replaying the submission: safe_verify's un-memoized
-    # rebuildExpr blew up on the agent's proof term. Agent-attributable ->
-    # rejection, not a raise (it is deterministic; rerunning cannot help).
-    checker, _ = _checker(
-        monkeypatch, [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _fail(137)]
-    )
+    # 137 inside safe_verify replaying the submission (9th exec): safe_verify's
+    # un-memoized rebuildExpr blew up on the agent's proof term. Agent-
+    # attributable -> rejection, not a raise (deterministic; rerunning can't help).
+    checker, _ = _checker(monkeypatch, [_ok()] * 8 + [_fail(137)])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "safeverify_resource"
@@ -398,9 +436,7 @@ async def test_check_rejects_on_safeverify_signal_death(
 async def test_check_rejects_on_safeverify_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    checker, _ = _checker(
-        monkeypatch, [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _timeout()]
-    )
+    checker, _ = _checker(monkeypatch, [_ok()] * 8 + [_timeout()])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "safeverify_timeout"
@@ -412,9 +448,7 @@ async def test_check_rejects_on_safeverify_decode_error(
     # A non-utf8 byte in safe_verify's output makes the provider raise
     # UnicodeDecodeError out of .exec(); that is the agent's submission output,
     # so it is a rejection, not a scaffold crash that errors the sample.
-    checker, _ = _checker(
-        monkeypatch, [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _decode_error()]
-    )
+    checker, _ = _checker(monkeypatch, [_ok()] * 8 + [_decode_error()])
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "safeverify_decode"
