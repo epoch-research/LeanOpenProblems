@@ -26,7 +26,18 @@ cheating attempts and honest baselines:
   way to import one, so these cases are ordinary regression guards: if a future
   change re-enables helper imports, they fail loudly;
 * **must ACCEPT** -- honest single-file, definition reproduction, and a genuine
-  disproof.
+  disproof;
+* **known vulnerability (xfail, strict)** -- *root code execution.* The
+  submission is compiled (``lake env lean -o``) as root in the **same** sandbox
+  that holds the trusted ``target.olean`` and the ``safe_verify`` binary, BEFORE
+  ``safe_verify`` runs. A compile-time ``#eval`` of an IO action overwrites the
+  ``safe_verify`` binary with a script that always exits 0, so a bogus proof
+  (here ``sorry`` of a false target) is accepted. This documents the need for
+  the separate-compilation-sandbox design -- compile the submission in an
+  untrusted sandbox, run ``safe_verify`` in a trusted one whose TCB
+  (target.olean + the verifier binary) is read-only / hash-pinned. The
+  ``xfail(strict=True)`` case fails loudly (XPASS) the moment that lands -- the
+  signal to delete the marker.
 
 Memory: these deliberately import only ``Init`` (+ ``Lean`` where a metaprogram
 needs it), not Mathlib, so safe_verify's footprint stays well under a modest
@@ -53,7 +64,7 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
-from apn.checker import SandboxSafeVerify
+from apn.checker import SAFE_VERIFY_BIN, SandboxSafeVerify
 from apn.layout import SUBMISSION_DIR
 from apn.scorer import proof_scorer
 from apn.task import get_compose_file
@@ -80,6 +91,19 @@ INJECT = (
 )
 IMPORT_AUX = "import Submission.Helpers.Aux\n"
 
+# Root-code-execution attack on the scorer's TCB. The submission is *compiled*
+# (`lake env lean -o`) as root in the SAME sandbox that holds the trusted
+# target.olean and the safe_verify binary, BEFORE safe_verify runs. A `#eval` of
+# an IO action runs at elaboration time, so it overwrites the safe_verify binary
+# with a script that always exits 0 -- after which verification accepts anything.
+# (writeFile preserves the existing exec bit; chmod is belt-and-braces.) Needs no
+# import: IO.FS / IO.Process are in core (Init).
+TAMPER_SAFE_VERIFY = (
+    f'#eval (IO.FS.writeFile "{SAFE_VERIFY_BIN}" "#!/bin/sh\\nexit 0\\n" : IO Unit)\n'
+    f'#eval (do let _ <- IO.Process.output '
+    f'{{ cmd := "chmod", args := #["755", "{SAFE_VERIFY_BIN}"] }}; pure () : IO Unit)\n'
+)
+
 
 @dataclass(frozen=True)
 class Case:
@@ -87,6 +111,9 @@ class Case:
     target: str
     files: dict[str, str]
     secure_accept: bool
+    # Set for a confirmed-but-unfixed hole: the secure assertion is expected to
+    # fail today, so the case is xfail(strict) and XPASSes -> fails once fixed.
+    xfail_reason: str | None = None
 
 
 CASES: list[Case] = [
@@ -202,11 +229,39 @@ CASES: list[Case] = [
         },
         secure_accept=False,
     ),
+    # ---- root code execution: TCB tamper during compile (xfail, strict) ---- #
+    # The submission's compile-time #eval overwrites the safe_verify binary with
+    # `exit 0`, so its `sorry` proof of the FALSE target 2+2=5 is accepted. The
+    # secure verdict is REJECT (an intact verifier catches the sorryAx); the hole
+    # makes it ACCEPT, so this is xfail(strict) until the separate-compilation
+    # sandbox lands.
+    Case(
+        "root_exec_overwrites_safe_verify",
+        "theorem tgt : 2 + 2 = 5 := by sorry\n",
+        {"Spec.lean": TAMPER_SAFE_VERIFY + "theorem tgt : 2 + 2 = 5 := by sorry\n"},
+        secure_accept=False,
+        xfail_reason=(
+            "root-code-exec hole: the submission is compiled as root in the same "
+            "sandbox as the trusted target.olean + safe_verify binary, so a "
+            "compile-time `#eval` overwrites safe_verify with `exit 0` and the "
+            "bogus proof is accepted. Needs the separate-compilation-sandbox "
+            "design (compile untrusted; verify in a trusted sandbox with a "
+            "read-only / hash-pinned TCB). Delete this marker once that lands."
+        ),
+    ),
 ]
 
 
 def _params() -> list:
-    return [pytest.param(c, id=c.label) for c in CASES]
+    out = []
+    for c in CASES:
+        marks = (
+            pytest.mark.xfail(strict=True, reason=c.xfail_reason)
+            if c.xfail_reason
+            else ()
+        )
+        out.append(pytest.param(c, id=c.label, marks=marks))
+    return out
 
 
 # --------------------------------------------------------------------------- #
