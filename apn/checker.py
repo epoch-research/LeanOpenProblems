@@ -93,10 +93,6 @@ Threats the two-sandbox split contains, and the residual:
   which holds no ``target.olean`` and no ``safe_verify`` binary the verdict
   relies on. It cannot reach the ``scorer`` sandbox, where the trusted target is
   compiled and ``safe_verify`` runs without elaborating any agent Lean.
-* **Zip-Slip (contained).** The agent-produced tar's member names are untrusted;
-  a forged ``../...`` entry could escape ``SUBMISSION_DIR`` when unpacked -- but
-  the unpack happens in the ``compile`` sandbox, where there is nothing trusted
-  to clobber and no path to the scorer. We still do not path-validate.
 * **Residual: olean deserialization.** ``safe_verify`` parses the
   agent-influenced ``submission.olean`` with ``readModuleData`` in the trusted
   scorer sandbox, so a memory-safety bug in Lean's olean *deserializer* could
@@ -271,11 +267,9 @@ class SandboxSafeVerify:
         )
 
         # Unpack the agent's tar straight into SUBMISSION_DIR (PortBench's
-        # approach -- no Python file-by-file staging). The tar is agent-controlled
-        # and NOT path-validated: a forged ``../...`` member could escape
-        # SUBMISSION_DIR (a Zip-Slip) -- but only inside this throwaway sandbox,
-        # which has no trusted artifact to clobber and no path to the scorer (see
-        # the module docstring). A failure here is a verdict on the agent's code.
+        # approach -- no Python file-by-file staging). This runs in the throwaway
+        # compile sandbox, which has no trusted artifact and no path to the
+        # scorer. A failure here is a verdict on the agent's code.
         await compile_sb.write_file(COMPILE_SUBMISSION_TAR, submission_tar)
         mode, output = await self._exec_submission(
             ["tar", "-xf", COMPILE_SUBMISSION_TAR, "-C", SUBMISSION_DIR],

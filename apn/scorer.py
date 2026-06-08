@@ -33,11 +33,11 @@ only the final value reaches ``EvalSample.metadata``. The verdict's
 The tar is produced by ``tar`` in the agent's own sandbox (agent-owned as root),
 so its bytes are untrusted -- but the checker unpacks and compiles it in a
 throwaway, untrusted ``compile`` sandbox, never the trusted scorer (see
-:mod:`apn.checker`). So a forged traversal member (a Zip-Slip) or compile-time
-code execution is contained there, where no trusted ``target.olean`` or
-``safe_verify`` binary exists and there is no path to the scorer. The remaining
-attack surface is a memory-safety bug in ``safe_verify``'s deserialization of the
-agent-influenced olean -- a far higher bar; see the checker module docstring.
+:mod:`apn.checker`). So compile-time code execution is contained there, where no
+trusted ``target.olean`` or ``safe_verify`` binary exists and there is no path to
+the scorer. The remaining attack surface is a memory-safety bug in
+``safe_verify``'s deserialization of the agent-influenced olean -- a far higher
+bar; see the checker module docstring.
 """
 
 from __future__ import annotations
