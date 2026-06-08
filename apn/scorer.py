@@ -5,7 +5,7 @@ the kernel-level ``safe_verify`` executable run in the sandbox, which confirms
 the submission compiles, implements the target theorem with the same kernel
 type, leaves it ``sorry``-free, and uses only the standard axioms.
 
-The submission is the agent's ``Submission/`` subtree, read **live** from the
+The submission is the agent's ``Submission/Spec.lean``, read **live** from the
 agent's sandbox (not from any solver-written store), so this scorer gives the
 same verdict whether Inspect runs it at the end of a sample or mid-loop on each
 gated submission (the ``attempts`` mechanism -- see :func:`apn.agent.lean_prover`).
@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 @scorer(metrics=[accuracy(), stderr()])
 def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
-    """Score a sample by checking the agent's ``Submission/`` subtree with SafeVerify."""
+    """Score a sample by checking the agent's ``Submission/Spec.lean`` with SafeVerify."""
 
     async def score(state: TaskState, target: Target) -> Score:
         # Per-attempt attempt index, kept in the sample store (the react/deepagent
@@ -77,7 +77,7 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
         attempt = store().get("_score_call_idx", 0) + 1
         store().set("_score_call_idx", attempt)
 
-        # Tar the agent's Submission/ subtree from its (default) workspace
+        # Tar the agent's Submission/ directory from its (default) workspace
         # sandbox. A read failure is a real sandbox problem -- let it propagate
         # (error the sample) rather than masking it as a rejection.
         tar = await read_submission_tar(sandbox())
@@ -127,7 +127,7 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
 
 
 def _record_submission_tree(state: TaskState, tar: bytes) -> None:
-    """Set the agent's ``Submission/`` subtree as a display tree on sample metadata.
+    """Set the agent's ``Submission/`` directory as a display tree on sample metadata.
 
     Builds a nested :data:`~apn.filetree.FileTreeForLogViewer` from the scored
     tar and stores it on ``state.metadata["submission_contents"]`` for the Inspect

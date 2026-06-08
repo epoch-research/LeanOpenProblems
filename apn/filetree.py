@@ -1,8 +1,10 @@
-"""Collecting and displaying the agent's ``Submission/`` subtree.
+"""Collecting and displaying the agent's ``Submission/`` directory.
 
-The agent's proof is a subtree of ``.lean`` files (entry module + helpers), not
-a single file. :func:`read_submission_tar` tars ``Submission/`` from the sandbox
-and returns the bytes; that tar is the one source of truth.
+The agent's proof is a single ``.lean`` file, ``Submission/Spec.lean``.
+:func:`read_submission_tar` tars ``Submission/`` from the sandbox and returns the
+bytes; that tar is the one source of truth. (It tars the directory rather than
+the one file so the capture is robust to whatever the agent leaves there, and so
+the display tree below renders uniformly.)
 
 The tar bytes are used two ways, which must not be conflated:
 

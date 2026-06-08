@@ -23,7 +23,7 @@ conjecture:
 
 This is the complement of every other checker test. Those prove ``safe_verify``
 says **no** to bad proofs (a ``sorry``/custom axiom/compile failure is rejected --
-``test_multifile_proof.py``, ``test_checker.py``) and that our isolated
+``test_singlefile_proof.py``, ``test_checker.py``) and that our isolated
 statements line up with the published ones (the ``test_oeis_isolation.py``
 oracle). This proves it says **yes** to the known-good proofs, end to end. It is
 the only test that catches the over-strict-checker class: an axiom-allowlist
@@ -35,7 +35,7 @@ still green.
 The ``scorer`` sandbox is brought up **once for the whole module** through
 Inspect's lifecycle from the production compose (``apn.task.get_compose_file``,
 which builds from ``apn/lean/Dockerfile``), exactly like
-``tests/test_multifile_proof.py``, and every conjecture is a parametrized async
+``tests/test_singlefile_proof.py``, and every conjecture is a parametrized async
 case that reuses it. This matters for two reasons: ``safe_verify`` materializes
 the full Mathlib environment, so each check peaks at ~20-27 GiB (see the scorer
 ``mem_limit`` note in ``apn/task.py``) -- one shared sandbox runs them
@@ -81,7 +81,7 @@ GOLD_STEMS = sorted(p.stem for p in GOLD_DIR.glob("*.lean"))
 
 def _tar_of(files: dict[str, str]) -> bytes:
     """Pack ``{relative path: contents}`` into the tar the checker consumes
-    (members relative to ``Submission/``). Mirrors ``test_multifile_proof.py``."""
+    (members relative to ``Submission/``). Mirrors ``test_singlefile_proof.py``."""
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as tf:
         for name, content in files.items():
@@ -96,7 +96,7 @@ def _tar_of(files: dict[str, str]) -> bytes:
 async def _scorer_env():
     """Bring up the production compose and yield the live ``scorer`` env.
 
-    Mirrors ``tests/test_multifile_proof.py::_scorer_env``: Inspect's sandbox
+    Mirrors ``tests/test_singlefile_proof.py::_scorer_env``: Inspect's sandbox
     lifecycle against ``apn.task.get_compose_file`` (which builds from
     ``apn/lean/Dockerfile``), so the image is current by construction.
     """

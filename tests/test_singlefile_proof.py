@@ -1,4 +1,4 @@
-"""Integration tests for multi-module submissions against the real scorer image.
+"""Integration tests for single-file submissions against the real scorer image.
 
 These exercise the *actual* :class:`apn.checker.SandboxSafeVerify` against the
 real ``scorer`` sandbox (Lean + Mathlib + FormalConjectures + the vendored
@@ -14,23 +14,23 @@ We then call ``SandboxSafeVerify(sandbox_name="scorer").check(target, submission
 with ``apn.checker.sandbox`` pointed at the live scorer env, so the verdict here
 is exactly the one the scorer would return for that submission.
 
-What they cover (the genuinely new, soundness-relevant behaviour the multi-file
-change introduces; the plumbing -- tar shaping, path validation, verdict mapping
--- is unit-tested in ``test_checker.py``):
+What they cover (the soundness-relevant behaviour of the single-file model; the
+plumbing -- tar shaping, verdict mapping -- is unit-tested in ``test_checker.py``):
 
-* a multi-file proof using a helper module is accepted;
-* a ``sorry`` in a helper is rejected transitively (``safe_verify``);
-* a custom axiom in a helper is rejected transitively;
+* a single-file proof is accepted;
+* **a submission that ``import``s a helper module of its own is rejected at
+  ``compile_submission``** -- the load-bearing single-file guard. The submission
+  is compiled standalone, ``Submission`` is not a registered Lake library, and no
+  helper olean is ever built, so ``import Submission.…`` does not resolve. This is
+  what closes the trusted-helper hole: ``safe_verify`` kernel-replays only the
+  file it is handed, trusting an *imported* module's constants rather than
+  re-checking them, so there must be no way to introduce one;
 * a pattern-matching ``def`` in the entry module + a real proof is accepted --
-  the regression guard that the module-name flip preserves the mangled private
-  (equational-lemma) names ``safe_verify`` matches by exact name;
+  the regression guard that compiling both sides at the same path preserves the
+  mangled private (equational-lemma) names ``safe_verify`` matches by exact name;
 * a missing/renamed entry module, and an empty submission, are rejected as a
   verdict (``compile_submission``; never raised, and without falling through to
   verifying the trusted target text).
-
-The path-traversal / ``.lean``-only ingestion guard (Security A) is enforced by
-the scorer *before* the checker runs and is covered by
-``test_checker.py::test_scorer_rejects_illegal_paths_without_calling_checker``.
 
 Docker is part of the test environment, so these always run -- they are not
 gated or skipped. The first run builds the images (Lean + Mathlib) from the
@@ -57,10 +57,9 @@ from apn.task import get_compose_file
 def _tar_of(files: dict[str, str]) -> bytes:
     """Pack ``{relative path: contents}`` into a tar, as the checker expects.
 
-    Members are relative to ``Submission/`` (``Spec.lean``, ``Helpers/Aux.lean``);
-    the checker unpacks with ``tar -xf -C Submission`` and tar creates the helper
-    subdirs. Stands in for what ``read_submission_tar`` produces from the agent's
-    live sandbox.
+    Members are relative to ``Submission/`` (``Spec.lean``); the checker unpacks
+    with ``tar -xf -C Submission``. Stands in for what ``read_submission_tar``
+    produces from the agent's live sandbox.
     """
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as tf:
@@ -82,7 +81,7 @@ async def _scorer_env():
     repeat runs cheap (this is the same trade-off PortBench's test harness makes).
     """
     compose = str(get_compose_file(literature=False))
-    task_name = "pytest_multifile_scorer"
+    task_name = "pytest_singlefile_scorer"
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:
         envs = await init_sandbox_environments_sample(
@@ -129,62 +128,47 @@ _IMPORT = "import FormalConjectures.Util.ProblemImports\n"
 TARGET_SIMPLE = _IMPORT + "\ntheorem tgt : 1 + 1 = 2 := by sorry\n"
 
 # A target whose statement is about a pattern-matching def -- isolates the
-# private equational-lemma names the module-name flip must preserve.
+# private equational-lemma names the same-path compile must preserve.
 TARGET_PATTERN_MATCH = (
     _IMPORT
     + "\ndef parity : Nat → Bool\n  | 0 => true\n  | (n + 1) => !parity n\n"
     + "\ntheorem tgt : parity 0 = true := by sorry\n"
 )
 
-# Entry module that proves tgt via an imported helper lemma.
-_SPEC_VIA_HELPER = (
-    _IMPORT + "import Submission.Helpers.Aux\n" + "\ntheorem tgt : 1 + 1 = 2 := aux_eq\n"
-)
-
 
 # --------------------------------------------------------------------------- #
 # Tests.                                                                        #
 # --------------------------------------------------------------------------- #
-async def test_multifile_proof_with_helper_is_accepted(monkeypatch) -> None:
-    submission = {
-        "Spec.lean": _SPEC_VIA_HELPER,
-        "Helpers/Aux.lean": _IMPORT + "\ntheorem aux_eq : 1 + 1 = 2 := by norm_num\n",
-    }
+async def test_single_file_proof_is_accepted(monkeypatch) -> None:
+    submission = {"Spec.lean": _IMPORT + "\ntheorem tgt : 1 + 1 = 2 := by norm_num\n"}
     outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail}"
 
 
-async def test_sorry_in_helper_is_rejected(monkeypatch) -> None:
+async def test_helper_import_is_rejected_at_compile(monkeypatch) -> None:
+    # The single-file guard. Even an *honest* helper is unusable: the submission
+    # is compiled standalone and `Submission` is not a registered Lake library,
+    # so `import Submission.Helpers.Aux` does not resolve and the whole
+    # submission fails to compile -- never reaching safe_verify. This is what
+    # prevents an agent from smuggling a kernel-invalid constant into an
+    # imported (and therefore *trusted*, not replayed) helper module.
     submission = {
-        "Spec.lean": _SPEC_VIA_HELPER,
-        # Builds (warn.sorry=false) but the sorry poisons tgt transitively.
-        "Helpers/Aux.lean": _IMPORT + "\ntheorem aux_eq : 1 + 1 = 2 := by sorry\n",
-    }
-    outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
-    assert not outcome.ok, f"a sorry in a helper must be rejected:\n{outcome.detail}"
-    assert outcome.stage == "safeverify"
-
-
-async def test_custom_axiom_in_helper_is_rejected(monkeypatch) -> None:
-    submission = {
-        "Spec.lean": _SPEC_VIA_HELPER,
-        "Helpers/Aux.lean": (
-            _IMPORT
-            + "\naxiom bad_ax : 1 + 1 = 2\n"
-            + "\ntheorem aux_eq : 1 + 1 = 2 := bad_ax\n"
+        "Spec.lean": (
+            _IMPORT + "import Submission.Helpers.Aux\n\ntheorem tgt : 1 + 1 = 2 := aux_eq\n"
         ),
+        "Helpers/Aux.lean": _IMPORT + "\ntheorem aux_eq : 1 + 1 = 2 := by norm_num\n",
     }
     outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
-    assert not outcome.ok, f"a custom axiom in a helper must be rejected:\n{outcome.detail}"
-    assert outcome.stage == "safeverify"
+    assert not outcome.ok, f"a helper import must be rejected:\n{outcome.detail}"
+    assert outcome.stage == "compile_submission"
 
 
 async def test_pattern_matching_def_in_entry_is_accepted(monkeypatch) -> None:
-    # Regression guard for the flip: the submission reproduces the pattern-
-    # matching def verbatim and proves the theorem. Its compiler-generated
-    # private equational lemmas mangle with the module name Submission.Spec --
-    # the same name the target got from the flip -- so safe_verify's exact-name
-    # match succeeds. A single entry module (no helper) deliberately.
+    # Regression guard: the submission reproduces the pattern-matching def
+    # verbatim and proves the theorem. Its compiler-generated private equational
+    # lemmas mangle with the module name Submission.Spec -- the same name the
+    # target got by compiling at the same path -- so safe_verify's exact-name
+    # match succeeds.
     submission = {
         "Spec.lean": (
             _IMPORT
@@ -200,9 +184,9 @@ async def test_pattern_matching_def_in_entry_is_accepted(monkeypatch) -> None:
 
 
 async def test_missing_entry_module_is_rejected(monkeypatch) -> None:
-    # Only a helper, no Spec.lean: rejected as a verdict, never raised, and
-    # without falling through to verifying the trusted target text.
-    submission = {"Helpers/Aux.lean": _IMPORT + "\ntheorem aux_eq : True := trivial\n"}
+    # A submission whose tar omits Spec.lean: rejected as a verdict, never
+    # raised, and without falling through to verifying the trusted target text.
+    submission = {"Other.lean": _IMPORT + "\ntheorem aux_eq : True := trivial\n"}
     outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
     assert not outcome.ok
     assert outcome.stage == "compile_submission"

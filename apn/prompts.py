@@ -53,8 +53,7 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
         path: Absolute path of the entry module ``Submission/Spec.lean`` inside
             the agent's sandbox (``apn.layout.ENTRY_PATH``), the file holding the
             conjecture. The agent edits it by this absolute path with
-            ``text_editor`` and may add sibling helper modules under
-            ``Submission/`` that it ``import``s.
+            ``text_editor``; the whole proof stays in this one file.
 
     Disclosing the (very large) token budget counters two observed failure
     modes: models hallucinating a short deadline ("five minutes", "an hour")
@@ -106,22 +105,17 @@ conjecture theorem, with its proof left as `sorry`. The conjecture is genuinely
 open: your job is to determine whether it is true or false and to back that
 verdict with a complete Lean proof. Edit the file with the text editor.
 
-You work inside the Lake project at `/workspace/leanproject`, in its registered
-`Submission/` source root. The conjecture lives in the entry module
-`Submission/Spec.lean` (Lean module `Submission.Spec`), at the path above. You
-do not have to keep the whole proof in one file: you may add your own helper
-modules under `Submission/` -- for example `Submission/Helpers/Parity.lean`
-(module `Submission.Helpers.Parity`) -- and `import Submission.Helpers.Parity`
-from `Spec.lean` (or from other helpers). Structure a long proof across several
-modules if that helps. Build and type-check your work in-loop with
-`lake build Submission.Spec` from the `bash` tool, which compiles the entry
-module and all the helper modules it imports, in dependency order. Only files
-under `Submission/` are part of your submission, and only the entry module's
-declarations are matched against the conjecture. The soundness check is
-transitive: any `sorry` or non-standard axiom your proof actually depends on --
-whether in `Spec.lean` or in any helper module it (transitively) imports --
-rejects the whole submission. You cannot discharge a goal the proof relies on
-with `sorry` or a custom `axiom` by hiding it in a helper.
+You work inside the Lake project at `/workspace/leanproject`. The conjecture
+lives in the entry module `Submission/Spec.lean` (Lean module `Submission.Spec`),
+at the path above. Keep your entire proof in this one file: it is the whole of
+your submission, and every declaration in it is checked. Do not add
+`import Submission.…` lines for helper modules of your own -- there is no such
+library, so they will not compile; write any auxiliary `def`s and lemmas
+directly in `Spec.lean`, above the conjecture. Build and type-check your work
+in-loop with `lake env lean Submission/Spec.lean` from the `bash` tool (or via
+PyPantograph, below). The soundness check is total: any `sorry` or non-standard
+axiom your proof depends on rejects the whole submission, so you cannot
+discharge a goal the proof relies on with `sorry` or a custom `axiom`.
 
 You have a `bash` tool giving you a shell in the workspace. From there:
 
@@ -175,18 +169,18 @@ Rules:
   rejected.
 - Keep the `FormalConjectures.Util.ProblemImports` import and the conjecture
   itself in `Spec.lean`. That one import transitively pulls in all of Mathlib
-  and the other utilities, so you need no other library imports. You MAY add
-  `import Submission.…` lines for your own helper modules; do not otherwise add
-  or remove library `import` statements.
+  and the other utilities, so you need no other library imports. Do not add or
+  remove `import` statements -- in particular, `import Submission.…` will not
+  resolve, so keep everything in this one file.
 - Your submission may depend only on Lean's three standard axioms (`propext`,
   `Classical.choice`, `Quot.sound`). Do not introduce new `axiom`s, and do not use tactics that add other axioms. 
 - Leave no `sorry` in the declaration you are submitting (a proof of `foo`, or your `foo.disproof`).
 
 Think like a mathematician: weigh the evidence for and against each conjecture,
 focus on the key insight and proof structure, and prefer clever arguments over
-brute-force casework. Submit once `lake build Submission.Spec` succeeds and the
+brute-force casework. Submit once `Submission/Spec.lean` compiles and the
 conjecture is settled (proved, or a complete `foo.disproof`) with no `sorry`
-anywhere in your `Submission/` tree.
+left in the file.
 
 Facts about this task:
 

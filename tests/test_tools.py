@@ -19,15 +19,17 @@ def test_user_prompt_references_path() -> None:
     assert PROOF_PATH in rendered
 
 
-def test_user_prompt_explains_multi_module_layout() -> None:
-    # The agent must know it can split the proof across Submission/ modules and
-    # build them with `lake build Submission.Spec`.
+def test_user_prompt_explains_single_file_layout() -> None:
+    # The agent must know its proof is a single file (Submission/Spec.lean),
+    # type-checked with `lake env lean`, and that an `import Submission.…` for a
+    # helper module of its own will NOT resolve (the proof stays in one file).
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
-    assert "Submission/" in rendered
-    assert "lake build Submission.Spec" in rendered
+    assert "Submission/Spec.lean" in rendered
     assert "Submission.Spec" in rendered
-    # The relaxed import rule: own helper imports are allowed, library ones not.
+    assert "lake env lean Submission/Spec.lean" in rendered
+    assert "one file" in rendered
     assert "import Submission" in rendered
+    assert "will not" in rendered  # "they will not compile"
 
 
 def test_user_prompt_mentions_lean_and_pypantograph() -> None:

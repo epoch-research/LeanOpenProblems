@@ -1,14 +1,14 @@
 """Tests for the SafeVerify checker's exec orchestration and the scorer wiring.
 
-``SandboxSafeVerify`` now stages a multi-module submission by unpacking the
-agent's tar directly in the scorer sandbox: it clears the prior artifacts,
-compiles the trusted target at the entry path ``Submission/Spec.lean`` (``-o
-target.olean``), removes that entry file, unpacks the submission tar into
-``Submission/``, checks the entry module is present, builds it graph-aware with
-``lake build Submission.Spec``, and runs ``safe_verify`` on the two oleans. A
-fake sandbox scripts each step's exit code to verify the verdict mapping; the
-real ``safe_verify`` exe is validated against the toolchain. The scorer tests use
-a stub checker and a fake workspace sandbox to verify the ``Submission/`` tar is
+``SandboxSafeVerify`` stages the single-file submission by unpacking the agent's
+tar directly in the scorer sandbox: it clears the prior artifacts, compiles the
+trusted target at the entry path ``Submission/Spec.lean`` (``-o target.olean``),
+removes that entry file, unpacks the submission tar into ``Submission/``, checks
+the entry module is present, compiles it standalone the same way (``-o
+submission.olean``), and runs ``safe_verify`` on the two oleans. A fake sandbox
+scripts each step's exit code to verify the verdict mapping; the real
+``safe_verify`` exe is validated against the toolchain. The scorer tests use a
+stub checker and a fake workspace sandbox to verify the ``Submission/`` tar is
 collected and handed to the checker as raw bytes.
 """
 
@@ -145,8 +145,8 @@ def _checker(
 
 
 # The eight execs of the happy path, in order: clear, mkdir, compile target,
-# remove target entry, unpack submission, check entry present, build submission,
-# run safe_verify.
+# remove target entry, unpack submission, check entry present, compile submission
+# (standalone, same as target), run safe_verify.
 def _accept_steps() -> list[Step]:
     return [_ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok(), _ok("SafeVerify check passed.")]
 
@@ -160,7 +160,7 @@ async def test_check_accepts_when_all_steps_pass(
     assert outcome.stage == "safeverify"
     # Two writes (target spec, then the submission tar bytes), then eight
     # commands: clear, mkdir, compile target, rm entry, untar, test entry,
-    # build, safe_verify.
+    # compile submission, safe_verify.
     assert len(sb.writes) == 2
     assert len(sb.commands) == 8
     assert sb.commands[0][:2] == ["rm", "-rf"]
@@ -170,10 +170,9 @@ async def test_check_accepts_when_all_steps_pass(
 async def test_check_compiles_target_at_entry_path_and_unpacks_submission(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Load-bearing for private-name matching: the target is compiled at the
-    # entry path Submission/Spec.lean (so Lean gives it module name
-    # Submission.Spec) and the submission's entry module is built as that same
-    # lib module via `lake build Submission.Spec`. See SandboxSafeVerify.check.
+    # Load-bearing for private-name matching: BOTH the target and the submission
+    # are compiled standalone at the entry path Submission/Spec.lean (so Lean
+    # gives each module name Submission.Spec). See SandboxSafeVerify.check.
     checker, sb = _checker(monkeypatch, _accept_steps())
     await checker.check("THE TARGET", b"THE TAR")
     # Target spec written to the entry path; submission tar written to its stage.
@@ -189,9 +188,12 @@ async def test_check_compiles_target_at_entry_path_and_unpacks_submission(
     assert sb.commands[4] == [
         "tar", "-xf", checker_mod.SUBMISSION_TAR, "-C", checker_mod.SUBMISSION_DIR
     ]
-    # Entry module presence checked, then built graph-aware by module name.
+    # Entry module presence checked, then compiled standalone at the same entry
+    # path the target used (its olean lands at SUBMISSION_OLEAN).
     assert sb.commands[5] == ["test", "-f", checker_mod.ENTRY_PATH]
-    assert sb.commands[6] == ["lake", "build", checker_mod.ENTRY_MODULE]
+    assert sb.commands[6] == [
+        "lake", "env", "lean", "-o", checker_mod.SUBMISSION_OLEAN, checker_mod.ENTRY_REL
+    ]
     # safe_verify runs on the two oleans, target then submission.
     assert sb.commands[7][-2:] == [checker_mod.TARGET_OLEAN, checker_mod.SUBMISSION_OLEAN]
 
@@ -205,8 +207,9 @@ async def test_check_rejects_when_untar_fails(
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
     assert outcome.stage == "compile_submission"
-    # No build was attempted after the untar failed.
-    assert not any(c[:2] == ["lake", "build"] for c in sb.commands)
+    # The submission was never compiled after the untar failed (its olean appears
+    # only in the submission compile and safe_verify, neither of which ran).
+    assert not any(checker_mod.SUBMISSION_OLEAN in c for c in sb.commands)
 
 
 async def test_check_rejects_when_entry_module_missing(
@@ -220,7 +223,7 @@ async def test_check_rejects_when_entry_module_missing(
     assert not outcome.ok
     assert outcome.stage == "compile_submission"
     assert "entry module missing" in outcome.detail
-    assert not any(c[:2] == ["lake", "build"] for c in sb.commands)
+    assert not any(checker_mod.SUBMISSION_OLEAN in c for c in sb.commands)
 
 
 async def test_check_passes_disproofs_flag_to_safe_verify(
@@ -236,7 +239,7 @@ async def test_check_passes_disproofs_flag_to_safe_verify(
     # --save requests the JSON report; the two olean paths stay positional last.
     assert "--save" in safe_verify_cmd
     assert safe_verify_cmd[-2].endswith("target.olean")
-    assert safe_verify_cmd[-1].endswith("Spec.olean")
+    assert safe_verify_cmd[-1].endswith("submission.olean")
 
 
 async def test_check_omits_disproofs_flag_when_disabled(

@@ -191,10 +191,9 @@ def lean_prover(
 
     Writes the initial Lean file (the sample's ``metadata['sketch']``) into the
     sandbox at the entry module ``Submission/Spec.lean`` and runs the agent. The
-    proof is the agent's ``Submission/`` subtree (entry module plus any helper
-    modules it adds); the scorer reads it back from there both to verify it and
-    to record the final subtree as a display tree on
-    ``state.metadata["submission_contents"]`` (see :mod:`apn.scorer`). The
+    proof is the agent's ``Submission/Spec.lean`` (a single file); the scorer
+    reads it back from there both to verify it and to record it as a display tree
+    on ``state.metadata["submission_contents"]`` (see :mod:`apn.scorer`). The
     capture lives in the scorer, not here, because the scorer always runs after
     the agent -- including when a token/time limit terminates it -- whereas code
     after the agent runs is skipped on a limit.
@@ -275,9 +274,9 @@ def lean_prover(
         # the agent on an isolated state that never propagates back; on a limit
         # it re-raises and the conversation is lost entirely.)
         #
-        # The agent authors its proof under Submission/; the scorer reads that
-        # subtree back to verify it and to record it as a display tree on the
-        # sample metadata (see apn.scorer). The scorer always runs after the
+        # The agent authors its proof at Submission/Spec.lean; the scorer reads
+        # it back to verify it and to record it as a display tree on the sample
+        # metadata (see apn.scorer). The scorer always runs after the
         # agent, including on a limit, whereas any code after the agent call
         # would be skipped on a limit.
         state.messages = [

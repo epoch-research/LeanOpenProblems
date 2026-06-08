@@ -8,7 +8,7 @@ which tars it from that sandbox (``read_submission_tar``) and verifies it in the
 exercises the exact production path an agent submission travels -- nothing is
 reimplemented, and the verdict is the one a real eval would record.
 
-This is the security counterpart to ``test_multifile_proof.py`` (which checks
+This is the security counterpart to ``test_singlefile_proof.py`` (which checks
 plumbing/acceptance). Here we assert the *secure* verdict for a battery of
 cheating attempts and honest baselines:
 
@@ -16,14 +16,17 @@ cheating attempts and honest baselines:
   weakened or missing target statement, an ``unsafe`` constant, an import-superset
   violation, and a kernel-bypassing constant injected into the *entry* module
   (caught by replay);
-* **must ACCEPT** -- honest single-file, multi-file-via-helper, definition
-  reproduction, and a genuine disproof;
-* **known vulnerability (xfail, strict)** -- a kernel-invalid constant injected
-  into a *helper* module. safe_verify kernel-replays only the entry module and
-  *trusts* imported helper oleans, so such a constant is accepted, letting the
-  agent prove ``False`` (hence anything) or "disprove" a true target. These
-  ``xfail(strict=True)`` cases document the hole and will fail loudly (XPASS) the
-  moment it is closed -- the signal to delete the marker.
+* **must REJECT -- any helper import.** The submission is compiled standalone, so
+  an ``import Submission.…`` of a helper module does not resolve and the whole
+  submission fails to compile (``compile_submission``). This closes what was once
+  a soundness hole: safe_verify kernel-replays only the file it is handed and
+  *trusts* an imported module's constants, so a kernel-invalid constant hidden in
+  a helper (built by ``INJECT`` below) used to be accepted -- letting the agent
+  prove ``False`` (hence anything) or "disprove" a true target. Now there is no
+  way to import one, so these cases are ordinary regression guards: if a future
+  change re-enables helper imports, they fail loudly;
+* **must ACCEPT** -- honest single-file, definition reproduction, and a genuine
+  disproof.
 
 Memory: these deliberately import only ``Init`` (+ ``Lean`` where a metaprogram
 needs it), not Mathlib, so safe_verify's footprint stays well under a modest
@@ -84,9 +87,6 @@ class Case:
     target: str
     files: dict[str, str]
     secure_accept: bool
-    # True for confirmed-but-unfixed holes: the secure assertion is expected to
-    # fail today (xfail, strict) and will XPASS -> fail once the fix lands.
-    vuln: bool = False
 
 
 CASES: list[Case] = [
@@ -159,15 +159,6 @@ CASES: list[Case] = [
         secure_accept=True,
     ),
     Case(
-        "honest_multi_file_helper",
-        "theorem tgt : 2 + 2 = 4 := by sorry\n",
-        {
-            "Helpers/Aux.lean": "theorem aux : 2 + 2 = 4 := by decide\n",
-            "Spec.lean": IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n",
-        },
-        secure_accept=True,
-    ),
-    Case(
         "honest_def_reproduction",
         "def foo : Nat := 7\ntheorem tgt : foo = 7 := by sorry\n",
         {"Spec.lean": "def foo : Nat := 7\ntheorem tgt : foo = 7 := by decide\n"},
@@ -179,55 +170,43 @@ CASES: list[Case] = [
         {"Spec.lean": "theorem tgt.disproof : 2 + 2 ≠ 5 := by decide\n"},
         secure_accept=True,
     ),
-    # ------------- known vulnerability: trusted imported helper ------------- #
+    # ------- helper injection: the closed hole, now must REJECT ------- #
+    # Each injects a kernel-invalid `fakeFalse : False` into a helper and uses it
+    # from the entry module. The submission is compiled standalone, so the
+    # `import Submission.Helpers.Aux` fails to resolve and the whole thing is
+    # rejected at compile_submission -- the injected helper is never even built.
     Case(
-        "vuln_unchecked_helper_proves_false",
+        "helper_inject_false_rejected",
         "theorem tgt : False := by sorry\n",
         {
             "Helpers/Aux.lean": INJECT,
             "Spec.lean": IMPORT_AUX + "theorem tgt : False := fakeFalse\n",
         },
         secure_accept=False,
-        vuln=True,
     ),
     Case(
-        "vuln_unchecked_helper_proves_false_arith",
+        "helper_inject_arith_rejected",
         "theorem tgt : 2 + 2 = 5 := by sorry\n",
         {
             "Helpers/Aux.lean": INJECT,
             "Spec.lean": IMPORT_AUX + "theorem tgt : 2 + 2 = 5 := fakeFalse.elim\n",
         },
         secure_accept=False,
-        vuln=True,
     ),
     Case(
-        "vuln_unchecked_helper_disproves_truth",
+        "helper_inject_disproof_rejected",
         "theorem tgt : 2 + 2 = 4 := by sorry\n",
         {
             "Helpers/Aux.lean": INJECT,
             "Spec.lean": IMPORT_AUX + "theorem tgt.disproof : 2 + 2 ≠ 4 := fun _ => fakeFalse\n",
         },
         secure_accept=False,
-        vuln=True,
     ),
 ]
 
 
 def _params() -> list:
-    out = []
-    for c in CASES:
-        marks = (
-            pytest.mark.xfail(
-                strict=True,
-                reason="trusted-helper hole: safe_verify replays only the entry "
-                "module and trusts imported helper oleans (see module docstring). "
-                "Delete this marker once the fix lands.",
-            )
-            if c.vuln
-            else ()
-        )
-        out.append(pytest.param(c, id=c.label, marks=marks))
-    return out
+    return [pytest.param(c, id=c.label) for c in CASES]
 
 
 # --------------------------------------------------------------------------- #
@@ -238,7 +217,7 @@ def _params() -> list:
 async def _sandboxes():
     """Bring up the production compose; yield ``(agent_env, scorer_env)``.
 
-    Same lifecycle as ``test_multifile_proof._scorer_env`` but exposes both the
+    Same lifecycle as ``test_singlefile_proof._scorer_env`` but exposes both the
     default (agent) sandbox -- where the submission tree is staged and tarred --
     and the scorer sandbox where verification runs. Per-test bring-up isolates an
     OOM/crash to a single case.

@@ -11,7 +11,7 @@ Lean + Mathlib + FormalConjectures stage plus the baked ``extract_ranges``
 binary). It is brought up through Inspect's own sandbox lifecycle
 (``task_init`` / ``init_sandbox_environments_sample`` / ``cleanup``) from a
 compose file that carries a ``build:`` section, exactly like
-``tests/test_multifile_proof.py`` and a real eval -- so docker (re)builds the
+``tests/test_singlefile_proof.py`` and a real eval -- so docker (re)builds the
 image from the current Dockerfile on demand, cache-backed, and a stale prebuilt
 image can never silently satisfy the test. No raw ``docker`` CLI, no host bind
 mount, no pre-provisioned dev container: the repo's ``.lean`` files are staged
@@ -116,7 +116,7 @@ async def _generate_env():
 
     Per-session bring-up/tear-down through Inspect's sandbox lifecycle (the same
     path a real eval uses); the docker cache keeps repeat runs cheap. Mirrors
-    ``tests/test_multifile_proof.py::_scorer_env``.
+    ``tests/test_singlefile_proof.py::_scorer_env``.
     """
     compose = _generate_compose_file()
     task_name = "pytest_oeis_isolation"
