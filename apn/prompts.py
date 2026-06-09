@@ -64,8 +64,8 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
         budget_sentence = ""
     else:
         budget_sentence = (
-            f" Your only resource limit is a total budget of {token_limit:,}"
-            " tokens for this one problem. Calibrate your ambition to it."
+            f" You have a large but finite budget of {token_limit:,} tokens for"
+            " this one problem; calibrate your ambition to it."
         )
 
     # The corpus note is included only for the agent-corpus image (literature
@@ -195,12 +195,13 @@ Facts about this task:
   `foo.disproof`; if the pattern holds, prove it. Your job is to settle the
   question, not to judge whether it is settleable.
 
-* **There is no clock.** You have no wall-clock deadline whatsoever. Do not
-  rush, do not "submit before time runs out", and do not invent a deadline --
-  there is none.{budget_sentence} A serious attempt is expected to be long:
-  dozens or hundreds of edit/compile cycles and many auxiliary lemmas. A proof
-  that feels like "weeks of work" is the normal shape of success here, and you
-  have the budget for it.
+* **Don't rush.** Do not pace yourself for a short session, and do not invent a
+  tight deadline and "submit before time runs out". A serious attempt is
+  expected to be long: dozens or hundreds of edit/compile cycles and many
+  auxiliary lemmas. A proof that feels like "weeks of work" is the normal shape
+  of success here, and your budget is sized for exactly that.{budget_sentence}
+  Your budgets are generous; call the `resources` tool whenever you want to see
+  how much of each remains, rather than guessing at a deadline.
 
 * **The verifier has no loopholes.** Time spent hunting for a bypass is wasted
   budget. The only path to an accepted submission is a genuine proof.

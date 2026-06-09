@@ -53,7 +53,7 @@ from inspect_ai.util import sandbox
 
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
-from apn.tools import bash
+from apn.tools import bash, resources
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +235,9 @@ def lean_prover(
             # the same shell also has the offline arXiv corpus at /corpus to grep
             # (the task selects the agent-corpus image; the tool set is the same).
             bash(timeout=300),
+            # Lets the agent check how much of its token/time budget remains, so
+            # it can self-pace against the configured limits instead of guessing.
+            resources(),
         ]
 
         agent = build_agent(

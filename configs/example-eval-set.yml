@@ -30,7 +30,8 @@ models:
           config:
             # Defaults to 'none' in GPT 5.4
             reasoning_effort: "medium"
-token_limit: 100_000_000
+token_limit: 1_000_000_000
+working_limit: 129_600  # 36 * 60 * 60
 
 secrets:
   - name: ANTHROPIC_API_KEY

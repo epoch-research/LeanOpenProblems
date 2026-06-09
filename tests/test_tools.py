@@ -8,7 +8,7 @@ from inspect_ai.util import ExecResult
 import apn.tools as tools_mod
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
-from apn.tools import bash
+from apn.tools import bash, resources
 
 # The solver passes the absolute entry-module path (Submission/Spec.lean).
 PROOF_PATH = ENTRY_PATH
@@ -64,6 +64,27 @@ def test_user_prompt_token_budget_rendering() -> None:
     # Without one, the budget sentence is omitted entirely.
     facts = user_prompt(PROOF_PATH, token_limit=None, literature=False).split("Facts about")[1]
     assert "tokens" not in facts
+
+
+def test_user_prompt_drops_false_no_deadline_claim() -> None:
+    # A working_limit now exists, so the old absolute "no wall-clock deadline
+    # whatsoever / there is none" claim would be a lie -- it must be gone.
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    assert "no wall-clock deadline" not in rendered
+    assert "there is none" not in rendered
+    # The anti-rush spirit is preserved, and the agent is pointed at the tool
+    # instead of being told to guess at a deadline.
+    assert "Don't rush" in rendered
+    assert "resources" in rendered
+
+
+def test_user_prompt_does_not_state_time_budget() -> None:
+    # Per the tool-only design: the time budget is discoverable via the
+    # `resources` tool, never stated as a number in the prompt.
+    rendered = user_prompt(PROOF_PATH, token_limit=1_000_000, literature=False)
+    assert "36 hours" not in rendered
+    assert "129,600" not in rendered
+    assert "working time" not in rendered.lower()
 
 
 def test_user_prompt_literature_note_gated() -> None:
@@ -135,3 +156,68 @@ async def test_bash_tool_passes_through_normal_output(
     assert isinstance(output, str)
     assert output == "hello\n"
     assert "<stdout>" not in output
+
+
+class _FakeLimit:
+    """Stand-in for inspect_ai.util.Limit with the three fields the tool reads."""
+
+    def __init__(self, *, usage: float, limit: float | None) -> None:
+        self.usage = usage
+        self.limit = limit
+
+    @property
+    def remaining(self) -> float | None:
+        if self.limit is None:
+            return None
+        return self.limit - self.usage
+
+
+class _FakeSampleLimits:
+    def __init__(self, *, token: _FakeLimit, working: _FakeLimit) -> None:
+        self.token = token
+        self.working = working
+
+
+def test_format_duration_compact() -> None:
+    assert tools_mod._format_duration(0) == "0s"
+    assert tools_mod._format_duration(129_600) == "36h"  # 36h exactly, no m/s
+    assert tools_mod._format_duration(45) == "45s"
+    assert tools_mod._format_duration(3 * 3600 + 25 * 60) == "3h 25m"
+
+
+async def test_resources_tool_reports_token_and_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        tools_mod,
+        "sample_limits",
+        lambda: _FakeSampleLimits(
+            token=_FakeLimit(usage=10_000, limit=1_000_000),
+            working=_FakeLimit(usage=3600, limit=129_600),
+        ),
+    )
+    output = await resources()()
+    assert output == (
+        "Tokens: 10,000 used, 990,000 remaining (budget 1,000,000)\n"
+        "Time: 1h used, 35h remaining (budget 36h)"
+    )
+
+
+async def test_resources_tool_handles_unset_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # When a budget is not configured (limit is None), the tool says so rather
+    # than reporting a bogus "remaining".
+    monkeypatch.setattr(
+        tools_mod,
+        "sample_limits",
+        lambda: _FakeSampleLimits(
+            token=_FakeLimit(usage=500, limit=None),
+            working=_FakeLimit(usage=120, limit=None),
+        ),
+    )
+    output = await resources()()
+    assert output == (
+        "Tokens: 500 used (no limit set)\n"
+        "Time: 2m used (no limit set)"
+    )
