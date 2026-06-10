@@ -18,6 +18,12 @@ find papers by topic, then read their ``src/<id>/`` directory. The 2022
 proof-pile snapshot is leak-safe by construction (it predates the benchmark
 paper), so we don't top it up with newer papers.
 
+Invariant: no arxiv row is dropped without an explicit, intended reason
+(superseded version, --max-papers cap). A row whose meta.file we can't parse,
+or whose path is unsafe, fails the build with examples -- it once cost 45% of
+the corpus when single-file submissions (bare ``<id>.tex``) didn't match the
+shapes this script knew about and were skipped silently.
+
 Local eyeball (after fetch.py populated ./shards and ./meta)::
 
     uv run --with pyarrow python apn/lean/build_corpus.py \\
@@ -39,30 +45,52 @@ from pathlib import Path
 # already safely below this -- the check is a cheap tripwire, not the defense.
 CUTOFF_DATE = "2026-05-01"
 
+# How many offending meta.file values to show when failing the build.
+MAX_EXAMPLES = 20
+
+
+def _canonical_id(raw_id: str) -> str | None:
+    """Map a proof-pile raw arXiv id to canonical form, or None if unrecognized."""
+    if re.fullmatch(r"\d{4}\.\d{4,5}", raw_id):
+        return raw_id  # modern: 1812.02537
+    if re.fullmatch(r"[a-z-]+(\.[A-Z]{2})?\d{7}", raw_id):
+        # pre-2007: reinsert the slash arXiv (and the metadata dump) use, e.g.
+        # math0211159 -> math/0211159, math.AG0501001 -> math.AG/0501001.
+        return re.sub(r"(\d{7})$", r"/\1", raw_id)
+    return None
+
 
 def parse_arxiv_path(file_field: str) -> tuple[str, int, str] | None:
     """Parse a proof-pile arxiv ``meta.file`` into ``(canonical_id, version, rest)``.
 
-    Paths look like ``1812.02537/v5 arxiv/sections/5_interpolation.tex`` (modern)
-    or ``math0211159/v2 arxiv/main.tex`` (pre-2007 scheme, slash dropped). Returns
-    ``None`` for anything we can't confidently identify.
+    Two shapes exist in the data:
+
+    * multi-file submissions: ``1812.02537/v5 arxiv/sections/5_interp.tex``
+      (modern) or ``math0211159/v2 arxiv/main.tex`` (pre-2007 scheme, slash
+      dropped);
+    * single-file submissions: a bare ``0911.5478.tex`` / ``math0406055.tex``
+      with no directory or version segment. These carry no version info (the
+      snapshot holds whichever version arXiv served at dump time); we record
+      them as version 1.
+
+    Returns ``None`` for anything we can't confidently identify; build_source
+    treats that as a build failure, not a row to skip.
     """
-    parts = file_field.split("/")
-    if len(parts) < 2:
+    field = file_field.strip()
+    parts = field.split("/")
+    if len(parts) == 1:
+        if not field.endswith(".tex"):
+            return None
+        canonical = _canonical_id(field[: -len(".tex")])
+        if canonical is None:
+            return None
+        return canonical, 1, field
+    canonical = _canonical_id(parts[0].strip())
+    if canonical is None:
         return None
-    raw_id = parts[0].strip()
     vm = re.search(r"v(\d+)", parts[1])
     version = int(vm.group(1)) if vm else 1
     rest = "/".join(parts[2:]) if len(parts) > 2 else parts[1]
-
-    if re.fullmatch(r"\d{4}\.\d{4,5}", raw_id):
-        canonical = raw_id  # modern: 1812.02537
-    elif re.fullmatch(r"[a-z-]+(\.[A-Z]{2})?\d{7}", raw_id):
-        # pre-2007: reinsert the slash arXiv (and the metadata dump) use, e.g.
-        # math0211159 -> math/0211159, math.AG0501001 -> math.AG/0501001.
-        canonical = re.sub(r"(\d{7})$", r"/\1", raw_id)
-    else:
-        return None
     return canonical, version, rest
 
 
@@ -79,8 +107,12 @@ def safe_rest(rest: str) -> str | None:
     return "/".join(parts)
 
 
-def iter_arxiv_rows(shard_paths: list[Path]) -> Iterator[tuple[str, int, str, str]]:
-    """Yield ``(canonical_id, version, rest, text)`` for every arxiv .tex row."""
+def iter_arxiv_rows(shard_paths: list[Path]) -> Iterator[tuple[str, str]]:
+    """Yield ``(meta_file, text)`` for every arxiv row, unparsed.
+
+    Parsing stays in the caller so unparseable rows can fail the build there
+    instead of being skipped inside the iterator.
+    """
     for shard in shard_paths:
         with gzip.open(shard, "rt", encoding="utf-8", errors="replace") as fh:
             for line in fh:
@@ -94,11 +126,7 @@ def iter_arxiv_rows(shard_paths: list[Path]) -> Iterator[tuple[str, int, str, st
                 meta = row.get("meta") or {}
                 if meta.get("config") != "arxiv":
                     continue
-                parsed = parse_arxiv_path(str(meta.get("file", "")))
-                if parsed is None:
-                    continue
-                canonical, version, rest = parsed
-                yield canonical, version, rest, row.get("text", "")
+                yield str(meta.get("file", "")), row.get("text", "")
 
 
 def build_source(shard_paths: list[Path], out: Path, max_papers: int | None) -> dict[str, str]:
@@ -108,15 +136,35 @@ def build_source(shard_paths: list[Path], out: Path, max_papers: int | None) -> 
     under a per-paper directory. Only the latest version of each paper is kept.
     Returns ``{canonical_id: "src/<dir>"}`` to drive the metadata join.
 
+    Raises RuntimeError -- failing the build -- on any row whose meta.file
+    shape is unrecognized or whose path is unsafe. A row we don't understand is
+    a bug to investigate (teach parse_arxiv_path the new shape), never
+    something to drop quietly.
+
     Pass 1 finds the latest version per id (small: id -> int). Pass 2 streams the
     rows again and writes each chosen-version file -- bounded memory.
     """
     print("pass 1/2: resolving latest version per paper", flush=True)
     best: dict[str, int] = {}
-    for canonical, version, _rest, _text in iter_arxiv_rows(shard_paths):
+    unparsed = 0
+    unparsed_examples: list[str] = []
+    for file_field, _text in iter_arxiv_rows(shard_paths):
+        parsed = parse_arxiv_path(file_field)
+        if parsed is None:
+            unparsed += 1
+            if len(unparsed_examples) < MAX_EXAMPLES:
+                unparsed_examples.append(file_field)
+            continue
+        canonical, version, _rest = parsed
         if version > best.get(canonical, 0):
             best[canonical] = version
     print(f"  {len(best)} distinct papers", flush=True)
+    if unparsed:
+        raise RuntimeError(
+            f"{unparsed} arxiv rows have an unrecognized meta.file shape; the corpus "
+            f"would silently lose those papers. Teach parse_arxiv_path the new shape. "
+            f"Examples: {unparsed_examples}"
+        )
 
     keep = set(best)
     if max_papers is not None:
@@ -131,12 +179,19 @@ def build_source(shard_paths: list[Path], out: Path, max_papers: int | None) -> 
     print("pass 2/2: writing src/<id>/<file>.tex", flush=True)
     written: dict[str, str] = {}
     files = 0
-    for canonical, version, rest, text in iter_arxiv_rows(shard_paths):
+    for file_field, text in iter_arxiv_rows(shard_paths):
+        parsed = parse_arxiv_path(file_field)
+        if parsed is None:
+            continue  # pass 1 already proved there are none
+        canonical, version, rest = parsed
         if canonical not in keep or version != best[canonical]:
             continue
         rel_rest = safe_rest(rest)
         if rel_rest is None:
-            continue
+            raise RuntimeError(
+                f"unsafe path in arxiv row {file_field!r}; understand it before "
+                f"shipping a corpus."
+            )
         sid = safe_id(canonical)
         dest = src_dir / sid / rel_rest
         dest.parent.mkdir(parents=True, exist_ok=True)
