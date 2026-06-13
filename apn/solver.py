@@ -123,11 +123,7 @@ def submit() -> Tool:
     """
 
     async def execute() -> ToolResult:
-        """Submit the proof for verification.
-
-        Call this once the file compiles with no remaining `sorry`. Takes no
-        arguments: your edited file is the submission.
-        """
+        """Submit the proof for verification."""
         return "Submitted."
 
     return execute

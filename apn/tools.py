@@ -104,12 +104,7 @@ def resources() -> Tool:
     """A tool that reports the agent's remaining token and time budgets."""
 
     async def execute() -> str:
-        """Check how much of your token and time budget remains.
-
-        Takes no arguments. Reports how much you have used so far and how much is
-        left of each budget. Consult it whenever you want to gauge how much room
-        you have left rather than guessing.
-        """
+        """Check how much of your token and time budget remains."""
         limits = sample_limits()
         return "\n".join(
             [
