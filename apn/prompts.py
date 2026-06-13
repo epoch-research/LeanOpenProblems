@@ -69,24 +69,6 @@ hundreds of thousands of lines of Lean. Check remaining resources using the `res
 
 
 def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
-    """The complete user prompt handed to the agent.
-
-    The agent is given no system prompt: everything it is told -- role and
-    workflow guidance, the disproof/negation rules, the arXiv note (only when
-    the literature tools are enabled), and the line naming the file to settle --
-    is assembled here into this single user message.
-
-    Args:
-        path: Absolute path of the entry module ``Submission/Spec.lean`` inside
-            the agent's sandbox (``apn.layout.ENTRY_PATH``), the file holding the
-            conjecture. The agent edits it by this absolute path with
-            ``text_editor``; the whole proof stays in this one file.
-
-    Disclosing the (very large) token budget counters two observed failure
-    modes: models hallucinating a short deadline ("five minutes", "an hour")
-    and models pacing themselves for a normal-length session. When no token
-    limit is configured the budget sentence is omitted.
-    """
     parts = []
 
     if literature:
