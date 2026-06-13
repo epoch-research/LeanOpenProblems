@@ -160,6 +160,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         sagemath python3-numpy python3-sympy python3-mpmath \
     && rm -rf /var/lib/apt/lists/*
 
+# jq: a JSON CLI for the agent's `bash` tool (git is already in `base`). A cheap
+# layer kept after the sagemath layer so editing it never busts that cache.
+RUN apt-get update && apt-get install -y --no-install-recommends jq \
+    && rm -rf /var/lib/apt/lists/*
+
 CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
