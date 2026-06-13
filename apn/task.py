@@ -183,7 +183,7 @@ def get_compose_file(literature: bool = False) -> Path:
 @task
 def apn_oeis(
     subset: str | None = None,
-    gated: bool = False,
+    gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
