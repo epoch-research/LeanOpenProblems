@@ -99,7 +99,7 @@ Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib
-* `git`, `rg`, and `jq`
+* `git`, `rg`/`grep`, and `jq`
 * The `sage` computer algebra system
 * `python` with the following libraries: {', '.join(f'`{lib}`' for lib in PYTHON_LIBS)}.
 * Documentation for libraries is available at `/opt/`
