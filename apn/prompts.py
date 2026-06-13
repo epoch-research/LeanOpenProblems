@@ -102,7 +102,7 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
 Settle the conjecture in the Lean file `{PROOF_PATH}`: either replace its `sorry` with a complete proof, or disprove it by deleting the original `theorem foo ... := sorry` and adding a `foo.disproof` theorem proving its negation. Do not alter the statement of the conjecture.
 
 If disproving, write a `foo.disproof` theorem whose type is the negation of the original conjecture,
-according to the specific negateExpr function below.
+according to the specific `negateExpr` function below.
 
 ```lean
 {NEGATE_EXPR_SOURCE}
@@ -113,13 +113,13 @@ Work inside the Lake project at `/workspace/leanproject`. Your final proof must 
 In your final submission file {PROOF_PATH}, do not add or remove `import` statements. The `FormalConjectures.Util.ProblemImports` import transitively pulls in all of Mathlib, and other
 utilities.
 
-Your submission may depend only on the following axioms: {', '.join(AXIOMS)}. 
+Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in AXIOMS)}.
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib
 * `git` for version control 
-* `python` with the following libraries: {', '.join(PYTHON_LIBS)}. 
-* Documentation for libraries is available at /opt/
+* `python` with the following libraries: {', '.join(f'`{lib}`' for lib in PYTHON_LIBS)}.
+* Documentation for libraries is available at `/opt/`
 """)
 
     parts.append(encouragement_prompt())
