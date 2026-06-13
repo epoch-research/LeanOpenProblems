@@ -105,6 +105,8 @@ Your environment has the following available:
 * The `sage` computer algebra system
 * `python` with the following libraries: {', '.join(f'`{lib}`' for lib in PYTHON_LIBS)}.
 * Documentation for libraries is available at `/opt/`
+
+Blindly searching for counterexamples using numerics is rarely a good approach. 
 """)
 
     parts.append(encouragement_prompt())
