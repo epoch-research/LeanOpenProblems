@@ -180,7 +180,7 @@ class SandboxSafeVerify:
         self,
         sandbox_name: str | None = None,
         compile_sandbox_name: str = "compile",
-        timeout: int = 900,
+        timeout: int = 30*60,
         allow_disproofs: bool = True,
     ) -> None:
         # The TRUSTED verify sandbox (trusted-target compile + safe_verify). Kept
