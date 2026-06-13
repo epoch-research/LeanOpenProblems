@@ -97,6 +97,8 @@ utilities.
 
 Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in AXIOMS)}.
 
+Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.  
+
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib
 * `git`, `rg`/`grep`, and `jq`
