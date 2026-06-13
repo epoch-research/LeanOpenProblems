@@ -95,9 +95,7 @@ Work inside the Lake project at `/workspace/leanproject`. Your final proof must 
 In your final submission file `{PROOF_PATH}`, do not add or remove `import` statements. The `FormalConjectures.Util.ProblemImports` import transitively pulls in all of Mathlib, and other
 utilities.
 
-Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in AXIOMS)}.
-
-Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.  
+Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.  
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib
