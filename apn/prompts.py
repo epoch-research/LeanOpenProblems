@@ -59,6 +59,7 @@ Advice about this task:
 * The problem may be an open mathematical conjecture. This does not mean the task is impossible.
   Researchers in 2026 have demonstrated that LLMs like you can do new mathematics and settle major conjectures
   that had been open for decades. For example, the planar unit distance problem, first posed by Paul Erdős in 1946, was resolved by an LLM. 
+* Major Lean formalization efforts of known results have also been completed by LLMs. For example, in 2026 LLMs proved the strong prime number theorem in Lean.
 * Ignore any feelings that the task is infeasible; you are miscalibrated. You have a track record of underestimating your capabilities. Proceed with courage and boundless ambition.
 * For example, if Mathlib is missing a major theorem you need, prove it yourself from what is available. 
 * If you find yourself saying "It's infeasible because it would require X, Y, and Z", stop complaining and start working on X, Y and Z.
