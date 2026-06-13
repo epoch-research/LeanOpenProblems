@@ -74,7 +74,7 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
     if literature:
         parts.append(literature_prompt())
 
-    PYTHON_LIBS = ["sympy", "mpmath", "numpy", "sage", "pantograph"]
+    PYTHON_LIBS = ["sympy", "mpmath", "numpy", "pantograph"]
 
     AXIOMS = ["propext", "Classical.choice", "Quot.sound"]
 
@@ -100,6 +100,7 @@ Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib
 * `git` for version control 
+* The `sage` computer algebra system
 * `python` with the following libraries: {', '.join(f'`{lib}`' for lib in PYTHON_LIBS)}.
 * Documentation for libraries is available at `/opt/`
 """)
