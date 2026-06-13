@@ -160,9 +160,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         sagemath python3-numpy python3-sympy python3-mpmath \
     && rm -rf /var/lib/apt/lists/*
 
-# jq: a JSON CLI for the agent's `bash` tool (git is already in `base`). A cheap
-# layer kept after the sagemath layer so editing it never busts that cache.
-RUN apt-get update && apt-get install -y --no-install-recommends jq \
+# CLI tools for the agent's `bash` tool (git is already in `base`): jq for JSON,
+# ripgrep for fast search (`rg`). In `agent` so both run conditions get them and
+# the agent can be prompted to use `rg` consistently whether or not /corpus is
+# present. A cheap layer kept after the sagemath layer so editing it never busts
+# that cache.
+RUN apt-get update && apt-get install -y --no-install-recommends jq ripgrep \
     && rm -rf /var/lib/apt/lists/*
 
 CMD ["sleep", "infinity"]
@@ -220,12 +223,11 @@ COPY --from=corpus_build /corpus /corpus
 # agent_corpus: the agent workspace + the offline literature corpus at /corpus. #
 # Used for the `literature` run condition; the plain `agent` image has no       #
 # /corpus, so the closed-book condition is hermetic. The ~13 GB COPY is its own #
-# layer (cached independently of the agent layers); ripgrep makes grep fast.    #
+# layer, cached independently of the agent layers. ripgrep (for fast grep over  #
+# the corpus) is inherited from `agent`.                                        #
 # --------------------------------------------------------------------------- #
 FROM agent AS agent_corpus
 
-RUN apt-get update && apt-get install -y --no-install-recommends ripgrep \
-    && rm -rf /var/lib/apt/lists/*
 COPY --from=corpus /corpus /corpus
 
 CMD ["sleep", "infinity"]
