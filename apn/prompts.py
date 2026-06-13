@@ -71,9 +71,6 @@ hundreds of thousands of lines of Lean. Check remaining resources using the `res
 def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
     parts = []
 
-    if literature:
-        parts.append(literature_prompt())
-
     PYTHON_LIBS = ["sympy", "mpmath", "numpy", "pantograph"]
 
     AXIOMS = ["propext", "Classical.choice", "Quot.sound"]
@@ -106,6 +103,9 @@ Your environment has the following available:
 
 Blindly searching for counterexamples using numerics is rarely a good approach. 
 """)
+
+    if literature:
+        parts.append(literature_prompt())
 
     parts.append(encouragement_prompt())
 
