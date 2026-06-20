@@ -43,11 +43,12 @@ def test_user_prompt_mentions_lean_and_pypantograph() -> None:
 
 def test_user_prompt_explains_disproof_convention() -> None:
     # The agent must know it can disprove, and how: the `foo.disproof` naming
-    # convention and the literal `negateExpr` the verifier applies to the target.
+    # convention and that the disproof type is `¬` of the verbatim statement
+    # (the verifier kernel-checks it against `negateExpr`, which is now plain `¬`).
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
     assert "disprove" in rendered.lower()
     assert "foo.disproof" in rendered
-    assert "negateExpr" in rendered
+    assert "¬" in rendered
 
 
 def test_user_prompt_mentions_prove_or_disprove() -> None:
