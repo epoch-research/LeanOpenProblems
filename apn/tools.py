@@ -123,7 +123,7 @@ def resources() -> Tool:
         # so it's unambiguous) then list them all -- a limit the eval didn't set
         # just reads "no limit set" -- so the agent paces against whichever binds
         # first without having to reason about which one that is.
-        header = f"Reaching any of these {len(lines)} limits ends the task:"
+        header = f"Reaching any of the limits ends the task. "
         return "\n".join([header, *lines])
 
     return execute
