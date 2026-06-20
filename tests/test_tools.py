@@ -139,8 +139,16 @@ class _FakeLimit:
 
 
 class _FakeSampleLimits:
-    def __init__(self, *, token: _FakeLimit, working: _FakeLimit) -> None:
-        self.token = token
+    def __init__(
+        self,
+        *,
+        working: _FakeLimit,
+        token: _FakeLimit | None = None,
+        cost: _FakeLimit | None = None,
+    ) -> None:
+        # Default to "no limit set" for the spend limits not under test.
+        self.token = token or _FakeLimit(usage=0, limit=None)
+        self.cost = cost or _FakeLimit(usage=0, limit=None)
         self.working = working
 
 
@@ -151,9 +159,14 @@ def test_format_duration_compact() -> None:
     assert tools_mod._format_duration(3 * 3600 + 25 * 60) == "3h 25m"
 
 
-async def test_resources_tool_reports_token_and_time(
+_HEADER = "Reaching any of these 3 limits ends the task:"
+
+
+async def test_resources_tool_lists_all_limits_with_header(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # All limits are always listed under the "any one ends the task" header. Here
+    # a token-limited run (no cost limit): Cost reads "(no limit set)".
     monkeypatch.setattr(
         tools_mod,
         "sample_limits",
@@ -164,16 +177,39 @@ async def test_resources_tool_reports_token_and_time(
     )
     output = await resources()()
     assert output == (
-        "Tokens: 10,000 used, 990,000 remaining (budget 1,000,000)\n"
-        "Time: 1h used, 35h remaining (budget 36h)"
+        f"{_HEADER}\n"
+        "- Cost: $0.00 used (no limit set)\n"
+        "- Tokens: 10,000 used, 990,000 remaining (limit 1,000,000)\n"
+        "- Time: 1h used, 35h remaining (limit 36h)"
     )
 
 
-async def test_resources_tool_handles_unset_limit(
+async def test_resources_tool_reports_cost_in_usd(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # When a budget is not configured (limit is None), the tool says so rather
-    # than reporting a bogus "remaining".
+    # A cost-limited run (no token limit): Cost shows USD, Tokens "(no limit set)".
+    monkeypatch.setattr(
+        tools_mod,
+        "sample_limits",
+        lambda: _FakeSampleLimits(
+            cost=_FakeLimit(usage=1.5, limit=200.0),
+            working=_FakeLimit(usage=3600, limit=259_200),
+        ),
+    )
+    output = await resources()()
+    assert output == (
+        f"{_HEADER}\n"
+        "- Cost: $1.50 used, $198.50 remaining (limit $200.00)\n"
+        "- Tokens: 0 used (no limit set)\n"
+        "- Time: 1h used, 71h remaining (limit 72h)"
+    )
+
+
+async def test_resources_tool_handles_all_limits_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # With nothing configured, every line reads "(no limit set)" -- the header
+    # makes clear that an unset dimension simply doesn't bound the run.
     monkeypatch.setattr(
         tools_mod,
         "sample_limits",
@@ -184,6 +220,8 @@ async def test_resources_tool_handles_unset_limit(
     )
     output = await resources()()
     assert output == (
-        "Tokens: 500 used (no limit set)\n"
-        "Time: 2m used (no limit set)"
+        f"{_HEADER}\n"
+        "- Cost: $0.00 used (no limit set)\n"
+        "- Tokens: 500 used (no limit set)\n"
+        "- Time: 2m used (no limit set)"
     )
