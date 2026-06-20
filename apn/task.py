@@ -203,7 +203,8 @@ def apn_oeis(
 
     Args:
         subset: Optional name of a predefined OEIS subset (a ``*.txt`` file under
-            ``apn/data/oeis/subsets/``, e.g. ``"proved38"`` or ``"unproved40"``) to
+            ``apn/data/oeis/subsets/``, e.g. ``"tsoukalas_proved_38"`` or
+            ``"tsoukalas_unproved_40"``) to
             restrict the run to; defaults to all 492. Using a named subset rather
             than an inline name list keeps eval-set configs terse and gives each
             subset a stable, distinct Inspect task identifier.

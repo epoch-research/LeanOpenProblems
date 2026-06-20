@@ -1,7 +1,7 @@
 # Vendored gold proofs (AlphaProof Nexus, OEIS)
 
 The 38 `.lean` files here are **verbatim copies** of the AlphaProof Nexus paper's
-published, complete (`sorry`-free) proofs for the `proved38` OEIS conjectures,
+published, complete (`sorry`-free) proofs for the `tsoukalas_proved_38` OEIS conjectures,
 taken from the upstream results repo at
 `reference_sources/alphaproof-nexus-results/APNOutputs/OEIS/*.lean`.
 

@@ -1,4 +1,4 @@
-# proved38 -- the 38 OEIS conjectures with published AlphaProof Nexus proof
+# tsoukalas_proved_38 -- the 38 OEIS conjectures with published AlphaProof Nexus proof
 # outputs. One conjecture theorem name per line; blank lines and #-comments are
 # ignored. Referenced by name from configs/example-eval-set.yml.
 #

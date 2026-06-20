@@ -8,8 +8,8 @@ colored on a red→green gradient by the problem's **solve rate** (fraction of
 epochs that scored CORRECT, ``proof_scorer == "C"``); problems with no score are
 gray.
 
-Each plot states its dataset subset — ``proved38`` (proofs already known) vs
-``unproved40`` (open problems) vs ``lite`` — which dominates token usage and
+Each plot states its dataset subset — ``tsoukalas_proved_38`` (proofs already
+known) vs ``tsoukalas_unproved_40`` (open problems) vs ``lite`` — which dominates token usage and
 therefore cost, so comparisons are only meaningful within the same subset.
 
 Runs that are unreliable are dropped: if more than ``MAX_UNSCORED_FRAC`` of a
@@ -65,7 +65,7 @@ def _load_subset(name: str) -> set[str]:
     return {_norm_id(ln) for ln in path.read_text().splitlines() if ln.strip() and not ln.startswith("#")}
 
 
-_SUBSET_SETS = {name: _load_subset(name) for name in ("proved38", "unproved40", "lite")}
+_SUBSET_SETS = {name: _load_subset(name) for name in ("tsoukalas_proved_38", "tsoukalas_unproved_40", "lite")}
 
 
 def classify_subset(sample_ids: list[str], task_subset: str | None) -> str:

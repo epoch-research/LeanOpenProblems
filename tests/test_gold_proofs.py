@@ -2,7 +2,7 @@
 
 The repo vendors the AlphaProof Nexus paper's solved proofs under
 ``tests/data/gold_proofs/`` -- one complete, ``sorry``-free Lean proof per
-conjecture in the ``proved38`` subset (committed copies of the upstream
+conjecture in the ``tsoukalas_proved_38`` subset (committed copies of the upstream
 ``reference_sources/.../APNOutputs/OEIS`` files, which are gitignored and absent
 in CI; see that dir's README). This test runs each of them through the *real*
 :class:`apn.checker.SandboxSafeVerify` against the live ``scorer`` sandbox -- the
@@ -131,7 +131,7 @@ async def _sandbox_envs():
 def _target_theorem(spec_text: str) -> str:
     """The single target theorem's name in an isolated spec.
 
-    Every isolated spec in proved38 declares exactly one theorem (the conjecture
+    Every isolated spec in tsoukalas_proved_38 declares exactly one theorem (the conjecture
     target; the cut keeps no surviving dependency lemmas for these), so this is
     unambiguous -- and it is the name ``safe_verify`` will require the submission
     to match."""
