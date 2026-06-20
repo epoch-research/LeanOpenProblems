@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+# Verbatim copy of `negateExpr` from apn/lean/safeverify/SafeVerify/Util.lean.
+# The disproof checker there (`checkNegatedTheorem`) applies this function to the
+# target theorem's type and kernel-checks the agent's `foo.disproof` against the
+# result, so we show the agent the exact source. Keep this in sync with Util.lean.
+NEGATE_EXPR_SOURCE = """\
+private def negateExpr (e : Expr) : MetaM Expr := do
+  let e := (← instantiateMVars e).cleanupAnnotations
+  return mkNot e"""
+
 
 def literature_prompt() -> str:
     N_PAPERS = 475_000
@@ -39,7 +48,11 @@ def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
     parts.append(f"""\
 Settle the conjecture in the Lean file `{PROOF_PATH}`: either replace its `sorry` with a complete proof, or disprove it by deleting the original `theorem foo ... := sorry` and adding a `foo.disproof` theorem proving its negation. Do not alter the statement of the conjecture.
 
-If disproving, the type of `foo.disproof` must be the negation of the original conjecture: take the conjecture's exact statement, move any hypothesis binders into the type, and prepend `¬`. For example, to disprove `theorem foo (n : ℕ) (h : 0 < n) : P n := sorry`, submit `theorem foo.disproof : ¬ (∀ (n : ℕ), 0 < n → P n) := by ...`. The verifier kernel-checks that this type is the negation of the original, so it must be `¬` of the statement verbatim; you may then prove it however you like (e.g. `push_neg`, `by_contra`, an explicit counterexample).
+If disproving, write a `foo.disproof` theorem whose type is the negation (prepending `¬`) of the original conjecture, according to the specific `negateExpr` function:
+
+```lean
+{NEGATE_EXPR_SOURCE}
+```
 
 Work inside the Lake project at `/workspace/leanproject`. Your final proof must be in the single file `{PROOF_PATH}`. You may use other files as you develop your proof.
 
