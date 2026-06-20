@@ -177,7 +177,7 @@ wheels = [
 
 [[package]]
 name = "apn"
-version = "0.1.4rc6"
+version = "0.1.4rc7"
 source = { editable = "." }
 dependencies = [
     { name = "inspect-ai" },
