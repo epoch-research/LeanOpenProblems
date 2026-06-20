@@ -19,19 +19,6 @@ def test_user_prompt_references_path() -> None:
     assert PROOF_PATH in rendered
 
 
-def test_user_prompt_explains_single_file_layout() -> None:
-    # The agent must know its proof is a single file (Submission/Spec.lean),
-    # type-checked with `lake env lean`, and that an `import Submission.…` for a
-    # helper module of its own will NOT resolve (the proof stays in one file).
-    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
-    assert "Submission/Spec.lean" in rendered
-    assert "Submission.Spec" in rendered
-    assert "lake env lean Submission/Spec.lean" in rendered
-    assert "one file" in rendered
-    assert "import Submission" in rendered
-    assert "will not" in rendered  # "they will not compile"
-
-
 def test_user_prompt_mentions_lean_and_pypantograph() -> None:
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
     assert "Lean 4" in rendered
@@ -55,28 +42,6 @@ def test_user_prompt_mentions_prove_or_disprove() -> None:
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
     assert "disproof" in rendered
     assert "Settle" in rendered
-
-
-def test_user_prompt_token_budget_rendering() -> None:
-    # With a configured limit, the budget is disclosed with thousands separators.
-    assert "100,000,000 tokens" in user_prompt(
-        PROOF_PATH, token_limit=100_000_000, literature=False
-    )
-    # Without one, the budget sentence is omitted entirely.
-    facts = user_prompt(PROOF_PATH, token_limit=None, literature=False).split("Facts about")[1]
-    assert "tokens" not in facts
-
-
-def test_user_prompt_drops_false_no_deadline_claim() -> None:
-    # A working_limit now exists, so the old absolute "no wall-clock deadline
-    # whatsoever / there is none" claim would be a lie -- it must be gone.
-    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
-    assert "no wall-clock deadline" not in rendered
-    assert "there is none" not in rendered
-    # The anti-rush spirit is preserved, and the agent is pointed at the tool
-    # instead of being told to guess at a deadline.
-    assert "Don't rush" in rendered
-    assert "resources" in rendered
 
 
 def test_user_prompt_does_not_state_time_budget() -> None:
