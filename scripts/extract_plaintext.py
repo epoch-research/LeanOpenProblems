@@ -35,9 +35,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from collections import Counter
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 from inspect_ai.log import (
@@ -490,6 +492,19 @@ def main():
         help="Extract only these sample IDs (repeatable, e.g. -s foo -s bar)",
     )
     parser.add_argument("--list-samples", action="store_true", help="List sample IDs and exit")
+    parser.add_argument(
+        "--parallel",
+        nargs="?",
+        type=int,
+        const=os.cpu_count() or 4,
+        default=1,
+        metavar="N",
+        help=(
+            "Process eval files concurrently across N worker processes "
+            "(default 1 = sequential; bare --parallel uses all CPUs). Each worker "
+            "loads a full log into memory, so lower N if the large runs exhaust RAM."
+        ),
+    )
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument(
         "--compaction-summaries",
@@ -526,12 +541,39 @@ def main():
     write_compactions = not args.messages_only
     write_messages = not args.compaction_summaries
 
-    for eval_path in eval_paths:
+    def out_dir_for(eval_path: Path) -> Path:
         if collection_mode:
-            out_dir = Path(args.output_dir) / eval_path.stem if args.output_dir else _default_output_dir(eval_path)
+            return Path(args.output_dir) / eval_path.stem if args.output_dir else _default_output_dir(eval_path)
+        return Path(args.output_dir) if args.output_dir else _default_output_dir(eval_path)
+
+    tasks = [(eval_path, out_dir_for(eval_path)) for eval_path in eval_paths]
+    workers = min(args.parallel, len(tasks))
+
+    if workers > 1:
+        print(f"Extracting {len(tasks)} eval file(s) across {workers} workers", file=sys.stderr)
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(
+                    _extract_eval_file,
+                    eval_path,
+                    out_dir,
+                    sample_ids,
+                    write_compactions=write_compactions,
+                    write_messages=write_messages,
+                ): eval_path
+                for eval_path, out_dir in tasks
+            }
+            for future in as_completed(futures):
+                eval_path = futures[future]
+                try:
+                    future.result()
+                except Exception as e:  # noqa: BLE001 — report and keep going
+                    print(f"ERROR extracting {eval_path}: {e}", file=sys.stderr)
+        return
+
+    for eval_path, out_dir in tasks:
+        if collection_mode:
             print(f"Extracting {eval_path} -> {out_dir}", file=sys.stderr)
-        else:
-            out_dir = Path(args.output_dir) if args.output_dir else _default_output_dir(eval_path)
         _extract_eval_file(
             eval_path,
             out_dir,
