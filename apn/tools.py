@@ -111,7 +111,7 @@ def resources() -> Tool:
         """Check your remaining limits (cost, tokens, time)."""
         limits = sample_limits()
         lines = [
-            _resource_line("Cost", limits.cost, _format_usd),
+            _resource_line("Token cost", limits.cost, _format_usd),
             _resource_line("Tokens", limits.token, _format_tokens),
             # We surface the *working*-time limit -- the one the eval sets --
             # plainly as "Time". The agent is deliberately not told about the
