@@ -76,7 +76,7 @@ INCORRECT_MESSAGE = (
 # model cannot even tell which of them occurred.
 RESOURCE_INCORRECT_MESSAGE = (
     "Checking your submission exceeded a resource limit (it "
-    "ran out of memory, timed out, or created artifacts that were too large). Keep working to find a "
+    "ran out of memory, timed out, or created files that were too large). Keep working to find a "
     "correct, complete proof that is cheaper to check."
 )
 
