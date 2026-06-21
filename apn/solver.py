@@ -20,9 +20,11 @@ Submissions can be *gated*: with ``max_attempts`` > 1, Inspect's native
 and, if it isn't accepted, tells the model to keep going -- up to ``max_attempts``
 or until a token/time limit. The model is told only that it was incorrect (the
 ``incorrect_message`` below), not why, so it cannot probe the verifier for gaps
--- with one exception: if the submission made SafeVerify run out of memory or
-time, it is told that much (but not which, nor any amount), so it can aim for a
-cheaper proof instead of guessing blindly.
+-- with one exception: if the submission was too expensive to process (it ran
+out of memory, timed out, or was too large to handle, at either the compile or
+the safe_verify step), it is told that much (but not which, at which stage, nor
+any amount), so it can aim for a cheaper, smaller proof instead of guessing
+blindly.
 """
 
 from __future__ import annotations
@@ -65,29 +67,46 @@ INCORRECT_MESSAGE = (
     "complete proof."
 )
 
-# The one exception to the opaque policy: when the submission made SafeVerify
-# run out of memory or time (rather than being rejected on the merits), tell the
-# model that much -- but nothing more. It learns to look for a cheaper proof
-# without learning which limit it hit, the amount, or any other detail it could
-# turn into a probe. OOM and timeout deliberately share this one wording so the
-# model cannot even tell which of the two occurred.
+# The one exception to the opaque policy: when the submission was too expensive
+# to process (rather than rejected on the merits) -- it ran out of memory, timed
+# out, or was too large to handle -- tell the model that much, but nothing more.
+# It learns to look for a cheaper, smaller proof without learning which limit it
+# hit, at which stage, the amount, or any other detail it could turn into a
+# probe. All of these failure modes deliberately share this one wording so the
+# model cannot even tell which of them occurred.
 RESOURCE_INCORRECT_MESSAGE = (
-    "Your submission did not pass verification: checking it ran out of memory or "
-    "timed out. Keep working to find a correct, complete proof that is also "
-    "cheaper to check."
+    "Checking your submission exceeded a resource limit (it "
+    "ran out of memory, timed out, or created artifacts that were too large). Keep working to find a "
+    "correct, complete proof that is cheaper to check."
 )
 
-# SafeVerify stages (see apn.checker) that mean the agent's proof was too
-# expensive to *verify*, as opposed to wrong. Only these get the more
-# informative message; every other rejection stays opaque.
-_RESOURCE_STAGES = frozenset({"safeverify_resource", "safeverify_timeout"})
+# Stages (see apn.checker / apn.scorer) that mean the agent's proof was too
+# expensive to *process* -- OOM, timeout, or too large to read out of the
+# sandbox -- as opposed to wrong. These span both agent-side steps: compiling
+# the submission AND running safe_verify on it (a death in either is the agent's
+# expensive proof, not our infra), plus the scorer's read of an oversized
+# Submission/. Only these get the more informative message; every other
+# rejection -- a plain compile error, a plain safe_verify rejection, a decode
+# failure -- stays opaque. (Keep in sync with the stages apn.checker.check and
+# apn.scorer.proof_scorer emit.)
+_RESOURCE_STAGES = frozenset(
+    {
+        "compile_submission_resource",
+        "compile_submission_timeout",
+        "compile_submission_oversize",
+        "safeverify_resource",
+        "safeverify_timeout",
+        "submission_oversize",
+    }
+)
 
 
 async def gated_incorrect_message(state: AgentState, scores: list[Score]) -> str:
     """Pick the reply for a rejected gated submission.
 
-    Opaque by default; the resource message only when a score's ``stage`` marks
-    a SafeVerify OOM/timeout (``state`` is unused -- the verdict is all we need).
+    Opaque by default; the resource message only when a score's ``stage`` marks a
+    too-expensive-to-process failure -- an OOM/timeout/oversize in either
+    agent-side step (``state`` is unused -- the verdict is all we need).
     """
     if any((s.metadata or {}).get("stage") in _RESOURCE_STAGES for s in scores):
         return RESOURCE_INCORRECT_MESSAGE
