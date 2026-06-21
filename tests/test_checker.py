@@ -22,7 +22,7 @@ import pytest
 from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target
 from inspect_ai.solver import TaskState
-from inspect_ai.util import ExecResult
+from inspect_ai.util import ExecResult, OutputLimitExceededError
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
@@ -91,16 +91,19 @@ class ScriptedSandbox:
 
     ``read_file`` dispatches on the path: the compile-sandbox olean read returns
     ``olean`` bytes (or raises ``FileNotFoundError`` when ``olean is None`` -- a
-    clean compile that left no readable olean), and the scorer-sandbox report read
-    returns ``report`` (a string) or raises ``FileNotFoundError`` when it is
-    ``None`` (safe_verify wrote nothing).
+    clean compile that left no readable olean, or raises ``olean`` itself when it
+    is an exception -- e.g. an ``OutputLimitExceededError`` for an oversized
+    olean), and the scorer-sandbox report read returns ``report`` (a string),
+    raises ``FileNotFoundError`` when it is ``None`` (safe_verify wrote nothing),
+    or raises ``report`` itself when it is an exception (e.g. an
+    ``OutputLimitExceededError`` for an oversized report).
     """
 
     def __init__(
         self,
         results: list[Step],
-        report: str | None = None,
-        olean: bytes | None = _OLEAN_BYTES,
+        report: str | BaseException | None = None,
+        olean: bytes | BaseException | None = _OLEAN_BYTES,
     ) -> None:
         self._results = list(results)
         self._report = report
@@ -126,9 +129,13 @@ class ScriptedSandbox:
         if file == checker_mod.COMPILE_SUBMISSION_OLEAN:
             if self._olean is None:
                 raise FileNotFoundError(file)
+            if isinstance(self._olean, BaseException):
+                raise self._olean
             return self._olean
         if self._report is None:
             raise FileNotFoundError(file)
+        if isinstance(self._report, BaseException):
+            raise self._report
         return self._report
 
 
@@ -152,12 +159,19 @@ def _decode_error() -> UnicodeDecodeError:
     return UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
 
 
+def _oversize_error() -> OutputLimitExceededError:
+    # The provider raises this out of read_file when the artifact exceeds
+    # MAX_READ_FILE_SIZE (k8s_sandbox/_pod/read.py); the 100 MiB default matches
+    # what the production logs showed.
+    return OutputLimitExceededError(limit_str="100 MiB", truncated_output=None)
+
+
 def _checker(
     monkeypatch: pytest.MonkeyPatch,
     results: list[Step],
     allow_disproofs: bool = True,
     report: str | None = None,
-    olean: bytes | None = _OLEAN_BYTES,
+    olean: bytes | BaseException | None = _OLEAN_BYTES,
 ) -> tuple[SandboxSafeVerify, ScriptedSandbox]:
     sb = ScriptedSandbox(results, report=report, olean=olean)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
@@ -271,6 +285,22 @@ async def test_check_rejects_when_compiled_olean_missing(
     assert len(sb.commands) == 5
 
 
+async def test_check_rejects_when_compiled_olean_too_large(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A clean compile (5 ok execs) whose olean is too large to read back out of
+    # the sandbox (OutputLimitExceededError, the MAX_READ_FILE_SIZE limit). That
+    # is the agent's expensive proof term inflating the artifact -- deterministic
+    # per submission, so rerunning could never help. A verdict on the agent's
+    # code, never reaching the scorer, not a raise that errors the sample.
+    checker, sb = _checker(monkeypatch, [_ok()] * 5, olean=_oversize_error())
+    outcome = await checker.check("the target", SUBMISSION_TAR)
+    assert not outcome.ok
+    assert outcome.stage == "compile_submission_oversize"
+    # The compile sandbox ran its 5 execs; the scorer phase never started.
+    assert len(sb.commands) == 5
+
+
 async def test_check_passes_disproofs_flag_to_safe_verify(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -330,6 +360,25 @@ async def test_check_report_is_none_when_json_is_malformed(
     )
     outcome = await checker.check("the target", SUBMISSION_TAR)
     assert not outcome.ok
+    assert outcome.report is None
+
+
+async def test_check_report_is_none_when_too_large(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # safe_verify ran and rejected, but its --save report is too large to read
+    # back (OutputLimitExceededError, MAX_READ_FILE_SIZE). The report is
+    # supplementary offline data read after the verdict is decided, so an
+    # oversized read degrades to None -- it must not change the verdict or error
+    # the sample.
+    checker, _ = _checker(
+        monkeypatch,
+        [_ok()] * 8 + [_fail(1, "SafeVerify check failed.")],
+        report=_oversize_error(),
+    )
+    outcome = await checker.check("the target", SUBMISSION_TAR)
+    assert not outcome.ok
+    assert outcome.stage == "safeverify"
     assert outcome.report is None
 
 
@@ -497,6 +546,32 @@ async def test_scorer_incorrect_when_checker_rejects(
 ) -> None:
     score = await _score(StubChecker(False), b"tar", monkeypatch)
     assert score.value == INCORRECT
+
+
+async def test_scorer_incorrect_when_submission_too_large(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The agent's Submission/ is too large to read out of the sandbox
+    # (read_submission_tar's read_file raises OutputLimitExceededError, the
+    # MAX_READ_FILE_SIZE limit). That is agent-caused and deterministic, so the
+    # scorer returns INCORRECT with an oversize stage rather than letting it error
+    # the sample. With no tar there is nothing to verify -- the checker never runs.
+    class OversizeSandbox:
+        async def exec(self, cmd: list[str], **kwargs: object) -> ExecResult[str]:
+            return ExecResult(success=True, returncode=0, stdout="", stderr="")
+
+        async def read_file(self, file: str, text: bool = True) -> bytes:
+            raise OutputLimitExceededError(limit_str="100 MiB", truncated_output=None)
+
+    monkeypatch.setattr(scorer_mod, "sandbox", lambda *a, **k: OversizeSandbox())
+    checker = StubChecker(True)
+    score = await proof_scorer(checker)(_state(), Target(""))
+    assert score is not None
+    assert score.value == INCORRECT
+    assert score.metadata is not None
+    assert score.metadata["stage"] == "submission_oversize"
+    # No tar to hand it, so the checker was never called.
+    assert checker.calls == []
 
 
 async def test_scorer_metadata_has_no_tree(

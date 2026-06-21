@@ -55,7 +55,7 @@ from inspect_ai.scorer import (
     stderr,
 )
 from inspect_ai.solver import TaskState
-from inspect_ai.util import sandbox, store
+from inspect_ai.util import OutputLimitExceededError, sandbox, store
 
 from apn.checker import SafeVerifyChecker
 from apn.filetree import build_tree_from_tar, read_submission_tar
@@ -75,9 +75,22 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
         store().set("_score_call_idx", attempt)
 
         # Tar the agent's Submission/ directory from its (default) workspace
-        # sandbox. A read failure is a real sandbox problem -- let it propagate
-        # (error the sample) rather than masking it as a rejection.
-        tar = await read_submission_tar(sandbox())
+        # sandbox. A generic read failure is a real sandbox problem -- let it
+        # propagate (error the sample) rather than masking it as a rejection.
+        # The one exception is an oversized Submission/: if the tar exceeds
+        # Inspect's MAX_READ_FILE_SIZE it cannot be read back, but that is the
+        # agent's doing (e.g. a giant generated file), deterministic per
+        # submission, so rerunning could never help. Score it INCORRECT instead
+        # of erroring the sample -- with no tar there is nothing to verify,
+        # record as a tree, or write as a sidecar, so we return straight away.
+        try:
+            tar = await read_submission_tar(sandbox())
+        except OutputLimitExceededError as exc:
+            return Score(
+                value=INCORRECT,
+                explanation=str(exc),
+                metadata={"stage": "submission_oversize", "safeverify_report": None},
+            )
 
         # Record exactly what was scored, two display ways from the one tar
         # already read (both best-effort -- neither may fail scoring):

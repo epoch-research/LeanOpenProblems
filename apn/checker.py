@@ -73,7 +73,9 @@ rule is *whose code failed*:
     - OOM / signal kill (exit >= 128) -> ``stage="*_resource"``;
     - timeout (provider raises ``TimeoutError``) -> ``stage="*_timeout"``;
     - undecodable output (provider raises ``UnicodeDecodeError``) ->
-      ``stage="*_decode"``.
+      ``stage="*_decode"``;
+    - a compiled olean too large to read back out of the sandbox (provider raises
+      ``OutputLimitExceededError``) -> ``stage="compile_submission_oversize"``.
 
 Why agent-side resource deaths are a verdict, not a raise: an OOM or timeout
 here is almost always the agent's expensive proof term, not our infrastructure.
@@ -107,7 +109,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
-from inspect_ai.util import sandbox
+from inspect_ai.util import OutputLimitExceededError, sandbox
 
 from apn.layout import (
     ENTRY_PATH,
@@ -323,6 +325,17 @@ class SandboxSafeVerify:
                 stage="compile_submission",
                 detail="submission compiled but produced no readable olean",
             )
+        except OutputLimitExceededError as exc:
+            # The compile succeeded but produced an olean too large to read out of
+            # the sandbox (Inspect's MAX_READ_FILE_SIZE). Like the OOM/timeout
+            # resource deaths above, that is the agent's expensive proof term
+            # inflating the artifact, not our infrastructure -- and it is
+            # deterministic per submission, so raising-and-rerunning could never
+            # resolve it, only discard the sample. Return it as a verdict on the
+            # agent's code so the agent is told to find a cheaper proof.
+            return CheckOutcome(
+                ok=False, stage="compile_submission_oversize", detail=str(exc)
+            )
 
         # ============================ VERIFY PHASE =========================== #
         # Runs in the TRUSTED scorer sandbox. No agent Lean is elaborated here:
@@ -400,12 +413,15 @@ class SandboxSafeVerify:
 
         safe_verify writes it whenever it runs (accept or reject), and ``check``
         clears ``SCORE_DIR`` up front, so a present file is always this call's.
-        A missing or unparseable file is not an error -- it just means no report
-        (e.g. safe_verify was OOM-killed before writing), so we return ``None``.
+        A missing, oversized, or unparseable file is not an error -- it just means
+        no report (e.g. safe_verify was OOM-killed before writing, or the report
+        exceeded ``MAX_READ_FILE_SIZE``), so we return ``None``. The report is
+        supplementary offline-analysis data read *after* the verdict is decided,
+        so degrading it to ``None`` never affects the verdict or errors the sample.
         """
         try:
             raw = await sandbox(self._sandbox_name).read_file(REPORT_PATH)
-        except FileNotFoundError:
+        except (FileNotFoundError, OutputLimitExceededError):
             return None
         try:
             parsed = json.loads(raw)
