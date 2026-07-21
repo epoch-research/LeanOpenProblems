@@ -201,20 +201,26 @@ row_defs = [(lite_by_model[p], f"{MODEL_LABELS[p]} lite (3-agent avg)")
             for p in PROVIDERS if lite_by_model[p]]
 row_defs += [([k], f"{MODEL_LABELS[k[3]]} (full)") for k in full_keys]
 
-def mean_counts(keys, extract):
+def pooled_shares(keys, extract):
+    """Counts pooled over the runs, as a share of the pooled denominator."""
     total = Counter()
+    denom = 0
     for k in keys:
-        total.update(extract(samples[k]))
-    return {c: v / len(keys) for c, v in total.items()}
+        counts, n = extract(samples[k])
+        total.update(counts)
+        denom += n
+    return {c: v / denom for c, v in total.items()}
 
-stage_counts = [mean_counts(keys, lambda recs: Counter(
-                    r["stage"] for r in recs.values() if not r["solved"]))
-                for keys, _ in row_defs]
-mode_counts = [mean_counts(keys, lambda recs: Counter(
-                    m for r in recs.values()
-                    if not r["solved"] and r["stage"] == "safeverify"
-                    for m in (r["modes"] or ["(none recorded)"])))
-               for keys, _ in row_defs]
+def stage_extract(recs):
+    fails = [r for r in recs.values() if not r["solved"]]
+    return Counter(r["stage"] for r in fails), len(fails)
+
+def mode_extract(recs):
+    sv = [r for r in recs.values() if not r["solved"] and r["stage"] == "safeverify"]
+    return Counter(m for r in sv for m in (r["modes"] or ["(none recorded)"])), len(sv)
+
+stage_counts = [pooled_shares(keys, stage_extract) for keys, _ in row_defs]
+mode_counts = [pooled_shares(keys, mode_extract) for keys, _ in row_defs]
 
 def col_order(rows):
     totals = Counter()
@@ -235,7 +241,7 @@ def count_matrix(ax, cols, rows, title, xlabel):
                 frac = (v / maxv) ** 0.4  # perceptual-ish ramp for skewed counts
                 color = plt.matplotlib.colors.to_rgb("#2a78d6")
                 bg = tuple(1 - frac * (1 - ch) for ch in color)
-                txt = f"{v:.0f}" if abs(v - round(v)) < 1e-9 else f"{v:.1f}"
+                txt = f"{v:.0%}" if v >= 0.005 else "<1%"
                 ax.add_patch(Rectangle((c + 0.05, nr - 1 - r + 0.05), 0.9, 0.9,
                                        facecolor=bg, edgecolor="none"))
                 ax.text(c + 0.5, nr - 1 - r + 0.5, txt, ha="center", va="center",
@@ -258,11 +264,12 @@ def count_matrix(ax, cols, rows, title, xlabel):
 fig, (axa, axb) = plt.subplots(1, 2, figsize=(13.5, 0.42 * len(row_defs) + 2.6),
                                gridspec_kw={"width_ratios": [len(stages), len(modes) + 1.5]})
 count_matrix(axa, stages, stage_counts,
-             "Incorrect samples by scorer stage\n(lite rows: mean count over base/deep/lit runs)",
+             "Incorrect samples by scorer stage — % of run's incorrect samples\n"
+             "(lite rows pooled over base/deep/lit runs)",
              "stage (scores.json metadata)")
 count_matrix(axb, modes, mode_counts,
-             'Stage "safeverify" failures by failureMode key\n'
-             "(a sample can record several; each counted once)",
+             'Stage "safeverify" failures by failureMode key — % of safeverify failures\n'
+             "(a sample can record several keys, so rows can exceed 100%)",
              "failureMode key (safeverify_report)")
 fig.tight_layout(w_pad=3)
 fig.savefig(OUT / "failure_stages.png", dpi=200, bbox_inches="tight")
