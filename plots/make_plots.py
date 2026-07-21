@@ -64,7 +64,7 @@ def style_axis(ax, ymax=0.55):
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
 
 fig, (ax1, ax2) = plt.subplots(
-    1, 2, figsize=(12.5, 4.6), gridspec_kw={"width_ratios": [3, 1.8]}
+    1, 2, figsize=(13, 4.6), gridspec_kw={"width_ratios": [3, 2.1]}
 )
 
 # --- panel 1: lite, model x variant ----------------------------------------
@@ -97,7 +97,7 @@ ax1.legend(title="scaffold", frameon=False, fontsize=9.5, title_fontsize=9.5,
 full_provs = [p for p in providers if ("full", "base", p) in table]
 ys = [table[("full", "base", p)][0] for p in full_provs]
 errs = [table[("full", "base", p)][1] for p in full_provs]
-labels = [MODEL_LABELS[p] for p in full_provs]
+labels = [MODEL_LABELS[p].replace(" ", "\n", 1) for p in full_provs]
 colors = ["#2a78d6"] * len(full_provs)
 
 # External reported baseline: AlphaProofNexus, 44/492 solved
@@ -115,7 +115,7 @@ for x, y in zip(xs, ys):
     ax2.text(x, y + 0.025, f"{y:.1%}", ha="center", va="bottom",
              fontsize=9, color=INK2)
 ax2.set_xticks(list(xs))
-ax2.set_xticklabels(labels, fontsize=10.5)
+ax2.set_xticklabels(labels, fontsize=9.5)
 style_axis(ax2)
 n_full = table[("full", "base", full_provs[0])][2]
 ax2.set_title(f"OEIS-full — accuracy\n(n={n_full}, $50 budget/sample, ±1 s.e.)",
