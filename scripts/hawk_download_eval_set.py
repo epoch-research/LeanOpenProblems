@@ -217,7 +217,7 @@ def _compute_artifact_excludes(eval_prefix: str, max_per_sample: int, profile: s
 
 def _extract_plaintext(dest_dir: Path) -> None:
     script_path = PROJECT_ROOT / "scripts" / "extract_plaintext.py"
-    cmd = [sys.executable, str(script_path), str(dest_dir)]
+    cmd = [sys.executable, str(script_path), str(dest_dir), "--parallel-samples"]
     print(f"\nExtracting plaintext from .eval files in {dest_dir} ...")
     result = subprocess.run(cmd)
     if result.returncode != 0:

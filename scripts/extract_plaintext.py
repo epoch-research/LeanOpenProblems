@@ -29,6 +29,7 @@ Usage::
     python scripts/extract_plaintext.py logs/some-dir/ -o /tmp/out
     python scripts/extract_plaintext.py logs/run.eval --list-samples
     python scripts/extract_plaintext.py logs/run.eval -s a325046_...
+    python scripts/extract_plaintext.py logs/some-dir/ --parallel-evals --parallel-samples 4
 """
 
 from __future__ import annotations
@@ -398,28 +399,77 @@ def list_samples(eval_path: str | Path) -> list[str]:
     return sorted({str(s.id) for s in summaries})
 
 
-def _iter_samples(eval_path: Path, sample_ids: set[str] | None):
+def _sample_specs(
+    eval_path: Path, sample_ids: set[str] | None
+) -> list[tuple[str, str | int, int]]:
+    """List the (output stem, sample id, epoch) of every sample to extract.
+
+    Only reads the header and sample summaries, so it is cheap; the full
+    samples are read one at a time in :func:`_extract_sample`.
+    """
     eval_path_str = str(eval_path)
     log = read_eval_log(eval_path_str, header_only=True)
     epochs = log.eval.config.epochs or 1
+    specs: list[tuple[str, str | int, int]] = []
     for s in read_eval_log_sample_summaries(eval_path_str):
         sid = str(s.id)
         if sample_ids is not None and sid not in sample_ids:
             continue
-        # Read the full sample: the transcript is reconstructed from events
-        # (see main_loop_messages), so events must not be excluded.
-        # resolve_sample_attachments inlines the ``attachment://<hash>`` blobs
-        # (bash commands, tool outputs, long prompts) that Inspect stores out of
-        # line -- without it the transcript is full of bare attachment refs.
-        sample = resolve_sample_attachments(
-            read_eval_log_sample(eval_path_str, id=s.id, epoch=s.epoch)
-        )
-        stem = f"{sid}_ep{sample.epoch:03d}" if epochs > 1 else sid
-        yield stem, sample
+        stem = f"{sid}_ep{s.epoch:03d}" if epochs > 1 else sid
+        specs.append((stem, s.id, s.epoch))
+    return specs
 
 
 def _default_output_dir(eval_path: Path) -> Path:
     return eval_path.parent / (eval_path.stem + "_plaintext")
+
+
+def _extract_sample(
+    eval_path: Path,
+    out_dir: Path,
+    stem: str,
+    sample_id: str | int,
+    epoch: int,
+    *,
+    write_compactions: bool,
+    write_messages: bool,
+) -> None:
+    # Read the full sample: the transcript is reconstructed from events
+    # (see main_loop_messages), so events must not be excluded.
+    # resolve_sample_attachments inlines the ``attachment://<hash>`` blobs
+    # (bash commands, tool outputs, long prompts) that Inspect stores out of
+    # line -- without it the transcript is full of bare attachment refs.
+    sample = resolve_sample_attachments(
+        read_eval_log_sample(str(eval_path), id=sample_id, epoch=epoch)
+    )
+
+    sample_dir = out_dir / stem
+    sample_dir.mkdir(parents=True, exist_ok=True)
+
+    def write(name: str, writer) -> None:
+        path = sample_dir / name
+        with open(path, "w") as f:
+            writer(f)
+        print(f"{stem}: {path.stat().st_size:,} bytes -> {path}", file=sys.stderr)
+
+    write("info.json", lambda f: _write_info(sample, f))
+
+    messages = main_loop_messages(sample) if (write_messages or write_compactions) else []
+
+    if write_compactions:
+        write("compactions.txt", lambda f: _write_compactions(messages, f))
+    if write_messages:
+        write("messages.txt", lambda f: _write_transcript(messages, f))
+
+    write("scores.txt", lambda f: _write_scores(sample, f))
+    write("scores.json", lambda f: _write_scores_json(sample, f))
+
+    n_files = _write_sample_workspace(sample, sample_dir)
+    if n_files:
+        print(
+            f"{stem}: wrote {n_files} file(s) -> {sample_dir / 'Submission'}",
+            file=sys.stderr,
+        )
 
 
 def _extract_eval_file(
@@ -429,6 +479,7 @@ def _extract_eval_file(
     *,
     write_compactions: bool,
     write_messages: bool,
+    sample_workers: int = 1,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -437,34 +488,42 @@ def _extract_eval_file(
         _write_eval_scores_json(eval_path, f)
     print(f"eval: {scores_path.stat().st_size:,} bytes -> {scores_path}", file=sys.stderr)
 
-    for stem, sample in _iter_samples(eval_path, sample_ids):
-        sample_dir = out_dir / stem
-        sample_dir.mkdir(parents=True, exist_ok=True)
+    specs = _sample_specs(eval_path, sample_ids)
+    workers = min(sample_workers, len(specs))
 
-        def write(name: str, writer) -> None:
-            path = sample_dir / name
-            with open(path, "w") as f:
-                writer(f)
-            print(f"{stem}: {path.stat().st_size:,} bytes -> {path}", file=sys.stderr)
+    if workers > 1:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(
+                    _extract_sample,
+                    eval_path,
+                    out_dir,
+                    stem,
+                    sid,
+                    epoch,
+                    write_compactions=write_compactions,
+                    write_messages=write_messages,
+                ): stem
+                for stem, sid, epoch in specs
+            }
+            for future in as_completed(futures):
+                stem = futures[future]
+                try:
+                    future.result()
+                except Exception as e:  # noqa: BLE001 — report and keep going
+                    print(f"ERROR extracting {eval_path.name} sample {stem}: {e}", file=sys.stderr)
+        return
 
-        write("info.json", lambda f: _write_info(sample, f))
-
-        messages = main_loop_messages(sample) if (write_messages or write_compactions) else []
-
-        if write_compactions:
-            write("compactions.txt", lambda f: _write_compactions(messages, f))
-        if write_messages:
-            write("messages.txt", lambda f: _write_transcript(messages, f))
-
-        write("scores.txt", lambda f: _write_scores(sample, f))
-        write("scores.json", lambda f: _write_scores_json(sample, f))
-
-        n_files = _write_sample_workspace(sample, sample_dir)
-        if n_files:
-            print(
-                f"{stem}: wrote {n_files} file(s) -> {sample_dir / 'Submission'}",
-                file=sys.stderr,
-            )
+    for stem, sid, epoch in specs:
+        _extract_sample(
+            eval_path,
+            out_dir,
+            stem,
+            sid,
+            epoch,
+            write_compactions=write_compactions,
+            write_messages=write_messages,
+        )
 
 
 def main():
@@ -493,16 +552,30 @@ def main():
     )
     parser.add_argument("--list-samples", action="store_true", help="List sample IDs and exit")
     parser.add_argument(
-        "--parallel",
+        "--parallel-evals",
         nargs="?",
         type=int,
-        const=os.cpu_count() or 4,
+        const=max(1, (os.cpu_count() or 8) // 2),
         default=1,
         metavar="N",
         help=(
             "Process eval files concurrently across N worker processes "
-            "(default 1 = sequential; bare --parallel uses all CPUs). Each worker "
-            "loads a full log into memory, so lower N if the large runs exhaust RAM."
+            "(default 1 = sequential; bare flag uses half the CPUs). Wall-clock stays "
+            "bounded by the largest file; combine with --parallel-samples for that."
+        ),
+    )
+    parser.add_argument(
+        "--parallel-samples",
+        nargs="?",
+        type=int,
+        const=max(1, (os.cpu_count() or 8) // 2),
+        default=1,
+        metavar="N",
+        help=(
+            "Within each eval file, extract samples concurrently across N worker "
+            "processes (default 1 = sequential; bare flag uses half the CPUs). "
+            "Multiplies with --parallel-evals. Each worker holds one full sample "
+            "in memory, so lower N if the large runs exhaust RAM."
         ),
     )
     mode_group = parser.add_mutually_exclusive_group()
@@ -547,11 +620,15 @@ def main():
         return Path(args.output_dir) if args.output_dir else _default_output_dir(eval_path)
 
     tasks = [(eval_path, out_dir_for(eval_path)) for eval_path in eval_paths]
-    workers = min(args.parallel, len(tasks))
+    eval_workers = min(args.parallel_evals, len(tasks))
+    sample_workers = args.parallel_samples
 
-    if workers > 1:
-        print(f"Extracting {len(tasks)} eval file(s) across {workers} workers", file=sys.stderr)
-        with ProcessPoolExecutor(max_workers=workers) as pool:
+    if eval_workers > 1:
+        print(f"Extracting {len(tasks)} eval file(s) across {eval_workers} workers", file=sys.stderr)
+        # Each file worker may spawn its own sample workers (ProcessPoolExecutor
+        # processes are non-daemonic, so nesting is fine); total processes are
+        # up to eval_workers * sample_workers.
+        with ProcessPoolExecutor(max_workers=eval_workers) as pool:
             futures = {
                 pool.submit(
                     _extract_eval_file,
@@ -560,6 +637,7 @@ def main():
                     sample_ids,
                     write_compactions=write_compactions,
                     write_messages=write_messages,
+                    sample_workers=sample_workers,
                 ): eval_path
                 for eval_path, out_dir in tasks
             }
@@ -580,6 +658,7 @@ def main():
             sample_ids,
             write_compactions=write_compactions,
             write_messages=write_messages,
+            sample_workers=sample_workers,
         )
 
 
