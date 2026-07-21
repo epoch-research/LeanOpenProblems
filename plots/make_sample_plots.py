@@ -73,6 +73,15 @@ for top in sorted(LOGS.glob("*/*_plaintext/scores.json")):
             fm = entry[1].get("failureMode")
             if isinstance(fm, dict):
                 modes.update(fm.keys())
+            elif fm == "axioms":
+                # split by the disallowed axiom(s) the submission relies on
+                # (propext / Classical.choice / Quot.sound are permitted)
+                std = {"propext", "Classical.choice", "Quot.sound"}
+                used = set(((entry[1].get("solutionInfo") or {}).get("axioms")) or [])
+                if "sorryAx" in used:
+                    modes.add("axioms · sorryAx")
+                if used - std - {"sorryAx"}:
+                    modes.add("axioms · other")
             elif fm is not None:
                 modes.add(str(fm))
         samples[key][sd.name] = dict(
@@ -242,10 +251,15 @@ stage_counts = [pooled_shares(keys, stage_extract) for keys, _ in row_defs]
 mode_counts = [pooled_shares(keys, mode_extract) for keys, _ in row_defs]
 
 def col_order(rows):
+    """Columns by total share, but variants of one key ("x · a", "x · b") stay adjacent."""
     totals = Counter()
     for d in rows:
         totals.update(d)
-    return [c for c, _ in totals.most_common()]
+    groups = Counter()
+    for c, v in totals.items():
+        groups[c.split(" · ")[0]] += v
+    return sorted(totals, key=lambda c: (-groups[c.split(" · ")[0]],
+                                         c.split(" · ")[0], -totals[c]))
 
 stages = col_order(stage_counts)
 modes = col_order(mode_counts)

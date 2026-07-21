@@ -126,5 +126,5 @@ if missing:
              transform=ax2.transAxes, ha="right", va="top", fontsize=8.5, color=MUTED)
 
 fig.tight_layout(w_pad=3)
-fig.savefig(OUT / "oeis_accuracy.png", dpi=200)
-print("wrote", OUT / "oeis_accuracy.png")
+fig.savefig(OUT / "accuracy.png", dpi=200)
+print("wrote", OUT / "accuracy.png")
