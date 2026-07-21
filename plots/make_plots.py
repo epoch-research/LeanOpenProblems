@@ -87,7 +87,7 @@ for j, variant in enumerate(variants):
 ax1.set_xticks(range(len(providers)))
 ax1.set_xticklabels([MODEL_LABELS[p] for p in providers], fontsize=10.5)
 style_axis(ax1)
-ax1.set_title("OEIS-lite — accuracy by model and scaffold variant\n"
+ax1.set_title("OEIS OP-lite — accuracy by model and scaffold variant\n"
               "(n=100 conjectures, $200 budget/sample, ±1 s.e.)",
               fontsize=11, loc="left", color=INK)
 ax1.legend(title="scaffold", frameon=False, fontsize=9.5, title_fontsize=9.5,
@@ -118,7 +118,7 @@ ax2.set_xticks(list(xs))
 ax2.set_xticklabels(labels, fontsize=9.5)
 style_axis(ax2)
 n_full = table[("full", "base", full_provs[0])][2]
-ax2.set_title(f"OEIS-full — accuracy\n(n={n_full}, $50 budget/sample, ±1 s.e.)",
+ax2.set_title(f"OEIS OP-full — accuracy\n(n={n_full}, $50 budget/sample, ±1 s.e.)",
               fontsize=11, loc="left", color=INK)
 missing = [p for p in providers if ("full", "base", p) not in table]
 if missing:

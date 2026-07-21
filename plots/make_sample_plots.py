@@ -143,17 +143,8 @@ for r, s in enumerate(ever):
                     ha="right", va="center", fontsize=6.5,
                     color=SURFACE if luminance(color) < 0.35 else INK)
 ax.set_xlim(0, ncol)
-ax.set_ylim(-1.6, nrow + 1.5)
+ax.set_ylim(-1.6, nrow)
 ax.set_aspect("auto")
-# swatch legend: shading encodes how many of the 3 agent configs solved
-lx = 0.05
-for n, lbl in [(3, "solved by 3/3 agents"), (2, "2/3"), (1, "1/3"), (0, "0/3")]:
-    swatch = NEUTRAL if n == 0 else mix(SERIES["ant"], SHADE[n])
-    ax.add_patch(Rectangle((lx, nrow + 0.45), 0.09, 0.6,
-                           facecolor=swatch, edgecolor="none"))
-    ax.text(lx + 0.13, nrow + 0.75, lbl, ha="left", va="center",
-            fontsize=7.5, color=INK2)
-    lx += 0.13 + 0.042 * len(lbl) + 0.1
 ax.set_yticks([nrow - 1 - r + 0.5 for r in range(nrow)])
 ax.set_yticklabels(labels, fontsize=6.8, color=INK2)
 ax.set_xticks([c + 0.5 for c in range(ncol)])
@@ -165,10 +156,10 @@ ax.text(ncol / 2, -1.0,
 for side in ("top", "right", "left", "bottom"):
     ax.spines[side].set_visible(False)
 ax.tick_params(length=0)
-ax.set_title(f"OEIS-lite — which conjectures each model solved\n"
-             f"({len(ever)} conjectures solved by ≥1 run; cell label = mean cost\n"
-             f"of the solving runs; rows sorted by mean solve cost;\n"
-             f"$200 budget/sample)",
+ax.set_title(f"OEIS OP-lite — which conjectures each model solved\n"
+             f"({len(ever)} conjectures solved by ≥1 run; paler shade = solved\n"
+             f"by fewer of the 3 agent configs; cell label = mean cost of the\n"
+             f"solving runs; rows sorted by mean solve cost; $200 budget/sample)",
              fontsize=10.5, loc="left", color=INK, pad=14)
 fig.tight_layout()
 fig.savefig(OUT / "solve_matrix.png", dpi=200, bbox_inches="tight")
@@ -177,11 +168,12 @@ print("wrote", OUT / "solve_matrix.png")
 # === plot 2: solved fraction vs spend ======================================
 fig, ax = plt.subplots(figsize=(8.2, 4.8))
 # full runs individually; lite runs pooled over the 3 agent configs per model
-curves = [([k], f"OEIS-full · {MODEL_LABELS[k[3]]}", "-") for k in full_keys]
-curves += [(lite_by_model[p], f"OEIS-lite · {MODEL_LABELS[p]}, 3-agent avg", (0, (4, 2)))
+curves = [([k], f"OEIS OP-full · {MODEL_LABELS[k[3]]}", "-") for k in full_keys]
+curves += [(lite_by_model[p], f"OEIS OP-lite · {MODEL_LABELS[p]}, 3-agent avg", (0, (4, 2)))
            for p in PROVIDERS if lite_by_model[p]]
 for keys, label, style in curves:
     n = sum(len(samples[k]) for k in keys)
+    n_txt = f"{len(keys)}×{len(samples[keys[0]])}" if len(keys) > 1 else f"{n}"
     costs = sorted(max(r["cost"], 0.01)
                    for k in keys for r in samples[k].values() if r["solved"])
     xs, ys = [0.4], [0.0]
@@ -193,7 +185,7 @@ for keys, label, style in curves:
     ys.append(ys[-1])
     color = SERIES[keys[0][3]]
     ax.plot(xs, ys, color=color, linestyle=style, linewidth=2,
-            label=f"{label}  (n={n}, ${cap} cap)")
+            label=f"{label}  (n={n_txt}, ${cap} cap)")
     ax.plot([cap], [ys[-1]], marker="o", ms=5, color=color)
     ax.annotate(f"{ys[-1]:.0%}", (cap, ys[-1]), textcoords="offset points",
                 xytext=(6, -3), fontsize=9, color=INK2)
@@ -224,8 +216,8 @@ print("wrote", OUT / "solve_cost_curves.png")
 # blocks of rows: lite pooled over the 3 agent configs per model, full runs as-is
 lite_rows = [(lite_by_model[p], MODEL_LABELS[p]) for p in PROVIDERS if lite_by_model[p]]
 full_rows = [([k], MODEL_LABELS[k[3]]) for k in full_keys]
-blocks = [("OEIS-lite · $200 cap · pooled over base/deep/lit agent runs", lite_rows),
-          ("OEIS-full · $50 cap", full_rows)]
+blocks = [("OEIS OP-lite · $200 cap · pooled over base/deep/lit agent runs", lite_rows),
+          ("OEIS OP-full · $50 cap", full_rows)]
 row_defs = lite_rows + full_rows
 
 def pooled_shares(keys, extract):
