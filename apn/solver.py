@@ -11,8 +11,8 @@ Two agent loops are supported, selected by ``agent_type``: Inspect's
 ``deepagent`` (the default -- subagents, planning, an opinionated system prompt)
 and its plain ``react`` agent (a bare tool-use loop). The solver only ever
 configures functionality common to both -- tools, the gated ``attempts``
-mechanism, the no-argument ``submit`` tool, the continue message, compaction,
-and the model -- so swapping the loop changes nothing else about the run. See
+mechanism, the no-argument ``submit`` tool, the continue message, and
+compaction -- so swapping the loop changes nothing else about the run. See
 :func:`build_agent`.
 
 Submissions can be *gated*: with ``max_attempts`` > 1, Inspect's native
@@ -45,8 +45,6 @@ from inspect_ai.model import (
     ChatMessageUser,
     CompactionStrategy,
     CompactionSummary,
-    Model,
-    get_model,
 )
 from inspect_ai.scorer import Score
 from inspect_ai.solver import Generate, Solver, TaskState, solver
@@ -163,15 +161,14 @@ def build_agent(
     submit: AgentSubmit,
     on_continue: str,
     compaction: CompactionStrategy,
-    model: Model | None,
 ) -> Agent:
     """Construct the configured agent loop.
 
     Only exposes functionality common to ``deepagent`` and ``react`` so the two
     behave identically apart from the loop itself: the same tools, the gated
     ``attempts`` mechanism, the no-argument ``submit`` tool, the continue
-    message, compaction, and the model. Everything specific to one agent stays
-    at its default.
+    message, and compaction. Everything specific to one agent stays at its
+    default.
     """
     constructor: Callable[..., Agent]
     if agent_type == "deep":
@@ -191,14 +188,12 @@ def build_agent(
         submit=submit,
         on_continue=on_continue,
         compaction=compaction,
-        model=model,
     )
 
 
 @solver
 def lean_prover(
     agent_type: AgentType,
-    model: str | None = None,
     max_attempts: int = 1,
     literature: bool = False,
 ) -> Solver:
@@ -214,7 +209,6 @@ def lean_prover(
     after the agent runs is skipped on a limit.
 
     Args:
-        model: Optional model override for the agent.
         max_attempts: With ``> 1``, enables *gated submit* via Inspect's native
             ``attempts``: each submission is re-scored by the task scorer
             (SafeVerify) and, if not accepted, the model is told to keep going
@@ -278,7 +272,6 @@ def lean_prover(
             # might be better at avoiding doom loops.
             on_continue="Continue working on the problem.",
             compaction=CompactionSummary(threshold=300_000),
-            model=get_model(model) if model is not None else None,
         )
         # Seed the conversation with the task prompt, then run the agent *as a
         # solver*. We replace state.messages (rather than append) so the agent
