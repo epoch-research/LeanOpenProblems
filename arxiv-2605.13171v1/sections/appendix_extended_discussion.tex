@@ -1,0 +1,19 @@
+\section{Extended Discussion}\label{sec:extended_discussion}
+
+\subsection{Future Work}\label{sec:app_future_work}
+
+We plan to continuously extend Formal Conjectures with new problems unblocked by newly added Mathlib definitions or from community contributions.
+While our implementation uses Lean~4, the methodology is language-agnostic and portable to systems like Isabelle or Rocq should they develop comparable library support. We will also track future Lean updates to maintain ecosystem compatibility.
+To better evaluate the difficulty and impact of conjectures, we plan to extend the metadata by recording when a conjecture was first proposed.
+This objective metric will enable users to filter for long-standing open problems versus contemporary questions.
+However, since difficulty and importance are often subjective, we also propose an interactive interface where the community can share insights.
+Users will be able to vote on a conjecture's perceived difficulty, its mathematical significance, and their conviction regarding its truth value
+(e.g., True, False, or independent of ZFC).
+
+Furthermore, references to the mathematical literature are currently handled inconsistently across the repository, often requiring duplication in each file. We plan to improve this by centralizing reference management in future iterations.
+
+This vision is being integrated into an accompanying website\footnote{\url{https://google-deepmind.github.io/formal-conjectures/}} for the repository.
+The website already serves as a frontend for the benchmark, allowing users to explore the source code, view \LaTeX-rendered docstrings, and search, sort, or filter conjectures.
+It also contains metadata recording when a \lstinline[language={}]{research open} problem gets solved or when a \lstinline[language={}]{research solved} problem receives a formal proof; in the future, we plan to make these changes more prominently visible.
+
+Moving forward, we plan to expand this platform into a collaborative hub with interactive community features, including a public leaderboard to track successful AI-based solutions and recognize groups taking on these problems.

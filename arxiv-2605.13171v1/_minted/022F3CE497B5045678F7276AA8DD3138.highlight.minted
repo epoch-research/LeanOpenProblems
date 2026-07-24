@@ -1,0 +1,10 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{ } /\PYGZhy{}\PYGZhy{} Let \PYGZdl{}f(n)\PYGZdl{} be the minimal integer \PYGZdl{}m\PYGZdl{} such that \PYGZdl{}n\PYGZdl{} is the sum of the
+\PYG{+w}{ } \PYGZdl{}k\PYGZdl{} smallest divisors of \PYGZdl{}m\PYGZdl{} for some \PYGZdl{}k\PYGZbs{}geq 1\PYGZdl{}. Is it true that
+\PYG{+w}{ } \PYGZdl{}\PYGZbs{}limsup f(n)/n=\PYGZbs{}infty\PYGZdl{}? \PYGZhy{}/
+\PYG{+w}{ } @[category research open, AMS 11]
+\PYG{+w}{ } theorem erdos\PYGZus{}1054.parts.iii : (∃ (A : Set ℕ), A.HasDensity 1 ∧
+\PYG{g+gd}{\PYGZhy{}      atTop.limsup (fun n ↦ (f n : EReal) / n) = ⊤) ↔ answer(sorry) := by}
+\PYG{g+gi}{+      atTop.limsup (fun n ↦ (f n : EReal) / n = ⊤)) ↔ answer(sorry) := by}
+\PYG{+w}{ } sorry
+\end{MintedVerbatim}

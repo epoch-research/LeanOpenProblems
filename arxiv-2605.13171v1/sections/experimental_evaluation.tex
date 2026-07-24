@@ -1,0 +1,89 @@
+\section{Benchmark Evaluation}\label{sec:experimental_evaluation}
+
+\subsection{Evaluation Framework}\label{sec:experimental_setup}
+
+
+\paragraph{Evaluation Paradigms.}
+Formal Conjectures provides a dynamic, rigorous benchmark for advanced automated reasoning premised on novel mathematical insight as the ultimate intellectual hurdle for complex problems. We define two distinct setups:
+\begin{enumerate}
+    \item \textbf{Primary Goal: New Formal Proof Discovery.}
+    Measuring AI's ability to discover formal proofs for open problems, these unsolved conjectures form a zero-contamination testbed for genuine mathematical discovery. Since no solutions exist in any training corpus, success provides a definitive signal of reasoning capabilities, removing the need for secretive evaluation sets common in other benchmarks.
+    \item \textbf{Secondary Goal: Proof Auto-formalization.}
+    This track provides a climbable benchmark treating the non-trivial translation of established mathematics into formal code as a distinct, rigorous challenge. It measures a model's ability to work with Lean~4 and Mathlib to formalize known arguments.
+\end{enumerate}
+
+
+\paragraph{Evaluating Open Problems.}
+Evaluating open problems is definitive: as no formal solutions exist at release time, the first kernel-accepted proof provides a zero-contamination success signal.
+However, since a proof may settle a misformalized statement rather than the intended problem, any result for an open conjecture triggers manual inspection for fidelity.
+
+
+\paragraph{Fixed Benchmark Subsets.}
+To enable stable model comparisons, we provide two frozen subsets of 100 problems each:
+\texttt{FC100OpenSet1} (100 \texttt{research open} statements) and \texttt{FC100SolvedSet1} (100 \texttt{research solved} statements).
+These subsets are defined in the repository files \texttt{FC100OpenSet1.lean} and \texttt{FC100SolvedSet1.lean}, which import exactly the corresponding theorem statements.
+Because these files are compiled as part of the repository across all supported Lean versions, the problem sets remain fixed and comparable even as the repository evolves.
+Further details on the construction of these subsets are in Appendix~\ref{sec:app_bench_lists}.
+
+
+\paragraph{Correctness.}
+Following established formal math benchmark methodologies \citep{minif2f21, putnambench24}, our evaluation leverages the Lean~4 kernel for an objective, rigorous, and automatable success criterion.
+A proposed solution is a Lean proof term replacing the \lstinline{sorry} placeholder.
+Solutions are correct if and only if accepted by the kernel without relying on forbidden axioms, such as \lstinline{sorry}.
+This binary criterion eliminates human grading ambiguity and provides an indisputable ground truth.
+While theoretically susceptible to foundational bugs in the Lean kernel or unintended axioms (e.g., a Lean Zulip thread\footnote{\url{https://leanprover.zulipchat.com/\#narrow/channel/270676-lean4/topic/Soundness.20bug.3A.20hasLooseBVars.20is.20not.20conservative/with/520153084}}, which mentions a now-fixed exploit), in practice, kernel-level verification provides the highest mathematical rigor.
+Consequently, all evaluations are automatically verifiable, allowing results and proof terms to be shared publicly for transparent, reproducible research.
+
+
+\paragraph{Versioning and Reproducibility.}\label{sec:versioning}
+Evaluating on a living repository is challenging: dependency updates can alter statement semantics, and new Mathlib theorems may simplify problems.
+To enable reproducible comparisons, we tag frozen benchmark snapshots using a two-part naming scheme: \texttt{bench-v$N$-lean4.$X$.$Y$}.
+The \emph{bench version} \texttt{v$N$} identifies a fixed problem set; the \emph{Lean version} suffix pins the Mathlib tag (and hence Lean toolchain) against which statements compile and are evaluated.
+Releases are issued every few months; when Lean versions bump, companion tags allow evaluating the same problem set against intermediate toolchains, e.g.\ \texttt{bench-v3-lean4.27.0}.
+To preserve baselines, snapshots are immutable; misformalization fixes are never patched into existing versions but incorporated into the next (e.g., \texttt{bench-v$($N$+1)$}).
+
+
+\paragraph{A Living Benchmark and Unified API.}
+Outside the frozen subsets, the repository operates as a dynamic benchmark that exhibits useful evaluation dynamics over time.
+As new conjectures are added, solved, or corrected by the community, it naturally self-adjusts its difficulty, expands, and improves.
+The hardest problems remain open, pushing the frontier of automated reasoning.
+Crucially, the repository acts as a unified API: researchers can submit formalized conjectures to a single centralized hub for simultaneous exposure to all evaluating AI systems.
+This obviates the need to manually engage with individual provers, ensuring broad and concurrent attempts at mathematical discovery.
+
+\input{sections/assets/results_formal_proof_table}
+
+
+\paragraph{Open Problems Baseline.}
+For the primary proof-discovery task on open problems, the baseline for the first tagged release \texttt{bench-v1-lean4.27} is $0\%$ for all systems: by definition, no formal proof exists for any \texttt{research open} statement at the time of tagging (problems with known solutions are reclassified as \texttt{research solved}).
+Over time, these open statements may receive formal or informal proofs.
+Proofs that expose a misformalization (Section~\ref{sec:misform}) rather than settling the intended problem trigger revisions incorporated into the next version.
+In subsequent releases, interim-solved problems are reclassified to \texttt{research solved}, with formal solutions receiving the \lstinline{@[formal_proof]} attribute.
+The new \texttt{research open} set combines remaining unsolved problems with new additions; thus, successive versions start with a baseline of $\geq 0\%$ solved statements and become increasingly more difficult.
+
+\paragraph{Proof Auto-Formalization Baseline.}
+For auto-formalization, the baseline is system-agnostic: we track all formal proofs contributed to the repository, regardless of origin.
+These are tracked using the \lstinline{@[formal_proof]} attribute (Section~\ref{sec:formalization-methodology}), which records the proof system (\texttt{formal\_conjectures} for proofs within the repository, \texttt{lean4} for proofs in external Lean~4 projects such as Mathlib, or \texttt{other\_system} for proofs in Isabelle, Rocq, etc.) and links to the source.
+Table~\ref{tab:formal_proof_baseline} summarizes the current state. Notably, 17.3\% of \texttt{research\_solved} statements have a known formal proof (5.3\% internal, 12.1\% linked externally).
+
+
+\subsection{Illustrative Evaluation}\label{sec:experimental_results}
+
+
+We provide illustrative evaluations, with setup and cost details in Appendix~\ref{sec:illustrative_evaluation}.
+
+
+\input{sections/assets/results_bench_table}
+
+
+\paragraph{Frozen Evaluation Subsets.}
+To ensure stable comparisons despite repository fluidity, we provide two frozen evaluation subsets, each containing 100 problems randomly sampled from the \texttt{bench-v1-lean4.27.0} tag: \texttt{FC100SolvedSet1} (proof auto-formalization) and \texttt{FC100OpenSet1} (proof discovery; 0\% baseline).
+By definition, \texttt{FC100OpenSet1} currently remains at a definitive 0\% baseline across these evaluated methods, which highlights its status as a rigorous frontier for new discovery.
+Results on \texttt{FC100SolvedSet1} (Table \ref{tab:results_bench_table}) demonstrate a clear, climbable signal across both compute and model capabilities.
+To provide a diverse evaluation, we evaluate both a slightly improved version of the AlphaProof system used in the 2024 IMO \citep{AlphaProof25} and a development version of a DeepMind prover agent \citep{DMProverAgent26}.
+These are different systems rather than incremental versions of the same architecture.
+Utilizing a constrained tree-search-only inference setup on v6e TPUs, AlphaProof achieves a solve rate of 45\% on \texttt{FC100SolvedSet1} with a low compute configuration of 1,000 simulations per problem.
+By increasing the compute budget to 16,000 simulations, the solve rate improves to 50\%, demonstrating a clear scaling signal.
+We emphasize that these evaluations are conducted using tree-search inference only and do not utilize AlphaProof's test-time reinforcement learning (TTRL) mechanism, which generates a curriculum to learn from during the proof finding process through weight updates.
+Furthermore, utilizing a newer, development version of the DeepMind prover agent, the solve rate increases to 66\%, illustrating that the benchmark effectively measures advancements across improved model architectures and methodologies.
+Because running automated reasoning methods within Lean involves significant infrastructure overhead, we provide these specific systems as illustrative baselines to validate the benchmark's signal.
+We encourage the community to report results against these subsets as well as the evolving main repository.

@@ -1,0 +1,13 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{ } @[category research open, AMS 5]
+\PYG{+w}{ } theorem erdos\PYGZus{}128 :
+\PYG{g+gd}{\PYGZhy{}     ((∀ (G\PYGZsq{} : G.Subgraph) [Fintype G\PYGZsq{}.verts] [Fintype G\PYGZsq{}.edgeSet],}
+\PYG{g+gd}{\PYGZhy{}         letI n := Fintype.card V;}
+\PYG{g+gd}{\PYGZhy{}         2 * G\PYGZsq{}.verts.toFinset.card ≥ n →}
+\PYG{g+gd}{\PYGZhy{}         50 * G\PYGZsq{}.edgeSet.toFinset.card \PYGZgt{} n\PYGZca{}2) → ¬ (G.CliqueFree 3))}
+\PYG{g+gi}{+     ((∀ (V\PYGZsq{} : Set V),}
+\PYG{g+gi}{+       2 * V\PYGZsq{}.ncard ≥ Fintype.card V →}
+\PYG{g+gi}{+         50 * (G.induce V\PYGZsq{}).edgeSet.ncard \PYGZgt{} Fintype.card V \PYGZca{} 2) → ¬(G.CliqueFree 3))}
+\PYG{+w}{ }   ↔ answer(sorry) := by
+\PYG{+w}{ } sorry
+\end{MintedVerbatim}

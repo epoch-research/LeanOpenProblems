@@ -1,0 +1,10 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{ } /\PYGZhy{}\PYGZhy{}
+\PYG{g+gd}{\PYGZhy{} A (weak) Giuga number is a number \PYGZdl{}n\PYGZdl{} such that}
+\PYG{g+gi}{+ A (weak) Giuga number is a composite number \PYGZdl{}n\PYGZdl{} such that}
+\PYG{+w}{ } \PYGZdl{}\PYGZdl{}\PYGZbs{}sum\PYGZus{}\PYGZob{}i=1\PYGZcb{}\PYGZca{}\PYGZob{}n \PYGZhy{} 1\PYGZcb{}i\PYGZca{}\PYGZob{}\PYGZbs{}varphi(n)\PYGZcb{} \PYGZbs{}equiv \PYGZhy{}1\PYGZbs{}pmod\PYGZob{}n\PYGZcb{}\PYGZdl{}\PYGZdl{}.
+\PYG{+w}{ } \PYGZhy{}/
+\PYG{+w}{ } def IsWeakGiuga (n : ℕ) : Prop :=
+\PYG{g+gd}{\PYGZhy{}     2 ≤ n ∧ ¬ n.Prime ∧ n ∣ 1 + ∑ i ∈ Finset.Ioo 0 n, i \PYGZca{} φ n}
+\PYG{g+gi}{+     n.Composite ∧ n ∣ 1 + ∑ i ∈ Finset.Ioo 0 n, i \PYGZca{} φ n}
+\end{MintedVerbatim}

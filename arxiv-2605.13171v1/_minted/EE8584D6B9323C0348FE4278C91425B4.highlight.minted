@@ -1,0 +1,9 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{ } /\PYGZhy{}\PYGZhy{} A group `HasPolynomialGrowth` if there exists a finite generating set
+\PYG{+w}{ }   such that the growth function is bounded above by a polynomial. \PYGZhy{}/
+\PYG{+w}{ } def HasPolynomialGrowth (G : Type*) [Group G] : Prop :=
+\PYG{+w}{ }   ∃ (S : Set G), Set.Finite S ∧ Subgroup.closure S = ⊤ ∧
+\PYG{+w}{ }     ∃ (C : ℝ) (d : ℕ), C \PYGZgt{} 0 ∧
+\PYG{g+gd}{\PYGZhy{}     ∀ n : ℕ, (GrowthFunction S n : ℝ) ≤ C * (n : ℝ) \PYGZca{} d}
+\PYG{g+gi}{+     ∀ n \PYGZgt{} 0, (GrowthFunction S n : ℝ) ≤ C * (n : ℝ) \PYGZca{} d}
+\end{MintedVerbatim}

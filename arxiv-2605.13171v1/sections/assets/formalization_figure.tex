@@ -1,0 +1,73 @@
+\begin{tikzpicture}[
+    % Reduced vertical distance (0.6cm) and horizontal (1.2cm)
+    node distance=0.6cm and 1.2cm,
+    font=\sffamily,
+    % Reduced minimum height to 1.2cm and inner sep to 6pt for vertical compactness
+    flowbox/.style={rectangle, fill=#1!5, draw=#1!60!black, very thick, rounded corners=1.5ex, text width=3.6cm, minimum height=1.2cm, inner sep=6pt, align=center},
+    % Arrow styles
+    arrow/.style={thick, color=black!60, -{Stealth[scale=1.1]}},
+    feedback/.style={thick, color=red!70!black, dashed, -{Stealth[scale=1.1]}},
+    success/.style={thick, color=green!60!black, -{Stealth[scale=1.1]}},
+    % Label styles (tightened inner sep)
+    pathlabel/.style={font=\sffamily\scriptsize, text=black!80, align=center, fill=white, fill opacity=0.8, text opacity=1, inner sep=2pt, rounded corners=0.4ex}
+]
+
+    % ==========================================
+    % ROW 1: The Forward Pipeline
+    % ==========================================
+    \node (source) [flowbox=green] {
+        \textbf{Informal Source}\\[0.3ex]
+        \color{black!70}\scriptsize Erdős, arXiv, etc.
+    };
+
+    \node (formalize) [flowbox=orange, right=of source] {
+        \textbf{Human Formalization}\\[0.3ex]
+        \color{black!70}\scriptsize Draft Lean~4 code \& tests
+    };
+
+    \node (repo) [flowbox=cyan, right=of formalize] {
+        \textbf{Merge to Repository}\\[0.3ex]
+        \color{black!70}\scriptsize \texttt{formal-conjectures}
+    };
+
+
+    % ==========================================
+    % ROW 2: The Evaluation & Feedback Loop
+    % ==========================================
+    \node (eval) [flowbox=purple, below=of repo] {
+        \textbf{Automated Runs}\\[0.3ex]
+        \color{black!70}\scriptsize AI systems attempt proofs
+    };
+
+    \node (inspect) [flowbox=gray, below=of formalize] {
+        \textbf{Verification \& Triage}\\[0.3ex]
+        \color{black!70}\scriptsize Manual inspection of results
+    };
+
+    \node (status) [flowbox=cyan, below=of source] {
+        \textbf{Status Updated}\\[0.3ex]
+        \color{black!70}\scriptsize In repo \& informal source
+    };
+
+
+    % ==========================================
+    % ROUTING ARROWS
+    % ==========================================
+    % 1. Forward Path
+    \draw [arrow] (source.east) -- (formalize.west);
+    \draw [arrow] (formalize.east) -- (repo.west);
+    \draw [arrow] (repo.south) -- (eval.north);
+
+    % 2. Into Triage
+    \draw [arrow] (eval.west) -- (inspect.east) node[midway, pathlabel] {Proofs \&\\Disproofs};
+
+    % 3. Feedback Loops (Red Dashed)
+    \draw [feedback] (inspect.north) -- (formalize.south) node[midway, pathlabel] {Misformalization};
+
+    % External Community Feedback (Diagonal)
+    \draw [thick, dashed, color=black!50, -{Stealth[scale=1.1]}] (inspect.north west) -- (source.south east) node[midway, pathlabel, sloped] {Source Error};
+
+    % 4. Success Path (Green)
+    \draw [success] (inspect.west) -- (status.east) node[midway, pathlabel] {Valid \\ Result};
+
+\end{tikzpicture}

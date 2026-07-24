@@ -1,0 +1,25 @@
+\section{Discussion}\label{sec:discussion}
+
+
+\paragraph{Broader Benefits.}
+Beyond its primary role, Formal Conjectures provides \textbf{precise mathematics} by enforcing a level of formal precision that clarifies the exact meaning of statements.
+This creates a library of conjectures referenced unambiguously via unique file names and commit hashes, ensuring fixed and verifiable mathematical intent; unlike standard citations where generality or precision is often left to interpretation.
+Furthermore, the benchmark serves as a compass for \textbf{Mathlib development}, as formalizing advanced conjectures reveals gaps in the existing library.
+We address these via \texttt{FormalConjecturesForMathlib}, a directory of results continuously upstreamed to Mathlib. By identifying hard-to-state concepts, the repository both benchmarks reasoning and expands formalized mathematics.
+
+
+\paragraph{Limitations.}
+Problem selection faces a \textbf{scope bias} constrained by Mathlib's current coverage, which we mitigate somewhat via our \texttt{ForMathlib} directory. While some concepts remain hard to formalize, this limitation will diminish as Mathlib expands.
+There is also a \textbf{selection bias} toward famous conjectures and Erd\H{o}s problems, resulting in a concentration of number theory and combinatorics; we plan to mitigate this by sourcing diverse arXiv preprints in areas like computer science and physics.
+Focusing on open problems introduces a \textbf{misformalization risk} from subtle statement or source errors.
+While mitigated via new methods in Section~\ref{sec:avoiding_misform}, these risks remain until a full proof is provided; fixing newly discovered errors may require revisions impacting historical comparisons.
+The benchmark also faces \textbf{contamination challenges}: for solved problems, models may retrieve known arguments rather than reasoning from scratch; for open problems, zero-contamination is not permanent as future solutions enter training data.
+Our living repository tracks these developments and reclassifies problems accordingly.
+Finally, \textbf{verification and reproducibility} rely on the Lean~4 kernel's integrity; while the theoretical exploitability of foundational bugs or unintended axioms is a general challenge for formal systems, it remains the highest standard for rigor.
+To ensure stable results despite the repository's evolution, we provide frozen, versioned subsets for standardized evaluation.
+
+
+\paragraph{Future Work.}
+As an active open-source project, we are committed to maintaining and extending Formal Conjectures with new problems, improved problems, and platform features; this ongoing commitment is reflected in the repository's steady growth since its initial release (see Figure~\ref{fig:repo_growth}).
+See Appendix~\ref{sec:extended_discussion} for details on planned extensions, metadata improvements, and community features.
+

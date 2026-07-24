@@ -1,0 +1,12 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{ } /\PYGZhy{}\PYGZhy{} Is there a graph with \PYGZdl{}\PYGZbs{}aleph\PYGZus{}2\PYGZdl{} vertices and chromatic number \PYGZdl{}\PYGZbs{}aleph\PYGZus{}2\PYGZdl{} such that every
+\PYG{+w}{ } subgraph on \PYGZdl{}\PYGZbs{}aleph\PYGZus{}1\PYGZdl{} vertices has chromatic number \PYGZdl{}\PYGZbs{}leq\PYGZbs{}aleph\PYGZus{}0\PYGZdl{}? \PYGZhy{}/
+\PYG{+w}{ } \PYGZhy{}\PYGZhy{} Formalisation note: source material [ErHa68b] uses only induced subgraphs
+\PYG{+w}{ } @[category research open, AMS 5]
+\PYG{+w}{ } theorem erdos\PYGZus{}918.parts.i :
+\PYG{+w}{ }     (∃ (V : Type u) (G : SimpleGraph V), \PYGZsh{}V = ℵ\PYGZus{} 2 ∧ G.chromaticCardinal = ℵ\PYGZus{} 2 ∧
+\PYG{g+gd}{\PYGZhy{}       ∀ (W : Set V) (\PYGZus{} : \PYGZsh{}W = ℵ₁), (G.induce W).chromaticCardinal = ℵ₀) ↔}
+\PYG{g+gi}{+       ∀ (W : Set V) (\PYGZus{} : \PYGZsh{}W = ℵ₁), (G.induce W).chromaticCardinal ≤ ℵ₀) ↔}
+\PYG{+w}{ }     answer(sorry) := by
+\PYG{+w}{ }   sorry
+\end{MintedVerbatim}
