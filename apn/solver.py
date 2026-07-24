@@ -194,8 +194,8 @@ def build_agent(
 @solver
 def lean_prover(
     agent_type: AgentType,
-    max_attempts: int = 1,
-    literature: bool = False,
+    max_attempts: int,
+    literature: bool,
 ) -> Solver:
     """Prove the sample's theorem with an Inspect agent.
 
@@ -212,16 +212,16 @@ def lean_prover(
         max_attempts: With ``> 1``, enables *gated submit* via Inspect's native
             ``attempts``: each submission is re-scored by the task scorer
             (SafeVerify) and, if not accepted, the model is told to keep going
-            (up to this many attempts, or until a token/time limit). With ``1``
-            (default), the first submission ends the loop and is validated only
-            by the final scorer.
+            (up to this many attempts, or until a token/time limit). With ``1``,
+            the first submission ends the loop and is validated only by the
+            final scorer.
         literature: If true, tell the agent about the offline arXiv corpus at
             ``/corpus`` and run against the agent-corpus image that contains it
             (the task wires the image; the tool set is unchanged -- the agent
             greps ``/corpus`` with its ``bash`` shell). The corpus is a 2022
             snapshot, so it predates the benchmark paper and can't leak a later
-            solution. Off by default: it's a literature-augmented run condition,
-            reported separately from the closed-book numbers.
+            solution. If false, run closed-book: it's a literature-augmented run
+            condition, reported separately from the closed-book numbers.
         agent_type: Which agent loop to run -- ``"deep"`` for Inspect's
             ``deepagent`` or ``"react"`` for its plain react agent. Both get the
             same tools, gating, submit tool, and prompt; see :func:`build_agent`.
