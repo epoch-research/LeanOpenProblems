@@ -28,7 +28,7 @@ from inspect_ai import Task, task
 from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
-from apn.dataset import load_subset, oeis_dataset
+from apn.dataset import FC100_SUBSETS_DIR, fc100open_dataset, load_subset, oeis_dataset
 from apn.scorer import proof_scorer
 
 COMPOSE_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_compose"
@@ -227,6 +227,59 @@ def apn_oeis(
     # submission ends the loop and is validated once by the final scorer.
     return Task(
         dataset=oeis_dataset(names=name_list),
+        solver=lean_prover(
+            max_attempts=99_999_999 if gated else 1,
+            literature=literature,
+            agent_type=agent_type,
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", str(get_compose_file(literature))),
+    )
+
+
+@task
+def apn_fc100open(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+) -> Task:
+    """Settle the FC100OpenSet1 open problems from the paper (86 of its 100).
+
+    FC100OpenSet1 is the paper's frozen subset of 100 ``research open`` Formal
+    Conjectures problems (arXiv 2605.13171). Each sample is one problem,
+    presented as its *isolated* spec (the source file's definitions plus the
+    single target theorem; see :mod:`apn.dataset`), and the agent settles it
+    exactly as in :func:`apn_oeis` -- prove it, or disprove it via
+    ``foo.disproof`` -- with the same solver, SafeVerify scorer, and sandbox
+    images.
+
+    Results are comparable to the paper's ``FC100OpenSet1`` at
+    ``bench-v1-lean4.27.0`` modulo two footnotes: (1) the 14 value-typed
+    ``answer(sorry)`` members are excluded (their statement types contain
+    ``sorryAx``, which SafeVerify cannot score; see
+    ``apn/data/fc100open/EXCLUDED.txt``), leaving 86 samples; (2) the 46
+    propositional ``answer(sorry) ↔ P`` statements are rewritten to plain ``P``
+    -- a rewrite certified exact by re-elaboration
+    (``tests/test_fc100_isolation.py``), since the placeholder elaborates to
+    ``True``.
+
+    Args:
+        subset: Optional name of a predefined subset (a ``*.txt`` file under
+            ``apn/data/fc100open/subsets/``, e.g. ``"smoke"``); defaults to all
+            86 samples.
+        gated: If true, submissions are gated by SafeVerify -- a submission that
+            fails verification is rejected and the agent must keep working (until
+            a limit), and it is told only that verification failed (not why).
+        literature: If true, run against the agent-corpus image (the offline
+            arXiv-math corpus baked in at ``/corpus``). Off by default; report
+            separately from closed-book numbers.
+        agent_type: Which agent loop to run -- ``"deep"`` for Inspect's
+            ``deepagent`` or ``"react"`` (default) for its plain react agent.
+    """
+    name_list = load_subset(subset, FC100_SUBSETS_DIR) if subset is not None else None
+    return Task(
+        dataset=fc100open_dataset(names=name_list),
         solver=lean_prover(
             max_attempts=99_999_999 if gated else 1,
             literature=literature,

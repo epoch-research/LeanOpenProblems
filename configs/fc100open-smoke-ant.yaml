@@ -1,0 +1,64 @@
+# Schema reference for eval-set config:
+# https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# SMOKE run for the FC100OpenSet1 task, claude-opus-4-8: the handful of samples
+# in apn/data/fc100open/subsets/smoke.txt. Goal: confirm the task wiring
+# (sandbox startup, sketch write, SafeVerify gating) end-to-end before any full
+# run -- not to measure solve rates. Same per-sample cap as the OEIS lite runs.
+name: fc100open-smoke-ant
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@develop
+    name: apn
+    items:
+      - name: apn_fc100open
+        args:
+          subset: smoke
+epochs: 1
+models:
+  - package: anthropic
+    name: anthropic
+    # Anthropic requires a max_tokens to be provided, unlike most providers.
+    # Inspect defaults to 4096, which is too low.
+    # See https://github.com/UKGovernmentBEIS/inspect_ai/blob/29b6fc4c02eba58d77a46d5ef2ce96808fa620d8/src/inspect_ai/model/_providers/anthropic.py#L387-L393
+    # Too low max_tokens results in broken tool calls due to truncation.
+    # We set max_tokens to the max supported by each model.
+    items:
+      - name: claude-opus-4-8
+        args:
+          config:
+            max_tokens: 128_000
+            # In the raw Anthropic API thinking: {type: "adaptive"} defaults to high.
+            # Inspect has no "just enable thinking" option — you must explicitly set
+            # reasoning_effort or reasoning_tokens in GenerateConfig.
+            reasoning_effort: "high"
+
+# Per-sample spend cap -- the real budget. Requires model_cost_config below for
+# every model used, or Hawk/Inspect errors out.
+cost_limit: 200.0
+working_limit: 259_200  # 72 * 60 * 60
+
+# Prices in dollars per 1M tokens (from scripts/data/model_prices_and_context_window.json).
+# Keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  anthropic/claude-opus-4-8:
+    input: 5.0
+    output: 25.0
+    input_cache_read: 0.5
+    input_cache_write: 6.25
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""

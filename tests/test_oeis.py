@@ -144,7 +144,7 @@ def test_load_subset_strips_comments_and_resolves_to_real_conjectures() -> None:
 
 
 def test_load_subset_unknown_raises() -> None:
-    with pytest.raises(ValueError, match="Unknown OEIS subset"):
+    with pytest.raises(ValueError, match="Unknown subset"):
         load_subset("does_not_exist")
 
 
@@ -153,7 +153,7 @@ def test_load_subset_unknown_raises() -> None:
 # so they carry more than one top-level theorem/lemma. Such lemmas are dependency
 # closure of the spec's definitions, not sibling conjectures; the conjecture to
 # settle is still the single target. Keep this list in sync with
-# scripts/generate_isolated.py output (it is a stable property of the data).
+# scripts/generate_oeis_isolated.py output (it is a stable property of the data).
 _DEPENDENCY_LEMMA_SPECS = {"oeis_a374265_conjecture_1_boundedness"}
 
 

@@ -1,0 +1,22 @@
+# FC100OpenSet1 members excluded from the eval task (14 of 100).
+#
+# Each of these is a value-typed `answer(sorry)` statement: the placeholder
+# elaborates to a position-labeled `sorryAx` *in the statement's type*, so the
+# statement cannot be closed (or even stated) without the paper's
+# `google.answer "with_auxiliary"` machinery, and SafeVerify cannot score it.
+# The propositional `answer(sorry) ↔ P` members are NOT excluded -- they are
+# certified-rewritten to plain `P` at generation time instead.
+Green31.green_31.variants.upper_eventually
+Equidistribution.isAccumulationPoint_three_halves_pow
+Erdos1074.erdos_1074.parts.ii
+Erdos1074.erdos_1074.parts.iv
+Erdos282.erdos_282.variants.general
+Green24.green_24
+Erdos887.erdos_887.parts.i
+Erdos329.erdos_329
+Erdos409.erdos_409.parts.i.isBigO
+Erdos188.erdos_188
+RamseyNumbers.ramsey_number_five_five
+Erdos332.erdos_332
+Erdos888.erdos_888
+Erdos36.erdos_36.variants.lower

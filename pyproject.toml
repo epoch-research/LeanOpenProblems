@@ -15,6 +15,7 @@ build-backend = "hatchling.build"
 packages = ["apn"]
 artifacts = [
     "apn/data/oeis/**/*",
+    "apn/data/fc100open/**/*",
 ]
 
 [project.entry-points.inspect_ai]
@@ -42,6 +43,9 @@ hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v20
 [tool.mypy]
 python_version = "3.13"
 files = ["apn", "tests"]
+# tests/ is a namespace package (no __init__.py); tests import shared plumbing
+# as `tests.lean_sandbox`, so pin the repo root as the package base.
+explicit_package_bases = true
 # Vendored third-party docs/examples, not our code.
 exclude = 'pypantograph-docs'
 strict = true
