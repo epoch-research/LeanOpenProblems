@@ -266,8 +266,8 @@ def apn_fc100open(
 
     Args:
         subset: Optional name of a predefined subset (a ``*.txt`` file under
-            ``apn/data/fc100open/subsets/``, e.g. ``"smoke"``); defaults to all
-            86 samples.
+            ``apn/data/fc100open/subsets/``); defaults to all 86 samples. None
+            are shipped currently; restrict ad-hoc runs with ``--sample-id``.
         gated: If true, submissions are gated by SafeVerify -- a submission that
             fails verification is rejected and the agent must keep working (until
             a limit), and it is told only that verification failed (not why).

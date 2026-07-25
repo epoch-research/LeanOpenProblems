@@ -1,7 +1,0 @@
-# Smoke subset: a few small FC100OpenSet1 specs that exercise the task wiring
-# end-to-end cheaply (sandbox startup, sketch write, SafeVerify gating). Picked
-# to cover the dataset's quirks, not to be solvable:
-Erdos200.erdos_200                              # rewritten (was `answer(sorry) ↔ P`)
-Arxiv.«2501.03234».conjecture_4_1               # guillemets in the id/filename
-Transcendental.pi_pow_sqrt_two_transcendental   # plain statement, tiny spec
-Gilbreath.gilbreath_conjecture                  # definition-heavy sequence spec

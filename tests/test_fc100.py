@@ -18,7 +18,6 @@ from apn.dataset import (
     FC100_ISOLATED_DIR,
     FC100_MAPPING_FILE,
     FC100_SUBSETS_DIR,
-    available_subsets,
     fc100open_dataset,
     load_subset,
     parse_fc100_mapping,
@@ -154,14 +153,6 @@ def test_every_target_has_isolated_single_theorem_spec() -> None:
         assert re.search(rf"\b(?:theorem|lemma)\s+.*{re.escape(short)}\b", text), name
         expected = _DEPENDENCY_LEMMA_SPECS.get(name, 1)
         assert len(_DECL_RE.findall(text)) == expected, name
-
-
-def test_smoke_subset_loads() -> None:
-    assert "smoke" in available_subsets(FC100_SUBSETS_DIR)
-    names = load_subset("smoke", FC100_SUBSETS_DIR)
-    assert 3 <= len(names) <= 5
-    # Every name resolves to a real sample.
-    assert len(fc100open_dataset(names=names)) == len(names)
 
 
 def test_load_subset_unknown_raises() -> None:
