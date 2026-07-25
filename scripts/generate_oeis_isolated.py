@@ -20,8 +20,9 @@ This script only *generates*. The committed ``Isolated/`` files are validated by
 ``tests/test_oeis_isolation.py`` -- re-extraction structural checks, the
 authoritative ``lake env lean -o`` compile gate, and the paper oracle
 cross-check -- all of which run the Lean toolchain in a container (the shared cut
-logic and Docker plumbing live in ``scripts/oeis_isolation.py``). After
-regenerating, run those tests to confirm the output is sound.
+logic and Docker plumbing live in ``scripts/isolation.py``; the OEIS data
+locations in ``scripts/oeis_isolation.py``). After regenerating, run those
+tests to confirm the output is sound.
 
 Setup (one-time, since there is no local Lean toolchain). Start a Lean container
 with the repo mounted and build the extractor in-tree:
@@ -33,7 +34,7 @@ with the repo mounted and build the extractor in-tree:
 
 Then generate (defaults target that container and in-tree exe):
 
-    python scripts/generate_isolated.py
+    python scripts/generate_oeis_isolated.py
 
 (The committed ``apn/lean/Dockerfile`` ``generate`` stage bakes the same extractor
 to ``/opt/apn/extract_ranges/...`` for a from-image regen; pass ``--exe`` to use it.)
@@ -44,20 +45,17 @@ from __future__ import annotations
 import argparse
 import sys
 
-from oeis_isolation import (
-    AUTO_DIR,
+from scripts.isolation import (
     DEFAULT_CONTAINER,
     DEV_EXE,
-    ISOLATED_DIR,
-    MAPPING_FILE,
     dependency_closure,
     isolate,
     kept_flags,
-    parse_mapping,
     resolve_target,
     run_extractor,
     tidy,
 )
+from scripts.oeis_isolation import AUTO_DIR, ISOLATED_DIR, MAPPING_FILE, parse_mapping
 
 
 def main() -> None:
