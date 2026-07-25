@@ -1,107 +1,3 @@
-"""Final proof checking via SafeVerify.
-
-The authoritative anti-cheat is the vendored ``safe_verify`` executable
-(see ``apn/lean/safeverify/``): given two ``.olean`` files it re-checks the
-submission against the target spec at the kernel level (same name/kind/type for
-every target declaration, ``sorry``-free, only the standard axioms). Its raw
-interface is::
-
-    # in the UNTRUSTED `compile` sandbox -- elaborating agent Lean runs agent code:
-    tar -xf submission.tar -C Submission                      # unpack the agent's file
-    lake env lean -o submission.olean Submission/Spec.lean    # compile the submission
-    # submission.olean is then copied into the TRUSTED `scorer` sandbox, where:
-    lake env lean -o target.olean     Submission/Spec.lean    # compile the trusted spec
-    lake env safe_verify --disproofs --save out.json target.olean submission.olean
-
-The submission is a **single** Lean module: the entry module
-``Submission/Spec.lean`` (Lean module ``Submission.Spec``) holding the
-conjecture's defs + target theorem and a complete proof. The scorer hands
-``check`` the raw tar of the agent's ``Submission/`` directory (read from its
-sandbox) -- nothing decodes the archive in Python.
-
-**Two-sandbox split (the anti-cheat that matters most).** Compiling the
-submission *elaborates agent-authored Lean*, so a compile-time ``#eval`` /
-``initialize`` / ``IO`` macro runs arbitrary code as root. That compile therefore
-happens in a throwaway **compile** sandbox that holds nothing the verdict trusts;
-the only thing that crosses out of it is the produced ``submission.olean``, read
-by path. The **scorer** sandbox -- where the trusted ``target.olean`` and the
-``safe_verify`` binary live -- only compiles the trusted target spec (fixed
-dataset text, never agent-controlled) and runs ``safe_verify``. So no
-agent-influenced Lean is ever *elaborated* in the scorer: ``safe_verify`` reads
-the submission olean via ``readModuleData`` (no execution) and runs initializers
-only for its *imports*, which are trusted library modules (Mathlib/FC/Init)
-present in the scorer image. A submission that compiled can only import such
-trusted modules, so importing it pulls in nothing agent-controlled.
-
-Both sides compile the **same** way -- a standalone ``lake env lean -o`` at the
-entry path ``Submission/Spec.lean`` (in their respective sandboxes), which gives
-each the module name ``Submission.Spec``. That shared module name is load-bearing
-for private-name matching (see ``check``), and compiling the submission standalone
-is load-bearing for *soundness*: ``safe_verify`` kernel-replays only the
-declarations of the file it is given, trusting the constants of any *imported*
-module (they enter via ``importModules`` and are not re-checked -- see
-``apn/lean/safeverify``'s README). A single replayed module therefore has nowhere
-to hide a kernel-invalid constant. The agent cannot split its proof across
-imported helper modules: ``Submission`` is not a registered Lake library and no
-helper olean is ever built, so an ``import Submission.…`` simply fails to compile
-and the submission is rejected. Auxiliary defs/lemmas must live in ``Spec.lean``
-itself, where they are replayed.
-
-``--disproofs`` lets the agent *resolve* a conjecture either way: a target
-theorem ``foo`` is accepted by a proof of ``foo`` itself, **or** by a separate
-``foo.disproof`` whose type SafeVerify checks is the negation of ``foo``'s
-statement (kernel ``isDefEq`` against its negation-normal-form). The "or" lives
-inside ``safe_verify``, so this module's verdict mapping is unchanged.
-
-``--save`` dumps a per-declaration JSON report (kind, axioms, failure mode),
-which this module reads back and attaches to the :class:`CheckOutcome` (and
-thence the score metadata) for offline analysis.
-
-This module drives those commands across the two sandboxes, one
-``sandbox(name).exec`` per step, and maps the result to a verdict. The governing
-rule is *whose code failed*:
-
-* **Reference side** -- compiling the trusted, fixed target spec (and the
-  scratch-dir bookkeeping). If that fails for any reason (nonzero exit, OOM/signal
-  kill, timeout) it is *our* bug, no verdict is possible -> raise, so the sample
-  errors out and is rerun/inspected.
-* **Agent side** -- compiling the submission (in the compile sandbox), and
-  ``safe_verify`` replaying it (in the scorer sandbox). Any failure here is a
-  verdict on the agent's code, never an infra raise:
-    - submission won't compile -> ``stage="compile_submission"``;
-    - ``safe_verify`` exit 0 -> accepted; plain nonzero -> ``stage="safeverify"``;
-    - OOM / signal kill (exit >= 128) -> ``stage="*_resource"``;
-    - timeout (provider raises ``TimeoutError``) -> ``stage="*_timeout"``;
-    - undecodable output (provider raises ``UnicodeDecodeError``) ->
-      ``stage="*_decode"``;
-    - a compiled olean too large to read back out of the sandbox (provider raises
-      ``OutputLimitExceededError``) -> ``stage="compile_submission_oversize"``.
-
-Why agent-side resource deaths are a verdict, not a raise: an OOM or timeout
-here is almost always the agent's expensive proof term, not our infrastructure.
-safe_verify's memory/time use on a submission can vastly exceed the agent-side
-compile cost (its un-memoized rebuildExpr expands pointer-shared proof terms,
-e.g. from ``ring``, exponentially). These failures are *deterministic* per
-submission, so raising-and-rerunning can never resolve them -- it just discards
-the sample. Telling the agent its submission could not be verified lets it
-produce a cheaper proof. See the scorer mem_limit comment in apn/task.py for
-measurements. (The reference target spec is small and fixed, so it does not hit
-these limits; if it ever did, that is genuinely our problem -> raise.)
-
-Threats the two-sandbox split contains, and the residual:
-
-* **Root code execution (closed for the verdict).** Compile-time agent code can
-  run arbitrary commands as root, but only in the throwaway ``compile`` sandbox,
-  which holds no ``target.olean`` and no ``safe_verify`` binary the verdict
-  relies on. It cannot reach the ``scorer`` sandbox, where the trusted target is
-  compiled and ``safe_verify`` runs without elaborating any agent Lean.
-* **Residual: olean deserialization.** ``safe_verify`` parses the
-  agent-influenced ``submission.olean`` with ``readModuleData`` in the trusted
-  scorer sandbox, so a memory-safety bug in Lean's olean *deserializer* could
-  regain code execution there. This pre-dates the split (the olean was always
-  agent-influenced) and is a far higher bar than a one-line ``#eval``; closing it
-  would need a hardened/validated olean loader. Out of scope here.
-"""
 
 from __future__ import annotations
 
@@ -150,11 +46,7 @@ class CheckOutcome:
     ok: bool
     stage: str
     detail: str
-    # safe_verify's ``--save`` JSON: one entry per target declaration, recording
-    # the target/submission kind + axioms and the per-declaration failure mode
-    # (``None`` on success). Present only when safe_verify actually ran and wrote
-    # it (so ``None`` when the submission never compiled, or safe_verify died to
-    # a resource limit before writing).
+    # safe_verify's ``--save`` JSON. Present only when safe_verify actually ran.
     report: list[dict[str, Any]] | None = None
 
 
@@ -163,14 +55,6 @@ class SafeVerifyChecker(Protocol):
     async def check(
         self, target: str, submission_tar: bytes
     ) -> CheckOutcome:
-        """Check ``submission_tar`` proves the spec in ``target`` without cheating.
-
-        ``submission_tar`` is the agent's ``Submission/`` directory as raw tar
-        bytes (members relative to that root, e.g. ``./Spec.lean``), exactly as
-        :func:`apn.filetree.read_submission_tar` produces it. The checker unpacks
-        it in the untrusted compile sandbox and compiles; the entry module
-        ``Spec.lean`` must be present after unpacking.
-        """
         ...
 
 
@@ -192,13 +76,6 @@ class SandboxSafeVerify:
         # compiled to an olean. Compile-time agent code runs only here.
         self._compile_sandbox_name = compile_sandbox_name
         self._timeout = timeout
-        # When set, pass ``--disproofs`` so a submission may *disprove* a target
-        # theorem ``foo`` by supplying ``foo.disproof`` whose type is SafeVerify's
-        # negation-normal-form of ``foo``'s statement (``∀`` -> ``∃¬``, ``∧`` ->
-        # ``→¬``, ``≠`` -> ``=``, ...), proved sorry-free with the standard
-        # axioms. SafeVerify checks that negation by kernel ``isDefEq`` and
-        # accepts ``foo`` *or* ``foo.disproof`` for the target; the definitions
-        # must still be reproduced either way.
         self._allow_disproofs = allow_disproofs
 
     async def _exec_reference(
