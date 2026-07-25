@@ -1,9 +1,14 @@
-name: Build LeanOpenProblems Docker Images and Upload to Amazon ECR
+name: Build LeanOpenProblems Docker Images and Upload to Amazon ECR (manual)
 
+# This workflow is only ever triggered manually (workflow_dispatch). For the
+# "Run workflow" button to appear, this file must exist on the default branch
+# (main); you can then select a different branch to run.
+#
+# The ECR registry and the IAM role to assume come from repository
+# variables (Settings -> Secrets and variables -> Actions -> Variables):
+# ECR_REGISTRY, AWS_ECR_PUSH_ROLE.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -11,6 +16,7 @@ permissions:
 
 env:
   IMAGE_NAME: ${{ vars.ECR_REGISTRY }}
+  AWS_ECR_PUSH_ROLE: ${{ vars.AWS_ECR_PUSH_ROLE }}
 
 jobs:
   publish-lean-images:
@@ -23,7 +29,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           aws-region: ${{ steps.ecr.outputs.region }}
-          role-to-assume: arn:aws:iam::328726945407:role/production-github-actions-epochai
+          role-to-assume: ${{ env.AWS_ECR_PUSH_ROLE }}
 
       - uses: actions/checkout@v4
 
