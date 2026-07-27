@@ -33,10 +33,15 @@ Canonicalization (see `EXCLUDED.txt` and `RENAMED.txt` for the details):
   `@[category ..., AMS ...]` classification list is dropped whole — it is
   catalogue metadata, not part of the statement, and its `research solved`
   category and `formal_proof` URL clauses are the recorded verdict (the same
-  answer key in human-readable form) — as are the 6 prose lines crediting the
-  prover agent (`scripts/erdos_isolation.py:strip_fc_annotations`, counts
-  asserted). Membership itself ignores resolution status: this is the paper's
-  canonical attempted set, regardless of what has been resolved since.
+  answer key in human-readable form) — as is the doc-comment prose recording
+  resolutions (crediting the DeepMind prover agent, other AI provers, or human
+  authors, sometimes describing the counterexample) and the module-doc
+  reference lines linking solution papers/formalisations
+  (`scripts/erdos_isolation.py:strip_fc_annotations`, exact snippets, counts
+  asserted; assembled from the generation census plus a full agentic audit of
+  every member against its source). Membership itself ignores resolution
+  status: this is the paper's canonical attempted set, regardless of what has
+  been resolved since.
 
 Everything else in this directory is produced by this repository:
 `MAPPING.txt` (target -> source file) and `Isolated/` (one per-target spec per

@@ -114,12 +114,13 @@ def test_sketches_have_no_category_attributes() -> None:
     # metadata, not part of the statement, and their category/formal_proof
     # fields are where FC records resolution status -- generation drops every
     # kept declaration's list whole (fc_statements.strip_category_attrs).
-    # Semantic attributes (Selfridge's `@[mk_iff]`) are kept. (Module docs may
-    # mention `research solved` in prose about *cut* sibling statements --
-    # MonochromaticQuantumGraph does -- so only the attribute is banned here.)
+    # Semantic attributes (Selfridge's `@[mk_iff]`) are kept. Comment-stripped,
+    # because prose may legitimately *quote* the attribute
+    # (OpenQuantumProblems/23's module doc) or mention `research solved` about
+    # cut sibling statements (MonochromaticQuantumGraph).
     for sample in fc100open_dataset():
         assert sample.metadata is not None
-        sketch = sample.metadata["sketch"]
+        sketch = strip_comments(sample.metadata["sketch"])
         assert "@[category" not in sketch, sample.id
         assert "formal_proof" not in sketch, sample.id
 

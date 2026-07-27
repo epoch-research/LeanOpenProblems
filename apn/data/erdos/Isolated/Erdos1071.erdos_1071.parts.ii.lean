@@ -33,9 +33,6 @@ def SegmentsDisjoint (seg1 seg2 : ℝ² × ℝ²) : Prop :=
   segment ℝ seg1.1 seg1.2 ∩ segment ℝ seg2.1 seg2.2 ⊆ {seg1.1, seg1.2, seg2.1, seg2.2}
 
 /-- Is there a region $R$ with a maximal set of disjoint unit line segments that is countably infinite?
-Solved affirmatively by [Fo99], who gave an explicit construction.
-
-This was formalized in Lean by Alexeev using Aristotle and ChatGPT.
 -/
 theorem erdos_1071.parts.ii :
     ∃ (R : Set ℝ²) (S : Set (ℝ² × ℝ²)),

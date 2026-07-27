@@ -92,8 +92,10 @@ def fc_kept_flags(src: bytes, filerec: dict, engine_flags: list[bool]) -> list[b
 # answer-key channel for the eval tasks -- so the shipped specs drop the list
 # whole (with its trailing newline). Only lists *starting* with `category` are
 # matched: semantic attributes (Selfridge's `@[mk_iff]`) live in their own
-# lists and must be kept.
-CATEGORY_ATTR_RE = re.compile(r"@\[category [^\]]*\]\n?")
+# lists and must be kept. Anchored to line starts, where every real attribute
+# list sits -- prose may quote the attribute mid-line (OpenQuantumProblems/23's
+# module doc does) and must not be mangled.
+CATEGORY_ATTR_RE = re.compile(r"^@\[category [^\]]*\]\n?", re.MULTILINE)
 
 
 def strip_category_attrs(text: str) -> tuple[str, int]:

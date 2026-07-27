@@ -179,10 +179,12 @@ def main() -> None:
     # 86 kept. Any drift means membership or vendored sources changed.
     if len(rewritten) != 46:
         raise SystemExit(f"expected 46 rewritten members, got {len(rewritten)}")
-    # 92 classification lists: one per kept declaration carrying one -- the 86
-    # targets plus kept dependency decls (EllipticCurveRank 5, hasSICPOVM_60 1).
-    if n_category != 92:
-        raise SystemExit(f"expected 92 category lists stripped, got {n_category}")
+    # 91 classification lists: one per kept declaration carrying one -- the 86
+    # targets plus EllipticCurveRank's 5 kept dependency decls. (A 92nd
+    # occurrence of `@[category` is backtick-quoted prose in
+    # OpenQuantumProblems/23's module doc; the line-anchored pattern skips it.)
+    if n_category != 91:
+        raise SystemExit(f"expected 91 category lists stripped, got {n_category}")
 
     MAPPING_FILE.write_text("".join(f"{name} {rel}\n" for name, rel in mapping))
     print(

@@ -54,8 +54,6 @@ There are four possibilities for the density of $A+B$:
 /--
 Literature question:
 Does $A + B$ have positive lower density?
-
-This has been falsified.
 -/
 theorem erdos_125.variants.positive_lower_density :
     0 < (A + B).lowerDensity := by

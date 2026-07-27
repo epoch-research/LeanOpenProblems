@@ -88,7 +88,7 @@ The file includes the following test lemmas and benchmark-support statements:
 - `hesseFamily_normalized`, `hesseFamily_pairwise`;
 - `bb84Family_normalized`.
 
-At present, these `` results are included with
+At present, these `@[category test, AMS 15 47 81]` results are included with
 placeholder proofs `by sorry`; they are intended to be proved in the next PR.
 
 ## References

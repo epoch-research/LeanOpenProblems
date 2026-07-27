@@ -29,15 +29,6 @@ open EuclideanGeometry
 Let $A\subset \mathbb{R}^2$ be a set of $n$ points with no three on a line.
 Must there exist a single point from which there are at least $\lfloor n/2\rfloor$ distinct
 distances?
-
-This question has been answered negatively by Xichuan in the
-[comments](https://www.erdosproblems.com/forum/thread/1082), who gave a set of $42$ points in
-$\mathbb{R}^2$, with no three on a line, such that each point determines only $20$ distinct distances.
-
-A smaller counterexample has been formalised here: it comprised of $8$ points, where each point only
-determines $3$ distances.
-
-This counterexample has originally been found by Heiko Harborth.
 -/
 theorem erdos_1082.parts.ii : 
     ∀ (A : Finset ℝ²) (hA : A.Nonempty) (hA_n3c : NonTrilinear (A : Set ℝ²)),

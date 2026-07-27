@@ -21,7 +21,6 @@ import FormalConjectures.Util.ProblemImports
 
 *References:*
 - [erdosproblems.com/868](https://www.erdosproblems.com/868)
-- [LaLa26] Larsen and Larsen, [Erdős problem 868](https://github.com/Larsen-Daniel/Erdos-868/blob/main/868.pdf) (2026)
 -/
 
 open Filter
@@ -40,8 +39,6 @@ def ncard_add_repr (A : Set ℕ) (o : ℕ) (n : ℕ) : ℕ :=
 $n$ can be written as the sum of two elements from $A$. If $f(n) > \epsilon \log n$ for large $n$
 and an arbitrary fixed $\epsilon > 0$, then must $A$ contain a minimal additive
 basis of order $2$?
-
-Larsen and Larsen [LaLa26] constructed a counterexample with $f(n) > c \log n$ for all large $n$.
 -/
 theorem erdos_868.parts.ii :
     ∀ᵉ (A : Set ℕ) (ε > 0), A.IsAsymptoticAddBasisOfOrder 2 →

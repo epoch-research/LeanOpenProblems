@@ -21,7 +21,6 @@ import FormalConjectures.Util.ProblemImports
 
 *References:*
 - [erdosproblems.com/868](https://www.erdosproblems.com/868)
-- [LaLa26] Larsen and Larsen, [Erdős problem 868](https://github.com/Larsen-Daniel/Erdos-868/blob/main/868.pdf) (2026)
 -/
 
 open Filter
@@ -39,8 +38,6 @@ def ncard_add_repr (A : Set ℕ) (o : ℕ) (n : ℕ) : ℕ :=
 /-- Let $A$ be an additive basis of order $2$, let $f(n)$ denote the number of ways in which
 $n$ can be written as the sum of two elements from $A$. If $f(n) \to \infty$ as $n \to \infty$, then
 must $A$ contain a minimal additive basis of order $2$?
-
-Larsen and Larsen [LaLa26] answered this in the negative.
 -/
 theorem erdos_868.parts.i :
     ∀ (A : Set ℕ), A.IsAsymptoticAddBasisOfOrder 2 →

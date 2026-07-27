@@ -63,17 +63,22 @@ FORM_CENSUS = {
 # All 353 statements were unresolved when the paper's agent attempted them; FC
 # has since recorded verdicts on 14 members: a `research solved` category
 # flip, for 10 of them a `formal_proof` URL attribute pointing at a complete
-# proof, and prose crediting the prover agent (one line of which states the
-# direction outright). Un-filling the answer literal removes the
-# machine-readable key; these annotations are the same key in human-readable
-# form, so generation strips them back to the attempt-time text: every kept
-# declaration's `@[category ...]` list is dropped whole (see
-# ``scripts.fc_statements.strip_category_attrs``; that takes any formal_proof
-# clause with it), and the free prose is removed via the exact snippets in
-# VERDICT_PROSE. Every application is counted and the totals asserted, so
-# upstream drift at regeneration fails loudly instead of leaking.
-# tests/test_erdos.py asserts the markers are absent from every shipped sketch.
+# proof, and doc-comment prose recording the resolution -- crediting the
+# DeepMind prover agent, other AI provers, or human authors, sometimes stating
+# the direction or even describing the counterexample, plus module-doc
+# reference lines linking the solution papers/formalisations. Un-filling the
+# answer literal removes the machine-readable key; these annotations are the
+# same key in human-readable form, so generation strips them back to the
+# attempt-time text: every kept declaration's `@[category ...]` list is
+# dropped whole (see ``scripts.fc_statements.strip_category_attrs``; that
+# takes any formal_proof clause with it), and the free prose is removed via
+# the exact snippets in VERDICT_PROSE (assembled from the shipped generation
+# plus a full agentic audit of all 350 members against their sources). Every
+# application is counted and the totals asserted, so upstream drift at
+# regeneration fails loudly instead of leaking. tests/test_erdos.py asserts
+# the markers are absent from every shipped sketch.
 VERDICT_PROSE = [
+    # -- resolutions by the paper's own agent -------------------------------
     "\n\nThis was disproved by the DeepMind prover agent.\n",
     "\n\nThis was proved by DeepMind prover agent.\n",
     "\n\nThe DeepMind prover agent has found a formal proof of this statement.\n",
@@ -87,10 +92,42 @@ VERDICT_PROSE = [
     " (2026)\n",
     "\n\nThis stronger quadratic variant was also proved formally by the DeepMind prover agent"
     " [DM26b].\n",
+    # -- resolutions recorded from other provers/authors --------------------
+    "\nSolved affirmatively by [Fo99], who gave an explicit construction.\n\n"
+    "This was formalized in Lean by Alexeev using Aristotle and ChatGPT.\n",  # 1071.parts.ii
+    "\n\nThis was proved affirmatively by Chojecki [Ch26], using a Duke-type equidistribution"
+    " theorem.\nA Lean formalisation of the reduction (conditional on a Duke-type equidistribution"
+    " theorem) exists;\nsee the [forum discussion]"
+    "(https://www.erdosproblems.com/forum/thread/1148#post-4849).\n",  # 1148
+    "- [Ch26] P. Chojecki, [Bounded Representations by $x^2 + y^2 - z^2$]"
+    "(https://www.ulam.ai/research/erdos1148-full.pdf) (2026)\n",  # 1148 module-doc reference
+    "\n\nThis has been falsified.\n",  # 125.variants.positive_lower_density
+    "\n\nThe answer is yes, by [APSSV26, Section 4]; a Lean formalisation is available"
+    " in [Mo26].\n",  # 997
+    "- [Mo26] P. Monticone, [Lean formalisation of Erdős problem 997]"
+    "(https://live.lean-lang.org/#project=mathlib-v4.28.0&url=https://gist.githubusercontent.com/"
+    "pitmonticone/016f2ed66b4cd1c4c4b9998095170e60/raw/"
+    "b7dfc05c525ae385b5835f89f1ada721443e4305/Erdos997.lean) (2026)\n",  # 997 module-doc reference
+    "\n\nThis question has been answered negatively by Xichuan in the\n[comments]"
+    "(https://www.erdosproblems.com/forum/thread/1082), who gave a set of $42$ points in\n"
+    "$\\mathbb{R}^2$, with no three on a line, such that each point determines only $20$ distinct"
+    " distances.\n\nA smaller counterexample has been formalised here: it comprised of $8$ points,"
+    " where each point only\ndetermines $3$ distances.\n\n"
+    "This counterexample has originally been found by Heiko Harborth.\n",  # 1082.parts.ii
+    "\n\nA positive [solution](https://github.com/spicylemonade/erdos-38) was given by GPT 5.5 Pro\n"
+    "(prompted by gebyjaff, cleanup by Liam Price); in fact a sparse random set $B$ has this"
+    " property,\nwith $f(\\alpha)\\gg \\alpha (1-\\alpha)^2$.\n",  # 38
+    "\n\nLarsen and Larsen [LaLa26] answered this in the negative.\n",  # 868.parts.i
+    "\n\nLarsen and Larsen [LaLa26] constructed a counterexample with $f(n) > c \\log n$ for all"
+    " large $n$.\n",  # 868.parts.ii
+    "- [LaLa26] Larsen and Larsen, [Erdős problem 868]"
+    "(https://github.com/Larsen-Daniel/Erdos-868/blob/main/868.pdf) (2026)\n",  # 868 module-doc ref
 ]
 # 351 category lists (one per kept declaration: the 350 targets + 1055's kept
-# `exists_p`) and the 6 verdict-prose lines.
-ANNOTATION_TOTALS = {"category": 351, "prose": 6}
+# `exists_p`) and 18 verdict-prose applications: each snippet applies once,
+# except the 868 module-doc reference line, which lands in both of that file's
+# derived specs (parts.i and parts.ii).
+ANNOTATION_TOTALS = {"category": 351, "prose": 18}
 
 
 def strip_fc_annotations(text: str) -> tuple[str, dict[str, int]]:
