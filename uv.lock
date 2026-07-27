@@ -184,15 +184,13 @@ wheels = [
 name = "apn"
 version = "0.1.4rc7"
 source = { editable = "." }
-dependencies = [
-    { name = "inspect-ai" },
-]
 
 [package.dev-dependencies]
 dev = [
     { name = "anthropic" },
     { name = "environs" },
     { name = "hawk", extra = ["cli"] },
+    { name = "inspect-ai" },
     { name = "mypy" },
     { name = "openai" },
     { name = "pytest" },
@@ -201,13 +199,13 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "inspect-ai", specifier = ">=0.3.229" }]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "anthropic", specifier = ">=0.105.2" },
     { name = "environs" },
     { name = "hawk", extras = ["cli"], git = "https://github.com/METR/hawk?subdirectory=hawk&tag=v2026.06.01" },
+    { name = "inspect-ai", specifier = ">=0.3.229" },
     { name = "mypy", specifier = ">=2.1.0" },
     { name = "openai", specifier = ">=2.38.0" },
     { name = "pytest", specifier = ">=8.0" },
