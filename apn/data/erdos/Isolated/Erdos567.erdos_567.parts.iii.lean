@@ -56,7 +56,6 @@ def H5 : SimpleGraph (Fin 5) :=
 
 Is $H_5$ ($C_5$ with two vertex-disjoint chords) Ramsey size linear?
 -/
-@[category research open, AMS 5]
 theorem erdos_567.parts.iii : IsRamseySizeLinear H5 := by
   sorry
 

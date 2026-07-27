@@ -109,6 +109,21 @@ def test_sketches_have_no_answer_and_no_banner() -> None:
         assert sketch.startswith("import "), sample.id
 
 
+def test_sketches_have_no_category_attributes() -> None:
+    # FC's `@[category ..., AMS ...]` classification lists are catalogue
+    # metadata, not part of the statement, and their category/formal_proof
+    # fields are where FC records resolution status -- generation drops every
+    # kept declaration's list whole (fc_statements.strip_category_attrs).
+    # Semantic attributes (Selfridge's `@[mk_iff]`) are kept. (Module docs may
+    # mention `research solved` in prose about *cut* sibling statements --
+    # MonochromaticQuantumGraph does -- so only the attribute is banned here.)
+    for sample in fc100open_dataset():
+        assert sample.metadata is not None
+        sketch = sample.metadata["sketch"]
+        assert "@[category" not in sketch, sample.id
+        assert "formal_proof" not in sketch, sample.id
+
+
 def test_sketches_have_no_example_commands() -> None:
     # FC's anonymous `example` sanity checks (GraphConjecture316/327 run
     # `decide +native`) are cut so the trusted target compile never executes

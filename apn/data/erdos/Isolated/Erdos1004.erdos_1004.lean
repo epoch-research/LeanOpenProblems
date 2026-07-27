@@ -35,7 +35,6 @@ For any fixed c > 0, if x is sufficiently large then there exists n ≤ x such t
 the values of φ(n+k) are all distinct for 1 ≤ k ≤ (log x)^c.
 This is an open problem.
 -/
-@[category research open, AMS 11]
 theorem erdos_1004 :
     ∀ c > (0 : ℝ), ∀ᶠ x in atTop, ∃ n ≤ x,
       IsDistinctTotientRun n ⌊(Real.log (x : ℝ)) ^ c⌋₊ := by

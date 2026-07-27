@@ -49,7 +49,6 @@ noncomputable def g (k : ℕ) : ℕ := sInf {m | k + 1 < m ∧ k < (m.choose k).
 /--
 Sorenson, Sorenson, and Webster [SSWE20] give heuristic evidence that $\log g(k) \asymp \frac{k}{\log k}$.
 -/
-@[category research open, AMS 11]
 theorem erdos_1095.variants.log_equivalent : (fun k ↦ log (g k)) ~[atTop] (fun k ↦ k / log k) := by
   sorry
 

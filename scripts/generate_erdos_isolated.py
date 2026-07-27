@@ -48,9 +48,9 @@ from scripts.erdos_isolation import (
     MAPPING_FILE,
     SORRY_ALLOWLIST,
     SOURCES_DIR,
-    VERDICT_TOTALS,
+    ANNOTATION_TOTALS,
     kept_names,
-    strip_verdict_annotations,
+    strip_fc_annotations,
 )
 from scripts.fc_statements import (
     fc_kept_flags,
@@ -118,8 +118,8 @@ def check_sorries(name: str, src: bytes, filerec: dict, flags: list[bool]) -> No
     """Assert the isolated spec's only sorry'd *declaration* is the target
     (checked on the kept commands' source spans; no-decl commands are skipped,
     since a module doc may say "sorry" in prose). A stray ``sorry`` in a kept
-    sibling would make the sample unscorable-as-intended; the allowlist is
-    expected empty here (reported, not fatal, if ever populated)."""
+    sibling would make the sample unscorable-as-intended; an allowlisted one
+    (1055's `exists_p` dependency) is reported, not fatal."""
     for c, keep in zip(filerec["commands"], flags):
         if not keep or not c["decls"]:
             continue
@@ -161,7 +161,7 @@ def main() -> None:
         old.unlink()
 
     census: dict[str | None, int] = {form: 0 for form in FORM_CENSUS}
-    verdicts = {kind: 0 for kind in VERDICT_TOTALS}
+    annotations = {kind: 0 for kind in ANNOTATION_TOTALS}
     for name, rel in mapping:
         filerec = by_rel[rel]
         src = (SOURCES_DIR / rel).read_bytes()
@@ -180,15 +180,15 @@ def main() -> None:
             if form is None or n != 1 or "answer(" in strip_comments(text):
                 raise SystemExit(f"{name}: answer(...) ↔ rewrite did not apply cleanly")
         census[form] += 1
-        text, counts = strip_verdict_annotations(text)
+        text, counts = strip_fc_annotations(text)
         for kind, n in counts.items():
-            verdicts[kind] += n
+            annotations[kind] += n
         (ISOLATED_DIR / f"{name}.lean").write_text(text)
 
     if census != FORM_CENSUS:
         raise SystemExit(f"form census drifted: {census} != {FORM_CENSUS}")
-    if verdicts != VERDICT_TOTALS:
-        raise SystemExit(f"verdict-annotation strip drifted: {verdicts} != {VERDICT_TOTALS}")
+    if annotations != ANNOTATION_TOTALS:
+        raise SystemExit(f"annotation strip drifted: {annotations} != {ANNOTATION_TOTALS}")
 
     MAPPING_FILE.write_text("".join(f"{name} {rel}\n" for name, rel in mapping))
     n_rewritten = sum(n for form, n in census.items() if form is not None)

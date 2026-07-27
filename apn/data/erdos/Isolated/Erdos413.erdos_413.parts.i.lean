@@ -40,7 +40,6 @@ def IsBarrier (f : ℕ → ℝ) (n : ℕ) : Prop :=
   ∀ m < n, (m : ℝ) + f m ≤ n
 
 /-- Are there infinitely many barriers for `ω`? -/
-@[category research open, AMS 11]
 theorem erdos_413.parts.i :
     { n | IsBarrier (fun m => ω m) n }.Infinite := by
   sorry

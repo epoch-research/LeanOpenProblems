@@ -58,7 +58,6 @@ noncomputable abbrev W : ℕ → ℕ := monoAPNumber 2
 /--
 In [Er81] Erdős asks whether $\frac{W(k+1)}{W(k)} \to \infty$.
 -/
-@[category research open, AMS 11]
 theorem erdos_138.variants.quotient :
     atTop.Tendsto (fun k => ((W (k + 1) : ℚ)/(W k))) atTop := by
   sorry

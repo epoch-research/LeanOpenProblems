@@ -50,7 +50,6 @@ noncomputable def u (n : ℕ) : ℝ :=
 /--
 Does the set `{n | u n < u (n+1)}` have positive natural density?
 -/
-@[category research open, AMS 11]
 theorem erdos_968 : {n : ℕ | u n < u (n + 1)}.HasPosDensity := by
   sorry
 

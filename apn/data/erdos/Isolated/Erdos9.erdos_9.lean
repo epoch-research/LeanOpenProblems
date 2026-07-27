@@ -33,7 +33,6 @@ def Erdos9A : Set ℕ := { n | Odd n ∧ ¬ ∃ (p k l : ℕ), (Nat.Prime p) ∧
 Is the upper density of the set of odd numbers that cannot be expressed as a prime plus
 two powers of 2 positive?
 -/
-@[category research open, AMS 5 11]
 theorem erdos_9 : 0 < Erdos9A.upperDensity := by
   sorry
 

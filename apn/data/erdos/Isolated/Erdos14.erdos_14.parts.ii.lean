@@ -44,7 +44,6 @@ noncomputable def squareRoot (N : ℕ) : ℝ :=
 /--
 Is it possible that $|\{1,\ldots,N\} \setminus B| = o(N^\frac{1}{2})$?
 -/
-@[category research open, AMS 11]
 theorem erdos_14.parts.ii :
     ∃ (A : Set ℕ), IsLittleO atTop (nonUniqueSumCount A) squareRoot := by
   sorry

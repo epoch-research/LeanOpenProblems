@@ -34,7 +34,6 @@ $\lim_{n\to\infty} \frac{a_n}{a_{n-1}^2} = 1$ and $\sum \frac{1}{a_n} \in \mathb
 
 Then, for all sufficiently large $n \ge 1$, $a_n = a_{n-1}^2 - a_{n-1} + 1$.
 -/
-@[category research open, AMS 40]
 theorem erdos_243 (a : ℕ → ℕ) (ha₀ : StrictMono a)
     (ha₁ : Tendsto (fun n ↦ (a n : ℝ) / a (n - 1) ^ 2) atTop (𝓝 1))
     (ha₂ : Summable ((1 : ℚ) / a ·)) :

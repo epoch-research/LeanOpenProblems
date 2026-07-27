@@ -44,7 +44,6 @@ Alternative statement of Erdős Problem 835 using the chromatic number of the Jo
 This is equivalent to asking whether there exists $k > 2$ such that the chromatic number of the
 Johnson graph $J(2k, k)$ is $k+1$.
 -/
-@[category research open, AMS 5]
 theorem erdos_835.variants.johnson : (∃ l,
     -- making sure k > 2
     letI k := l + 3

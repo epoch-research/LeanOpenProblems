@@ -34,7 +34,6 @@ namespace Erdos741
 Is there a basis $A$ of order $2$ such that if $A=A_1\sqcup A_2$ then $A_1+A_1$ and $A_2+A_2$
 cannot both have bounded gaps?
  -/
-@[category research open, AMS 5]
 theorem erdos_741.parts.ii : ∃ A : Set ℕ, IsAddBasisOfOrder (A ∪ {0}) 2 ∧ ∀ A₁ A₂,
     A = A₁ ∪ A₂ → Disjoint A₁ A₂ → ¬ (IsSyndetic (A₁ + A₁) ∧ IsSyndetic (A₂ + A₂)) := by
   sorry

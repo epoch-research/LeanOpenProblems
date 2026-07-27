@@ -44,7 +44,6 @@ $$
   \frac{N^2}{2} + O(N)
 $$
 -/
-@[category research open, AMS 5]
 theorem erdos_272.variants.szabo_strong :
     (fun N ↦ (maxArithInterCard N - N ^ 2 / 2 : ℝ)) =O[atTop] fun N : ℕ ↦ (N : ℝ) := by
   sorry

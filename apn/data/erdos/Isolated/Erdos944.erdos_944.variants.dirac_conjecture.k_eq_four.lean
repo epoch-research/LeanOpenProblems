@@ -39,7 +39,6 @@ def SimpleGraph.IsErdos944 (G : SimpleGraph V) (k r : ℕ) : Prop :=  G.IsCritic
 /--
 The case $k=4$ and $r=1$ remains open: Are there $4$-critical graphs without any critical edges?
 -/
-@[category research open, AMS 11]
 theorem erdos_944.variants.dirac_conjecture.k_eq_four :
     ∃ (V : Type u) (G : SimpleGraph V), G.IsErdos944 4 1 := by
   sorry

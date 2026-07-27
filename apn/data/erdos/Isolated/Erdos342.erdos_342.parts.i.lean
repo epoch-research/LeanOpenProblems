@@ -48,7 +48,6 @@ def IsUlamSequence (a : ℕ → ℕ) : Prop :=
 
 /--
 Do infinitely many pairs $(a, a+2)$ occur in Ulam's sequence? -/
-@[category research open, AMS 5 11 40]
 theorem erdos_342.parts.i :
     
       ∀ a : ℕ → ℕ, IsUlamSequence a →

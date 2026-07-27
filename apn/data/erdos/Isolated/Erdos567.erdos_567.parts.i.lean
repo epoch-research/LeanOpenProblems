@@ -56,7 +56,6 @@ def H5 : SimpleGraph (Fin 5) :=
 
 Is $Q_3$ (the 3-dimensional hypercube) Ramsey size linear?
 -/
-@[category research open, AMS 5]
 theorem erdos_567.parts.i : IsRamseySizeLinear Q3 := by
   sorry
 

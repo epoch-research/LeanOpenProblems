@@ -66,7 +66,6 @@ def IsLychrel10 (n : ℕ) : Prop :=
 
 Equivalently, every positive integer eventually becomes a palindrome under the Lychrel iteration.
 -/
-@[category research open, AMS 11]
 theorem no_lychrel_numbers_base10 :
     ∀ n : ℕ, 0 < n → ¬ IsLychrel10 n := by
   sorry

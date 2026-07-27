@@ -41,7 +41,6 @@ noncomputable def t (k n : ℕ) : ℕ :=
 /--
 Erdős and Hall conjecture that the sum is $o(x^2/(\log x)^c)$ for any $c<\log 2$.
 -/
-@[category research open, AMS 11]
 theorem erdos_394.variants.hall_conjecture :
     ∀ c < Real.log 2, (fun x ↦ ∑ n ∈ Icc 1 ⌊x⌋₊,
     (t 2 n : ℝ)) =o[atTop]

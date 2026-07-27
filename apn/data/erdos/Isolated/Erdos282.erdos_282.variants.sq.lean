@@ -49,7 +49,6 @@ square denominators if and only if $x\in [0,\pi^2/6-1)\cup [1,\pi^2/6)$. Does th
 greedy algorithm for this always terminate? Erdős and Graham believe not - indeed, perhaps it
 fails to terminate almost always.
 -/
-@[category research open, AMS 5]
 theorem erdos_282.variants.sq :
     ∀ x : ℚ, (x : ℝ) ∈ Set.Ico 0 (π ^ 2 / 6 - 1) ∪ Set.Ico 1 (π ^ 2 / 6) →
       greedyUnitFractionRem { n | IsSquare n } x =ᶠ[atTop] 0 := by

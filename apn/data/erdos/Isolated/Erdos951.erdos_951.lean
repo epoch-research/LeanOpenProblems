@@ -37,7 +37,6 @@ def Erdos951Prop (a : ℕ → ℝ) : Prop :=
   ∀ (k ℓ : ℕ →₀ ℕ), k ≠ ℓ → |beurlingInteger a k - beurlingInteger a ℓ| ≥ 1
 
 /-- If `1 < a 0 < ...` has property `Erdos951Prop`, is it true that `#{a i ≤ x} ≤ π x`? -/
-@[category research open, AMS 11]
 theorem erdos_951 : 
     ∀ a : ℕ → ℝ, 1 < a 0 → StrictMono a → Erdos951Prop a →
       ∀ᶠ (x : ℝ) in Filter.atTop, {i : ℕ | a i ≤ x}.ncard ≤ π ⌊x⌋₊ := by

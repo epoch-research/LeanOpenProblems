@@ -45,7 +45,6 @@ noncomputable def M (z : ℕ → ℂ) (n : ℕ) : ℝ :=
 
 Is it true that there exists $c > 0$ such that, for all large $n$, $\sum_{k \leq n} M_k > n^{1 + c}$?
 -/
-@[category research open, AMS 30]
 theorem erdos_119.parts.iii :
     ∀ (z : ℕ → ℂ) (hz : ∀ i : ℕ, ‖z i‖ = 1),
       ∃ (c : ℝ) (hc : c > 0), ∀ᶠ n in atTop,

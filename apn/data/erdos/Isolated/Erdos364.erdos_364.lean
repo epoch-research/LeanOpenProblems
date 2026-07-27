@@ -27,7 +27,6 @@ open Nat
 namespace Erdos364
 
 /-- There is no consecutive triple of powerful numbers. -/
-@[category research open, AMS 11]
 theorem erdos_364 :
     ¬ ∃ (n : ℕ), Powerful n ∧ Powerful (n + 1) ∧ Powerful (n + 2) := by
   sorry

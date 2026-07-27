@@ -37,7 +37,6 @@ an independent set of size at least $\frac{m}{2}-f(m)$?
 Note that in [Er94b] the function $f$ generalises a (proven) result for $f(m) = \epsilon m$,
 where $\epsilon > 0$. Hence we should assume it is non-negative valued.
 -/
-@[category research open, AMS 5]
 theorem erdos_750 :
     ∀ (f : ℕ → ℝ≥0) (hf : atTop.Tendsto f atTop),
       ∃ (V : Type*) (G : SimpleGraph V), G.chromaticNumber = ⊤ ∧

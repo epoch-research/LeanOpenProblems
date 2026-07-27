@@ -43,7 +43,6 @@ def IsAdditiveComplementToPrimes (A : Set ℕ) : Prop :=
 Can the bound $O(\log N)$ be achieved for an additive complement to the primes? [Guy04] writes
 that Erdős offered \$50 for the solution.
 -/
-@[category research open, AMS 11]
 theorem erdos_32.variants.log_bound : ∃ A : Set ℕ,
     IsAdditiveComplementToPrimes A ∧
     (fun N => (((Finset.Icc 1 N).filter (· ∈ A)).card : ℝ)) =O[atTop]

@@ -36,7 +36,6 @@ local notation "R" => hypergraphRamsey 2
 /--
 Is it true that $\frac{R(n+1)}{R(n)}\geq 1+c$ for some constant $c>0$, for all large $n$?
 -/
-@[category research open, AMS 5]
 theorem erdos_812.parts.i :
     ∃ c > 0, ∀ᶠ n in atTop, (R (n + 1) : ℝ) / (R n : ℝ) ≥ 1 + c:= by
   sorry

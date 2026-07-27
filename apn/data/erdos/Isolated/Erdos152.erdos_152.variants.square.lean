@@ -40,7 +40,6 @@ noncomputable def f (n : ℕ) : ℕ :=
 /--
 Must `f n ≫ n ^ 2`?
 -/
-@[category research open, AMS 5]
 theorem erdos_152.variants.square : 
     (fun n => f n : ℕ → ℝ) ≫ (fun n => n ^ 2 : ℕ → ℝ) := by
   sorry

@@ -164,9 +164,10 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is the
     target's *isolated* spec under ``Isolated/<name>.lean`` -- the source file's
     definitions plus the single target theorem, siblings/test lemmas/``example``
-    commands removed, and propositional ``answer(sorry) ↔ P`` statements
-    rewritten to plain ``P`` (certified by ``tests/test_fc100_isolation.py``).
-    The 14 value-typed ``answer(sorry)`` members of the paper's 100 are excluded
+    commands removed, propositional ``answer(sorry) ↔ P`` statements rewritten
+    to plain ``P`` (certified by ``tests/test_fc100_isolation.py``), and FC's
+    ``@[category ...]`` classification lists dropped. The 14 value-typed
+    ``answer(sorry)`` members of the paper's 100 are excluded
     (``EXCLUDED.txt``).
 
     Args:

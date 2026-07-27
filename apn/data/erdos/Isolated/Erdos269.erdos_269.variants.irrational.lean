@@ -56,7 +56,6 @@ are all in $P$. Is the sum
 $$ \sum_{n=1}^\infty \frac{1}{[a_1,\ldots,a_n]} $$
 irrational?
 -/
-@[category research open, AMS 11]
 theorem erdos_269.variants.irrational : 
     ∀ᵉ (P : Finset ℕ) (h : ∀ p ∈ P, p.Prime) (h_card : P.card ≥ 2),
     Irrational (series (P : Set ℕ)) := by

@@ -59,6 +59,5 @@ noncomputable abbrev W : ℕ → ℕ := monoAPNumber 2
 In [Er80] Erdős asks whether
 $$ \lim_{k \to \infty} (W(k))^{1/k} = \infty $$
 -/
-@[category research open, AMS 11]
 theorem erdos_138 : atTop.Tendsto (fun k => (W k : ℝ)^(1/(k : ℝ))) atTop := by
   sorry

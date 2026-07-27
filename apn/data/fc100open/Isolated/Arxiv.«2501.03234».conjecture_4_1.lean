@@ -47,7 +47,6 @@ end SumS
 /--
 **Conjecture 4.1**: For any prime $k$ larger than $5$, $S(k) > k$.
 -/
-@[category research open, AMS 11]
 theorem conjecture_4_1 (k : ℕ) (hprim : k.Prime) (hodd : Odd k) (hgt : k > 5) : k < S k := by
   sorry
 

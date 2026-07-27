@@ -41,7 +41,6 @@ $$
   \lim\frac{|S\cap[1, x]|}{x}
 $$
 exist? -/
-@[category research open, AMS 11]
 theorem erdos_1074.parts.i : ∃ c, EHSNumbers.HasDensity c := by
   sorry
 

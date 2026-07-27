@@ -50,7 +50,6 @@ $$\left(\frac{n}{(n,a,d)},\frac{d}{(a,d)}\right)=1.$$
 Does the greedy algorithm always
 terminate in such cases?
 -/
-@[category research open, AMS 5]
 theorem erdos_282.variants.graham {x : ℚ} (hx : x ∈ Set.Ioo 0 1) {a d : ℕ} (hd : 1 < d)
     (h : (x.den / x.den.gcd (a.gcd d)).gcd (d / a.gcd d) = 1) :
     (greedyUnitFractionRem { n | n ≡ a [MOD d] } x =ᶠ[atTop] 0) := by

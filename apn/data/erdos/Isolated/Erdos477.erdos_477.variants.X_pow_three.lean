@@ -31,7 +31,6 @@ namespace Erdos477
 /--
 Probably there is no such $A$ for the polynomial $X^3$.
 -/
-@[category research open, AMS 12]
 theorem erdos_477.variants.X_pow_three :
     letI f := X ^ 3
     ∀ A : Set ℤ, ∃ z, ¬ ∃! a ∈ A ×ˢ (f.eval '' {n | 0 < n}), z = a.1 + a.2 := by

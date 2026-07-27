@@ -53,7 +53,6 @@ structure Group.ExactCovering (G : Type*) [Group G] (ι : Type*) [Fintype ι] wh
 Does there exist a group `G` with an exact covering by more than one cosets of
 different sizes? (i.e. each element is contained in exactly one of the cosets.)
 -/
-@[category research open, AMS 20]
 theorem erdos_274 : ∃ (G : Type*) (h : Group G) (hG : 1 < ENat.card G)
     (ι : Type*) (_ : Fintype ι) (P : Group.ExactCovering G ι),
       1 < Fintype.card ι ∧ (Set.range P.parts).Pairwise fun A B ↦ #A ≠ #B := by

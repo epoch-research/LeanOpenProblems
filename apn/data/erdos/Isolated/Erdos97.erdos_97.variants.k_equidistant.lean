@@ -73,7 +73,6 @@ def HasNUnitDistanceProperty (n : ℕ) (A : Finset ℝ²) : Prop :=
 Erdős also conjectured that there is a $k$ for which every convex polygon has a vertex
 with no other $k$ vertices equidistant from it.
 -/
-@[category research open, AMS 52]
 theorem erdos_97.variants.k_equidistant : 
     ∃ k : ℕ, ∀ A : Finset ℝ², A.Nonempty → ConvexIndep A → ¬HasNEquidistantProperty k A := by
   sorry

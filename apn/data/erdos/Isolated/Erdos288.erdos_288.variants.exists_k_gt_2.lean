@@ -27,7 +27,6 @@ namespace Erdos288
 /--
 Is it true for any $k > 2$ that only finitely many $k$ intervals satisfy this condition?
 -/
-@[category research open, AMS 11]
 theorem erdos_288.variants.exists_k_gt_2 : 
     ∃ k > 2, Set.Finite { I : Fin k → ℕ+ × ℕ+ |
       ∀ j, (I j).1 ≤ (I j).2 ∧

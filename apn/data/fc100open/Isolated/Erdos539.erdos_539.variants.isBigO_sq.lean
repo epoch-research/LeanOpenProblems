@@ -55,7 +55,6 @@ noncomputable def cofactorThreshold (n : ℕ) : ℕ :=
   sSup {m | IsCofactorLowerBound n m}
 
 /-- To prove `erdos_539.variants.sq` it suffices to show $$ h(n)\ll n^{1/2}$$. -/
-@[category research open, AMS 5 11]
 theorem erdos_539.variants.isBigO_sq :
     (fun n ↦ (cofactorThreshold n : ℝ)) =O[atTop] fun n ↦ √n := by
   sorry

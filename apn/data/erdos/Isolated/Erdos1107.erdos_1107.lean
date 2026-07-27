@@ -36,7 +36,6 @@ def SumOfRPowerful (r n : ℕ) : Prop :=
 /--
 Let $r \ge 2$. Is every large integer the sum of at most $r + 1$ many $r$-powerful numbers?
 -/
-@[category research open, AMS 11]
 theorem erdos_1107 : ∀ r ≥ 2, ∀ᶠ n in atTop, SumOfRPowerful r n := by
   sorry
 

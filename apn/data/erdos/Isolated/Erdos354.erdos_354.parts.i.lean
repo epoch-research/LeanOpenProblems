@@ -36,7 +36,6 @@ noncomputable def FloorMultiples.interleave (a b γ : ℝ) (n : ℕ) : ℤ :=
 /-- Let $\alpha,\beta\in \mathbb{R}_{>0}$ such that $\alpha/\beta$ is irrational. Is
 $$\{ \lfloor \alpha\rfloor,\lfloor \gamma\alpha\rfloor,\lfloor \gamma^2\alpha\rfloor,\ldots\}\cup
 \{ \lfloor \beta\rfloor,\lfloor \gamma\beta\rfloor,\lfloor \gamma^2\beta\rfloor,\ldots\}$$ complete?-/
-@[category research open, AMS 11]
 theorem erdos_354.parts.i : ∀ᵉ (α > 0) (β > 0), Irrational (α / β) →
     IsAddCompleteNatSeq' (FloorMultiples.interleave α β 2) := by
   sorry

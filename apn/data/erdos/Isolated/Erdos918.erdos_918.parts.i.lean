@@ -34,7 +34,6 @@ namespace Erdos918
 /-- Is there a graph with $\aleph_2$ vertices and chromatic number $\aleph_2$ such that every
 subgraph on $\aleph_1$ vertices has chromatic number $\leq\aleph_0$? -/
 -- Formalisation note: source material [ErHa68b] uses only induced subgraphs
-@[category research open, AMS 5]
 theorem erdos_918.parts.i :
     ∃ (V : Type u) (G : SimpleGraph V), #V = ℵ_ 2 ∧ G.chromaticCardinal = ℵ_ 2 ∧
       ∀ (W : Set V) (_ : #W = ℵ₁), (G.induce W).chromaticCardinal ≤ ℵ₀ := by

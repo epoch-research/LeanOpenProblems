@@ -35,7 +35,6 @@ Let `G` be a simple connected graph. If `3 · γ(G) = γ_i(G)`, then `G` is well
 totally dominated, where `γ(G)` is the domination number of `G` and `γ_i(G)` is
 the independent domination number of `G`.
 -/
-@[category research open, AMS 5]
 theorem conjecture327 (G : SimpleGraph α) [DecidableRel G.Adj] (hG : G.Connected)
     (h : 3 * G.dominationNumber = G.indepDominationNumber) :
     IsWellTotallyDominated G := by

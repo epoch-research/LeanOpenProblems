@@ -43,7 +43,6 @@ partial def f : ℕ+ → ℕ+
 /--
 Is $f$ surjective?
 -/
-@[category research open, AMS 11]
 theorem erdos_422.variants.surjective : f.Surjective := by
   sorry
 

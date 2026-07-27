@@ -60,7 +60,6 @@ noncomputable def g (A : ℕ → ℕ) (n : ℕ) : ℕ :=
 When $A =\{a_1 < \cdots\}$ corresponds to the set of primes, it is conjectured that the
 $\limsup$ of the number of representations $$n=\sum_{u\leq i\leq v}a_i$$ is infinite.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_358.variants.prime_set :
     atTop.limsup (fun n ↦ (f (Nat.nth Nat.Prime) n : ℕ∞)) = ⊤ := by
   sorry

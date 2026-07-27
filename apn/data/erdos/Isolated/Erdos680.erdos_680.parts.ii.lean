@@ -30,7 +30,6 @@ open Real
 Can one prove this is false if we replace $k^2+1$ by $e^{(1+\epsilon)\sqrt{k}}+C_\epsilon$, for all
 $\epsilon>0$, where $C_\epsilon>0$ is some constant?
 -/
-@[category research open, AMS 11]
 theorem erdos_680.parts.ii : ∀ ε > 0, ∃ C > 0,
     ¬ ∀ᶠ (n : ℕ) in Filter.atTop, ∃ k ≠ 0,
     Nat.minFac (n + k) > exp ((1 + ε) * √k) + C := by

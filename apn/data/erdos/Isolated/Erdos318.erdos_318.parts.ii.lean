@@ -48,7 +48,6 @@ Does the set of squares excluding 1 have property `P₁`?
 
 Larsen [La26] proved that this set does have property `P₁`.
 -/
-@[category research open, AMS 11]
 theorem erdos_318.parts.ii : P₁ ({n | IsSquare n} \ {1}) := by
   sorry
 

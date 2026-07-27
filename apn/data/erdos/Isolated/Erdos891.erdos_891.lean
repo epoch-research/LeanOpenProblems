@@ -34,7 +34,6 @@ namespace Erdos891
 Let $2=p_1 < p_2 < \cdots$ be the primes and $k\geq 2$. Is it true that, for all sufficiently large
 $n$, there must exist an integer in $[n,n+p_1\cdots p_k)$ with $>k$ many prime factors?
 -/
-@[category research open, AMS 11]
 theorem erdos_891 :
     
       ∀ k ≥ 2, ∀ᶠ n in atTop,

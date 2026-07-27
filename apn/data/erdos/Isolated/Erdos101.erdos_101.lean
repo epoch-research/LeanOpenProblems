@@ -45,7 +45,6 @@ noncomputable def numLinesWithFourPointMax (n : ℕ) : ℕ :=
 Given $n$ points in $\mathbb{R}^2$, no five of which are on a line, the number of
 lines containing four points is $o(n^2)$.
 -/
-@[category research open, AMS 52]
 theorem erdos_101 : (fun n => (numLinesWithFourPointMax n : ℝ)) =o[atTop] (fun n => (n : ℝ)^2) := by
   sorry
 

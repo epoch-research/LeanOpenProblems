@@ -37,7 +37,6 @@ Does $\lim V(x)/V'(x)$ exist?
 Formalization note: We formalize the limit of the inverse fraction V'(x)/V(x)
 to ensure the limit is finite (bounded between 0 and 1).
 -/
-@[category research open, AMS 11]
 theorem erdos_417.parts.i :
     ∃ L : ℝ, Tendsto (fun x ↦
       ((totient '' { m | 1 ≤ m ∧ (m : ℝ) ≤ x }).ncard : ℝ) /

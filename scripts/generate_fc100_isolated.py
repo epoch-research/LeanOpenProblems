@@ -49,6 +49,7 @@ from scripts.fc_statements import (
     LHS_SORRY,
     fc_kept_flags,
     rewrite_answer_iff,
+    strip_category_attrs,
     strip_comments,
 )
 from scripts.isolation import (
@@ -150,6 +151,7 @@ def main() -> None:
         old.unlink()
 
     rewritten: list[str] = []
+    n_category = 0
     for name, rel in mapping:
         filerec = by_rel[rel]
         src = (SOURCES_DIR / rel).read_bytes()
@@ -169,12 +171,18 @@ def main() -> None:
             if form != LHS_SORRY or n != 1 or "answer(" in strip_comments(text):
                 raise SystemExit(f"{name}: answer(sorry) ↔ rewrite did not apply cleanly")
             rewritten.append(name)
+        text, n = strip_category_attrs(text)
+        n_category += n
         (ISOLATED_DIR / f"{name}.lean").write_text(text)
 
     # The subset's census: 46 propositional answer(sorry) ↔ members among the
     # 86 kept. Any drift means membership or vendored sources changed.
     if len(rewritten) != 46:
         raise SystemExit(f"expected 46 rewritten members, got {len(rewritten)}")
+    # 92 classification lists: one per kept declaration carrying one -- the 86
+    # targets plus kept dependency decls (EllipticCurveRank 5, hasSICPOVM_60 1).
+    if n_category != 92:
+        raise SystemExit(f"expected 92 category lists stripped, got {n_category}")
 
     MAPPING_FILE.write_text("".join(f"{name} {rel}\n" for name, rel in mapping))
     print(

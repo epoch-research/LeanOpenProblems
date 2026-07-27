@@ -37,7 +37,6 @@ Solved affirmatively by [Fo99], who gave an explicit construction.
 
 This was formalized in Lean by Alexeev using Aristotle and ChatGPT.
 -/
-@[category research open, AMS 52]
 theorem erdos_1071.parts.ii :
     ∃ (R : Set ℝ²) (S : Set (ℝ² × ℝ²)),
       IsOpen R ∧ IsConnected R ∧ S.Countable ∧ S.Infinite ∧

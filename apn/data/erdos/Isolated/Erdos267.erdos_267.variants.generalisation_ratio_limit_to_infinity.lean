@@ -29,7 +29,6 @@ Let $F_1=F_2=1$ and $F_{n+1} = F_n + F_{n-1}$ be the Fibonacci sequence.
 Let $n_1 < n_2 < \dots$ be an infinite sequence with $\frac {n_k}{k} \to \infty$. Must
 $\sum_k \frac 1 {F_{n_k}}$ be irrational?
 -/
-@[category research open, AMS 11]
 theorem erdos_267.variants.generalisation_ratio_limit_to_infinity : ∀ (n : ℕ → ℕ),
     StrictMono n → Filter.Tendsto (fun k => (n (k+1) / k.succ : ℝ)) Filter.atTop Filter.atTop →
     Irrational (∑' k, 1 / (Nat.fib <| n k)) := by

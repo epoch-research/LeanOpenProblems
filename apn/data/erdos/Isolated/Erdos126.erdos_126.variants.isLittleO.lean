@@ -35,7 +35,6 @@ def IsMaximalAddFactorsCard (f : ℕ → ℕ) : Prop := ∀ n,
 /--
 Erdős says that $f(n) = o(\frac{n}{\log n})$ has never been proved.
 -/
-@[category research open, AMS 11]
 theorem erdos_126.variants.isLittleO
     (f : ℕ → ℕ)
     (hf : IsMaximalAddFactorsCard f) :

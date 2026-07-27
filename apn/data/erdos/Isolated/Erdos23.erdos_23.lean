@@ -40,7 +40,6 @@ def blowupC5 (n : ℕ) : SimpleGraph (ZMod 5 × Fin n) :=
 /--
 Can every triangle-free graph on $5n$ vertices be made bipartite by deleting at most $n^2$ edges?
 -/
-@[category research open, AMS 5]
 theorem erdos_23 : 
     ∀ (n : ℕ) (V : Type) [Fintype V], Fintype.card V = 5 * n →
       ∀ (G : SimpleGraph V), G.CliqueFree 3 →

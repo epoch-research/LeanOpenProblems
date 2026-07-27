@@ -35,9 +35,9 @@ For any $0<\alpha<1$, let $f(\alpha,n)=\frac{1}{\log n}\sum_{1\leq k\leq n}(\tfr
 In other words, is there a non-decreasing function $g$ such that $g(-\infty)=0$, $g(\infty)=1$,
 and $\lim_{n\to \infty}\lvert \{ \alpha\in (0,1): f(\alpha,n)\leq c\}\rvert=g(c)$?
 -/
-@[category research open, AMS 11]
 theorem erdos_1002 :
-    ∃ g : ℝ → ℝ, Monotone g ∧
+    
+      ∃ g : ℝ → ℝ, Monotone g ∧
       Tendsto g atBot (𝓝 0) ∧
       Tendsto g atTop (𝓝 1) ∧
       letI f :=  fun (α : ℝ) (n : ℕ) ↦

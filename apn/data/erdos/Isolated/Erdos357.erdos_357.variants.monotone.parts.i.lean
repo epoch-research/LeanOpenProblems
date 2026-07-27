@@ -61,7 +61,6 @@ noncomputable def h (n : ℕ) : ℕ :=
 
 /-- Let $h(n)$ be the maximal $k$ such that there exist integers $1 \le a_1 \leq \dotsc \leq a_k \le n$
 such that all sums of the shape $\sum_{u \le i \le v} a_i$ are distinct. Is $h(n)=o(n)$? -/
-@[category research open, AMS 11]
 theorem erdos_357.variants.monotone.parts.i : (fun n ↦ (h n : ℝ)) =o[atTop] (fun n ↦ (n : ℝ)) := by
   sorry
 

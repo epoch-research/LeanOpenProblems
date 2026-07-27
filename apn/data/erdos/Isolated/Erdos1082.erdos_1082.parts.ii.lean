@@ -39,7 +39,6 @@ determines $3$ distances.
 
 This counterexample has originally been found by Heiko Harborth.
 -/
-@[category research open, AMS 51]
 theorem erdos_1082.parts.ii : 
     ∀ (A : Finset ℝ²) (hA : A.Nonempty) (hA_n3c : NonTrilinear (A : Set ℝ²)),
     ∃ (a : ℝ²) (ha : a ∈ A), A.card / 2 ≤ distinctDistancesFrom A a - 1 := by

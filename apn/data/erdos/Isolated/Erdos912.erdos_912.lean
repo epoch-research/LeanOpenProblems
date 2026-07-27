@@ -37,7 +37,6 @@ noncomputable def h (n : ℕ) : ℕ := (n !).factorization.frange.card
 $$h(n) \sim c \left(\frac{n}{\log n}\right)^{1/2}$$
 as $n\to \infty$.
 -/
-@[category research open, AMS 11]
 theorem erdos_912 : ∃ c > 0,
     (fun n => (h n : ℝ)) ~[atTop] (fun n => c * (n / Real.log n) ^ (1 / 2 : ℝ)) := by
   sorry

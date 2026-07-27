@@ -29,7 +29,6 @@ open EuclideanGeometry
 Let $A\subset \mathbb{R}^2$ be a set of $n$ points with no three on a line.
 Does $A$ determine at least $\lfloor n/2\rfloor$ distinct distances?
 -/
-@[category research open, AMS 51]
 theorem erdos_1082.parts.i : ∀ (A : Finset ℝ²) (hA_n3c : NonTrilinear (A : Set ℝ²)),
     A.card / 2 ≤ distinctDistances A:= by
   sorry

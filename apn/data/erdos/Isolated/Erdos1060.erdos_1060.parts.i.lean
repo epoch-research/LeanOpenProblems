@@ -32,7 +32,6 @@ than any power of $n^(\frac{1}{\log\log n})$. The second bound is that $f(n)$ is
 $\log n$.
 -/
 
-@[category research open, AMS 11]
 theorem erdos_1060.parts.i :
     ∃ h : ℕ → ℝ,
       h =o[atTop] (fun n ↦ 1 / log (log n)) ∧ ∀ᶠ n in atTop, #{k ≤ n | k * σ 1 k = n} ≤ (n : ℝ) ^ h n := by sorry

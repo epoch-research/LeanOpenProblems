@@ -58,7 +58,6 @@ noncomputable abbrev W : ℕ → ℕ := monoAPNumber 2
 /--
 In [Er80] Erdős asks whether $W(k)/2^k\to \infty$.
 -/
-@[category research open, AMS 11]
 theorem erdos_138.variants.dvd_two_pow :
     atTop.Tendsto (fun k => ((W k : ℚ)/ (2 ^ k))) atTop := by
   sorry

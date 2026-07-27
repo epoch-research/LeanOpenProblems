@@ -27,7 +27,6 @@ namespace Erdos288
 /--
 This is still open even if $|I_2| = 1$.
 -/
-@[category research open, AMS 11]
 theorem erdos_288.variants.i2_card_eq_1 : Set.Finite { (I, n₂) : (ℕ+ × ℕ+) × ℕ+ |
     I.1 ≤ I.2 ∧ ∃ n : ℕ+, ∑ n₁ ∈ Set.Icc I.1 I.2, (n₁⁻¹ : ℚ) + (n₂⁻¹ : ℚ) = n } := by
   sorry

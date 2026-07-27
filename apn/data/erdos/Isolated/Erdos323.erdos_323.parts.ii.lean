@@ -37,7 +37,6 @@ noncomputable def f (k m x : ℕ) : ℕ :=
 /--
 Is it true that if $m < k$ then $f_{k,m}(x) \gg x^{m/k}$ for sufficiently large $x$?
 -/
-@[category research open, AMS 11]
 theorem erdos_323.parts.ii :
     ∀ k m : ℕ, 1 ≤ m → m < k →
       (fun (x : ℕ) ↦ (x : ℝ) ^ ((m : ℝ) / (k : ℝ))) =O[atTop] (fun (x : ℕ) ↦ (f k m x : ℝ)) := by

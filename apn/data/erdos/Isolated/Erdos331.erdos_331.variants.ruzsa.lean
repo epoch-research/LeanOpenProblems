@@ -32,7 +32,6 @@ Ruzsa suggests that a non-trivial variant of this problem arises if one imposes 
 condition that $|A \cap \{1,\dots,N\}| \sim c_A N^{1/2}$ for some constant $c_A>0$, and similarly
 for $B$.
 -/
-@[category research open, AMS 11]
 theorem erdos_331.variants.ruzsa :
     
       ∀ A B : Set ℕ,

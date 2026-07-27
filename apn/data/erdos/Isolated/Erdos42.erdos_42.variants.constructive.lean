@@ -37,7 +37,6 @@ This version provides a constructive function f such that for all M ≥ 1 and N 
 every maximal Sidon set A ⊆ {1,…,N} has another Sidon set B ⊆ {1,…,N} of size M with
 disjoint difference sets (apart from 0).
 -/
-@[category research open, AMS 5 11]
 theorem erdos_42.variants.constructive : 
     ∃ (f : ℕ → ℕ), ∀ (M N : ℕ) (_ : 1 ≤ M) (_ : f M ≤ N),
     ∀ (A : Set ℕ) (_ : IsMaximalSidonSetIn A N), ∃ᵉ (B : Set ℕ),

@@ -34,7 +34,6 @@ namespace Erdos891
 This is unknown even for $k=2$ - that is, is it true that in every interval of $6$
 (sufficiently large) consecutive integers there must exist one with at least $3$ prime factors?
 -/
-@[category research open, AMS 11]
 theorem erdos_891.variants.case_k_2 :
     ∀ᶠ n in atTop,
       ∃ m ∈ Ico n (n + 6), 3 ≤ ω m := by

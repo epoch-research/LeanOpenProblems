@@ -50,7 +50,6 @@ $$
   \limsup_{N \to \infty} \frac{\sum_{m \leq N} f(m)}{\sqrt{N \log \log N}} = c?
 $$
 -/
-@[category research open, AMS 11 60]
 theorem erdos_520 :
     ∃ c > 0, ∀ (f : ℕ → Ω → ℝ), IsRademacherMultiplicative f →
       ∀ᵐ ω, limsup (fun N ↦ ∑ m ≤ N, f m ω / sqrt (N * log (log N))) atTop = c := by

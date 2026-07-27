@@ -51,7 +51,6 @@ $x$ as the sum of distinct unit fractions with denominators from $A$.
 
 Does this process always terminate if $x$ has odd denominator and $A$ is the
 set of odd numbers? -/
-@[category research open, AMS 5]
 theorem erdos_282 {x : ℚ} (hx : x ∈ Set.Ioo 0 1) (hx_den : Odd x.den) :
     greedyUnitFractionRem { n | Odd n } x =ᶠ[atTop] 0 := by
   sorry

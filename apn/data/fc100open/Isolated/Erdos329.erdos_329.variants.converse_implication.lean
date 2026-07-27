@@ -41,7 +41,6 @@ noncomputable def sidonUpperDensity (A : Set ℕ) : ℝ :=
 The converse: if the maximum density is 1, then any finite Sidon set
 can be embedded in a perfect difference set.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_329.variants.converse_implication :
     (sSup {sidonUpperDensity A | (A : Set ℕ) (_ : IsSidon A)} = 1) →
     (∀ (A : Finset ℕ), IsSidon (A : Set ℕ) → ∃ (D : Set ℕ) (n : ℕ),

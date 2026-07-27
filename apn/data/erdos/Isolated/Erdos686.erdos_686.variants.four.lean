@@ -28,7 +28,6 @@ Can $4$ be written as
 $$4=\frac{\prod_{1\leq i\leq k}(m+i)}{\prod_{1\leq i\leq k}(n+i)}$$
 for some $k≥2$ and $m≥n+k$?
 -/
-@[category research open, AMS 11]
 theorem erdos_686.variants.four :
     ∃ᵉ (k ≥ 2) (n : ℕ) (m ≥ n + k),
       (4 : ℚ) = (∏ i ∈ Finset.Icc 1 k, (m + i)) / (∏ i ∈ Finset.Icc 1 k, (n + i)) := by

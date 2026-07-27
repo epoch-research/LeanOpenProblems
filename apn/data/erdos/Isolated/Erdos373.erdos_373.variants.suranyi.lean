@@ -38,7 +38,6 @@ abbrev S : Set (ℕ × List ℕ) :=
 Surányi was the first to conjecture that the only non-trivial solution to `a!b!=n!`
 is `6!7!=10!`.
 -/
-@[category research open, AMS 11]
 theorem erdos_373.variants.suranyi :
     {(n, a, b) : ℕ × ℕ × ℕ | n ! = a ! * b ! ∧ 1 < n ∧ 1 < a ∧ 1 < b ∧ b ≤ a ∧ a + 1 ≠ n}
       = {(10, 7, 6)} := by

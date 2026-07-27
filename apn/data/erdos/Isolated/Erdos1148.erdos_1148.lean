@@ -44,7 +44,6 @@ This was proved affirmatively by Chojecki [Ch26], using a Duke-type equidistribu
 A Lean formalisation of the reduction (conditional on a Duke-type equidistribution theorem) exists;
 see the [forum discussion](https://www.erdosproblems.com/forum/thread/1148#post-4849).
 -/
-@[category research open, AMS 11]
 theorem erdos_1148 : ∀ᶠ n in atTop, Erdos1148Prop n := by
   sorry
 

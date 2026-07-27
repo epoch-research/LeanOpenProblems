@@ -31,7 +31,6 @@ namespace Erdos28
 If $A ⊆ \mathbb{N}$ is such that $A + A$ contains all but finitely many integers then
  $\limsup 1_A ∗ 1_A(n) = \infty$.
 -/
-@[category research open, AMS 11]
 theorem erdos_28 (A : Set ℕ) (h : (A + A)ᶜ.Finite) :
     limsup (fun (n : ℕ) => (sumRep A n : ℕ∞)) atTop = (⊤ : ℕ∞) := by
   sorry

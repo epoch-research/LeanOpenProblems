@@ -28,7 +28,6 @@ Can $25$ be written as
 $$25=\frac{\prod_{1\leq i\leq k}(m+i)}{\prod_{1\leq i\leq k}(n+i)}$$
 for some $k≥2$ and $m≥n+k$?
 -/
-@[category research open, AMS 11]
 theorem erdos_686.variants.twenty_five :
     ∃ᵉ (k ≥ 2) (n : ℕ) (m ≥ n + k),
       (25 : ℚ) = (∏ i ∈ Finset.Icc 1 k, (m + i)) / (∏ i ∈ Finset.Icc 1 k, (n + i)) := by

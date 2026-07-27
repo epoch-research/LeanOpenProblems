@@ -57,7 +57,6 @@ Does $A + B$ have positive lower density?
 
 This has been falsified.
 -/
-@[category research open, AMS 11]
 theorem erdos_125.variants.positive_lower_density :
     0 < (A + B).lowerDensity := by
   sorry

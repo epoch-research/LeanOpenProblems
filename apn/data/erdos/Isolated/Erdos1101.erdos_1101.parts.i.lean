@@ -54,7 +54,6 @@ def IsGood (u : ℕ → ℕ) : Prop :=
       (A u (k + 1) : ℝ) - A u k < (1 + ε) * (t u x : ℝ) * (∏' i : ℕ, (1 - 1 / (u i : ℝ)))⁻¹
 
 /-- 1. There is NO good sequence with polynomial growth. -/
-@[category research open, AMS 11]
 theorem erdos_1101.parts.i :
     ¬ ∃ u, IsGood u ∧ ∃ k : ℕ, (fun n => (u n : ℝ)) =O[atTop] (fun n => (n : ℝ) ^ k) := by
   sorry

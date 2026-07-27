@@ -29,7 +29,6 @@ open scoped Nat
 /--
 When $n > 1$, Lehmer conjectured that $\phi(n) | n - 1$ if and only if $n$ is prime.
 -/
-@[category research open, AMS 11]
 theorem erdos_828.variants.lehmer_conjecture : ∀ n > 1, φ n ∣ n - 1 ↔ Prime n := by
   sorry
 

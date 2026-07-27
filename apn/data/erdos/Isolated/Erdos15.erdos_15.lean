@@ -33,7 +33,6 @@ where $p_n$ is the sequence of primes?
 Note: In the problem statement, $p_n$ is the $n$-th prime, indexed such that $p_1=2, p_2=3, \ldots$.
 We 0-index here to reflect how Nat.nth works.
 -/
-@[category research open, AMS 11]
 theorem erdos_15 : 
     Summable (fun k : ℕ => (-1 : ℚ) ^ (k + 1) * (k + 1) / (k.nth Nat.Prime)) := by
   sorry

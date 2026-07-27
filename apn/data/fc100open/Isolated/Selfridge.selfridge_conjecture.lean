@@ -63,7 +63,6 @@ structure IsPseudoSelfridge (p : ℕ) where
 Let $p$ be an odd number, with $p \equiv \pm 2 \pmod{5}$, $2^{p-1} \equiv 1 \pmod{p}$
 and $F_{p+1} \equiv 0 \pmod{p}$, then $p$ is a prime number.
 -/
-@[category research open, AMS 11]
 theorem selfridge_conjecture (p : ℕ) (hp : IsSelfridge p) : p.Prime := by
   sorry
 

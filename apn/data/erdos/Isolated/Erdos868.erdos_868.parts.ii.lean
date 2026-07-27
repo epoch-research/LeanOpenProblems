@@ -43,7 +43,6 @@ basis of order $2$?
 
 Larsen and Larsen [LaLa26] constructed a counterexample with $f(n) > c \log n$ for all large $n$.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_868.parts.ii :
     ∀ᵉ (A : Set ℕ) (ε > 0), A.IsAsymptoticAddBasisOfOrder 2 →
       (∀ᶠ (n : ℕ) in atTop, ε * Real.log n < ncard_add_repr A 2 n) → ∃ B ⊆ A,

@@ -37,7 +37,6 @@ noncomputable def h (n : ℕ) : ℕ∞ := sInf {m | 2 < m ∧
   ((Finset.Icc 2 m.toNat).image fun i => (i ^ n - 1)).gcd id = 1}
 
 /-- Does `liminf h n = ∞`? -/
-@[category research open, AMS 11]
 theorem erdos_770.parts.ii : liminf h atTop = ⊤ := by
   sorry
 

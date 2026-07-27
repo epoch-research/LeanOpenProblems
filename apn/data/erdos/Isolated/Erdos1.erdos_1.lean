@@ -42,7 +42,6 @@ $$
   N \gg 2 ^ n.
 $$
 -/
-@[category research open, AMS 5 11]
 theorem erdos_1 : ∃ C > (0 : ℝ), ∀ (N : ℕ) (A : Finset ℕ) (_ : IsSumDistinctSet A N),
     N ≠ 0 → C * 2 ^ A.card < N := by
   sorry

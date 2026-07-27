@@ -37,7 +37,6 @@ abbrev PillaiPrimes : Set ℕ := {p | p.Prime ∧ ∃ m ≥ 1, ¬p ≡ 1 [MOD m]
 
 /-- Regarding the first question, Hardy and Subbarao computed all EHS numbers up to $2^{10}$, and
 write "...if this trend conditions we expect [the limit] to be around 0.5, if it exists." -/
-@[category research open, AMS 11]
 theorem erdos_1074.variants.EHSNumbers_one_half : EHSNumbers.HasDensity (1 / 2) := by
   sorry
 

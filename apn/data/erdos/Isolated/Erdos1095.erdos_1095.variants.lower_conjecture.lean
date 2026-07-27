@@ -50,7 +50,6 @@ noncomputable def g (k : ℕ) : ℕ := sInf {m | k + 1 < m ∧ k < (m.choose k).
 Erdős, Lacampagne, and Selfridge [ELS93] write 'it is clear to every right-thinking person' that
 $g(k)\geq\exp(c\frac{k}{\log k})$ for some constant $c>0$.
 -/
-@[category research open, AMS 11]
 theorem erdos_1095.variants.lower_conjecture : ∃ c > 0, ∀ᶠ k in atTop, g k ≥ exp (c * k / log k) := by
   sorry
 

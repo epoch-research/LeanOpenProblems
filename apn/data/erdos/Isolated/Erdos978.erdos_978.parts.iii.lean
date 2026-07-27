@@ -31,7 +31,6 @@ open Polynomial Set
 namespace Erdos978
 
 /-- Does `n ^ 4 + 2` represent infinitely many squarefree numbers? -/
-@[category research open, AMS 11]
 theorem erdos_978.parts.iii : {n : ℕ | Squarefree (n ^ 4 + 2)}.Infinite := by
   sorry
 

@@ -33,7 +33,6 @@ namespace Erdos242
 For every $n>2$ there exist distinct integers $1 ≤ x < y < z$
 such that $\frac 4 n = \frac 1 x + \frac 1 y + \frac 1 z$.
 -/
-@[category research open, AMS 11]
 theorem erdos_242 (n : ℕ) (hn : 2 < n) :
     ∃ x y z : ℕ, 1 ≤ x ∧ x < y ∧ y < z ∧
       (4 / n : ℚ) = 1 / x + 1 / y + 1 / z := by

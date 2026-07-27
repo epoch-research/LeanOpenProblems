@@ -37,7 +37,6 @@ def DistancesSeparated (A : Finset ℝ²) : Prop :=
     |dist p₁ q₁ - dist p₂ q₂| ≥ 1
 
 /-- Stronger conjecture: diameter $\geq n - 1$ for sufficiently large $n$. -/
-@[category research open, AMS 52]
 theorem erdos_100.variants.strong :
     ∀ᶠ n in atTop, ∀ A : Finset ℝ²,
       A.card = n →

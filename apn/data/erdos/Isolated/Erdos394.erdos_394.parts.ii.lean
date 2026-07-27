@@ -41,7 +41,6 @@ noncomputable def t (k n : ℕ) : ℕ :=
 /--
 Is it true that, for $k\geq 2$, $\sum_{n\leq x}t_{k+1}(n) =o\left(\sum_{n\leq x}t_k(n)\right)?$
 -/
-@[category research open, AMS 11]
 theorem erdos_394.parts.ii :
     
       ∀ k ≥ 2, (fun (x : ℝ) ↦ ∑ n ∈ Icc 1 ⌊x⌋₊,

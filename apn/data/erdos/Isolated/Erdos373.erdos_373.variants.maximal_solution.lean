@@ -38,7 +38,6 @@ abbrev S : Set (ℕ × List ℕ) :=
 Hickerson conjectured the largest solution the equation `n!=a_1!a_2!···a_k!`, with
 `n−1 > a_1 ≥ a_2 ≥ ··· ≥ a_k`, is `16!=14!5!2!`.
 -/
-@[category research open, AMS 11]
 theorem erdos_373.variants.maximal_solution :
     (16, [14, 5, 2]) ∈ S ∧ ∀ s ∈ S, s.fst ≤ 16 := by
   sorry

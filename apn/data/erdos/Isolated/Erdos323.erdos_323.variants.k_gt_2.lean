@@ -37,7 +37,6 @@ noncomputable def f (k m x : ℕ) : ℕ :=
 /--
 For $k>2$ it is not known if $f_{k,k}(x)=o(x)$.
 -/
-@[category research open, AMS 11]
 theorem erdos_323.variants.k_gt_2 :
     ∀ k > 2, (fun (x : ℕ) ↦ (f k k x : ℝ)) =o[atTop] (fun (x : ℕ) ↦ (x : ℝ)) := by
   sorry

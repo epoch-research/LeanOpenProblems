@@ -60,7 +60,6 @@ def HasFinitePrimeCoveringSet (k : ℕ) : Prop :=
 **Filaseta–Finch–Kozek conjecture (2008).** Every Sierpiński number is either a perfect power
 or possesses a finite covering set of primes.
 -/
-@[category research open, AMS 11]
 theorem erdos_1113.variants.filaseta_finch_kozek :
     ∀ k, k.IsSierpinskiNumber →
       k.IsPerfectPower ∨ HasFinitePrimeCoveringSet k := by

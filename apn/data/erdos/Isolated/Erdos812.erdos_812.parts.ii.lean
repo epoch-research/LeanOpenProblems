@@ -36,7 +36,6 @@ local notation "R" => hypergraphRamsey 2
 /--
 Is it true that $R(n+1)-R(n) \gg n^2$?
 -/
-@[category research open, AMS 5]
 theorem erdos_812.parts.ii :
     
       (fun n : ℕ ↦ (R (n + 1) : ℝ) - (R n : ℝ)) ≫ (fun n : ℕ ↦ (n : ℝ) ^ 2) := by

@@ -37,7 +37,6 @@ noncomputable def h (n : ℕ) : ℕ∞ := sInf {m | 2 < m ∧
   ((Finset.Icc 2 m.toNat).image fun i => (i ^ n - 1)).gcd id = 1}
 
 /-- For every prime `p`, does the density of integers with `h n = p` exist? -/
-@[category research open, AMS 11]
 theorem erdos_770.parts.i : ∀ p : ℕ, p.Prime → ∃ a, HasDensity {n | h n = p} a := by
   sorry
 

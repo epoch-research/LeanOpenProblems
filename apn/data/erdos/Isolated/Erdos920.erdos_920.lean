@@ -44,7 +44,6 @@ noncomputable def f (k n : ℕ) : ℕ :=
 Is it true that, for $k\geq 4$, $f_k(n) \gg \frac{n^{1-\frac{1}{k-1}}}{(\log n)^{c_k}}$ for some
 constant $c_k>0$?
 -/
-@[category research open, AMS 5]
 theorem erdos_920 :
     ∀ k : ℕ, k ≥ 4 → ∃ c > 0,
       (fun n ↦ f k n) ≫ (fun n ↦ (n : ℝ) ^ (1 - 1 / ((k : ℝ) - 1)) / (log n) ^ c) := by

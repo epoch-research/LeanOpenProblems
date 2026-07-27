@@ -38,7 +38,6 @@ Let $d_n = p_{n+1} - p_n$, where $p_n$ is the $n$th prime. Let $r(x)$ be the sma
 integer $t$ such that $d_n = t$ has no solutions for $n \le x$.
 
 Is it true that $r(x) / \log x \to \infty$? -/
-@[category research open, AMS 11]
 theorem erdos_853.parts.ii :
     atTop.Tendsto (fun n ↦ r n / Real.log n) atTop := by
   sorry

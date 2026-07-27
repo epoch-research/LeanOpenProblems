@@ -29,7 +29,6 @@ open Nat
 For all $2 \le k \le n - 2$,
 can $\binom{n}{k}$ be the product of consecutive primes infinitely often?
 -/
-@[category research open, AMS 11]
 theorem erdos_386.variants.forall :
     ∀ k ≥ 2, ∃ᶠ n in .atTop,
       k ≤ n - 2 ∧ ∃ p q : ℕ, n.choose k = ∏ i ∈ .Ico p q, nth Nat.Prime i := by

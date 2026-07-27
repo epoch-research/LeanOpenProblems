@@ -34,7 +34,6 @@ Schinzel conjectured (see [Si56]) the generalisation that, for any fixed $a$, if
 large in terms of $a$ then there exist distinct integers $1\leq x < y < z$ such that
 $\frac{a}{n} = \frac{1}{x}+\frac{1}{y}+\frac{1}{z}.$
 -/
-@[category research open, AMS 11]
 theorem erdos_242.variants.schinzel_generalization
     (a : ℕ) (ha : 0 < a) :
     ∀ᶠ (n : ℕ) in Filter.atTop, ∃ x y z : ℕ, 1 ≤ x ∧ x < y ∧ y < z ∧

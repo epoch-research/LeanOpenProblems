@@ -29,7 +29,6 @@ namespace Transcendental
 /--
 $\pi^{\pi^{\pi}}$ is transcendental.
 -/
-@[category research open, AMS 11 33]
 theorem pi_pow_pi_pow_pi_transcendental : Transcendental ℚ (π ^ (π ^ π)) := by
   sorry
 

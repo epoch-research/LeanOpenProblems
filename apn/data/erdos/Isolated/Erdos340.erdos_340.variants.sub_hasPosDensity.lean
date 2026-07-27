@@ -64,7 +64,6 @@ positive density.
 [ErGr80] Erdős, P. and Graham, R., Old and new problems and results in combinatorial number
 theory. Monographies de L'Enseignement Mathematique (1980).
 -/
-@[category research open, AMS 5]
 theorem erdos_340.variants.sub_hasPosDensity :
     Set.HasPosDensity (Set.range greedySidon - Set.range greedySidon) := by
   sorry

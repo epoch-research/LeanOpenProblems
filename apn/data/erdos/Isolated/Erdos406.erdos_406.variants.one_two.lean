@@ -28,7 +28,6 @@ namespace Erdos406
 If we only allow the digits $1$ and $2$ then $2^{15}$ seems to be the largest such power
 of $2$.
 -/
-@[category research open, AMS 11]
 theorem erdos_406.variants.one_two :
     IsGreatest { n | n.isPowerOfTwo ∧ Nat.digits 3 n ⊆ [1, 2] } (2 ^ 15) := by
   sorry

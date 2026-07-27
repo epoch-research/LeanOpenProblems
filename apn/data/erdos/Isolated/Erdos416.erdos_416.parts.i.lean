@@ -34,7 +34,6 @@ noncomputable abbrev V (x : ℝ) : ℝ :=
 /--
 Let `V(x)` count the number of `n≤x` such that `ϕ(m)=n` is solvable. Does `V(2x)/V(x)→2` ?
 -/
-@[category research open, AMS 11]
 theorem erdos_416.parts.i :
     Filter.Tendsto (fun x => (V (2 * x) / V (x))) Filter.atTop (𝓝 2) := by
   sorry

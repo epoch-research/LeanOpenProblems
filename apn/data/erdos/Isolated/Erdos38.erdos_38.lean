@@ -47,7 +47,6 @@ A positive [solution](https://github.com/spicylemonade/erdos-38) was given by GP
 (prompted by gebyjaff, cleanup by Liam Price); in fact a sparse random set $B$ has this property,
 with $f(\alpha)\gg \alpha (1-\alpha)^2$.
 -/
-@[category research open, AMS 11]
 theorem erdos_38 : 
     ∃ B : Set ℕ, ¬ B.IsWeakAddBasis ∧ ∃ f : ℝ → ℝ, (∀ α, 0 < α → α < 1 → f α > 0) ∧
       ∀ (A : Set ℕ) (N : ℕ),

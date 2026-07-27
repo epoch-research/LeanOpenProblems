@@ -64,7 +64,6 @@ noncomputable def f (r N : ℕ) : ℕ :=
 The first open case of Erdős Problem 535 is $r = 3$: there should exist $c > 0$ such that
 $f_3(N) \leq N^{c/\log\log N}$ for all sufficiently large $N$.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_535.variants.first_open_case : ∃ c > (0 : ℝ),
     ∀ᶠ (N : ℕ) in atTop,
       (f 3 N : ℝ) ≤ (N : ℝ) ^ (c / log (log (N : ℝ))) := by

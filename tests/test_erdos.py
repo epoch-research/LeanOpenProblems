@@ -119,18 +119,19 @@ def test_sketches_have_no_answer_and_no_banner() -> None:
         assert sketch.startswith("import "), sample.id
 
 
-def test_sketches_have_no_verdict_annotations() -> None:
+def test_sketches_have_no_fc_annotations() -> None:
     # FC has recorded verdicts on 14 members since the paper's attempts (a
     # `research solved` category flip, `formal_proof` URL attributes, prose
     # crediting the prover agent -- one stating the direction outright).
-    # Generation strips them back to the attempt-time form
-    # (scripts/erdos_isolation.py:strip_verdict_annotations): the recorded
-    # answer must not reach the shipped sketch in any form. None of these
-    # markers legitimately occurs in problem prose.
+    # Generation drops every kept declaration's `@[category ...]`
+    # classification list whole and removes the verdict prose
+    # (scripts/erdos_isolation.py:strip_fc_annotations): the recorded answer
+    # must not reach the shipped sketch in any form. None of these markers
+    # legitimately occurs in problem prose.
     for sample in erdos_dataset():
         assert sample.metadata is not None
         sketch = sample.metadata["sketch"].lower()
-        for marker in ("formal_proof", "research solved", "deepmind", "prover agent"):
+        for marker in ("@[category", "formal_proof", "research solved", "deepmind", "prover agent"):
             assert marker not in sketch, (sample.id, marker)
 
 

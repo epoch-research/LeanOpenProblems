@@ -39,7 +39,6 @@ noncomputable def f (n : ℕ) : ℝ := ⨅ A : {A : Finset ℕ | A.card = n ∧ 
   ∑ i : Set.Ico 1 ((A.1 + A).card), (s ⟨i, i.2.2⟩ - s ⟨i - 1, by grind⟩) ^ 2 / (n : ℝ)
 
 /-- Must `lim f n = ∞`? -/
-@[category research open, AMS 5]
 theorem erdos_153 : Tendsto f atTop atTop := by
   sorry
 

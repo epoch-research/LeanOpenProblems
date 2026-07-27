@@ -36,7 +36,6 @@ noncomputable def f (n k : ℕ) : ℕ :=
 /--
 Is it true that $f(n,k) < c_k^n$ for some constant $c_k>0$ and for all $n > 0$?
 -/
-@[category research open, AMS 5]
 theorem erdos_20 : ∃ (c : ℕ → ℕ), ∀ n k, n > 0 → f n k < (c k) ^ n := by
   sorry
 

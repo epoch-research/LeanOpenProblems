@@ -51,7 +51,6 @@ def consecutivePrimeArithmeticProgressions (k : ℕ) : Set (Set ℕ) :=
 /--
 It is open, even for $k=3$, whether there are infinitely many such progressions.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_141.variants.infinite_three : 
     (consecutivePrimeArithmeticProgressions 3).Infinite := by
   sorry

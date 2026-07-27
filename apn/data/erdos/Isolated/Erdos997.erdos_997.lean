@@ -59,7 +59,6 @@ if $p_n$ is the sequence of primes?
 
 The answer is yes, by [APSSV26, Section 4]; a Lean formalisation is available in [Mo26].
 -/
-@[category research open, AMS 11]
 theorem erdos_997 :
     
       ∀ α : ℝ, ¬ IsWellDistributed (fun n ↦ Int.fract (α * (n.nth Nat.Prime))) := by

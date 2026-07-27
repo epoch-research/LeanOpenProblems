@@ -40,7 +40,6 @@ def SimpleGraph.IsErdos944 (G : SimpleGraph V) (k r : ℕ) : Prop :=  G.IsCritic
 Let $k \ge 4$ and $r\ge 1$. Must there exist a graph $G$ with chromatic number $k$
  such that every vertex is critical, yet every critical set of edges has size $>r$?
 -/
-@[category research open, AMS 11]
 theorem erdos_944 :
     ∀ k ≥ 4, ∀ r ≥ 1, ∃ (V : Type u) (G : SimpleGraph V), G.IsErdos944 k r := by
   sorry

@@ -34,7 +34,6 @@ namespace Erdos978
 If $k>3$ (and $k \neq 2^l$), and for all primes $p$ there exists $n$ such that $p^{k-2}\nmid f(n)$,
 then are there infinitely many $n$ for which $f(n)$ is $(k-2)$-power-free?
 -/
-@[category research open, AMS 11]
 theorem erdos_978.parts.ii : 
     ∀ {f : ℤ[X]}, Irreducible f → f.natDegree > 3 →
     (¬ ∃ l : ℕ, f.natDegree = 2 ^ l) → 0 < f.leadingCoeff →

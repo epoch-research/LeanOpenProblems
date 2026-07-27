@@ -27,7 +27,6 @@ namespace RiemannZetaValues
 /--
 $\zeta(5)$ is irrational.
 -/
-@[category research open, AMS 11 33]
 theorem irrational_five : ∃ x, Irrational x ∧ riemannZeta 5 = x := by
   sorry
 

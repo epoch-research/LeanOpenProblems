@@ -45,7 +45,6 @@ Let $v(n,k)$ count the prime factors of $n+k$ which
 do not divide $n+i$ for $0\leq i < k$. Is it true that
 $v_0(n)=\max_{k\geq 0}v(n,k)\to \infty$ as $n\to \infty$?
 -/
-@[category research open, AMS 11]
 theorem erdos_889 : Tendsto v₀ atTop (𝓝 ⊤) := by
   sorry
 

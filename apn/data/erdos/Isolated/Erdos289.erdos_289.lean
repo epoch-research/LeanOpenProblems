@@ -31,7 +31,6 @@ $$
 1 = \sum_{i=1}^k \sum_{n \in I_i} \frac{1}{n}.
 $$
 -/
-@[category research open, AMS 11]
 theorem erdos_289 : 
     (∀ᶠ k : ℕ in atTop, ∃ I : Fin k → ℕ × ℕ,
     (∀ i, (I i).1 < (I i).2) ∧

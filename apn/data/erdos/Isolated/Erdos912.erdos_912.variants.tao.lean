@@ -35,7 +35,6 @@ noncomputable def h (n : ℕ) : ℕ := (n !).factorization.frange.card
 
 /-- A heuristic of Tao using the Cramér model for the primes suggests this is true with
 $c=\sqrt{2\pi}$. -/
-@[category research open, AMS 11]
 theorem erdos_912.variants.tao :
     (fun n => (h n : ℝ)) ~[atTop] (fun n => √(2 * Real.pi) * (n / Real.log n) ^ (1 / 2 : ℝ)) := by
   sorry

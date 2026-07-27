@@ -50,7 +50,6 @@ coefficient. Is it true that $$A=\{ p(n)+1/n : n \in \mathbb{N}\}$$ is strongly 
 in the sense that, for any finite set $B$,
 $$\left\{\sum_{a \in X} a : X \subseteq A \setminus B, X \textrm{ is finite}\right\}$$
 contains all sufficiently large integers? -/
-@[category research open, AMS 11]
 theorem erdos_351 :
     ∀ P : ℚ[X], 0 < P.natDegree → 0 < P.leadingCoeff → HasCompleteImage P := by
   sorry

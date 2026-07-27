@@ -50,7 +50,6 @@ noncomputable def S (S₀ : List ℤ) (n : ℕ) : List ℤ :=
 /--
 The sequence will eventually reach $1$.
 -/
-@[category research open, AMS 11]
 theorem curling_number_conjecture (S₀ : List ℤ) (h : S₀ ≠ []) : ∃ m, k (S S₀ m) = 1 := by
   sorry
 

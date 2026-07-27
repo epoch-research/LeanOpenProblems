@@ -58,7 +58,6 @@ noncomputable abbrev W : ℕ → ℕ := monoAPNumber 2
 /--
 In [Er81] Erdős asks whether $W(k+1) - W(k) \to \infty$.
 -/
-@[category research open, AMS 11]
 theorem erdos_138.variants.difference :
     atTop.Tendsto (fun k => (W (k + 1) - W k)) atTop := by
   sorry

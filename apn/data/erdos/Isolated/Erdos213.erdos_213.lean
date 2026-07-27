@@ -40,7 +40,6 @@ def Erdos213For (n : ℕ) : Prop := ∃ S : Set ℝ², S.Finite ∧ S.ncard = n 
 Let $n \geq 4$. Are there $n$ points in $\mathbb{R}^2$, no three on a line and no four on a circle,
 such that all pairwise distances are integers?
 -/
-@[category research open, AMS 52]
 theorem erdos_213 : ∀ n : ℕ, n ≥ 4 → Erdos213For n := by sorry
 
 end Erdos213

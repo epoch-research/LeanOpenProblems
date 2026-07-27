@@ -38,7 +38,6 @@ The density `dₜ` of `DivisorSumSet (t : ℕ)` is assymptotically equivalent to
 for some positive constants `c₁` and `c₂`.
 -/
 /-- The density of the divisor sum set is asymptotically equivalent to $c_1 / \log(t)^{c_2}$. -/
-@[category research open, AMS 11]
 theorem erdos_859 :
     ∃ c₁ > 0, ∃ c₂ > (0 : ℝ), ∃ d : ℕ → ℝ, (∀ t > 0, (DivisorSumSet t).HasDensity (d t)) ∧
       (fun (t : ℕ) ↦ d t) ~[atTop] (fun t ↦ c₁ / Real.log t ^ c₂) := by

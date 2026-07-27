@@ -32,7 +32,6 @@ $$
 $$
 have the same prime factors?
 -/
-@[category research open, AMS 11]
 theorem erdos_931 : ∀ᵉ (k₁ : ℕ) (k₂ ≥ 3), k₂ ≤ k₁ →
     { (n₁, n₂) | n₁ + k₁ ≤ n₂ ∧
       (∏ i ∈ Finset.Icc 1 k₁, (n₁ + i)).primeFactors =

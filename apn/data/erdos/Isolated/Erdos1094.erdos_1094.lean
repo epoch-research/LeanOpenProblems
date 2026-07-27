@@ -30,7 +30,6 @@ open scoped Nat
 For all $n\ge 2k$ the least prime factor of $\binom{n}{k}$ is $\le\max(n/k,k)$, with only
 finitely many exceptions.
 -/
-@[category research open, AMS 11]
 theorem erdos_1094 :
     {(n, k) : ℕ × ℕ | 0 < k ∧ 2 * k ≤ n ∧ (n.choose k).minFac > max (n / k) k}.Finite := by
   sorry

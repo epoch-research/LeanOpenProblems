@@ -30,7 +30,6 @@ namespace Erdos409
 /--
 Is it true that iterates of $n\mapsto\sigma(n) - 1$ always reach a prime?
 -/
-@[category research open, AMS 11]
 theorem erdos_409.variants.sigma_prime_termination :
     ∀ n > 1, ∃ i, (σ 1 · - 1)^[i] n |>.Prime := by
   sorry

@@ -29,7 +29,6 @@ namespace Erdos940
 /--
 Is it true that the set of integers which are the sum of at most three cubes has density $0$?
 -/
-@[category research open, AMS 11]
 theorem erdos_940.variants.three_cubes :
     
     {n : ℕ | ∃ (S : Multiset ℕ), S.card ≤ 3 ∧ n = (Multiset.map (· ^ 3) S).sum}.HasDensity 0 := by

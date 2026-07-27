@@ -58,7 +58,6 @@ More generally, Bose and Chowla [BoCh62] conjectured that the maximum size of
 $A\subseteq \{1,\ldots,N\}$ with all $r$-fold sums distinct (aside from the trivial coincidences)
 then $\lvert A\rvert \sim N^{1/r}.$
 -/
-@[category research open, AMS 5]
 theorem erdos_241.variants.generalization (r : ℕ) (hr : r ≥ 2) :  BoseChowlaConjecture r := by
   sorry
 

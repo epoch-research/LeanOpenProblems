@@ -42,7 +42,6 @@ noncomputable def t (k n : ℕ) : ℕ :=
 They ask about the behaviour of $t_{n-3}(n!)$ and also ask whether, for infinitely many $n$,
 $t_k(n!)< t_{k-1}(n!)-1$ for all $1\leq k < n$.
 -/
-@[category research open, AMS 11]
 theorem erdos_394.variants.factorial_gap_conjecture :
     
       Set.Infinite { n : ℕ | ∀ k, 2 ≤ k → k < n →

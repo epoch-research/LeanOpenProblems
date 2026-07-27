@@ -27,7 +27,6 @@ namespace Erdos288
 /--
 It is perhaps true with two intervals replaced by any $k$ intervals.
 -/
-@[category research open, AMS 11]
 theorem erdos_288.variants.k_intervals : ∀ k, Set.Finite { I : Fin k → ℕ+ × ℕ+ |
     ∀ j, (I j).1 ≤ (I j).2 ∧
       ∃ n : ℕ+, (∑ j : Fin k, ∑ nⱼ ∈ Set.Icc (I j).1 (I j).2, (nⱼ⁻¹ : ℚ)) = n } := by

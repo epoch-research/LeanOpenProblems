@@ -37,7 +37,6 @@ noncomputable def f (n : ℕ) : ℕ := sInf {m : ℕ | ∃ k, ∃ f : ℕ → �
   n < f 0 ∧ f (k - 1) = m ∧ ∏ i < k, f i = n !}
 
 /-- Does there exists a constant `c` such that `f n - 2 * n ~ c * (n / log n)`? -/
-@[category research open, AMS 11]
 theorem erdos_390 :
     ∃ c,
       (fun n => f n - 2 * n : ℕ → ℝ) ~[atTop] (fun n => c * n / log (n : ℝ)) := by

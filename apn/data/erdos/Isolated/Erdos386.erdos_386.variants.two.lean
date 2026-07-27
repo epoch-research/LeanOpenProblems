@@ -28,7 +28,6 @@ open Nat
 /--
 Can $\binom{n}{2}$ be the product of consecutive primes infinitely often?
 -/
-@[category research open, AMS 11]
 theorem erdos_386.variants.two :
     ∃ᶠ n in .atTop,
       2 ≤ n - 2 ∧ ∃ p q : ℕ, n.choose 2 = ∏ i ∈ .Ico p q, nth Nat.Prime i := by

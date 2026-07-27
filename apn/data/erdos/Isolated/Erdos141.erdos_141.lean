@@ -45,7 +45,6 @@ def Set.IsAPAndPrimeProgressionOfLength (s : Set ℕ) (l : ℕ) :=
 /--
 Let $k≥3$. Are there $k$ consecutive primes in arithmetic progression?
 -/
-@[category research open, AMS 5 11]
 theorem erdos_141 : 
     ∀ k ≥ 3, ∃ (s : Set ℕ), s.IsAPAndPrimeProgressionOfLength k := by
   sorry

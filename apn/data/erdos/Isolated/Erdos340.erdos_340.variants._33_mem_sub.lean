@@ -60,7 +60,6 @@ def greedySidon (n : ℕ) : ℕ := greedySidon.aux n |>.2
 /--
 The smallest integer which is unknown to be in $A - A$ is $33$.
  -/
-@[category research open, AMS 5]
 theorem erdos_340.variants._33_mem_sub : 
     33 ∈ Set.range greedySidon - Set.range greedySidon := by
   sorry

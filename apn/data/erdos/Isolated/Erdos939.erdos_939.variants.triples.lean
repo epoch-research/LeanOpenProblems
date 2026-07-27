@@ -38,7 +38,6 @@ def Erdos939Sums (r : ℕ) :=
 /--
 Are there infinitely many triples of coprime $3$-powerful numbers $a, b, c$ such that $a + b = c$?
 -/
-@[category research open, AMS 11]
 theorem erdos_939.variants.triples :
     {(a,b,c) | ({a, b, c} : Finset ℕ).Coprime ∧
       (3).Full a ∧ (3).Full b ∧ (3).Full c ∧

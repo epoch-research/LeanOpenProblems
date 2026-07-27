@@ -42,7 +42,6 @@ Is it true that
 $$\limsup_{n\to \infty}\left(\sum_{0\leq i < k}\omega(n+i)\right) \frac{\log\log n}{\log n}=1,$$
 where $\omega$ counts the number of distinct prime factors without restriction?
 -/
-@[category research open, AMS 11]
 theorem erdos_890.parts.b :
     ∀ k ≥ 1, limsup (fun n ↦ (∑ i ∈ range k, (ω (n + i) : EReal)) *
       (log (log n) / log n)) atTop = 1 := by

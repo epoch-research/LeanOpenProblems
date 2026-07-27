@@ -39,7 +39,6 @@ $$
 Can one prove that $q(n, \log n) < (1 - \epsilon) (\log n)^2$
 for all large $n$ and some $\epsilon > 0$?
 -/
-@[category research open, AMS 11]
 theorem erdos_457.variants.one_sub : ∃ ε > (0 : ℝ),
     ∀ᶠ n in Filter.atTop, q n (Real.log n) < (1 - ε) * Real.log n ^ 2 := by
   sorry

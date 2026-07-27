@@ -38,7 +38,6 @@ def pellNumber : ℕ → ℕ
   | n + 1 + 1 => 2 * pellNumber (n + 1) + pellNumber n
 
 /-- There are infinitely many prime Pell numbers -/
-@[category research open, AMS 11]
 theorem infinite_pellNumber_primes : Infinite {n : ℕ | Prime (pellNumber n)} := by
   sorry
 

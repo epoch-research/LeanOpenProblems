@@ -28,7 +28,6 @@ namespace Erdos1065
 Are there infinitely many primes $p$ such that $p = 2^k 3^l q + 1$
 for some prime $q$ and $k ≥ 0$, $l ≥ 0$?
 -/
-@[category research open, AMS 11]
 theorem erdos_1065.parts.ii : 
     Set.Infinite {p | ∃ q k l, p.Prime ∧ q.Prime ∧ p = 2^k * 3^l * q + 1} := by
   sorry

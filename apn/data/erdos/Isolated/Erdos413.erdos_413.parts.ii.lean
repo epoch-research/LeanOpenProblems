@@ -44,7 +44,6 @@ def expProd (n : ℕ) : ℕ :=
   n.factorization.prod fun _ e => e
 
 /-- Does there exist some `ε > 0` such that there are infinitely many `ε`-barriers for `ω`? -/
-@[category research open, AMS 11]
 theorem erdos_413.parts.ii :
     
         (∃ ε > (0 : ℝ), { n | IsBarrier (fun n => ε * ω n) n }.Infinite) := by

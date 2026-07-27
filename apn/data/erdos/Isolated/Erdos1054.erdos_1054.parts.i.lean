@@ -35,7 +35,6 @@ noncomputable def f (n : ℕ) : ℕ :=
 
 /-- Let $f(n)$ be the minimal integer $m$ such that $n$ is the sum of the $k$ smallest divisors
 of $m$ for some $k\geq 1$. Is it true that $f(n)=o(n)$?-/
-@[category research open, AMS 11]
 theorem erdos_1054.parts.i : (fun n ↦ (f n : ℝ)) =o[atTop] (fun n ↦ (n : ℝ)) := by
   sorry
 

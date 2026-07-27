@@ -37,7 +37,6 @@ is $o(x/\log x)$.
 [HaSu02] Hardy, G. E. and Subbarao, M. V., _A modified problem of Pillai and some related questions._
 Amer. Math. Monthly (2002), 554--559.
 -/
-@[category research open, AMS 11]
 theorem erdos_1072.variants.littleo :
     (fun x ↦ (({p | p.Prime ∧ f p = p - 1} ∩ Icc 0 x).ncard : ℝ)) =o[atTop]
       (fun x ↦ x / Real.log x) := by

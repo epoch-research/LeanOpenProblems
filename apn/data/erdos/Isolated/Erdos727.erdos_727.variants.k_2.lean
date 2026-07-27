@@ -30,7 +30,6 @@ namespace Erdos727
 It is open even for $k = 2$.
 Let $k = 2$. Does $((n+k)!)^2∣(2n)!$ hold for infinitely many n?
 -/
-@[category research open, AMS 11]
 theorem erdos_727.variants.k_2 :
     letI k := 2
     Set.Infinite {n : ℕ | (Nat.factorial (n + k)) ^ 2 ∣ Nat.factorial (2 * n)} := by

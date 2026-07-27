@@ -36,7 +36,6 @@ both have positive density?
 
 Note that this is using a literal interpretation of "positive density".
 -/
-@[category research open, AMS 5]
 theorem erdos_741.parts.i : ∀ A : Set ℕ, HasPosDensity (A + A) → ∃ A₁ A₂,
     A = A₁ ∪ A₂ ∧ Disjoint A₁ A₂ ∧ HasPosDensity (A₁ + A₁)
     ∧ HasPosDensity (A₂ + A₂) := by

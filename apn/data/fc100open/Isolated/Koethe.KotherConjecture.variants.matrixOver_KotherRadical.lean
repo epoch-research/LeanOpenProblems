@@ -46,7 +46,6 @@ def KotheRadical : TwoSidedIdeal R := sSup {I : TwoSidedIdeal R | IsNil I}
 local notation "Nil* " R => KotheRadical R
 
 /-- The **Köthe conjecture**: for any positive integer `n`, the Köthe radical of `R` is the matrix ideal `M_2(Nil*(R))`. -/
-@[category research open, AMS 16]
 theorem KotherConjecture.variants.matrixOver_KotherRadical
     {I : TwoSidedIdeal R} (hI : IsNil I) (n : Type*) [Fintype n] :
     matrix n (Nil* R) = Nil* (Matrix n n R) := by

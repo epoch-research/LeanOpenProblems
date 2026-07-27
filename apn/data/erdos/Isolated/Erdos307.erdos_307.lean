@@ -38,7 +38,6 @@ Asked by Barbeau [Ba76].
 
 [Ba76] Barbeau, E. J., _Computer challenge corner: Problem 477: A brute force program._
 -/
-@[category research open, AMS 11]
 theorem erdos_307 : ∃ P Q : Finset ℕ, (∀ p ∈ P, p.Prime) ∧ (∀ q ∈ Q, q.Prime) ∧
     1 = (∑ p ∈ P, (p : ℚ)⁻¹) * (∑ q ∈ Q, (q : ℚ)⁻¹) := by
   sorry

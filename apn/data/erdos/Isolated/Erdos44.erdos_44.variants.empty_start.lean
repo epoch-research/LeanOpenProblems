@@ -29,7 +29,6 @@ namespace Erdos44
 /--
 The case where we start with an empty set (constructing large Sidon sets).
 -/
-@[category research open, AMS 5 11]
 theorem erdos_44.variants.empty_start : ∀ᵉ (ε > (0 : ℝ)), ∀ᶠ (M : ℕ) in Filter.atTop,
     ∃ᵉ (A ⊆ Finset.Icc 1 M), IsSidon (A : Set ℕ) ∧ (1 - ε) * Real.sqrt M ≤ A.card := by
   sorry

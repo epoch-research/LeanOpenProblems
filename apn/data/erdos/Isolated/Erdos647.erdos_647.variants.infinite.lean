@@ -31,7 +31,6 @@ for which
 $$
   \max_{n−k < m < n}(m + \tau(m)) ≤ n + 2.
 $$ -/
-@[category research open, AMS 11]
 theorem erdos_647.variants.infinite :
     ∀ k, { n | ⨆ m : Set.Ioo (n - k) n, ↑m + σ 0 m ≤ n + 2 }.Infinite := by
   sorry

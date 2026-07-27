@@ -43,7 +43,6 @@ partial def f : ℕ+ → ℕ+
 /--
 Does $f$ become stationary at some point?
 -/
-@[category research open, AMS 11]
 theorem erdos_422.variants.eventually_const : EventuallyConst f atTop := by
   sorry
 

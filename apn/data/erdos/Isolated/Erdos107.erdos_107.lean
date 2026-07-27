@@ -43,7 +43,6 @@ Let $f(n)$ be minimal such that any $f(n)$ points in $ℝ^2$, no three on a line
 contain $n$ points which form the vertices of a convex $n$-gon.
 Prove that $f(n) = 2^{n-2} + 1$.
 -/
-@[category research open, AMS 52]
 theorem erdos_107 : ∀ n ≥ 3, f n = 2^(n - 2) + 1 := by
   sorry
 

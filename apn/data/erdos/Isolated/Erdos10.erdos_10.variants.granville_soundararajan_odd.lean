@@ -39,7 +39,6 @@ suffice for all even integers.
 
 Ref: Granville, A. and Soundararajan, K., _A Binary Additive Problem of Erdős and the Order of $2$ mod $p^2$_
 -/
-@[category research open, AMS 5 11]
 theorem erdos_10.variants.granville_soundararajan_odd :
     {n : ℕ | Odd n ∧ 1 < n} ⊆ sumPrimeAndTwoPows 3 ∧
       {n : ℕ | Even n ∧ n ≠ 0} ⊆ sumPrimeAndTwoPows 4 := by

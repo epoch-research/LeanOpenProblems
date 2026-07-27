@@ -42,7 +42,6 @@ must $A$ contain a minimal additive basis of order $2$?
 
 Larsen and Larsen [LaLa26] answered this in the negative.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_868.parts.i :
     ∀ (A : Set ℕ), A.IsAsymptoticAddBasisOfOrder 2 →
       atTop.Tendsto (fun n => ncard_add_repr A 2 n) atTop → ∃ B ⊆ A,

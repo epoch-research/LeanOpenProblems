@@ -43,7 +43,6 @@ def Erdos945Prop : Prop := ∃ O : ℝ → ℝ, O =O[atTop] (1 : ℝ → ℝ) �
 /--
 Is it true that $F(x) \leq (\log x)^{O(1)}$?
 -/
-@[category research open, AMS 11]
 theorem erdos_945 : Erdos945Prop := by
   sorry
 

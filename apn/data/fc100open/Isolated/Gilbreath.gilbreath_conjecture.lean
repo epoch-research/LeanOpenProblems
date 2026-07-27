@@ -38,7 +38,6 @@ open Gilbreath
 **Gilbreath's conjecture**
 Gilbreath's conjecture states that every term in the sequence $d^k_0$ for $k > 0$ is equal to 1.
 -/
-@[category research open, AMS 11]
 theorem gilbreath_conjecture (k : ℕ+) : d k 0 = 1 := by
   sorry
 

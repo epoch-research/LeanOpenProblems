@@ -29,13 +29,14 @@ Canonicalization (see `EXCLUDED.txt` and `RENAMED.txt` for the details):
 * Recorded verdicts are un-filled: `answer(True/False) ↔ P` ships as plain
   `P`, like the unfilled `answer(sorry)` forms — determining P's truth value
   is exactly the paper's task, and a recorded literal is the answer key.
-* FC's recorded-verdict *annotations* are stripped likewise (they are the same
-  answer key in human-readable form): 14 `category research solved` flips
-  revert to `research open`, 10 `formal_proof` URL attributes and 6 prose
-  lines crediting the prover agent are removed
-  (`scripts/erdos_isolation.py:strip_verdict_annotations`, counts asserted).
-  Membership itself ignores resolution status: this is the paper's canonical
-  attempted set, regardless of what has been resolved since.
+* FC's annotations are stripped likewise: every kept declaration's
+  `@[category ..., AMS ...]` classification list is dropped whole — it is
+  catalogue metadata, not part of the statement, and its `research solved`
+  category and `formal_proof` URL clauses are the recorded verdict (the same
+  answer key in human-readable form) — as are the 6 prose lines crediting the
+  prover agent (`scripts/erdos_isolation.py:strip_fc_annotations`, counts
+  asserted). Membership itself ignores resolution status: this is the paper's
+  canonical attempted set, regardless of what has been resolved since.
 
 Everything else in this directory is produced by this repository:
 `MAPPING.txt` (target -> source file) and `Isolated/` (one per-target spec per

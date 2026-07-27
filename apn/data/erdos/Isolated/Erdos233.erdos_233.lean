@@ -33,7 +33,6 @@ namespace Erdos233
 A conjecture by Heath-Brown:
 The sum of squares of the first $N$ gaps between consecutive primes behaves like $N * (log N)^2$.
 -/
-@[category research open, AMS 11]
 theorem erdos_233 :
     (fun N => ((∑ n ∈ Finset.range N, (primeGap n) ^ 2) : ℝ)) =O[atTop] fun N => N * (log N)^2 := by
   sorry

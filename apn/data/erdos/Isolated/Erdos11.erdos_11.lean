@@ -27,7 +27,6 @@ namespace Erdos11
 /--
 Is every odd $n > 1$ the sum of a squarefree number and a power of 2?
 -/
-@[category research open, AMS 11]
 theorem erdos_11 (n : ℕ) (hn : Odd n) (hn' : 1 < n) :
     ∃ k l : ℕ, Squarefree k ∧ n = k + 2 ^ l := by
   sorry

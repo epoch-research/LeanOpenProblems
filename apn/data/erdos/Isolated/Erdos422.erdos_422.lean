@@ -43,7 +43,6 @@ partial def f : ℕ+ → ℕ+
 /--
 Does $f(n)$ miss infinitely many integers?
 -/
-@[category research open, AMS 11]
 theorem erdos_422 : Set.Infinite {n | ∀ x, f x ≠ n} := by
   sorry
 

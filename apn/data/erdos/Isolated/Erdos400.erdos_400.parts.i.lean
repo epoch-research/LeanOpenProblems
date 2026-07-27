@@ -37,7 +37,6 @@ noncomputable def g (k n : ℕ) : ℕ :=
 /--
 Can one show that $\sum_{n\leq x}g_k(n) \sim c_k x\log x$ for some constant $c_k$?
 -/
-@[category research open, AMS 11]
 theorem erdos_400.parts.i :
     ∀ᵉ (k ≥ 2), ∃ c : ℝ,
       (fun x : ℕ ↦ (∑ n ∈ Icc 1 x, (g k n : ℝ))) ~[atTop]

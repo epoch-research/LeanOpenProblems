@@ -41,7 +41,6 @@ namespace Erdos418
 /--
 It is open whether the set of non-cototients has positive density.
 -/
-@[category research open, AMS 11]
 theorem erdos_418.variants.density :
     ∃ (S : Set ℕ) (hS : S.HasPosDensity), S ⊆ { (n - n.totient : ℕ) | n }ᶜ := by
   sorry

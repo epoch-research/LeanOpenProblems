@@ -27,7 +27,6 @@ namespace Erdos366
 /--
 Are there infinitely many 3-full $n$ such that $n+1$ is 2-full?
 -/
-@[category research open, AMS 11]
 theorem erdos_366.variants.three_two :
     {n | (3).Full n ∧ (2).Full (n + 1)}.Infinite := by
   sorry

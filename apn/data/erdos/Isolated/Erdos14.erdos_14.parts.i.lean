@@ -46,7 +46,6 @@ Let $A ⊆ \mathbb{N}$. Let $B ⊆ \mathbb{N}$ be the set of integers which are 
 in exactly one way as the sum of two elements from $A$. Is it true that for all
 $\epsilon > 0$ and large $N$, $|\{1,\ldots,N\} \setminus B| \gg_\epsilon N^{1/2 - \epsilon}$?
 -/
-@[category research open, AMS 11]
 theorem erdos_14.parts.i :
     ∀ A, ∀ ε > 0, nonUniqueSumCount A ≫ almostSquareRoot ε := by sorry
 

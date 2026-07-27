@@ -33,7 +33,6 @@ def Erdos672With (k l : ℕ) : Prop :=
 Can the product of an arithmetic progression of positive integers $n, n + d, ..., n + (k - 1)d$
 of length ≥ 4, with $(n, d) = 1$, be a perfect power?
 -/
-@[category research open, AMS 11]
 theorem erdos_672 :
     ∀ᵉ (k) (l > 1), k ≥ 4 → Erdos672With k l := by
   sorry

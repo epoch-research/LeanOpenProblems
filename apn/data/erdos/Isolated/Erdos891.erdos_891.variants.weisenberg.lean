@@ -37,7 +37,6 @@ integers at most $p_1\cdots p_k$. By Dickson's conjecture [Wikipedia], there are
 $n'$ such that $\frac{L_k}{m}n'+1$ is prime for all $1\leq m < p_1\cdots p_k$. It follows that,
 if $n=L_kn'+1$, then all integers in $[n,n+p_1\cdots p_k-1)$ have at most $k$ prime factors.
 -/
-@[category research open, AMS 11]
 theorem erdos_891.variants.weisenberg (k : ℕ) (hk : k ≥ 2) :
     ∃ᶠ n in atTop,
       ∀ m ∈ Ico n (n + (∏ i ∈ range k, i.nth Nat.Prime) - 1),

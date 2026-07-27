@@ -38,7 +38,6 @@ powers of $2$, and pointed out that parity considerations, coupled with the fact
 are many integers not the sum of a prime and $2$ powers of $2$ suggest that there exist
 infinitely many even integers which are not the sum of a prime and at most $3$ powers of $2$).
 -/
-@[category research open, AMS 5 11]
 theorem erdos_10.variants.grechuk :
     Set.Infinite <| {n : ℕ | Even n} \ sumPrimeAndTwoPows 3 := by
   sorry

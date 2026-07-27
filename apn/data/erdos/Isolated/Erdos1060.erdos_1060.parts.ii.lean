@@ -27,7 +27,6 @@ open scoped ArithmeticFunction.sigma
 namespace Erdos1060
 
 /-- Part (ii) of Erdős Problem 1060: bound on the number of $k \le n$ with $k \sigma_1(k) = n$. -/
-@[category research open, AMS 11]
 theorem erdos_1060.parts.ii :
     ∃ (C : ℝ), (fun n ↦ (#{k ≤ n | k * σ 1 k = n} : ℝ)) =O[atTop]
       (fun n ↦ log n ^ C) := by sorry

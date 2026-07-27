@@ -26,6 +26,7 @@ from __future__ import annotations
 import re
 
 from apn.dataset import parse_decl_mapping as parse_mapping  # re-exported
+from scripts.fc_statements import strip_category_attrs
 from scripts.isolation import REPO
 
 ERDOS_DIR = REPO / "apn" / "data" / "erdos"
@@ -60,19 +61,18 @@ FORM_CENSUS = {
 }
 
 # All 353 statements were unresolved when the paper's agent attempted them; FC
-# has since recorded verdicts on 14 members (a `research solved` category
+# has since recorded verdicts on 14 members: a `research solved` category
 # flip, for 10 of them a `formal_proof` URL attribute pointing at a complete
-# proof -- 6 `using formal_conjectures`, 4 `using lean4` -- and prose crediting
-# the prover agent, one line of which states the direction outright).
-# Un-filling the answer literal removes the machine-readable key; these
-# annotations are the same key in human-readable form, so generation strips
-# them back to the attempt-time text. The attribute surgery uses the two rigid
-# patterns below; the free prose is removed via the exact snippets in
+# proof, and prose crediting the prover agent (one line of which states the
+# direction outright). Un-filling the answer literal removes the
+# machine-readable key; these annotations are the same key in human-readable
+# form, so generation strips them back to the attempt-time text: every kept
+# declaration's `@[category ...]` list is dropped whole (see
+# ``scripts.fc_statements.strip_category_attrs``; that takes any formal_proof
+# clause with it), and the free prose is removed via the exact snippets in
 # VERDICT_PROSE. Every application is counted and the totals asserted, so
 # upstream drift at regeneration fails loudly instead of leaking.
 # tests/test_erdos.py asserts the markers are absent from every shipped sketch.
-SOLVED_CATEGORY_RE = re.compile(r"category research solved\b")
-FORMAL_PROOF_ATTR_RE = re.compile(r",\s*formal_proof using \w+ at\s*\"[^\"]*\"")
 VERDICT_PROSE = [
     "\n\nThis was disproved by the DeepMind prover agent.\n",
     "\n\nThis was proved by DeepMind prover agent.\n",
@@ -88,20 +88,19 @@ VERDICT_PROSE = [
     "\n\nThis stronger quadratic variant was also proved formally by the DeepMind prover agent"
     " [DM26b].\n",
 ]
-VERDICT_TOTALS = {"solved": 14, "formal_proof": 10, "prose": 6}
+# 351 category lists (one per kept declaration: the 350 targets + 1055's kept
+# `exists_p`) and the 6 verdict-prose lines.
+ANNOTATION_TOTALS = {"category": 351, "prose": 6}
 
 
-def strip_verdict_annotations(text: str) -> tuple[str, dict[str, int]]:
-    """Remove FC's recorded-verdict annotations from an isolated spec's text,
+def strip_fc_annotations(text: str) -> tuple[str, dict[str, int]]:
+    """Remove FC's catalogue/verdict annotations from an isolated spec's text,
     returning the stripped text and per-kind application counts (summed and
-    asserted against ``VERDICT_TOTALS`` by generation). Elaboration-neutral by
-    construction -- categories and attributes never reach the statement's type,
-    prose is prose -- and the certificate + compile gates re-check the result."""
-    counts = {"solved": 0, "formal_proof": 0, "prose": 0}
-    text, n = FORMAL_PROOF_ATTR_RE.subn("", text)
-    counts["formal_proof"] = n
-    text, n = SOLVED_CATEGORY_RE.subn("category research open", text)
-    counts["solved"] = n
+    asserted against ``ANNOTATION_TOTALS`` by generation). Elaboration-neutral
+    by construction -- the attributes never reach the statement's type, prose
+    is prose -- and the certificate + compile gates re-check the result."""
+    counts = {"category": 0, "prose": 0}
+    text, counts["category"] = strip_category_attrs(text)
     for snippet in VERDICT_PROSE:
         if snippet in text:
             counts["prose"] += text.count(snippet)

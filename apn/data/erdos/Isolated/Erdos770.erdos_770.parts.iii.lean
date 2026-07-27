@@ -38,7 +38,6 @@ noncomputable def h (n : ℕ) : ℕ∞ := sInf {m | 2 < m ∧
 
 /-- Is it true that if `p` is the greatest prime such that `p - 1 ∣ n` and `p > n ^ ε`, then
 `h n = p`? -/
-@[category research open, AMS 11]
 theorem erdos_770.parts.iii : ∀ ε > 0, ∀ᶠ n in atTop,
     let p := sSup {m : ℕ | m.Prime ∧ m - 1 ∣ n}
     p > (n : ℝ) ^ (ε : ℝ) → h n = p := by

@@ -35,7 +35,6 @@ def IsGoodPair (t α : ℝ) : Prop :=
 /--
 Is it true that the terms of the sequence $\lfloor (3/2)^n\rfloor$ are even infinitely often?
 -/
-@[category research open, AMS 11]
 theorem erdos_349.variants.floor_3_halves_even :
     {n | Even ⌊(3/2 : ℝ) ^ n⌋}.Infinite := by
   sorry

@@ -47,7 +47,6 @@ Similar remarks hold for the `variants.monotone` formalisations later in this fi
 
 /--  Suppose $A$ is an infinite set such that all finite sums of consecutive terms of $A$ are distinct.
 Then it is conjectured that $A$ has density 0. -/
-@[category research open, AMS 11]
 theorem erdos_357.variants.infinite_set_density (A : ℕ → ℕ) (hA : StrictMono A)
     (hA : HasDistinctSums A) :
     (Set.range A).HasDensity 0 := by

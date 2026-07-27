@@ -60,7 +60,6 @@ noncomputable def f (n : ℕ) : ℕ := sSup <| possible_f_values n
 /--
 Is it true that $f(n)\leq n^{o(1)}$?
 -/
-@[category research open, AMS 52]
 theorem erdos_92.variants.weak : ∃ o : ℕ → ℝ,
   o =o[atTop] (1 : ℕ → ℝ) ∧ ∀ n, (f n : ℝ) ≤ n^(o n) := by
   sorry

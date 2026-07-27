@@ -53,7 +53,6 @@ Let $f$ be the asymptotic distribution function of $\varphi(n)/n$, so that for e
 $f(c)$ is the natural density of $\{n : \varphi(n) < cn\}$. Is it true that there is no $x$ such
 that the derivative $f'(x)$ exists and is positive?
 -/
-@[category research open, AMS 11]
 theorem erdos_50 : ∀ᵉ (f : ℝ → ℝ) (hf : IsDistributionOfPhiRatio f),
     ¬∃ x, ∃ y > 0, HasDerivAt f y x := by
   sorry

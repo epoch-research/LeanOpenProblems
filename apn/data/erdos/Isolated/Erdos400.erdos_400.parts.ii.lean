@@ -38,7 +38,6 @@ noncomputable def g (k n : ℕ) : ℕ :=
 Is it true that there is a constant $c_k$ such that for almost all $n < x$ we have
 $g_k(n)=c_k\log x+o(\log x)$?
 -/
-@[category research open, AMS 11]
 theorem erdos_400.parts.ii :
     ∀ᵉ (k ≥ 2), ∃ c : ℝ, ∀ ε > 0,
       Tendsto (fun x : ℕ ↦

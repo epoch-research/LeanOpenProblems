@@ -37,7 +37,6 @@ def AbundancyIndex (n : ℕ) : ℚ := (∑ d ∈ n.divisors, d) / n
 /--
 Are there infinitely many primitive weird numbers?
 -/
-@[category research open, AMS 11]
 theorem erdos_470.parts.ii : Set.Infinite PrimitiveWeird := by
   sorry
 

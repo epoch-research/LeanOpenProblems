@@ -48,7 +48,6 @@ $f_2(3n^2 + 3n + 1) < 9n^2 + 3n$.
 
 Note: in [Er75f] is read $9n^2 + 6n$, but this seems to be a typo.
 -/
-@[category research open, AMS 52]
 theorem erdos_1084.variants.triangular_optimal_d2 : f 2 (3 * n ^ 2 + 3 * n + 1) = 9 * n ^ 2 + 3 * n := by
   sorry
 

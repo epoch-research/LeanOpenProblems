@@ -41,7 +41,6 @@ Is it true that $\limsup_n (f(n+1)−f(n))/ \log n = ∞$?
 The known counterexample does not satisfy either of these extra hypotheses, so this variant remains
 open.
 -/
-@[category research open, AMS 11]
 theorem erdos_897.variants.parts.i : ∀ (f : ℕ → ℝ),
     (∀ᵉ (a > 0) (b > 0), a.Coprime b → f (a * b) = f a + f b) →
     ((Filter.atTop ⊓ Filter.principal {(p, k) : ℕ × ℕ | p.Prime}).limsup

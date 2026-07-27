@@ -42,7 +42,6 @@ $$
 $$
 exists?
 -/
-@[category research open, AMS 11]
 theorem erdos_145 :
     ∀ α ≥ (0 : ℝ), ∃ β : ℝ,
       atTop.Tendsto (fun x : ℝ ↦ 1 / x * ∑ n ∈ A x, (s (n + 1) - s n : ℝ) ^ α) (𝓝 β) := by

@@ -45,7 +45,6 @@ def IsIrrationalitySequence (a : ℕ → ℕ) : Prop := ∀ b : ℕ → ℕ, Bdd
 /--
 Is $n!$ an example of an irrationality sequence?
 -/
-@[category research open, AMS 11]
 theorem erdos_264.parts.ii : IsIrrationalitySequence Nat.factorial := by sorry
 
 end Erdos264

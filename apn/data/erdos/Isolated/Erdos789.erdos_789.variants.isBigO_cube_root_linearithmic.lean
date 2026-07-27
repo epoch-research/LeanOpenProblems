@@ -56,7 +56,6 @@ noncomputable def subsetSumThreshold (n : ℕ): ℕ :=
 
 /-- By the solved variant `erdos_789.variants.cube_root_linearithmic_isBigO`, in order to prove
 `erdos_789.variants.cube_root_linarithmic` it suffices to show $h(n) = O((n\log(n))^{1/3})$. -/
-@[category research open, AMS 5]
 theorem erdos_789.variants.isBigO_cube_root_linearithmic :
     (fun n ↦ (subsetSumThreshold n : ℝ)) =O[atTop]
       fun n ↦ (n * Real.log n) ^ ((1 : ℝ) / 3) := by

@@ -28,7 +28,6 @@ namespace Erdos218
 The set of indices $n$ for which a prime gap is followed by a larger or equal prime gap has a
 natural density of $\frac 1 2$.
 -/
-@[category research open, AMS 11]
 theorem erdos_218.variants.le : {n | primeGap n ≤ primeGap (n + 1)}.HasDensity <| 1 / 2 := by
   sorry
 

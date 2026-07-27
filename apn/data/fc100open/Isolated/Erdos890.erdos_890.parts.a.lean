@@ -42,8 +42,8 @@ If $\omega_k(n)$ counts the number of distinct prime factors of $n$ which are $>
 that, for every $k\geq 1$,
 $$\liminf_{n\to \infty}\sum_{0\leq i < k}\omega_k(n+i)\leq k?$$
 -/
-@[category research open, AMS 11]
 theorem erdos_890.parts.a :
+    
     ∀ k ≥ 1, liminf (fun n ↦ (∑ i ∈ range k, (ω_gt k (n + i) : EReal))) atTop ≤ k := by
   sorry
 

@@ -41,7 +41,6 @@ $$
   \lim\frac{|P\cap[1, x]|}{\pi(x)}
 $$
 exist? -/
-@[category research open, AMS 11]
 theorem erdos_1074.parts.iii : ∃ c, PillaiPrimes.HasDensity c {p | p.Prime} := by
   sorry
 

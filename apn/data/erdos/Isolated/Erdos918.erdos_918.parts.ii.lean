@@ -33,7 +33,6 @@ namespace Erdos918
 
 /-- Is there a graph with $\aleph_{\omega+1}$ vertices and chromatic number $\aleph_1$ such that
 every subgraph on $\aleph_\omega$ vertices has chromatic number $\leq\aleph_0$? -/
-@[category research open, AMS 5]
 theorem erdos_918.parts.ii :
     ∀ (ω : Ordinal),
     ∃ (V : Type u) (G : SimpleGraph V), #V = ℵ_ (ω + 1) ∧ G.chromaticCardinal = ℵ₁ ∧

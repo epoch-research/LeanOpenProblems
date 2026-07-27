@@ -31,7 +31,6 @@ open Filter
 Are there infinitely many solutions to $\phi(n) = \phi(n+1)$, where $\phi$ is the Euler totient
 function?
 -/
-@[category research open, AMS 11]
 theorem erdos_1003 : Set.Infinite {n | φ n = φ (n + 1)} := by
   sorry
 

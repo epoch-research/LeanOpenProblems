@@ -28,7 +28,6 @@ Can every square $N≥2$ be written as
 $$N=\frac{\prod_{1\leq i\leq k}(m+i)}{\prod_{1\leq i\leq k}(n+i)}$$
 for some $k≥2$ and $m≥n+k$?
 -/
-@[category research open, AMS 11]
 theorem erdos_686.variants.square :
     ∀ N ≥ (2 : ℕ),  (IsSquare N) → ∃ᵉ (k ≥ 2) (n : ℕ) (m ≥ n + k),
       (N : ℚ) = (∏ i ∈ Finset.Icc 1 k, (m + i)) / (∏ i ∈ Finset.Icc 1 k, (n + i)) := by

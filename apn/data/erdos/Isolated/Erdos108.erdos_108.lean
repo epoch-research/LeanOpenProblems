@@ -32,7 +32,6 @@ open Erdos108
 For every r ≥ 4 and k ≥ 2 is there some finite f(k,r) such that every graph of chromatic number ≥ f(k,r)
 contains a subgraph of girth ≥ r and chromatic number ≥ k?
 -/
-@[category research open, AMS 5]
 theorem erdos_108 :
     ∀ r ≥ 4, ∀ k ≥ (2 : ℕ), ∃ (f : ℕ),
     ∀ (V : Type u) (G : SimpleGraph V) (_ : Nonempty V)

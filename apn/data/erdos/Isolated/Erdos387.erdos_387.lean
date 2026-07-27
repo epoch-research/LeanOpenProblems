@@ -33,7 +33,6 @@ namespace Erdos387
 
 /-- Is there an absolute constant `c > 0` such that, for all `1 ≤ k < n`, the binomial coefficient
 `n.choose k` has a divisor in `(cn, n]`? -/
-@[category research open, AMS 11]
 theorem erdos_387 : ∃ c : ℝ, 0 < c ∧ ∀ n k : ℕ, 1 ≤ k → k < n →
     ∃ d : ℕ, (d : ℝ) ∈ Set.Ioc (c * n) n ∧ d ∣ n.choose k := by
   sorry

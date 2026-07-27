@@ -32,7 +32,6 @@ noncomputable def F (n : ℕ) : ℕ := sSup {m + m.minFac | (m < n) (_ : m.Compo
 
 /-- A question of Erdős, Eggleton, and Selfridge, who write that in fact it is possible that
 this quantity is always at least $n+(1-o(1))\sqrt{n}$ -/
-@[category research open, AMS 11]
 theorem erdos_385.variants.lb : ∃ (e : ℕ → ℝ) (he : e =o[atTop] (1 : ℕ → ℝ)),
     ∀ n, n + (1 - e n) * √n ≤ F n :=
   sorry

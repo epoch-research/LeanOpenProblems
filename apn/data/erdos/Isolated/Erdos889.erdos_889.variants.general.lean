@@ -52,7 +52,6 @@ $v_l(n) \to \infty$ as $n \to \infty$
 
 [ErSe67] Erdős, P. and Selfridge, J. L., Some problems on the prime factors of consecutive integers. Illinois J. Math. (1967), 428--430.
 -/
-@[category research open, AMS 11]
 theorem erdos_889.variants.general :
     ∀ l, Tendsto (v_l l) atTop (𝓝 ⊤) := by
   sorry

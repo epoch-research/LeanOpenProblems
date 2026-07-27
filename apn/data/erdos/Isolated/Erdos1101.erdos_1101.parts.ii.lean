@@ -54,7 +54,6 @@ def IsGood (u : ℕ → ℕ) : Prop :=
       (A u (k + 1) : ℝ) - A u k < (1 + ε) * (t u x : ℝ) * (∏' i : ℕ, (1 - 1 / (u i : ℝ)))⁻¹
 
 /-- 2. There is a good sequence with sub-exponential growth. -/
-@[category research open, AMS 11]
 theorem erdos_1101.parts.ii :
     ∃ u, IsGood u ∧ (fun n => Real.log (u n : ℝ)) =o[atTop] (fun n => (n : ℝ)) := by
   sorry

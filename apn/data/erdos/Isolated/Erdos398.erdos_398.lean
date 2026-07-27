@@ -32,7 +32,6 @@ namespace Erdos398
 **Brocard's Problem**
 Does $n! + 1 = m^2$ have integer solutions other than $n = 4, 5, 7$?
 -/
-@[category research open, AMS 11]
 theorem erdos_398 : {n | ∃ m, n ! + 1 = m ^ 2} = {4, 5, 7} := by
   sorry
 

@@ -36,7 +36,6 @@ def a (k : ℕ) : Prop :=
   φ (k ^ 2 + 1) = k * φ (k + 1)
 
 /-- For members of the sequence other than $8$, we have $k + 1$ is prime. -/
-@[category research open, AMS 11]
 theorem prime_add_one_of_a {k : ℕ} (h : a k) (hne : k ≠ 8) : (k + 1).Prime := by
   sorry
 

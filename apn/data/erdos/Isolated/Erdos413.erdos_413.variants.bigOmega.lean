@@ -44,7 +44,6 @@ def expProd (n : ℕ) : ℕ :=
   n.factorization.prod fun _ e => e
 
 /-- Erdős believed there should be infinitely many barriers for `Ω`, the total prime multiplicity. -/
-@[category research open, AMS 11]
 theorem erdos_413.variants.bigOmega :
     { n | IsBarrier (fun m => Ω m) n }.Infinite := by
   sorry

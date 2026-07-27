@@ -51,7 +51,6 @@ def consecutivePrimeArithmeticProgressions (k : ℕ) : Set (Set ℕ) :=
 /--
 Fix a $k \geq 3$. Is it true that there are infinitely many arithmetic prime progressions of length $k$?
 -/
-@[category research open, AMS 5 11]
 theorem erdos_141.variants.infinite_general_case : 
     ∀ k ≥ 3, (consecutivePrimeArithmeticProgressions k).Infinite := by
   sorry

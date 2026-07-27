@@ -51,7 +51,6 @@ sums all differ by at least $1$ is proposed in [Er73] and [ErGr80].
 
 [ErGr80] Erdős, P. and Graham, R., _Old and new problems and results in combinatorial number theory_. Monographies de L'Enseignement Mathematique (1980).
 -/
-@[category research open, AMS 5 11]
 theorem erdos_1.variants.real : ∃ C > (0 : ℝ), ∀ (N : ℕ) (A : Finset ℝ)
     (_ : IsSumDistinctRealSet A N), N ≠ 0 → C * 2 ^ A.card < N := by
   sorry

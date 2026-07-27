@@ -61,7 +61,6 @@ $a_1+\cdots+a_r=b_1+\cdots+b_s$ with $a_i,b_i\in B$ then $r=s$.
 
 Is $h(n) = \Theta((n\log(n)))^{1/3})$?
 -/
-@[category research open, AMS 5]
 theorem erdos_789.variants.cube_root_linearithmic :
     (fun n ↦ (subsetSumThreshold n : ℝ)) =Θ[atTop]
       fun n ↦ (n * Real.log n) ^ ((1 : ℝ) / 3) := by

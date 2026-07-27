@@ -85,6 +85,25 @@ def fc_kept_flags(src: bytes, filerec: dict, engine_flags: list[bool]) -> list[b
     ]
 
 
+# FC tags every problem statement with a `@[category ..., AMS ...]`
+# classification list. It is catalogue metadata, not part of the mathematical
+# statement -- and its category field (`research open`/`solved`) plus any
+# `formal_proof` URL clause are where FC records resolution status, an
+# answer-key channel for the eval tasks -- so the shipped specs drop the list
+# whole (with its trailing newline). Only lists *starting* with `category` are
+# matched: semantic attributes (Selfridge's `@[mk_iff]`) live in their own
+# lists and must be kept.
+CATEGORY_ATTR_RE = re.compile(r"@\[category [^\]]*\]\n?")
+
+
+def strip_category_attrs(text: str) -> tuple[str, int]:
+    """Remove every ``@[category ...]`` classification list from an isolated
+    spec's text; returns (text, #removed). Elaboration-neutral -- attributes
+    never reach the statement's type -- and the certificate + compile gates
+    re-check the result; the generation scripts assert the per-dataset count."""
+    return CATEGORY_ATTR_RE.subn("", text)
+
+
 # The `answer(...) ↔` convention's surface forms. LHS carries the placeholder
 # or a recorded verdict literal; the RHS form only ever appears unfilled
 # (a filled RHS would extend the pattern and fail generation's

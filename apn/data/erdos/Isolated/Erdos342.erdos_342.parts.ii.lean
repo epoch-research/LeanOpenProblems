@@ -49,7 +49,6 @@ def IsUlamSequence (a : ℕ → ℕ) : Prop :=
 /--
 Does Ulam's sequence eventually have periodic differences? That is, is $a(n+1) - a(n)$ eventually periodic?
 -/
-@[category research open, AMS 5 11 40]
 theorem erdos_342.parts.ii :
     
       ∀ a : ℕ → ℕ, IsUlamSequence a →

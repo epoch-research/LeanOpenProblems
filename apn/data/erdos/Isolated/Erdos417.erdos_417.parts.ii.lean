@@ -33,7 +33,6 @@ namespace Erdos417
 /--
 Is it $>1$?
 -/
-@[category research open, AMS 11]
 theorem erdos_417.parts.ii :
     ∃ L < 1, Tendsto (fun x ↦
       ((totient '' { m | 1 ≤ m ∧ (m : ℝ) ≤ x }).ncard : ℝ) /

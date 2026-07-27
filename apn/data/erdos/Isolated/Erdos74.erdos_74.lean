@@ -75,7 +75,6 @@ Let $f(n)\to \infty$ possibly very slowly.
 Is there a graph of infinite chromatic number such that every finite subgraph on $n$
 vertices can be made bipartite by deleting at most $f(n)$ edges?
 -/
-@[category research open, AMS 5]
 theorem erdos_74 : ∀ f : ℕ → ℕ, Tendsto f atTop atTop →
     (∃ (V : Type u) (G : SimpleGraph V), G.chromaticNumber = ⊤ ∧
     ∀ n, G.maxSubgraphEdgeDistToBipartite n ≤ f n) := by

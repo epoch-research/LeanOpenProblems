@@ -32,7 +32,6 @@ namespace Erdos887
 Erdős and Rosenfeld, ask whether $4$ is the best possible $K$ for the infinitude of $n$
 with (at least) $K$ divisors in $(n^{\frac{1}{2}}, n^{\frac{1}{2}} + n^{\frac{1}{4}})$.
 -/
-@[category research open, AMS 11]
 theorem erdos_887.variants.rosenfeld_4 :
     IsGreatest {K | ∃ C > (0 : ℝ),
       Infinite {n : ℕ | K ≤ #{ d ∈ Ioo ⌊√n⌋₊ ⌈√n + C * n^((1 : ℝ) / 4)⌉₊ | d ∣ n }}} 4 := by

@@ -33,7 +33,6 @@ p(n+k)>k^2+1,
 $$
 where $p(m)$ denotes the least prime factor of $m$?
 -/
-@[category research open, AMS 11]
 theorem erdos_680.parts.i :
     ∀ᶠ (n : ℕ) in .atTop, ∃ k ≠ 0, (n + k).minFac > k^2 + 1 := by
   sorry

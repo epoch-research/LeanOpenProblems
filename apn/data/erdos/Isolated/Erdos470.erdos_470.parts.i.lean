@@ -37,7 +37,6 @@ def AbundancyIndex (n : ℕ) : ℚ := (∑ d ∈ n.divisors, d) / n
 /--
 Are there any odd weird numbers?
 -/
-@[category research open, AMS 11]
 theorem erdos_470.parts.i : ∃ n : ℕ, n.Weird ∧ Odd n := by
   sorry
 

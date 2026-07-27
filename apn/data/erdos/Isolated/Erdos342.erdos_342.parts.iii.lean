@@ -49,7 +49,6 @@ def IsUlamSequence (a : ℕ → ℕ) : Prop :=
 /--
 Part (iii), is the density of the sequence 0?
 -/
-@[category research open, AMS 5 11 40]
 theorem erdos_342.parts.iii :
     
       ∀ a : ℕ → ℕ, IsUlamSequence a →

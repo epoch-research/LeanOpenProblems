@@ -28,7 +28,6 @@ namespace Erdos932
 Let $p_k$ denote the $k$th prime. For infinitely many $r$ there are at least two
 integers $p_r < n < p_{r+1}$ all of whose prime factors are $< p_{r + 1} - p_r$.
 -/
-@[category research open, AMS 11]
 theorem erdos_932 :
     { r : ℕ | 2 ≤ (Finset.Ioo (r.nth Nat.Prime) (r.succ.nth Nat.Prime) |>.filter
       (fun m => m.maxPrimeFac < r.succ.nth Nat.Prime - r.nth Nat.Prime)).card }.Infinite := by

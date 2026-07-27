@@ -50,7 +50,6 @@ def IsDecomposition {V : Type*} (G : SimpleGraph V) (D : Finset G.Subgraph) : Pr
 In [Er71] Erdős suggests that only $n-1$ many cycles and edges are required if we do not
 require them to be edge-disjoint.
 -/
-@[category research open, AMS 5]
 theorem erdos_184.variants.covering :
     
       ∀ {V : Type} [Fintype V] [DecidableEq V] [Nonempty V] (G : SimpleGraph V),

@@ -31,7 +31,6 @@ fact suggests that
 $$
   lim_{n\to\infty} \max_{m < n}(\tau(m) + m − n) = \infty.
 $$ -/
-@[category research open, AMS 11]
 theorem erdos_647.variants.lim :
     atTop.Tendsto (fun n ↦ ⨆ m : Fin n, σ 0 m + m - n) atTop := by
   sorry

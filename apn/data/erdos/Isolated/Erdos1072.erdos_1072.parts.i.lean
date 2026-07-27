@@ -31,7 +31,6 @@ namespace Erdos1072
 noncomputable def f (p : ℕ) : ℕ := sInf {n | (n)! + 1 ≡ 0 [MOD p]}
 
 /-- Is it true that there are infinitely many $p$ for which $f(p) = p − 1$? -/
-@[category research open, AMS 11]
 theorem erdos_1072.parts.i : Set.Infinite {p | p.Prime ∧ f p = p - 1} := by
   sorry
 

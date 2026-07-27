@@ -42,7 +42,6 @@ def IsPowerful (n : ℕ) : Prop :=
 /--
 Does the set $A = \left\{ \sum_{n\in S}n! : S\subset \mathbb{N}\text{ finite}\right\}$ of all finite sums of distinct factorials contain only finitely many powerful numbers?
 -/
-@[category research open, AMS 11]
 theorem erdos_1108.parts.ii :
      {a ∈ FactorialSums | IsPowerful a}.Finite := by
   sorry

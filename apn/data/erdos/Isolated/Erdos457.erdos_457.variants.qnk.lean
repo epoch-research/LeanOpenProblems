@@ -36,7 +36,6 @@ does not divide $\prod_{1 \le i \le k}(n + i)$. This
 problem asks whether $q(n, \log n) \ge (2 + \epsilon) \log n$
 infinitely often.
 -/
-@[category research open, AMS 11]
 theorem erdos_457.variants.qnk : ∃ ε > (0 : ℝ),
     { (n : ℕ) | (2 + ε) * Real.log n ≤ q n (Real.log n) }.Infinite := by
   sorry

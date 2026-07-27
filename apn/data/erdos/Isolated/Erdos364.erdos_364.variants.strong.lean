@@ -32,7 +32,6 @@ then $n_{k+2} - n_k > n_k^c$ for some constant $c > 0$.
 
 [Er76d] Erdős, P., Problems and results on number theoretic properties of consecutive integers and related questions. Proceedings of the Fifth Manitoba Conference on Numerical Mathematics (Univ. Manitoba, Winnipeg, Man., 1975) (1976), 25-44.
 -/
-@[category research open, AMS 11]
 theorem erdos_364.variants.strong :
     ∃ (c : ℝ) (h : c > 0), ∀ (k : ℕ),
     Nat.nth Powerful (k + 2) - Nat.nth Powerful k > (Nat.nth Powerful k : ℝ) ^ c := by

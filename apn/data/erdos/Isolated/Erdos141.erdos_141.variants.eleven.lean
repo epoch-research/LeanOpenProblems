@@ -45,7 +45,6 @@ def Set.IsAPAndPrimeProgressionOfLength (s : Set ℕ) (l : ℕ) :=
 /--
 Are there $11$ consecutive primes in arithmetic progression?
 -/
-@[category research open, AMS 5 11]
 theorem erdos_141.variants.eleven : 
     ∃ (s : Set ℕ), s.IsAPAndPrimeProgressionOfLength 11 := by
   sorry

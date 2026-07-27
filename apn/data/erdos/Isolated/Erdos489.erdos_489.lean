@@ -49,7 +49,6 @@ and the existence of this limit was proved by Erdős.
 
 See also [208].
 -/
-@[category research open, AMS 11]
 theorem erdos_489 : 
     ∀ (A : Set ℕ),
       (fun x : ℕ => (((Finset.Icc 1 x).filter (· ∈ A)).card : ℝ)) =o[atTop]

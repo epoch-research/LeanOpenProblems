@@ -64,7 +64,6 @@ Sidon property (i.e. there are no non-trivial solutions to $a + b = c + d$). Wha
 order of growth of $A$? Is it true that $|A \cap \{1, \ldots, N\}| \gg N^{1/2 - \varepsilon}$
 for all $\varepsilon > 0$ and large $N$?
 -/
-@[category research open, AMS 5]
 theorem erdos_340 (ε : ℝ) (hε : ε > 0) :
     (fun n : ℕ ↦ √n / n ^ ε) =O[atTop]
       fun n : ℕ ↦ ((Set.range greedySidon ∩ Set.Icc 1 n).ncard : ℝ) := by

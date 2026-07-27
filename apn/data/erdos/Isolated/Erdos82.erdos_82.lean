@@ -45,7 +45,6 @@ noncomputable def F (n : ℕ) : ℕ :=
 /--
 $F(n) / \log n \to \infty as n \to \infty$
 -/
-@[category research open, AMS 5]
 theorem erdos_82 : Tendsto (fun n => F n / Real.log n) atTop atTop := by
   sorry
 

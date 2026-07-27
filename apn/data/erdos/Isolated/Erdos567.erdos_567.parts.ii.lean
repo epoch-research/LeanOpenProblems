@@ -56,7 +56,6 @@ def H5 : SimpleGraph (Fin 5) :=
 
 Is $K_{3,3}$ Ramsey size linear?
 -/
-@[category research open, AMS 5]
 theorem erdos_567.parts.ii : IsRamseySizeLinear K33 := by
   sorry
 

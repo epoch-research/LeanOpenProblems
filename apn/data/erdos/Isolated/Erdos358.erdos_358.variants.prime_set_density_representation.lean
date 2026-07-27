@@ -60,7 +60,6 @@ noncomputable def g (A : ℕ → ℕ) (n : ℕ) : ℕ :=
 When $A =\{a_1 < \cdots\}$ corresponds to the set of primes, it is conjectured that the set of
 numbers $n$ that have representations $$n=\sum_{u\leq i\leq v}a_i$$ has positive upper density.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_358.variants.prime_set_density_representation :
     0 < {n : ℕ | intervalRepresentations (Nat.nth Nat.Prime) n |>.Nonempty}.upperDensity := by
   sorry

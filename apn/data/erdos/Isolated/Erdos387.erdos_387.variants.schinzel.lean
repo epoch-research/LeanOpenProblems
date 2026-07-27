@@ -32,7 +32,6 @@ open Filter
 namespace Erdos387
 
 /-- The following is Schinzel's conjecture, which appears in [Gu04]. -/
-@[category research open, AMS 11]
 theorem erdos_387.variants.schinzel : 
     ∀ᶠ k in atTop, ¬ IsPrimePow k → ∃ n : ℕ, ∀ i < k, ¬ n - i ∣ n.choose k := by
   sorry

@@ -36,7 +36,6 @@ Is it true that the sequence of differences $a_{m+1}-a_m$ is eventually periodic
 
 This problem is discussed under Problem 7 on Green's open problems list.
 -/
-@[category research open, AMS 11]
 theorem erdos_341 :
     
       ∀ (a : ℕ → ℤ),

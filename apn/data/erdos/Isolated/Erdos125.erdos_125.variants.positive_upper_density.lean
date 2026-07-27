@@ -55,7 +55,6 @@ There are four possibilities for the density of $A+B$:
 Literature question:
 Does $A + B$ have positive upper density?
 -/
-@[category research open, AMS 11]
 theorem erdos_125.variants.positive_upper_density :
     0 < (A + B).upperDensity := by
   sorry

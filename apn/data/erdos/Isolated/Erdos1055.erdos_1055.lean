@@ -40,7 +40,6 @@ def IsOfClass : ℕ+ → ℕ → Prop := fun r ↦
 $2$ or $3$. In general, a prime $p$ is in class $r$ if every prime factor
 of $p+1$ is in some class $\leq r-1$, with equality for at least one prime factor.
 Show that for each $r$ there exists a prime $p$ of class $r$. -/
-@[category textbook, AMS 11]
 theorem exists_p (r : ℕ+) : ∃ p, p.Prime ∧ IsOfClass r p := by
   sorry
 
@@ -56,7 +55,6 @@ noncomputable def p (r : ℕ+) : ℕ := Nat.find (exists_p r)
 $2$ or $3$. In general, a prime $p$ is in class $r$ if every prime factor
 of $p+1$ is in some class $\leq r-1$, with equality for at least one prime factor.
 Are there infinitely many primes in each class?-/
-@[category research open, AMS 11]
 theorem erdos_1055 (r) : {p | p.Prime ∧ IsOfClass r p}.Infinite := by
   sorry
 

@@ -41,7 +41,6 @@ noncomputable def t (k n : ℕ) : ℕ :=
 /--
 Is it true that $\sum_{n\leq x}t_2(n)\ll \frac{x^2}{(\log x)^c}$ for some $c>0$?
 -/
-@[category research open, AMS 11]
 theorem erdos_394.parts.i :
     
       ∃ c > 0, (fun x ↦ ∑ n ∈ Icc 1 ⌊x⌋₊,

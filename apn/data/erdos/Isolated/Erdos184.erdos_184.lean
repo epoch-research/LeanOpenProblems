@@ -49,7 +49,6 @@ def IsDecomposition {V : Type*} (G : SimpleGraph V) (D : Finset G.Subgraph) : Pr
 /--
 Any graph on $n$ vertices can be decomposed into $O(n)$ many edge-disjoint cycles and edges.
 -/
-@[category research open, AMS 5]
 theorem erdos_184 :
     ∃ f : ℕ → ℝ,
       (f =O[atTop] fun n : ℕ ↦ (n : ℝ)) ∧

@@ -41,7 +41,6 @@ noncomputable def sidonUpperDensity (A : Set ℕ) : ℝ :=
 If any finite Sidon set can be embedded in a perfect difference set,
 then the maximum density would be 1.
 -/
-@[category research open, AMS 5 11]
 theorem erdos_329.variants.of_sub_perfectDifferenceSet :
     (∀ (A : Finset ℕ), IsSidon (A : Set ℕ) → ∃ (D : Set ℕ) (n : ℕ),
       ↑A ⊆ D ∧ IsPerfectDifferenceSet D n) →
