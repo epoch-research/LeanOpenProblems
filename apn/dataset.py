@@ -1,24 +1,3 @@
-"""Datasets of Lean proof sketches.
-
-A *sketch* is a Lean file containing the sequence definitions plus a single
-target conjecture theorem whose proof body is ``sorry``. Each becomes an Inspect
-:class:`Sample` whose input is the file text and whose metadata records the
-target theorem name and the original sketch text (so the scorer can check the
-statement was preserved).
-
-Two datasets load this way. The autoformalized OEIS conjectures (the paper's
-492-conjecture evaluation) bundle definitions, sanity "test" lemmas, and one or
-more conjecture theorems per upstream ``Auto/*.lean`` file. FC100OpenSet1 (the
-paper's frozen 100-problem open subset; 86 kept here, see
-``apn/data/fc100open/EXCLUDED.txt``) bundles the same way in FC's hand-written
-problem files. Both therefore read per-target *isolated* specs under their
-``Isolated/`` directory -- each keeps the file's definitions and the single
-target theorem, with all other theorems/lemmas removed -- so a sample is scored
-on its own target alone. The isolated files are derived by
-``scripts/generate_oeis_isolated.py`` / ``scripts/generate_fc100_isolated.py``;
-see the ``NOTICE.md`` in each data directory.
-"""
-
 from __future__ import annotations
 
 import re
@@ -52,10 +31,7 @@ def load_subset(name: str, subsets_dir: str | Path = OEIS_SUBSETS_DIR) -> list[s
     """Resolve a named subset to its list of target theorem names.
 
     Subsets are plain-text files under a dataset's ``subsets/`` directory (one
-    theorem name per line; blank lines and ``#`` comments ignored), so a curated
-    subset lives in the package rather than being pasted inline into eval-set
-    configs. See :func:`available_subsets`. Defaults to the OEIS subsets; pass
-    :data:`FC100_SUBSETS_DIR` for FC100OpenSet1.
+    theorem name per line; blank lines and ``#`` comments ignored).
     """
     subsets_dir = Path(subsets_dir)
     path = subsets_dir / f"{name}.txt"
@@ -72,18 +48,7 @@ def load_subset(name: str, subsets_dir: str | Path = OEIS_SUBSETS_DIR) -> list[s
 
 
 def strip_license_header(text: str) -> str:
-    """Drop a leading Lean copyright/license block comment to save the agent tokens.
-
-    Every Formal Conjectures file opens with the same ``/- ... -/`` Apache banner
-    (484/484 OEIS files) before the imports -- pure boilerplate the agent never
-    needs but pays for on every read. We remove it before writing the file to the
-    sandbox (see :mod:`apn.agent`); the scorer's target keeps the original text.
-
-    Only a *leading* ``/-`` block comment that mentions "Copyright" is removed:
-    a ``/--``/``/-!`` doc comment, a non-copyright comment, or a file with no
-    leading comment is returned unchanged. Nested ``/- -/`` is honoured so the
-    matching close is found correctly.
-    """
+    """Drop a leading Lean copyright/license block comment (wastes tokens and human attention)."""
     stripped = text.lstrip()
     if not stripped.startswith("/-") or stripped.startswith("/--"):
         return text
@@ -143,10 +108,8 @@ def oeis_dataset(
     """The Formal Conjectures autoformalized OEIS conjectures as Samples.
 
     One sample per mapping entry (one conjecture). The sketch is the conjecture's
-    *isolated* spec under ``Isolated/<name>.lean`` -- the sequence definitions plus
-    the single target theorem (all sibling conjectures and test lemmas removed) --
-    so the agent settles, and the scorer checks, that one conjecture alone. The
-    conjecture theorem name is the scoring target.
+    *isolated* spec under ``Isolated/<name>.lean``: the sequence definitions plus
+    the single target theorem (all sibling conjectures and test lemmas removed).
 
     Args:
         isolated_dir: Directory of per-conjecture ``Isolated/<name>.lean`` specs
@@ -162,24 +125,14 @@ def oeis_dataset(
     for name, files in entries:
         if names is not None and name not in names:
             continue
-        # Strip the Apache copyright banner here, at the single source: it is
-        # identical boilerplate across every conjecture, pure token waste in the
-        # agent's context, and clutter in the log UI. Both consumers downstream
-        # are unaffected -- the agent writes this text as its entry file, and the
-        # scorer compiles it as the verification target (a leading comment never
-        # reaches the olean).
         text = strip_license_header((isolated / f"{name}.lean").read_text())
         metadata = {
             "sketch": text,
-            # OEIS id derived from the upstream Auto filename's leading digits
-            # (files[0]); the conjecture name doesn't reliably carry an A-number.
-            # The sample's own identity is ``id``.
             "oeis_id": oeis_id_from_filename(files[0]),
         }
         # A few conjectures (3/492, only 1 a substantive difference) map to more
         # than one upstream file; we use files[0] and record the rest so the
-        # solver can warn at run time -- warning at build time would fire even for
-        # samples Inspect later drops via --sample-id/--limit.
+        # solver can warn at run time
         if len(files) > 1:
             metadata["unused_formalization_files"] = files[1:]
         samples.append(Sample(input=text, id=name, metadata=metadata))
@@ -208,8 +161,7 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     commands removed, and propositional ``answer(sorry) ↔ P`` statements
     rewritten to plain ``P`` (certified by ``tests/test_fc100_isolation.py``).
     The 14 value-typed ``answer(sorry)`` members of the paper's 100 are excluded
-    (``EXCLUDED.txt``): their statement types contain ``sorryAx``, which
-    SafeVerify cannot score.
+    (``EXCLUDED.txt``).
 
     Args:
         names: If given, keep only these target names (e.g. a curated subset).
@@ -219,12 +171,9 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     for name, relpath in entries:
         if names is not None and name not in names:
             continue
-        # Same single-source banner strip as oeis_dataset (see comment there).
         text = strip_license_header((FC100_ISOLATED_DIR / f"{name}.lean").read_text())
         metadata = {
             "sketch": text,
-            # The FC repo file (relative to FormalConjectures/) the target was
-            # isolated from; the sample's own identity is ``id``.
             "source_file": relpath,
         }
         samples.append(Sample(input=text, id=name, metadata=metadata))
