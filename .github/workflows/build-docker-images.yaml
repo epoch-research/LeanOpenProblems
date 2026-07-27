@@ -86,9 +86,6 @@ jobs:
             -t "${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
             .
 
-      # The corpus stage is self-contained (FROM debian, downloads pinned public
-      # HF datasets) and frozen at a 2022 snapshot -- no base build context
-      # needed.
       - name: Build and push corpus image
         if: steps.image_tags.outputs.corpus_exists != 'true'
         working-directory: apn/lean
