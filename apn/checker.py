@@ -133,11 +133,9 @@ class SandboxSafeVerify:
 
         # ============================ COMPILE PHASE ========================== #
         # Runs in the UNTRUSTED compile sandbox. Elaborating the agent's Lean can
-        # execute arbitrary code (a compile-time `#eval`/`initialize`); it is
-        # contained here, where nothing the verdict trusts lives.
+        # execute arbitrary code (a compile-time `#eval`/`initialize`).
 
-        # Clear prior artifacts (scratch dir + the unpacked source tree), then
-        # recreate the dirs. This is our bookkeeping, so failures raise.
+        # Clear prior artifacts, then recreate the dirs
         await self._exec_reference(
             ["rm", "-rf", COMPILE_DIR, SUBMISSION_DIR], self._compile_sandbox_name
         )
@@ -145,10 +143,7 @@ class SandboxSafeVerify:
             ["mkdir", "-p", COMPILE_DIR, SUBMISSION_DIR], self._compile_sandbox_name
         )
 
-        # Unpack the agent's tar straight into SUBMISSION_DIR (PortBench's
-        # approach -- no Python file-by-file staging). This runs in the throwaway
-        # compile sandbox, which has no trusted artifact and no path to the
-        # scorer. A failure here is a verdict on the agent's code.
+        # Unpack the agent's tar straight into SUBMISSION_DIR
         await compile_sb.write_file(COMPILE_SUBMISSION_TAR, submission_tar)
         mode, output = await self._exec_submission(
             ["tar", "-xf", COMPILE_SUBMISSION_TAR, "-C", SUBMISSION_DIR],
@@ -157,9 +152,7 @@ class SandboxSafeVerify:
         if mode != "ok":
             return CheckOutcome(ok=False, stage="compile_submission", detail=output)
 
-        # The entry module must exist after unpacking -- without it there is
-        # nothing to compile at Submission.Spec. (A `test -f` exit 1 is a normal
-        # negative, not a signal, so _exec_reference returns it rather than raising.)
+        # The entry module must exist after unpacking
         returncode, _ = await self._exec_reference(
             ["test", "-f", ENTRY_PATH], self._compile_sandbox_name
         )
@@ -170,14 +163,7 @@ class SandboxSafeVerify:
                 detail=f"entry module missing: {ENTRY_REL} not in submission",
             )
 
-        # Compile the submission standalone to an olean. This compiles ONLY
-        # Submission/Spec.lean, so safe_verify (below) kernel-replays the whole
-        # submission. An `import Submission.…` for a helper module the agent added
-        # does NOT resolve (no helper olean is built and Submission is not a
-        # registered lean_lib), so it fails here as a plain compile error ->
-        # rejected: no imported, un-replayed module can hide a kernel-invalid
-        # constant. This compile elaborates agent Lean -- the step whose code
-        # execution the compile-sandbox isolation contains.
+        # Compile the submission standalone to an olean.
         mode, output = await self._exec_submission(
             ["lake", "env", "lean", "-o", COMPILE_SUBMISSION_OLEAN, ENTRY_REL],
             self._compile_sandbox_name,
@@ -187,11 +173,7 @@ class SandboxSafeVerify:
         if mode != "ok":
             return CheckOutcome(ok=False, stage="compile_submission", detail=output)
 
-        # Read the produced olean out of the compile sandbox. A clean compile that
-        # leaves no readable olean means the agent tampered (e.g. a backgrounded
-        # process its #eval spawned deleted it) -> a verdict on the agent, not a
-        # raise. These bytes are agent-influenced but kernel-rechecked by
-        # safe_verify; only Lean's olean *deserializer* trusts them (see docstring).
+        # Read the produced olean out of the compile sandbox.
         try:
             submission_olean = await compile_sb.read_file(
                 COMPILE_SUBMISSION_OLEAN, text=False
@@ -204,20 +186,16 @@ class SandboxSafeVerify:
             )
         except OutputLimitExceededError as exc:
             # The compile succeeded but produced an olean too large to read out of
-            # the sandbox (Inspect's MAX_READ_FILE_SIZE). Like the OOM/timeout
-            # resource deaths above, that is the agent's expensive proof term
-            # inflating the artifact, not our infrastructure -- and it is
-            # deterministic per submission, so raising-and-rerunning could never
-            # resolve it, only discard the sample. Return it as a verdict on the
-            # agent's code so the agent is told to find a cheaper proof.
+            # the sandbox (Inspect's MAX_READ_FILE_SIZE).
             return CheckOutcome(
                 ok=False, stage="compile_submission_oversize", detail=str(exc)
             )
 
         # ============================ VERIFY PHASE =========================== #
-        # Runs in the TRUSTED scorer sandbox. No agent Lean is elaborated here:
-        # we compile the trusted target spec and run safe_verify on the two
-        # oleans. Clear prior artifacts, then recreate the dirs.
+        # Runs in the TRUSTED scorer sandbox. We compile the trusted target spec and run
+        # safe_verify on the two oleans.
+        #
+        # Clear prior artifacts, then recreate the dirs.
         await self._exec_reference(
             ["rm", "-rf", SCORE_DIR, SUBMISSION_DIR], self._sandbox_name
         )
