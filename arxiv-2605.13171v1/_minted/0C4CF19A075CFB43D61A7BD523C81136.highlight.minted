@@ -1,9 +1,0 @@
-\begin{MintedVerbatim}[commandchars=\\\{\}]
-\PYG{+w}{ } @[category research open, AMS 11]
-\PYG{+w}{ } theorem erdos\PYGZus{}510 :
-\PYG{+w}{ }     answer(sorry) ↔ ∃ (c : ℝ) (hc : 0 \PYGZlt{} c),
-\PYG{g+gd}{\PYGZhy{}       ∀ N \PYGZgt{} 0, ∀ (A : Finset ℕ), 0 ∉ A → \PYGZsh{}A = N →}
-\PYG{g+gi}{+       ∀ᶠ N in atTop, ∀ (A : Finset ℕ), 0 ∉ A → \PYGZsh{}A = N →}
-\PYG{+w}{ }       ∃ θ, ∑ n ∈ A, cos (n * θ) \PYGZlt{} \PYGZhy{}c * sqrt N := by
-\PYG{+w}{ }   sorry
-\end{MintedVerbatim}

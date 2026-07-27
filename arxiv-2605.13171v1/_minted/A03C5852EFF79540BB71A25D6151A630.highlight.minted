@@ -1,9 +1,0 @@
-\begin{MintedVerbatim}[commandchars=\\\{\}]
-\PYG{+w}{ } @[category research open, AMS 11]
-\PYG{+w}{ } theorem erdos\PYGZus{}944 :
-\PYG{g+gd}{\PYGZhy{}     (∀ k ≥ 4, ∀ r ≥ 1, ∃ (G : SimpleGraph V), G.IsErdos944 k r) ↔}
-\PYG{g+gd}{\PYGZhy{}       answer(sorry) := by}
-\PYG{g+gi}{+     (∀ k ≥ 4, ∀ r ≥ 1, ∃ (V : Type u) (G : SimpleGraph V), G.IsErdos944 k r) ↔}
-\PYG{g+gi}{+       answer(sorry) := by}
-\PYG{+w}{ } sorry
-\end{MintedVerbatim}

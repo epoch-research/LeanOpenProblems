@@ -1,7 +1,0 @@
-\begin{MintedVerbatim}[commandchars=\\\{\}]
-\PYG{+w}{ } /\PYGZhy{}\PYGZhy{} `Polynomial.HasOddCoeffs f` means that all coefficients of
-\PYG{+w}{ } `f : Polynomial ℤ` are odd. \PYGZhy{}/
-\PYG{+w}{ } def Polynomial.HasOddCoeffs (f : Polynomial ℤ) : Prop :=
-\PYG{g+gd}{\PYGZhy{}   ∀ i : ℕ, Odd (f.coeff i)}
-\PYG{g+gi}{+   ∀ i ∈ f.support, Odd (f.coeff i)}
-\end{MintedVerbatim}
