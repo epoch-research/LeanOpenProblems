@@ -1,15 +1,3 @@
-"""Tools for the proving agent.
-
-Editing is done with Inspect's built-in ``text_editor`` tool. ``bash`` gives the
-agent a shell in the workspace where PyPantograph is installed and the Mathlib +
-FormalConjectures oleans are baked into the image, so it can drive
-``pantograph.Server`` from Python directly. On the *agent-corpus* image the
-shell also has an offline arXiv-math corpus baked in at ``/corpus`` (built by
-``apn/lean/fetch.py`` + ``apn/lean/build_corpus.py``), which the agent searches
-with plain ``rg``/``cat`` -- no bespoke tool. Statement integrity and the axiom
-guard are enforced by
-SafeVerify at scoring time, not inside the tools.
-"""
 
 from __future__ import annotations
 
@@ -25,15 +13,6 @@ def bash(
     user: str | None = None,
     sandbox_name: str | None = None,
 ) -> Tool:
-    """Bash tool that surfaces the exit status to the agent on failure.
-
-    Equivalent to ``inspect_ai.tool.bash`` on success (stdout, with stderr
-    prepended if any). On a non-zero exit -- which the built-in tool would
-    silently swallow -- the agent gets stdout, stderr, and the raw returncode
-    each in pseudo-XML tags so the model sees the streams separately and knows
-    the command failed. Interpreting specific codes (137 = SIGKILL/OOM,
-    127 = command not found, ...) is left to the model.
-    """
 
     async def execute(command: str) -> str:
         """
@@ -113,16 +92,10 @@ def resources() -> Tool:
         lines = [
             _resource_line("Token cost", limits.cost, _format_usd),
             _resource_line("Tokens", limits.token, _format_tokens),
-            # We surface the *working*-time limit -- the one the eval sets --
-            # plainly as "Time". The agent is deliberately not told about the
-            # working-time vs. clock-time distinction, too subtle to be useful.
+            # We surface the *working*-time limit plainly as "Time".
+            # The working-time vs. clock-time distinction is not relevant to an agent.
             _resource_line("Time", limits.working, _format_duration),
         ]
-        # Multiple limits can be configured at once; Inspect ends the sample as
-        # soon as any single one is exceeded. State that up front (with the count,
-        # so it's unambiguous) then list them all -- a limit the eval didn't set
-        # just reads "no limit set" -- so the agent paces against whichever binds
-        # first without having to reason about which one that is.
         header = f"Reaching any of the limits ends the task. "
         return "\n".join([header, *lines])
 
