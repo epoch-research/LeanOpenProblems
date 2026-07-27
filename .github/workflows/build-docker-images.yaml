@@ -74,10 +74,3 @@ jobs:
               -t "${IMAGE_NAME}:LeanOpenProblems_${target}_${{ steps.missing.outputs.version }}" \
               .
           done
-
-      - name: Report image repository
-        run: |-
-          echo "LEAN_OPEN_PROBLEMS_IMAGE_NAME=${IMAGE_NAME}"
-          for target in agent agent_corpus scorer; do
-            echo "${IMAGE_NAME}:LeanOpenProblems_${target}_${{ steps.missing.outputs.version }}"
-          done
