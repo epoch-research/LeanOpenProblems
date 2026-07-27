@@ -225,30 +225,23 @@ class SandboxSafeVerify:
             ["mkdir", "-p", SCORE_DIR, SUBMISSION_DIR], self._sandbox_name
         )
 
-        # The flip. Compile the trusted target spec *at the submission's entry
+        # Compile the trusted target spec *at the submission's entry
         # path* (Submission/Spec.lean) so Lean assigns it the same module name
-        # (Submission.Spec) the submission got -- the submission was compiled from
-        # that same relative path in the compile sandbox. Lean derives a file's
+        # (Submission.Spec) the submission got. Lean derives a file's
         # module name from its path relative to the project root and bakes that
         # name into every private / compiler-generated declaration: a
         # pattern-matching ``def a`` emits equational lemmas that mangle to
         # ``_private.<module>.0.a.match_1.eq_1`` (and ``.splitter`` /
         # ``._arg_pusher``). SafeVerify matches each target declaration against the
         # submission by *exact name*, so if the two compiled under different module
-        # names those private lemmas could never match and a faithful, sorry-free
+        # names those private lemmas could never match and a faithful
         # proof would be rejected as "declaration not found". Compiling both at
         # Submission/Spec.lean makes the module name -- and thus every mangled
-        # private name -- identical. Those private lemmas are a pure function of
-        # (module name, def) and do not depend on the proof body, so the
-        # sorry-bodied target and the real-proof submission produce byte-identical
-        # private names (verified against the toolchain). SafeVerify reads the two
+        # private name -- identical.
+        # SafeVerify reads the two
         # oleans by path and replays them into separate environments, so the shared
-        # module name causes no collision. Do NOT compile either side at some other
-        # path: that silently reintroduces the module-name mismatch.
+        # module name causes no collision.
 
-        # The target spec is trusted, fixed data (metadata["sketch"], not
-        # agent-controlled): if it fails to compile -- or dies to a signal/timeout
-        # -- that is our problem, not the agent's, so _exec_reference raises.
         await verify_sb.write_file(ENTRY_PATH, target)
         returncode, output = await self._exec_reference(
             ["lake", "env", "lean", "-o", TARGET_OLEAN, ENTRY_REL], self._sandbox_name
@@ -259,17 +252,10 @@ class SandboxSafeVerify:
         # Copy the submission olean (built in the compile sandbox) into the scorer.
         await verify_sb.write_file(SUBMISSION_OLEAN, submission_olean)
 
-        # safe_verify exits 0 only on the verification-passed path; a plain
-        # nonzero exit means it ran and rejected (a plain check failure or a
-        # replay-time rejection: unsafe/partial constant, kernel type-check
-        # failure, missing imports, ...). An OOM/timeout/decode death here is
-        # the agent's expensive proof term -- also a rejection, not a raise.
+        # safe_verify exits 0 only on the verification-passed path
         safe_verify_cmd = ["lake", "env", SAFE_VERIFY_BIN]
         if self._allow_disproofs:
             safe_verify_cmd.append("--disproofs")
-        # --verbose makes safe_verify print detailed type-information on a
-        # mismatch (target vs submission constant info), which lands in the
-        # rejection ``detail`` for offline diagnosis.
         safe_verify_cmd.append("--verbose")
         # --save makes safe_verify dump a per-declaration JSON report (kind,
         # axioms, failure mode), written whether it accepts or rejects.
@@ -290,11 +276,8 @@ class SandboxSafeVerify:
 
         safe_verify writes it whenever it runs (accept or reject), and ``check``
         clears ``SCORE_DIR`` up front, so a present file is always this call's.
-        A missing, oversized, or unparseable file is not an error -- it just means
-        no report (e.g. safe_verify was OOM-killed before writing, or the report
-        exceeded ``MAX_READ_FILE_SIZE``), so we return ``None``. The report is
-        supplementary offline-analysis data read *after* the verdict is decided,
-        so degrading it to ``None`` never affects the verdict or errors the sample.
+        A missing file is not an error -- it just means no report (e.g. safe_verify was OOM-killed
+        before writing), so we return ``None``.
         """
         try:
             raw = await sandbox(self._sandbox_name).read_file(REPORT_PATH)
