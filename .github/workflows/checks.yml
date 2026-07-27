@@ -1,0 +1,61 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  # The CI image tags (LeanOpenProblems_*_<version>) are keyed on
+  # apn.__version__, while the wheel build uses pyproject.toml's version. The two
+  # must stay in lockstep (scripts/bump_version.py edits both) -- this guards
+  # against a bump that touches only one of them.
+  check-version:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Check apn.__version__ matches pyproject.toml
+        run: |-
+          version_from_init="$(python -c "import apn; print(apn.__version__)")"
+          echo "Version from apn/__init__.py: $version_from_init"
+          version_from_pyproject="$(uv version --short)"
+          echo "Version from pyproject.toml:  $version_from_pyproject"
+          if [ "$version_from_init" != "$version_from_pyproject" ]; then
+            echo "Version mismatch between apn/__init__.py and pyproject.toml"
+            exit 1
+          fi
+
+  tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest

@@ -18,6 +18,10 @@ logs/
 .inspect/
 configs/history/
 
+# Lean build artifacts (the lake projects ship source only; Docker builds them).
+.lake/
+apn/lean/extract_ranges/lake-manifest.json
+
 # Cloned upstream sources kept for reference, not part of the repo
 reference_sources/
 

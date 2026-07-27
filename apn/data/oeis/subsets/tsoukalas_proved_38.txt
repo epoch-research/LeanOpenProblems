@@ -1,0 +1,48 @@
+# tsoukalas_proved_38 -- the 38 OEIS conjectures with published AlphaProof Nexus proof
+# outputs. One conjecture theorem name per line; blank lines and #-comments are
+# ignored. Referenced by name from configs/example-eval-set.yml.
+#
+# Why 38 and not 44: the paper claims "proved 44/492 OEIS conjectures", but the
+# released results repo (reference_sources/alphaproof-nexus-results/APNOutputs/
+# OEIS) ships exactly 38 Lean proof files, each proving a single conjecture
+# (`target_theorem_0`)
+# The 6-conjecture gap (44 - 38) appears to be a paper miscount (or 6 proofs that
+# were simply never published)
+A224515_conjecture_existence
+A309132_conjecture_carmichael
+A382590_conjecture_kth_prime_factor_is_eventually_periodic
+a091669_conjecture_primitive_root
+a325046_odd_terms_at_k_times_k_plus_1
+oeis_103311_conjecture_0
+oeis_108_conjecture_2
+oeis_113254_conjecture_0
+oeis_175386_conjecture_0
+oeis_194806_conjecture_0
+oeis_227582_conjecture_0
+oeis_228143_conjecture_1
+oeis_243106_conjecture_0
+oeis_248802_conjecture_0
+oeis_248802_conjecture_4
+oeis_256012_conjecture_0
+oeis_267581_conjecture_0
+oeis_271591_conjecture_0
+oeis_278070_conjecture_0
+oeis_282779_conjecture_0
+oeis_289411_conjecture_0
+oeis_2897_conjecture_0
+oeis_306424_conjecture_0
+oeis_307865_conjecture_0
+oeis_323557_conjecture_0
+oeis_340737_conjecture_0
+oeis_341254_conjecture_0
+oeis_363347_conjecture_2
+oeis_372761_conjecture_2
+oeis_51293_conjecture_0
+oeis_62567_conjecture_0
+oeis_A028859_conjecture_1
+oeis_A258667_conjecture_0
+oeis_a211417_conjecture_specific
+oeis_a237271_conjecture_2
+oeis_a300997_finite_difference_is_one_or_two
+oeis_a363102_conjecture_1
+oeis_a368692_conjecture_integrality

@@ -1,36 +1,27 @@
 # Schema reference for eval-set config:
 # https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
-name: apn-oeis-smoke
-
+retry_attempts: 0  # Disable retries while we're still working out the kinks
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn
     items:
+      # Two named subsets (apn/data/oeis/subsets/*.txt), passed as task args so
+      # each apn_oeis item has a distinct Inspect task identifier. Drop the
+      # `subset` arg to run the full 492-conjecture OEIS benchmark.
       - name: apn_oeis
-        sample_ids:
-          # Remove sample_ids to run the full OEIS benchmark.
-          - oeis_228143_conjecture_1
         args:
-          gated: false
-          literature: false
+          gated: true
+          literature: true
+          # 38 OEIS conjectures with published APN proof outputs.
+          subset: proved38
+      - name: apn_oeis
+        args:
+          gated: true
+          literature: true
+          # 40 random OEIS conjectures not in the published APN proof-output set.
+          subset: unproved40
 epochs: 1
 models:
-  - package: anthropic
-    name: anthropic
-    # Anthropic requires a max_tokens to be provided, unlike most providers.
-    # Inspect defaults to 4096, which is too low.
-    # See https://github.com/UKGovernmentBEIS/inspect_ai/blob/29b6fc4c02eba58d77a46d5ef2ce96808fa620d8/src/inspect_ai/model/_providers/anthropic.py#L387-L393
-    # Too low max_tokens results in broken tool calls due to truncation.
-    # We set max_tokens to the max supported by each model.
-    items:
-      - name: claude-opus-4-7
-        args:
-          config:
-            max_tokens: 128_000
-            # In the raw Anthropic API thinking: {type: "adaptive"} defaults to high.
-            # Inspect has no "just enable thinking" option — you must explicitly set
-            # reasoning_effort or reasoning_tokens in GenerateConfig.
-            reasoning_effort: "high"
   - package: openai
     name: openai
     items:
@@ -39,14 +30,8 @@ models:
           config:
             # Defaults to 'none' in GPT 5.4
             reasoning_effort: "medium"
-  - package: google-genai
-    name: google
-    items:
-      - name: gemini-3.1-pro-preview
-        args:
-          config:
-            max_connections: 2
-token_limit: 1_000_000
+token_limit: 1_000_000_000
+working_limit: 129_600  # 36 * 60 * 60
 
 secrets:
   - name: ANTHROPIC_API_KEY
@@ -56,7 +41,7 @@ secrets:
     description: "The ECR repo containing the LeanOpenProblems sandbox images"
 
 runner:
-  memory: 64Gi
+  memory: 200Gi
   environment:
     # TODO: Remove once default in Hawk
     INSPECT_LOG_CONDENSE: "true"

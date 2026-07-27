@@ -92,38 +92,19 @@ def equivInduct (ctarget cnew : ConstantInfo)
 
 open Elab Meta Term Tactic
 
-structure NegateConfig where
-  distrib : Bool := false
-deriving Inhabited
+/-- The negation of `e`, i.e. `¬ e`, with metavariables instantiated and
+annotations cleaned up first so the result is a plain `Not` application.
 
-/-- Takes an expression `e` and outputs the negation of `e`, pushing `not` accross
-`e`. For example, occurences of `¬ ∀ a, p a` are replaced by `∃ a, ¬ p a`. -/
-private def negateExpr (cfg : NegateConfig) (e : Expr) : MetaM Expr := do
+Disproving a conjecture means proving its negation, and `¬ e` *is* that negation
+by construction -- so `checkNegatedTheorem` can trust this without trusting any
+syntactic rewrite. This used to push `not` inwards to negation-normal form (e.g.
+`¬ ∀ a, p a` to `∃ a, ¬ p a`), but that hand-written transform was something the
+soundness of the disproof check had to trust, and it forced the agent to match
+one exact encoding; a `push_neg` in the proof body recovers the NNF goal anyway,
+so plain `¬` is both safer and easier to target. -/
+private def negateExpr (e : Expr) : MetaM Expr := do
   let e := (← instantiateMVars e).cleanupAnnotations
-  handler e
-where handler (e : Expr) : MetaM Expr := do
-  match e with
-  | .app (.app (.const ``And _) p) q =>
-    if cfg.distrib then
-      return (mkOr (← handler p) (← handler q))
-    else
-      return (.forallE `_  p (← handler  q) .default)
-  | .forallE name ty body binfo =>
-    let body' : Expr := .lam name ty (← handler body) binfo
-    return (← mkAppM ``Exists #[body'])
-  | .app (.app (.const ``Or _) p) q =>
-    return (mkAnd (← handler p) (← handler q))
-  | .app (.app (.const ``Exists _) _) (.lam name btype body binfo) =>
-    return .forallE name btype (← handler body) binfo
-  | .lam name btype body binfo =>
-    return .lam name btype (← handler body) binfo
-  -- handle `≠` separately
-  | .app (.app (.app (.const ``Ne lvls) α) p) q =>
-    return .app (.app (.app (.const ``Eq lvls) α) p) q
-  | .app (.const ``Not _) p =>
-    return p
-  | _ =>
-    return mkNot e
+  return mkNot e
 
 def checkNegatedTheorem {m} [Monad m] [MonadLiftT CoreM m]
     (ctarget cnew : ConstantInfo) : m Bool :=
@@ -131,7 +112,7 @@ def checkNegatedTheorem {m} [Monad m] [MonadLiftT CoreM m]
   Lean.Meta.MetaM.run' do
   unless ctarget.levelParams == cnew.levelParams do return false
   let targetType := ctarget.type
-  let negatedType ← negateExpr default targetType
+  let negatedType ← negateExpr targetType
   match Lean.Kernel.isDefEq (← getEnv) (← getLCtx) negatedType cnew.type with
   | .error _ =>  return false
   | .ok bool => return bool

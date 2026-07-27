@@ -2,80 +2,77 @@
 
 from __future__ import annotations
 
-LEAN_INSTRUCTIONS = """\
-You are a world-class mathematician and Lean 4 expert. You prove theorems in Lean 4
-using Mathlib.
+# Verbatim copy of `negateExpr` from apn/lean/safeverify/SafeVerify/Util.lean.
+# The disproof checker there (`checkNegatedTheorem`) applies this function to the
+# target theorem's type and kernel-checks the agent's `foo.disproof` against the
+# result, so we show the agent the exact source. Keep this in sync with Util.lean.
+NEGATE_EXPR_SOURCE = """\
+private def negateExpr (e : Expr) : MetaM Expr := do
+  let e := (← instantiateMVars e).cleanupAnnotations
+  return mkNot e"""
 
-Workflow:
-- The problem is a Lean file. It may contain definitions, helper lemmas, small
-  "test" lemmas (sanity checks on the definitions), and one or more main
-  theorems or conjectures. Some proofs are left as `sorry`.
-- Use the text editor to edit the file, replacing every `sorry` with a real
-  proof.
-- After each change, call `lean_check` to compile the file and read the Lean
-  compiler feedback. Iterate on the errors until the file compiles with no
-  remaining `sorry`.
 
-You also have a `bash` tool giving you a shell in the workspace, where `python3`
-is installed with these libraries:
-- `sympy` for exact symbolic computation: arbitrary-precision integers and
-  rationals, primes and factorization, symbolic sums/products, simplification,
-  closed-form guessing, and solving equations/recurrences exactly.
-- `mpmath` for arbitrary-precision floating point, and in particular `pslq` /
-  `identify` to detect integer relations -- useful for guessing a closed form
-  from the numeric value of a sum or constant.
-- `numpy` for fast array/vector arithmetic over many cases at once.
-Use this as a scratchpad to explore the problem numerically before committing to
-a proof: compute the first terms of a sequence, test a conjectured identity or
-bound on small cases, search for a pattern or counterexample, guess a closed
-form, or sanity-check the "test lemmas". This is exploration only -- Python
-results carry no formal weight, so every claim must still be proved in Lean. Do
-not attempt to shell out to Lean or edit the proof file from bash; use
-`lean_check` and the text editor for that.
+def literature_prompt() -> str:
+    N_PAPERS = 475_000
 
-Rules:
-- Do NOT change any statement (theorem names, hypotheses, goals) or any
-  definition. Only fill in proofs. A submission that alters a statement or
-  definition is rejected.
-- All required imports are already present; do NOT add or remove `import`
-  statements.
-- Do not introduce new `axiom`s and do not leave any `sorry`.
+    return (
+        f"A corpus of around {N_PAPERS:,} pure-mathematics arXiv papers is available at "
+        f"`/corpus`. It has two parts:\n"
+        f"- `/corpus/metadata.jsonl` -- one JSON record per paper\n"
+        f"- `/corpus/src/<id>/` -- a paper's LaTeX source files."
+    )
 
-Think like a mathematician: focus on the key insight and proof structure, prefer
-clever arguments over brute-force casework, and don't give up easily. Submit once
-the file compiles with no `sorry`.
 
-* **Try your hardest to answer it.** Even if it seems impossible, try extremely
-  hard to think of approaches that have some chance of working. We already know
-  from other experiments that language models like you are capable of solving
-  problems like these.
+def encouragement_prompt() -> str:
+    return """
+Advice about this task:
 
-Ideas to try if you get stuck:
-* Consider spending a lot of your effort coming up with a rigorous
-  natural-language proof first, and only then formalising it in Lean.
-* Think about other, similar problems.
-* Try first solving a simpler version of the problem.
-* Pursue lines of investigation that might not seem like they will end up helping.
-* Brainstorm new approaches and try each of them.
+* The problem may be an open mathematical conjecture. This does not mean the task is impossible. Researchers in 2026 have demonstrated that LLMs like you can do new mathematics and settle major conjectures that had been open for decades. For example, the planar unit distance problem, first posed by Paul Erdős in 1946, was resolved by an LLM. 
+* Major Lean formalization efforts of known results have also been completed by LLMs. For example, in 2026 LLMs proved the strong prime number theorem in Lean.
+* Ignore any feelings that the task is infeasible; you are miscalibrated. You have a track record of underestimating your capabilities. Proceed with courage and boundless ambition.
+* For example, if Mathlib is missing a major theorem you need, prove it yourself from what is available. 
+* You have been given enough resources (in tokens and time) to complete proofs of many tens of thousands or hundreds of thousands of lines of Lean. Check remaining resources using the `resources` tool. The context window may be compacted numerous times.
 """
 
-# Appended to the instructions only when the agent is given the arXiv tools (the
-# ``literature`` option). Kept separate so the closed-book agent is never told
-# about tools it doesn't have.
-LITERATURE_INSTRUCTIONS = """\
 
-You can consult the mathematical literature with `arxiv_search` (find papers by
-keyword/author/title) and `arxiv_source` (download a paper's full LaTeX source
-into the workspace, then read it with the text editor or bash). These cover
-papers published before this problem set was assembled, so they will not contain
-a ready-made solution -- use them for relevant techniques, definitions, and prior
-results, not for the answer."""
+def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
+    parts = []
 
+    PYTHON_LIBS = ["sympy", "mpmath", "numpy", "pantograph"]
 
-def render_task(path: str) -> str:
-    """The user message pointing the agent at the proof file."""
-    return (
-        f"Prove every `sorry` in the Lean file `{path}` by replacing it with a "
-        f"complete proof. Keep all statements and definitions unchanged. Use the "
-        f"text editor to edit the file and `lean_check` to compile it."
-    )
+    AXIOMS = ["propext", "Classical.choice", "Quot.sound"]
+
+    PROOF_PATH = "/workspace/leanproject/Submission/Spec.lean"
+
+    parts.append(f"""\
+Settle the conjecture in the Lean file `{PROOF_PATH}`: either replace its `sorry` with a complete proof, or disprove it by deleting the original `theorem foo ... := sorry` and adding a `foo.disproof` theorem proving its negation. Do not alter the statement of the conjecture.
+
+If disproving, write a `foo.disproof` theorem whose type is the negation (prepending `¬`) of the original conjecture, according to the specific `negateExpr` function:
+
+```lean
+{NEGATE_EXPR_SOURCE}
+```
+
+Work inside the Lake project at `/workspace/leanproject`. Your final proof must be in the single file `{PROOF_PATH}`. You may use other files as you develop your proof.
+
+In your final submission file `{PROOF_PATH}`, do not add or remove `import` statements. The `FormalConjectures.Util.ProblemImports` import transitively pulls in all of Mathlib, and other utilities.
+
+Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.  
+
+Your environment has the following available:
+* A Lean 4 toolchain with Mathlib
+* `git`, `rg`, and `jq`
+* The `sage` computer algebra system
+* `python` with the following libraries: {', '.join(f'`{lib}`' for lib in PYTHON_LIBS)}.
+* Documentation for libraries is available at `/opt/`
+
+Blindly searching for counterexamples using numerics is rarely a good approach. 
+""")
+
+    if literature:
+        parts.append(literature_prompt())
+
+    parts.append(encouragement_prompt())
+
+    return "\n\n".join(parts)
+

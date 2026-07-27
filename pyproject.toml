@@ -1,6 +1,6 @@
 [project]
 name = "apn"
-version = "0.1.0"
+version = "0.1.4rc7"
 description = "An Inspect implementation of the AlphaProof Nexus formal proof-search framework"
 requires-python = ">=3.13,<3.14"
 dependencies = [
@@ -15,6 +15,7 @@ build-backend = "hatchling.build"
 packages = ["apn"]
 artifacts = [
     "apn/data/oeis/**/*",
+    "apn/data/fc100open/**/*",
 ]
 
 [project.entry-points.inspect_ai]
@@ -29,6 +30,7 @@ dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "types-PyYAML>=6.0",
+    "environs",
 ]
 
 [tool.uv]
@@ -36,11 +38,16 @@ dev = [
 override-dependencies = ["inspect-ai"]
 
 [tool.uv.sources]
-hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v2026.05.04" }
+hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v2026.06.01" }
 
 [tool.mypy]
 python_version = "3.13"
 files = ["apn", "tests"]
+# tests/ is a namespace package (no __init__.py); tests import shared plumbing
+# as `tests.lean_sandbox`, so pin the repo root as the package base.
+explicit_package_bases = true
+# Vendored third-party docs/examples, not our code.
+exclude = 'pypantograph-docs'
 strict = true
 # Inspect ships py.typed; lean on its annotations.
 warn_unused_configs = true
@@ -48,12 +55,6 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
 no_implicit_optional = true
-
-[[tool.mypy.overrides]]
-# PyPantograph is only installed inside the Lean sandbox image, not on the host
-# where mypy runs. apn/lean/apn_lean.py imports it lazily.
-module = "pantograph.*"
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
