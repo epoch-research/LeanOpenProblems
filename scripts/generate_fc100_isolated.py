@@ -43,8 +43,11 @@ from scripts.fc100_isolation import (
     MAPPING_FILE,
     SORRY_ALLOWLIST,
     SOURCES_DIR,
-    fc100_kept_flags,
     kept_names,
+)
+from scripts.fc_statements import (
+    LHS_SORRY,
+    fc_kept_flags,
     rewrite_answer_iff,
     strip_comments,
 )
@@ -152,7 +155,7 @@ def main() -> None:
         src = (SOURCES_DIR / rel).read_bytes()
         target = resolve_target(name, filerec)  # the unique target theorem
         closure = dependency_closure(filerec, target["name"])
-        flags = fc100_kept_flags(src, filerec, kept_flags(filerec, closure))
+        flags = fc_kept_flags(src, filerec, kept_flags(filerec, closure))
         check_sorries(name, src, filerec, flags)
         text = tidy(isolate(src, filerec, flags)).decode("utf-8")
         # Census `answer(` in *code* only -- kept docs may mention it in prose.
@@ -160,8 +163,10 @@ def main() -> None:
         if n_answers > 1:
             raise SystemExit(f"{name}: {n_answers} answer( occurrences in isolated spec")
         if n_answers == 1:
-            text, n = rewrite_answer_iff(text)
-            if n != 1 or "answer(" in strip_comments(text):
+            text, form, n = rewrite_answer_iff(text)
+            # This subset's census is LHS-`answer(sorry)` only; any other form
+            # showing up means the vendored sources changed.
+            if form != LHS_SORRY or n != 1 or "answer(" in strip_comments(text):
                 raise SystemExit(f"{name}: answer(sorry) ↔ rewrite did not apply cleanly")
             rewritten.append(name)
         (ISOLATED_DIR / f"{name}.lean").write_text(text)

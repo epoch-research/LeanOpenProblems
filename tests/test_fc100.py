@@ -20,7 +20,7 @@ from apn.dataset import (
     FC100_SUBSETS_DIR,
     fc100open_dataset,
     load_subset,
-    parse_fc100_mapping,
+    parse_decl_mapping,
 )
 from scripts.fc100_isolation import (
     EXCLUDED_FILE,
@@ -30,8 +30,8 @@ from scripts.fc100_isolation import (
     kept_names,
     parse_excluded,
     parse_subset_names,
-    strip_comments,
 )
+from scripts.fc_statements import strip_comments
 
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
 _DECL_RE = re.compile(r"(?m)^(?:theorem|lemma)\b")
@@ -55,14 +55,14 @@ def test_membership_arithmetic() -> None:
 def test_mapping_matches_membership() -> None:
     # MAPPING.txt (generated) covers exactly the kept members, in subset order,
     # and every mapped source file is vendored.
-    entries = parse_fc100_mapping(FC100_MAPPING_FILE.read_text())
+    entries = parse_decl_mapping(FC100_MAPPING_FILE.read_text())
     assert [name for name, _ in entries] == kept_names()
     for name, relpath in entries:
         assert (SOURCES_DIR / relpath).is_file(), f"{name}: missing source {relpath}"
 
 
 def test_every_isolated_file_used_exactly_once() -> None:
-    entries = parse_fc100_mapping(FC100_MAPPING_FILE.read_text())
+    entries = parse_decl_mapping(FC100_MAPPING_FILE.read_text())
     assert sorted(p.name for p in FC100_ISOLATED_DIR.glob("*.lean")) == sorted(
         f"{name}.lean" for name, _ in entries
     )
