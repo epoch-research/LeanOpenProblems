@@ -1,9 +1,14 @@
-name: Build LeanOpenProblems Docker Images and Upload to Amazon ECR
+name: Build LeanOpenProblems Docker Images and Upload to Amazon ECR (manual)
 
+# This workflow is only ever triggered manually (workflow_dispatch). For the
+# "Run workflow" button to appear, this file must exist on the default branch
+# (main); you can then select a different branch to run.
+#
+# The ECR registry and the IAM role to assume come from repository
+# variables (Settings -> Secrets and variables -> Actions -> Variables):
+# ECR_REGISTRY, AWS_ECR_PUSH_ROLE.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -11,6 +16,7 @@ permissions:
 
 env:
   IMAGE_NAME: ${{ vars.ECR_REGISTRY }}
+  AWS_ECR_PUSH_ROLE: ${{ vars.AWS_ECR_PUSH_ROLE }}
 
 jobs:
   publish-lean-images:
@@ -23,7 +29,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           aws-region: ${{ steps.ecr.outputs.region }}
-          role-to-assume: arn:aws:iam::328726945407:role/production-github-actions-epochai
+          role-to-assume: ${{ env.AWS_ECR_PUSH_ROLE }}
 
       - uses: actions/checkout@v4
 
@@ -75,33 +81,25 @@ jobs:
       # is pushed as its own image so that later CI runs can skip the
       # expensive Lean + Mathlib build: the agent/scorer builds override the
       # `base` stage with the pushed image via a named build context.
-      #
-      # Layer caches are pushed to ECR_CACHE_REGISTRY (mode=max: all layers,
-      # including intermediate stages), keyed by image tag like PortBench --
-      # ECR tags are immutable, so the cache ref must change with the version.
       - name: Build and push base image
         if: steps.image_tags.outputs.base_exists != 'true'
         working-directory: apn/lean
         run: |-
           docker buildx build \
             --target base \
-            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${BASE_IMAGE_TAG}" \
-            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${BASE_IMAGE_TAG}" \
             --push \
             -t "${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
             .
 
       # The corpus stage is self-contained (FROM debian, downloads pinned public
-      # HF datasets) and frozen at a 2022 snapshot, so it's built once and reused
-      # across versions via the registry cache -- no base build context needed.
+      # HF datasets) and frozen at a 2022 snapshot -- no base build context
+      # needed.
       - name: Build and push corpus image
         if: steps.image_tags.outputs.corpus_exists != 'true'
         working-directory: apn/lean
         run: |-
           docker buildx build \
             --target corpus \
-            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${CORPUS_IMAGE_TAG}" \
-            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${CORPUS_IMAGE_TAG}" \
             --push \
             -t "${IMAGE_NAME}:${CORPUS_IMAGE_TAG}" \
             .
@@ -113,8 +111,6 @@ jobs:
           docker buildx build \
             --target agent \
             --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
-            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_IMAGE_TAG}" \
-            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_IMAGE_TAG}" \
             --push \
             -t "${IMAGE_NAME}:${AGENT_IMAGE_TAG}" \
             .
@@ -130,8 +126,6 @@ jobs:
             --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
             --build-context "agent=docker-image://${IMAGE_NAME}:${AGENT_IMAGE_TAG}" \
             --build-context "corpus=docker-image://${IMAGE_NAME}:${CORPUS_IMAGE_TAG}" \
-            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_CORPUS_IMAGE_TAG}" \
-            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${AGENT_CORPUS_IMAGE_TAG}" \
             --push \
             -t "${IMAGE_NAME}:${AGENT_CORPUS_IMAGE_TAG}" \
             .
@@ -143,8 +137,6 @@ jobs:
           docker buildx build \
             --target scorer \
             --build-context "base=docker-image://${IMAGE_NAME}:${BASE_IMAGE_TAG}" \
-            --cache-from "type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${SCORER_IMAGE_TAG}" \
-            --cache-to "mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=${{ vars.ECR_CACHE_REGISTRY }}:${SCORER_IMAGE_TAG}" \
             --push \
             -t "${IMAGE_NAME}:${SCORER_IMAGE_TAG}" \
             .
