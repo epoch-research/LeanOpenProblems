@@ -1,11 +1,5 @@
 name: Build LeanOpenProblems Docker Images and Upload to Amazon ECR
 
-# Runs on every push to main, and can also be triggered manually
-# (workflow_dispatch) from any branch.
-#
-# The ECR registry and the IAM role to assume come from repository
-# variables (Settings -> Secrets and variables -> Actions -> Variables):
-# ECR_REGISTRY, AWS_ECR_PUSH_ROLE.
 on:
   workflow_dispatch:
   push:
