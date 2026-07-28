@@ -137,11 +137,7 @@ def lean_prover(
 ) -> Solver:
     """
     Args:
-        gated: With ``True``, enables *gated submit* via Inspect's native
-            ``attempts``: each submission is re-scored by the task scorer
-            (SafeVerify) and, if not accepted, the model is told to keep going
-            (until a token/time limit). With ``False``, the first submission
-            ends the loop and is validated only by the final scorer.
+        gated: Gated submission (retry until correct or token/time limit).
         literature: Run with the offline arXiv corpus.
         agent_type: Which agent loop to run.
     """
