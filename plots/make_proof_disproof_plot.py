@@ -1,4 +1,4 @@
-"""Solve rate split into proofs vs disproofs (counterexamples), per model.
+"""Solve rate split into proofs vs disproofs, per model.
 
 A solve counts as a disproof when the accepted Submission/Spec.lean contains a
 `.disproof` theorem (the harness's mechanism for settling a conjecture by
@@ -106,7 +106,7 @@ for ax, (kind, title) in zip(axes, PANELS):
     ax.set_title(title, fontsize=10.5, loc="left", color=INK)
 
 axes[0].bar(0, 0, color=PROOF, label="proved")
-axes[0].bar(0, 0, color=DISPROOF, label="disproved (counterexample)")
+axes[0].bar(0, 0, color=DISPROOF, label="disproved")
 axes[0].legend(frameon=False, fontsize=9, loc="upper right")
 fig.tight_layout(w_pad=3)
 fig.savefig(OUT / "proof_disproof.png", dpi=200)
