@@ -62,7 +62,7 @@ jobs:
         run: uv sync
 
       - name: Run tests
-        run: uv run pytest --ignore=tests/test_gold_proofs.py
+        run: uv run pytest --ignore=tests/test_gold_proofs.py --durations=0
 
   gold-proofs:
     runs-on: epoch-research-x64-64core-256GB-2040GB
@@ -84,4 +84,4 @@ jobs:
         run: uv sync
 
       - name: Run the gold-proof sweep
-        run: uv run pytest tests/test_gold_proofs.py
+        run: uv run pytest tests/test_gold_proofs.py --durations=0
