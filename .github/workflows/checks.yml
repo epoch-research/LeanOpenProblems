@@ -39,7 +39,9 @@ jobs:
           fi
 
   tests:
-    runs-on: ubuntu-24.04
+    # pytest builds the Lean sandbox image from the Dockerfile; a stock
+    # runner's ~14GB disk cannot hold that build.
+    runs-on: epoch-research-x64-64core-256GB-2040GB
     steps:
       - uses: actions/checkout@v4
 
