@@ -38,7 +38,7 @@ jobs:
             exit 1
           fi
 
-  tests:
+  mypy:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -57,5 +57,53 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      - name: Run mypy
+        run: uv run mypy
+
+  # The gold-proof sweep (~35 sequential SafeVerify checks, ~2h) dwarfs the
+  # rest of the suite (~15 min), so it runs as its own job for early signal.
+  # Both jobs build the Lean sandbox image from the Dockerfile in-test; a
+  # stock runner's ~14GB disk cannot hold that build.
+  tests:
+    runs-on: epoch-research-x64-64core-256GB-2040GB
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Install dependencies
+        run: uv sync
+
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --ignore=tests/test_gold_proofs.py
+
+  gold-proofs:
+    runs-on: epoch-research-x64-64core-256GB-2040GB
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run the gold-proof sweep
+        run: uv run pytest tests/test_gold_proofs.py

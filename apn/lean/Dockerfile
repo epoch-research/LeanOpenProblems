@@ -249,13 +249,13 @@ CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
 # generate: vendor-time stage holding the declaration-range extractor that      #
-# scripts/generate_isolated.py drives to (re)build apn/data/oeis/Isolated/. Not  #
+# scripts/generate_oeis_isolated.py drives to rebuild apn/data/oeis/Isolated/. Not  #
 # a runtime service and kept separate from `scorer` so the scored image stays    #
 # minimal. Source-only COPY (no host .lake); imports only Lean core, so it        #
 # builds offline with no `lake update`. Run via:                                 #
 #   docker build --target generate -t apn-generate apn/lean                      #
 #   docker run --rm -v "$PWD":/repo apn-generate \                               #
-#     python3 /repo/scripts/generate_isolated.py --container '' ...              #
+#     python3 /repo/scripts/generate_oeis_isolated.py --container '' ...         #
 # (in practice: build the extractor into a container with the repo mounted).     #
 # --------------------------------------------------------------------------- #
 FROM base AS generate

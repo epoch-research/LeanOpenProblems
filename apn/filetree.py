@@ -2,9 +2,9 @@
 
 The agent's proof is a single ``.lean`` file, ``Submission/Spec.lean``.
 :func:`read_submission_tar` tars ``Submission/`` from the sandbox and returns the
-bytes; that tar is the one source of truth. (It tars the directory rather than
-the one file so the capture is robust to whatever the agent leaves there, and so
-the display tree below renders uniformly.)
+bytes.
+
+It tars the directory rather than the one file, so in the future we can allow multi-file proofs.
 
 The tar bytes are used two ways, which must not be conflated:
 
@@ -14,8 +14,7 @@ The tar bytes are used two ways, which must not be conflated:
 * For **display**, :func:`build_tree_from_tar` turns the bytes into a nested
   :data:`FileTreeForLogViewer` that the scorer sets on
   ``state.metadata["submission_contents"]`` so the Inspect log viewer renders an
-  expandable tree (same shape as PortBench's ``workspace_src_contents``). This is
-  cosmetic; nothing functional depends on it.
+  expandable tree.
 """
 
 from __future__ import annotations
@@ -29,13 +28,8 @@ from inspect_ai.util import SandboxEnvironment
 
 from apn.layout import SUBMISSION_DIR
 
-# A recursive directory tree for the Inspect log viewer: directories map to
-# nested dicts, text files map to their contents as string leaves. The name is
-# the contract: this representation exists *only* to be displayed.
 FileTreeForLogViewer = dict[str, Union[str, "FileTreeForLogViewer"]]
 
-# Where read_submission_tar stages the tar inside the sandbox before reading it
-# back; removed afterwards so nothing lingers between attempts.
 _TAR_TMP = "/tmp/apn_submission.tar"
 
 
@@ -55,14 +49,7 @@ async def read_submission_tar(sb: SandboxEnvironment) -> bytes:
 
 
 def build_tree_from_tar(tar_bytes: bytes) -> FileTreeForLogViewer:
-    """Build a nested dict of text-file contents from the tar, **for display**.
-
-    Counterpart of PortBench's ``_build_directory_tree_from_tar``: the solver
-    hands this to the Inspect log viewer via ``submission_contents``. It is not
-    used for verification -- the checker unpacks the tar in its own sandbox. Only
-    regular files that decode as UTF-8 are kept (the submission is ``.lean``
-    source); binary blobs and non-file members are skipped.
-    """
+    """Build a nested dict of text-file contents from the tar, **for display only**."""
     tree: FileTreeForLogViewer = {}
     with tarfile.open(fileobj=BytesIO(tar_bytes)) as tf:
         for member in tf.getmembers():
