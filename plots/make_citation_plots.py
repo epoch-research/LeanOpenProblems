@@ -1,5 +1,5 @@
 """Solve rate binned by citation metadata in apn/data/oeis (native OEIS page
-citations and OpenAlex citing works), for the OEIS OP-full and OP-lite runs."""
+citations and OpenAlex citing works), for the benchmark's full and lite runs."""
 
 import json
 import glob
@@ -9,6 +9,8 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+
+from bench_names import BENCH_FULL, BENCH_LITE
 
 LOGS = Path("logs")
 OUT = Path("plots")
@@ -71,9 +73,9 @@ NATIVE_LITE = [("0", 0, 0), ("1–2", 1, 2), ("3+", 3, 10**9)]
 OPENALEX = [("0", 0, 0), ("1+", 1, 10**9)]
 
 ROWS = [
-    ("OEIS OP-full · $50 cap · one run per model", full_frac, full_oeis,
+    (f"{BENCH_FULL} · $50 cap · one run per model", full_frac, full_oeis,
      NATIVE_FULL),
-    ("OEIS OP-lite · $200 cap · pooled over base/deep/lit agent runs", lite_frac,
+    (f"{BENCH_LITE} · $200 cap · pooled over base/deep/lit agent runs", lite_frac,
      lite_oeis, NATIVE_LITE),
 ]
 

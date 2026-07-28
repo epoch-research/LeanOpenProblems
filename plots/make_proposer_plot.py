@@ -1,5 +1,5 @@
 """Conjectures per proposer (from apn/data/oeis/conjecture_provenance.jsonl)
-with solve outcomes, one plot per eval set (OEIS OP-lite and OP-full)."""
+with solve outcomes, one plot per eval set (lite and full)."""
 
 import json
 import glob
@@ -9,6 +9,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib.patches import Rectangle
+
+from bench_names import BENCH_FULL, BENCH_LITE
 
 LOGS = Path("logs")
 OUT = Path("plots")
@@ -95,11 +97,11 @@ def proposer_plot(solved, top_n, title, fname):
 
 proposer_plot(
     outcomes("oeis-full-*"), 12,
-    "OEIS OP-full — conjectures by proposer\n"
+    f"{BENCH_FULL} — conjectures by proposer\n"
     "(solved = ≥1 of the 3 full runs, \\$50/sample)",
     "proposer_solve_rate_full.png")
 proposer_plot(
     outcomes("oeis-lite-*"), 8,
-    "OEIS OP-lite — conjectures by proposer\n"
+    f"{BENCH_LITE} — conjectures by proposer\n"
     "(solved = ≥1 of the 9 lite runs, \\$200/sample)",
     "proposer_solve_rate_lite.png")

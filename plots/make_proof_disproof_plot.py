@@ -13,6 +13,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
+from bench_names import BENCH_FULL, BENCH_LITE
+
 LOGS = Path("logs")
 OUT = Path("plots")
 
@@ -69,9 +71,9 @@ def shares(kind, prov):
     return mean_p, mean_d, err_t, n
 
 PANELS = [
-    ("lite", "OEIS OP-lite — solve rate by outcome\n"
+    ("lite", f"{BENCH_LITE} — solve rate by outcome\n"
              "(100 conjectures, $200 cap, pooled over base/deep/lit agent runs, ±1 s.e.)"),
-    ("full", "OEIS OP-full — solve rate by outcome\n"
+    ("full", f"{BENCH_FULL} — solve rate by outcome\n"
              "(492 conjectures, $50 cap, ±1 s.e.)"),
 ]
 

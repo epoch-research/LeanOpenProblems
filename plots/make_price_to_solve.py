@@ -1,7 +1,7 @@
 """Price-to-solve distribution treating unsolved samples as right-censored.
 
-Per model, one observation per OEIS OP-full conjecture (n=492):
-- the 100 conjectures also in OP-lite use the lite base run (censored at $200);
+Per model, one observation per full-set conjecture (n=492):
+- the 100 conjectures also in the lite set use the lite base run (censored at $200);
 - the remaining 392 use the full run (censored at $50).
 Failures are censored at their observed spend (usually the cap).
 
@@ -23,6 +23,8 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from scipy.optimize import minimize
 from scipy.stats import norm
+
+from bench_names import BENCH
 
 LOGS = Path("logs")
 OUT = Path("plots")
@@ -166,7 +168,7 @@ for cap, lbl in [(50, "$50 cap\n(392 obs)"), (200, "$200 cap\n(100 obs)")]:
 ax.text(0.985, 0.03, "\n".join(notes), transform=ax.transAxes, ha="right",
         va="bottom", fontsize=8.5, color=INK2, linespacing=1.6)
 ax.set_xlabel("hypothetical price to solve (log scale)", fontsize=9.5, color=INK2)
-ax.set_title("OEIS OP — price-to-solve distribution, unsolved samples treated as\n"
+ax.set_title(f"{BENCH} — price-to-solve distribution, unsolved samples treated as\n"
              "right-censored: Kaplan–Meier (solid, one obs per conjecture,\n"
              "censored at \\$50 or \\$200) with two extrapolations past the data",
              fontsize=10.5, loc="left", color=INK)

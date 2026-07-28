@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib.patches import Rectangle
 
+from bench_names import BENCH_FULL, BENCH_LITE
+
 LOGS = Path("logs")
 OUT = Path("plots")
 OUT.mkdir(exist_ok=True)
@@ -165,7 +167,7 @@ ax.text(ncol / 2, -1.0,
 for side in ("top", "right", "left", "bottom"):
     ax.spines[side].set_visible(False)
 ax.tick_params(length=0)
-ax.set_title(f"OEIS OP-lite — which conjectures each model solved\n"
+ax.set_title(f"{BENCH_LITE} — which conjectures each model solved\n"
              f"({len(ever)} conjectures solved by ≥1 run; paler shade = solved\n"
              f"by fewer of the 3 agent configs; cell label = mean cost of the\n"
              f"solving runs; rows sorted by mean solve cost; $200 budget/sample)",
@@ -177,8 +179,8 @@ print("wrote", OUT / "solve_matrix.png")
 # === plot 2: solved fraction vs spend ======================================
 fig, ax = plt.subplots(figsize=(8.2, 4.8))
 # full runs individually; lite runs pooled over the 3 agent configs per model
-curves = [([k], f"OEIS OP-full · {MODEL_LABELS[k[3]]}", "-") for k in full_keys]
-curves += [(lite_by_model[p], f"OEIS OP-lite · {MODEL_LABELS[p]}, 3-agent avg", (0, (4, 2)))
+curves = [([k], f"{BENCH_FULL} · {MODEL_LABELS[k[3]]}", "-") for k in full_keys]
+curves += [(lite_by_model[p], f"{BENCH_LITE} · {MODEL_LABELS[p]}, 3-agent avg", (0, (4, 2)))
            for p in PROVIDERS if lite_by_model[p]]
 for keys, label, style in curves:
     n = sum(len(samples[k]) for k in keys)
@@ -225,8 +227,8 @@ print("wrote", OUT / "solve_cost_curves.png")
 # blocks of rows: lite pooled over the 3 agent configs per model, full runs as-is
 lite_rows = [(lite_by_model[p], MODEL_LABELS[p]) for p in PROVIDERS if lite_by_model[p]]
 full_rows = [([k], MODEL_LABELS[k[3]]) for k in full_keys]
-blocks = [("OEIS OP-lite · $200 cap · pooled over base/deep/lit agent runs", lite_rows),
-          ("OEIS OP-full · $50 cap", full_rows)]
+blocks = [(f"{BENCH_LITE} · $200 cap · pooled over base/deep/lit agent runs", lite_rows),
+          (f"{BENCH_FULL} · $50 cap", full_rows)]
 row_defs = lite_rows + full_rows
 
 def pooled_shares(keys, extract):
