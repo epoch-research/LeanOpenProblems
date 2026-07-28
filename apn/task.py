@@ -96,13 +96,7 @@ def apn_oeis(
     return Task(
         dataset=oeis_dataset(names=name_list),
         solver=lean_prover(
-            # An effectively infinite max_attempts on the built-in Inspect react() and deepagent()
-            # solvers is used to implement "gated submission".
-            # This is a bit of a hack: it would be clearer to implement this inside the solver.
-            # However, doing it like this lets us benefit automatically from upstream improvements
-            # in the built-in solvers; in particular, Inspect maintainers will keep these up to date
-            # with internal Inspect changes.
-            max_attempts=99_999_999 if gated else 1,
+            gated=gated,
             literature=literature,
             agent_type=agent_type,
         ),
@@ -122,7 +116,7 @@ def apn_fc100open(
     return Task(
         dataset=fc100open_dataset(names=name_list),
         solver=lean_prover(
-            max_attempts=99_999_999 if gated else 1,
+            gated=gated,
             literature=literature,
             agent_type=agent_type,
         ),
