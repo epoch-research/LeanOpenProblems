@@ -46,6 +46,7 @@ the layer cache.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
@@ -54,6 +55,7 @@ import pytest
 from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, Target
 from inspect_ai.solver import TaskState
+from inspect_ai.util import SandboxEnvironment
 from inspect_ai.util._sandbox.context import (
     cleanup_sandbox_environments_sample,
     init_sandbox_environments_sample,
@@ -240,7 +242,7 @@ CASES: list[Case] = [
 ]
 
 
-def _params() -> list:
+def _params() -> Sequence[object]:
     return [pytest.param(c, id=c.label) for c in CASES]
 
 
@@ -249,7 +251,7 @@ def _params() -> list:
 # scorer (which verifies in the scorer sandbox).                               #
 # --------------------------------------------------------------------------- #
 @asynccontextmanager
-async def _sandboxes():
+async def _sandboxes() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """Bring up the production compose; yield the live ``{name: env}`` dict.
 
     Same lifecycle as ``test_singlefile_proof._sandbox_envs``. Exposes the default
@@ -284,7 +286,7 @@ async def _sandboxes():
         await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
 
 
-async def _write_tree(env, files: dict[str, str]) -> None:
+async def _write_tree(env: SandboxEnvironment, files: dict[str, str]) -> None:
     """Stage ``files`` (paths relative to ``Submission/``) in the agent sandbox."""
     await env.exec(["rm", "-rf", SUBMISSION_DIR])
     await env.exec(["mkdir", "-p", SUBMISSION_DIR])
@@ -317,6 +319,7 @@ async def test_scorer_verdict(case: Case, monkeypatch: pytest.MonkeyPatch) -> No
             state, Target("")
         )
 
+    assert score is not None
     accepted = score.value == CORRECT
     detail = (score.explanation or "")[-800:]
     assert accepted == case.secure_accept, (

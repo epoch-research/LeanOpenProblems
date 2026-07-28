@@ -1,4 +1,3 @@
-# type: ignore
 """Formal-Conjectures statement conventions, shared by the FC-derived datasets.
 
 The FC repository states problems with conventions that are not specific to any

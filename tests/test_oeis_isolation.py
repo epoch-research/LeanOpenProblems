@@ -31,6 +31,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 import pytest_asyncio
@@ -58,9 +59,9 @@ REF_DIR = Path(__file__).resolve().parent / "data" / "gold_proofs"
 class IsoData:
     """Everything the gates need, gathered from a single sandbox bring-up."""
 
-    auto_ranges: dict[str, dict]  # extractor records for distinct Auto/ sources, by filename
-    iso_ranges: dict[str, dict]  # extractor records for every Isolated/ file, by stem (= name)
-    ref_ranges: list[dict]  # extractor records for the published challenge files
+    auto_ranges: dict[str, dict[str, Any]]  # extractor records for distinct Auto/ sources, by filename
+    iso_ranges: dict[str, dict[str, Any]]  # extractor records for every Isolated/ file, by stem (= name)
+    ref_ranges: list[dict[str, Any]]  # extractor records for the published challenge files
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
@@ -72,7 +73,7 @@ def mapping() -> list[tuple[str, list[str]]]:
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
-async def iso_data(mapping) -> IsoData:
+async def iso_data(mapping: list[tuple[str, list[str]]]) -> IsoData:
     """Bring the sandbox up once and run every Lean step inside it: extract the
     Auto sources, the Isolated files, and the reference challenge files, then
     compile every Isolated file.
@@ -104,7 +105,9 @@ async def iso_data(mapping) -> IsoData:
 # above; the bodies are pure assertions over the precomputed ``iso_data``.      #
 # --------------------------------------------------------------------------- #
 @pytest.mark.asyncio(loop_scope="module")
-async def test_isolated_files_are_structurally_correct(mapping, iso_data) -> None:
+async def test_isolated_files_are_structurally_correct(
+    mapping: list[tuple[str, list[str]]], iso_data: IsoData
+) -> None:
     """Each isolated file carries exactly the target + its dependency lemmas (the
     cut's prediction), with the target's statement preserved verbatim."""
     failures: list[str] = []
@@ -129,7 +132,7 @@ async def test_isolated_files_are_structurally_correct(mapping, iso_data) -> Non
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_isolated_files_compile(iso_data) -> None:
+async def test_isolated_files_compile(iso_data: IsoData) -> None:
     """The authoritative gate: every isolated file compiles with the scorer's
     exact ``lake env lean -o`` command."""
     assert not iso_data.compile_failures, (
@@ -139,16 +142,16 @@ async def test_isolated_files_compile(iso_data) -> None:
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_oracle_matches_published_challenge_files(iso_data) -> None:
+async def test_oracle_matches_published_challenge_files(iso_data: IsoData) -> None:
     """For each solved problem the paper published, our isolated target's
     elaborated type matches its ``target_theorem_0`` (the paper renames the
     conjecture). Confirms isolation reproduces the published challenge statement."""
     if not iso_data.ref_ranges:
         pytest.skip("no reference challenge files vendored")
 
-    def target_type(name: str, fr: dict) -> str:
+    def target_type(name: str, fr: dict[str, Any]) -> str:
         (target,) = [d for d in theorem_command_decls(fr) if matches_name(d["name"], name)]
-        return target["type"]
+        return cast(str, target["type"])
 
     iso_types = {name: target_type(name, fr) for name, fr in iso_data.iso_ranges.items()}
     match = mismatch = 0

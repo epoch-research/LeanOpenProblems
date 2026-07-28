@@ -54,11 +54,14 @@ from __future__ import annotations
 import io
 import re
 import tarfile
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import cast
 
 import pytest
 import pytest_asyncio
+from inspect_ai.util import SandboxEnvironment
 from inspect_ai.util._sandbox.context import (
     cleanup_sandbox_environments_sample,
     init_sandbox_environments_sample,
@@ -102,7 +105,7 @@ def _tar_of(files: dict[str, str]) -> bytes:
 
 
 @asynccontextmanager
-async def _sandbox_envs():
+async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """Bring up the production compose and yield the live ``{name: env}`` dict.
 
     Mirrors ``tests/test_singlefile_proof.py::_sandbox_envs``: Inspect's sandbox
@@ -146,7 +149,7 @@ def _target_theorem(spec_text: str) -> str:
     to match."""
     names = re.findall(r"(?m)^theorem\s+([A-Za-z0-9_.]+)", spec_text)
     assert len(names) == 1, f"expected exactly one theorem in spec, found {names}"
-    return names[0]
+    return cast(str, names[0])
 
 
 def _gold_submission(stem: str, theorem: str) -> str:
@@ -161,7 +164,7 @@ def _gold_submission(stem: str, theorem: str) -> str:
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
-async def sandbox_envs():
+async def sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """The live sandbox-env dict, brought up once and shared by every case.
 
     Shared (not per-case) is safe here: all gold proofs are honest, and the
@@ -189,7 +192,11 @@ def test_gold_proofs_present() -> None:
         for stem in GOLD_STEMS
     ],
 )
-async def test_gold_proof_verifies(stem: str, sandbox_envs, monkeypatch) -> None:
+async def test_gold_proof_verifies(
+    stem: str,
+    sandbox_envs: dict[str, SandboxEnvironment],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Each published gold proof is accepted by safe_verify against our spec."""
     monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: sandbox_envs[name])
     target = (ISOLATED_DIR / f"{stem}.lean").read_text()

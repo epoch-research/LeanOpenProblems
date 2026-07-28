@@ -72,7 +72,7 @@ def test_safe_rest_strips_and_rejects_traversal() -> None:
     assert bc.safe_rest("") is None
 
 
-def _write_shard(path: Path, rows: list[dict]) -> None:
+def _write_shard(path: Path, rows: list[dict[str, object]]) -> None:
     import gzip
     import json
 

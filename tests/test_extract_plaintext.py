@@ -10,13 +10,16 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
+
+from inspect_ai.log import EvalSample
 
 from scripts.extract_plaintext import _write_sample_workspace
 
 
-def _sample(tree: object) -> SimpleNamespace:
+def _sample(tree: object) -> EvalSample:
     # _write_sample_workspace only touches sample.metadata.
-    return SimpleNamespace(metadata={"submission_contents": tree})
+    return cast(EvalSample, SimpleNamespace(metadata={"submission_contents": tree}))
 
 
 def test_writes_nested_tree_to_submission_dir(tmp_path: Path) -> None:
@@ -33,7 +36,8 @@ def test_writes_nested_tree_to_submission_dir(tmp_path: Path) -> None:
 
 
 def test_no_workspace_metadata_writes_nothing(tmp_path: Path) -> None:
-    assert _write_sample_workspace(SimpleNamespace(metadata={}), tmp_path) == 0
+    sample = cast(EvalSample, SimpleNamespace(metadata={}))
+    assert _write_sample_workspace(sample, tmp_path) == 0
     assert not (tmp_path / "Submission").exists()
 
 
@@ -43,4 +47,5 @@ def test_empty_tree_writes_nothing(tmp_path: Path) -> None:
 
 
 def test_none_metadata_writes_nothing(tmp_path: Path) -> None:
-    assert _write_sample_workspace(SimpleNamespace(metadata=None), tmp_path) == 0
+    sample = cast(EvalSample, SimpleNamespace(metadata=None))
+    assert _write_sample_workspace(sample, tmp_path) == 0

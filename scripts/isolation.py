@@ -1,4 +1,3 @@
-# type: ignore
 """Dataset-neutral machinery for the per-target isolation pipeline.
 
 Each benchmark dataset here presents one *target* theorem per sample, but the

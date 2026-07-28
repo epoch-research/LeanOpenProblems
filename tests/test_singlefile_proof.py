@@ -41,8 +41,11 @@ from __future__ import annotations
 
 import io
 import tarfile
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import pytest
+from inspect_ai.util import SandboxEnvironment
 from inspect_ai.util._sandbox.context import (
     cleanup_sandbox_environments_sample,
     init_sandbox_environments_sample,
@@ -50,7 +53,7 @@ from inspect_ai.util._sandbox.context import (
 from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
-from apn.checker import SandboxSafeVerify
+from apn.checker import CheckOutcome, SandboxSafeVerify
 from apn.task import get_compose_file
 
 
@@ -72,7 +75,7 @@ def _tar_of(files: dict[str, str]) -> bytes:
 
 
 @asynccontextmanager
-async def _sandbox_envs():
+async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """Bring up the production compose and yield the live sandbox-env dict.
 
     Uses Inspect's sandbox lifecycle against ``apn.task.get_compose_file`` (which
@@ -108,7 +111,9 @@ async def _sandbox_envs():
         await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
 
 
-async def _check(monkeypatch, target: str, submission: dict[str, str]):
+async def _check(
+    monkeypatch: pytest.MonkeyPatch, target: str, submission: dict[str, str]
+) -> CheckOutcome:
     """Run the real checker against freshly built compile + scorer sandboxes.
 
     ``submission`` is given as ``{relative path: contents}`` for readability and
@@ -143,13 +148,15 @@ TARGET_PATTERN_MATCH = (
 # --------------------------------------------------------------------------- #
 # Tests.                                                                        #
 # --------------------------------------------------------------------------- #
-async def test_single_file_proof_is_accepted(monkeypatch) -> None:
+async def test_single_file_proof_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
     submission = {"Spec.lean": _IMPORT + "\ntheorem tgt : 1 + 1 = 2 := by norm_num\n"}
     outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail}"
 
 
-async def test_helper_import_is_rejected_at_compile(monkeypatch) -> None:
+async def test_helper_import_is_rejected_at_compile(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     # The single-file guard. Even an *honest* helper is unusable: the submission
     # is compiled standalone and `Submission` is not a registered Lake library,
     # so `import Submission.Helpers.Aux` does not resolve and the whole
@@ -167,7 +174,9 @@ async def test_helper_import_is_rejected_at_compile(monkeypatch) -> None:
     assert outcome.stage == "compile_submission"
 
 
-async def test_pattern_matching_def_in_entry_is_accepted(monkeypatch) -> None:
+async def test_pattern_matching_def_in_entry_is_accepted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     # Regression guard: the submission reproduces the pattern-matching def
     # verbatim and proves the theorem. Its compiler-generated private equational
     # lemmas mangle with the module name Submission.Spec -- the same name the
@@ -187,7 +196,7 @@ async def test_pattern_matching_def_in_entry_is_accepted(monkeypatch) -> None:
     )
 
 
-async def test_missing_entry_module_is_rejected(monkeypatch) -> None:
+async def test_missing_entry_module_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     # A submission whose tar omits Spec.lean: rejected as a verdict, never
     # raised, and without falling through to verifying the trusted target text.
     submission = {"Other.lean": _IMPORT + "\ntheorem aux_eq : True := trivial\n"}
@@ -196,7 +205,7 @@ async def test_missing_entry_module_is_rejected(monkeypatch) -> None:
     assert outcome.stage == "compile_submission"
 
 
-async def test_empty_submission_is_rejected(monkeypatch) -> None:
+async def test_empty_submission_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     outcome = await _check(monkeypatch, TARGET_SIMPLE, {})
     assert not outcome.ok
     assert outcome.stage == "compile_submission"

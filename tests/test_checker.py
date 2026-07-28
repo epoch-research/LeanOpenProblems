@@ -16,6 +16,8 @@ collected and handed to the checker as raw bytes.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -27,6 +29,7 @@ from inspect_ai.util import ExecResult, OutputLimitExceededError
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import CheckOutcome, SafeVerifyChecker, SandboxSafeVerify
+from apn.layout import ENTRY_PATH, ENTRY_REL, SUBMISSION_DIR
 from apn.scorer import proof_scorer
 
 SKETCH = "import Mathlib\ntheorem tgt : True := by sorry\n"
@@ -101,7 +104,7 @@ class ScriptedSandbox:
 
     def __init__(
         self,
-        results: list[Step],
+        results: Sequence[Step],
         report: str | BaseException | None = None,
         olean: bytes | BaseException | None = _OLEAN_BYTES,
     ) -> None:
@@ -168,9 +171,9 @@ def _oversize_error() -> OutputLimitExceededError:
 
 def _checker(
     monkeypatch: pytest.MonkeyPatch,
-    results: list[Step],
+    results: Sequence[Step],
     allow_disproofs: bool = True,
-    report: str | None = None,
+    report: str | BaseException | None = None,
     olean: bytes | BaseException | None = _OLEAN_BYTES,
 ) -> tuple[SandboxSafeVerify, ScriptedSandbox]:
     sb = ScriptedSandbox(results, report=report, olean=olean)
@@ -183,7 +186,9 @@ def _checker(
 # olean is read out. SCORER sandbox (4): clear, mkdir, compile trusted target,
 # run safe_verify.
 def _accept_steps() -> list[Step]:
-    return [_ok()] * 8 + [_ok("SafeVerify check passed.")]
+    steps: list[Step] = [_ok()] * 8
+    steps.append(_ok("SafeVerify check passed."))
+    return steps
 
 
 async def test_check_accepts_when_all_steps_pass(
@@ -217,24 +222,24 @@ async def test_check_compiles_in_two_phases_across_sandboxes(
     assert sb.commands[0][:2] == ["rm", "-rf"]
     assert sb.commands[1][:2] == ["mkdir", "-p"]
     assert sb.commands[2] == [
-        "tar", "-xf", checker_mod.COMPILE_SUBMISSION_TAR, "-C", checker_mod.SUBMISSION_DIR
+        "tar", "-xf", checker_mod.COMPILE_SUBMISSION_TAR, "-C", SUBMISSION_DIR
     ]
-    assert sb.commands[3] == ["test", "-f", checker_mod.ENTRY_PATH]
+    assert sb.commands[3] == ["test", "-f", ENTRY_PATH]
     # Submission compiled standalone to the compile-sandbox olean.
     assert sb.commands[4] == [
         "lake", "env", "lean", "-o",
-        checker_mod.COMPILE_SUBMISSION_OLEAN, checker_mod.ENTRY_REL,
+        checker_mod.COMPILE_SUBMISSION_OLEAN, ENTRY_REL,
     ]
     # The produced olean is read out of the compile sandbox.
     assert checker_mod.COMPILE_SUBMISSION_OLEAN in sb.reads
 
     # --- verify phase ---------------------------------------------------------
     # Trusted target written + compiled standalone at the SAME entry path.
-    assert sb.writes[1] == (checker_mod.ENTRY_PATH, "THE TARGET")
+    assert sb.writes[1] == (ENTRY_PATH, "THE TARGET")
     assert sb.commands[5][:2] == ["rm", "-rf"]
     assert sb.commands[6][:2] == ["mkdir", "-p"]
     assert sb.commands[7] == [
-        "lake", "env", "lean", "-o", checker_mod.TARGET_OLEAN, checker_mod.ENTRY_REL
+        "lake", "env", "lean", "-o", checker_mod.TARGET_OLEAN, ENTRY_REL
     ]
     # The olean read out of the compile sandbox is written into the scorer.
     assert sb.writes[2] == (checker_mod.SUBMISSION_OLEAN, _OLEAN_BYTES)
@@ -623,7 +628,7 @@ async def test_scorer_records_submission_tree_on_sample_metadata(
 
 
 async def test_scorer_writes_attempt_sidecar(
-    monkeypatch: pytest.MonkeyPatch, tmp_path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # Per attempt, the scored Submission/ tar is written to an attempt-indexed
     # sidecar under <logdir>/artifacts/<uuid>/. Stub the private sample_active so
