@@ -32,8 +32,8 @@ $$
 \lim_{k \to \infty} q_k^{1/k} = \infty?
 $$
 -/
-@[category research open, AMS 11]
-theorem erdos_695 : ∀ {q : ℕ → ℕ},
+theorem erdos_695 : 
+    ∀ {q : ℕ → ℕ},
       StrictMono q →
       (∀ i, (q i).Prime) →
       (∀ i, q (i + 1) % q i = 1) →

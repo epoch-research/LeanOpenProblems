@@ -60,8 +60,8 @@ def greedySidon (n : ℕ) : ℕ := greedySidon.aux n |>.2
 /--
 It may be true that all or almost all integers are in $A - A$.
 -/
-@[category research open, AMS 5]
-theorem erdos_340.variants.co_density_zero_sub : ∃ S : Set ℕ, S.HasDensity 0 ∧ ∀ n ∈ Sᶜ, n ∈ Set.range greedySidon - Set.range greedySidon := by
+theorem erdos_340.variants.co_density_zero_sub : 
+    ∃ S : Set ℕ, S.HasDensity 0 ∧ ∀ n ∈ Sᶜ, n ∈ Set.range greedySidon - Set.range greedySidon := by
   sorry
 
 end Erdos340

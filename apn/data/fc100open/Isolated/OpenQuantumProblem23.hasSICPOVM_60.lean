@@ -195,7 +195,6 @@ def bb84Family : Fin 4 → StateVector 2
 /- ## Smallest open special cases (all d<=75) -/
 
 /-- Benchmark open subproblem: existence of a SIC-POVM in dimension $60$. -/
-@[category research open, AMS 15 47 81]
 theorem hasSICPOVM_60 : HasSICPOVM 60 := by sorry
 
 /- ## Full conjecture -/

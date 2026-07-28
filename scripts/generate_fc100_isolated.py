@@ -43,9 +43,13 @@ from scripts.fc100_isolation import (
     MAPPING_FILE,
     SORRY_ALLOWLIST,
     SOURCES_DIR,
-    fc100_kept_flags,
     kept_names,
+)
+from scripts.fc_statements import (
+    LHS_SORRY,
+    fc_kept_flags,
     rewrite_answer_iff,
+    strip_category_attrs,
     strip_comments,
 )
 from scripts.isolation import (
@@ -147,12 +151,13 @@ def main() -> None:
         old.unlink()
 
     rewritten: list[str] = []
+    n_category = 0
     for name, rel in mapping:
         filerec = by_rel[rel]
         src = (SOURCES_DIR / rel).read_bytes()
         target = resolve_target(name, filerec)  # the unique target theorem
         closure = dependency_closure(filerec, target["name"])
-        flags = fc100_kept_flags(src, filerec, kept_flags(filerec, closure))
+        flags = fc_kept_flags(src, filerec, kept_flags(filerec, closure))
         check_sorries(name, src, filerec, flags)
         text = tidy(isolate(src, filerec, flags)).decode("utf-8")
         # Census `answer(` in *code* only -- kept docs may mention it in prose.
@@ -160,16 +165,26 @@ def main() -> None:
         if n_answers > 1:
             raise SystemExit(f"{name}: {n_answers} answer( occurrences in isolated spec")
         if n_answers == 1:
-            text, n = rewrite_answer_iff(text)
-            if n != 1 or "answer(" in strip_comments(text):
+            text, form, n = rewrite_answer_iff(text)
+            # This subset's census is LHS-`answer(sorry)` only; any other form
+            # showing up means the vendored sources changed.
+            if form != LHS_SORRY or n != 1 or "answer(" in strip_comments(text):
                 raise SystemExit(f"{name}: answer(sorry) ↔ rewrite did not apply cleanly")
             rewritten.append(name)
+        text, n = strip_category_attrs(text)
+        n_category += n
         (ISOLATED_DIR / f"{name}.lean").write_text(text)
 
     # The subset's census: 46 propositional answer(sorry) ↔ members among the
     # 86 kept. Any drift means membership or vendored sources changed.
     if len(rewritten) != 46:
         raise SystemExit(f"expected 46 rewritten members, got {len(rewritten)}")
+    # 91 classification lists: one per kept declaration carrying one -- the 86
+    # targets plus EllipticCurveRank's 5 kept dependency decls. (A 92nd
+    # occurrence of `@[category` is backtick-quoted prose in
+    # OpenQuantumProblems/23's module doc; the line-anchored pattern skips it.)
+    if n_category != 91:
+        raise SystemExit(f"expected 91 category lists stripped, got {n_category}")
 
     MAPPING_FILE.write_text("".join(f"{name} {rel}\n" for name, rel in mapping))
     print(

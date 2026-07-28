@@ -40,7 +40,6 @@ open Erdos12
 Let $A$ be an infinite set such that there are no distinct $a,b,c \in A$
 such that $a \mid (b+c)$ and $b,c > a$. Is it true that $∑_{n \in A} \frac{1}{n} < \infty$?
 -/
-@[category research open, AMS 11]
 theorem erdos_12.parts.iii :
     ∀ (A : Set ℕ), IsGood A → Summable (fun (n : A) ↦ (1 / n : ℝ)) := by
   sorry

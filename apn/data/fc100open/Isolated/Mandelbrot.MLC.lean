@@ -46,7 +46,6 @@ of `z ↦ z ^ 2 + c`. -/
 abbrev mandelbrotSet := multibrotSet 2
 
 /-- The MLC conjecture, stating that the mandelbrot set is locally connected. -/
-@[category research open, AMS 37]
 theorem MLC : LocallyConnectedSpace mandelbrotSet := by
   sorry
 

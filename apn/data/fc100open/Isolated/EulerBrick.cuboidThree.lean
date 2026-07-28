@@ -94,7 +94,6 @@ def CuboidThree : Prop := ∀ ⦃a b c : ℤ⦄, gcd a (gcd b c) = 1 → 0 < a �
   0 < c → a ≠ b → b ≠ c → c ≠ a → b * c ≠ a ^ 2 → a * c ≠ b ^ 2 → CuboidThreeFor a b c
 
 /-- The third Cuboid conjecture -/
-@[category research open, AMS 12]
 theorem cuboidThree : CuboidThree := by
   sorry
 

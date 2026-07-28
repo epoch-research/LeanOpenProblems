@@ -29,7 +29,6 @@ namespace Transcendental
 /--
 $\pi^{\sqrt{2}}$ is transcendental.
 -/
-@[category research open, AMS 11 33]
 theorem pi_pow_sqrt_two_transcendental : Transcendental ℚ (π ^ √2) := by
   sorry
 

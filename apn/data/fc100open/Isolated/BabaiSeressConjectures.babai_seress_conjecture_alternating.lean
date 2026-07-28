@@ -64,7 +64,6 @@ $$\operatorname{diam}(A_n) \leq n^C.$$
 
 *Reference:* [L. Babai and Á. Seress, *On the diameter of permutation groups*,
 European Journal of Combinatorics 13 (1992), Conjecture 1.5](https://doi.org/10.1016/S0195-6698(05)80029-0) -/
-@[category research open, AMS 5 20 68]
 theorem babai_seress_conjecture_alternating :
     ∃ C : ℕ, ∀ n : ℕ,
     (groupDiam (alternatingGroup (Fin n)) : ℝ) ≤ (n : ℝ) ^ C := by

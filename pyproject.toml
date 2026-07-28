@@ -14,6 +14,7 @@ packages = ["apn"]
 artifacts = [
     "apn/data/oeis/**/*",
     "apn/data/fc100open/**/*",
+    "apn/data/erdos/**/*",
 ]
 
 [project.entry-points.inspect_ai]

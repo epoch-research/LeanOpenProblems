@@ -278,9 +278,9 @@ All "general" conjectures are restricted to even `N`.
 
 /-- For $N = 16$ and $D = 3$, does there exist no solution to the monochromatic quantum graph
 equation system over $\mathbb{C}$? -/
-@[category research open, AMS 5 14 81]
 theorem eqSystem16_no_solution_d3 :
-    ¬ ∃ W : WeightsN 16 3 ℂ, EqSystemN 16 3 W := by
+    
+      ¬ ∃ W : WeightsN 16 3 ℂ, EqSystemN 16 3 W := by
   sorry
 
 /- ## Open conjectures over ℝ -/

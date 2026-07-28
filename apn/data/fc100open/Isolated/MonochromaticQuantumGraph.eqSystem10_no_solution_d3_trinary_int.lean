@@ -285,9 +285,9 @@ All "general" conjectures are restricted to even `N`.
 
 /-- For $N = 10$ and $D = 3$, does there exist no solution to the monochromatic quantum graph
 equation system over $\mathbb{Z}$ with weights in $\{-1, 0, 1\}$? -/
-@[category research open, AMS 5 14 81]
 theorem eqSystem10_no_solution_d3_trinary_int :
-    ¬ ∃ W : WeightsN 10 3 ℤ,
+    
+      ¬ ∃ W : WeightsN 10 3 ℤ,
           (∀ e, W e = (-1 : ℤ) ∨ W e = 0 ∨ W e = 1) ∧
             EqSystemN 10 3 W := by
   sorry

@@ -38,8 +38,8 @@ noncomputable def r (k N : ℕ) : ℕ := (Finset.Icc 1 N).maxAPFreeCard k
 /--
 Problem 9 (iii): is $r_4(\mathbf{F}_5^n) \ll N^{1-c}$, where $N=5^n$?
 -/
-@[category research open, AMS 5]
-theorem green_9_iii : ∃ c > (0 : ℝ), (fun (n : ℕ) ↦ ((Finset.univ : Finset (Fin n → ZMod 5)).maxAPFreeCard 4 : ℝ))
+theorem green_9_iii : 
+    ∃ c > (0 : ℝ), (fun (n : ℕ) ↦ ((Finset.univ : Finset (Fin n → ZMod 5)).maxAPFreeCard 4 : ℝ))
       ≪ fun (n : ℕ) ↦ ((5 : ℝ) ^ n) ^ (1 - c) := by
   sorry
 

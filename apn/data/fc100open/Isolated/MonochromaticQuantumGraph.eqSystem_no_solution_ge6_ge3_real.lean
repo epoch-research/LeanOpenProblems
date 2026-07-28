@@ -280,9 +280,9 @@ All "general" conjectures are restricted to even `N`.
 
 /-- For all even $N \geq 6$ and $D \geq 3$, does there exist no solution to the monochromatic
 quantum graph equation system over $\mathbb{R}$? -/
-@[category research open, AMS 5 14 81]
 theorem eqSystem_no_solution_ge6_ge3_real :
-    ∀ N D : Nat, N ≥ 6 → Even N → D ≥ 3 →
+    
+      ∀ N D : Nat, N ≥ 6 → Even N → D ≥ 3 →
         ¬ ∃ W : WeightsN N D ℝ, EqSystemN N D W := by
   sorry
 

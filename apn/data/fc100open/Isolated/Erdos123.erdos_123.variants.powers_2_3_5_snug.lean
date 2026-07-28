@@ -65,7 +65,6 @@ A stronger conjecture for numbers of the form $2^k 3^l 5^j$.
 For any $ε > 0$, all large integers $n$ can be written as the sum of distinct integers
 $b_1 < ... < b_t$ of the form $2^k 3^l 5^j$ where $b_t < (1 + ϵ) b_1$.
 -/
-@[category research open, AMS 11]
 theorem erdos_123.variants.powers_2_3_5_snug :
     ∀ ε > 0, ∀ᶠ n in atTop,
       ∃ A : Finset ℕ, (A : Set ℕ) ⊆ ↑(powers 2) * ↑(powers 3) * ↑(powers 5) ∧ IsSnug ε A ∧
