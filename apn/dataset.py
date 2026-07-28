@@ -126,7 +126,7 @@ def oeis_dataset(
         if names is not None and name not in names:
             continue
         text = strip_license_header((isolated / f"{name}.lean").read_text())
-        metadata = {
+        metadata: dict[str, str | list[str] | None] = {
             "sketch": text,
             "oeis_id": oeis_id_from_filename(files[0]),
         }

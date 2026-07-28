@@ -1,4 +1,3 @@
-# type: ignore
 """OEIS frontend for the per-target isolation pipeline.
 
 The dataset-neutral cut logic and Docker plumbing live in
@@ -16,8 +15,10 @@ Two callers import this module:
 
 from __future__ import annotations
 
-from apn.dataset import parse_oeis_mapping as parse_mapping  # re-exported
+from apn.dataset import parse_oeis_mapping
 from scripts.isolation import REPO
+
+parse_mapping = parse_oeis_mapping  # re-exported under the dataset-neutral name
 
 OEIS_DIR = REPO / "apn" / "data" / "oeis"
 AUTO_DIR = OEIS_DIR / "Auto"

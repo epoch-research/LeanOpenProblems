@@ -1,4 +1,3 @@
-# type: ignore
 """FC100OpenSet1 frontend for the per-target isolation pipeline.
 
 The dataset-neutral cut logic and Docker plumbing live in
@@ -29,8 +28,10 @@ from __future__ import annotations
 
 import re
 
-from apn.dataset import parse_fc100_mapping as parse_mapping  # re-exported
+from apn.dataset import parse_fc100_mapping
 from scripts.isolation import REPO
+
+parse_mapping = parse_fc100_mapping  # re-exported under the dataset-neutral name
 
 FC100_DIR = REPO / "apn" / "data" / "fc100open"
 SOURCES_DIR = FC100_DIR / "Sources"
