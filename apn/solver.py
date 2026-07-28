@@ -132,17 +132,16 @@ def build_agent(
 @solver
 def lean_prover(
     agent_type: AgentType,
-    max_attempts: int,
+    gated: bool,
     literature: bool,
 ) -> Solver:
     """
     Args:
-        max_attempts: With ``> 1``, enables *gated submit* via Inspect's native
+        gated: With ``True``, enables *gated submit* via Inspect's native
             ``attempts``: each submission is re-scored by the task scorer
             (SafeVerify) and, if not accepted, the model is told to keep going
-            (up to this many attempts, or until a token/time limit). With ``1``,
-            the first submission ends the loop and is validated only by the
-            final scorer.
+            (until a token/time limit). With ``False``, the first submission
+            ends the loop and is validated only by the final scorer.
         literature: Run with the offline arXiv corpus.
         agent_type: Which agent loop to run.
     """
@@ -157,6 +156,17 @@ def lean_prover(
             bash(timeout=300),
             resources(),
         ]
+
+        # An effectively infinite max_attempts on the built-in Inspect react() and deepagent()
+        # solvers is used to implement "gated submission" (Inspect allows retries if the scorer
+        # returns INCORRECT). This is a bit of a hack: it would be clearer to implement this
+        # inside the solver. However, doing it like this lets us benefit automatically from
+        # upstream improvements in the built-in solvers; in particular, Inspect maintainers will
+        # keep these up to date with internal Inspect changes.
+        if gated:
+            max_attempts = 99_999_999
+        else:
+            max_attempts = 1
 
         agent = build_agent(
             agent_type,
