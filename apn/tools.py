@@ -96,7 +96,7 @@ def resources() -> Tool:
             # The working-time vs. clock-time distinction is not relevant to an agent.
             _resource_line("Time", limits.working, _format_duration),
         ]
-        header = f"Reaching any of the limits ends the task. "
+        header = "Reaching any of the limits ends the task."
         return "\n".join([header, *lines])
 
     return execute

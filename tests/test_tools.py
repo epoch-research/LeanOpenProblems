@@ -159,14 +159,14 @@ def test_format_duration_compact() -> None:
     assert tools_mod._format_duration(3 * 3600 + 25 * 60) == "3h 25m"
 
 
-_HEADER = "Reaching any of these 3 limits ends the task:"
+_HEADER = "Reaching any of the limits ends the task."
 
 
 async def test_resources_tool_lists_all_limits_with_header(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # All limits are always listed under the "any one ends the task" header. Here
-    # a token-limited run (no cost limit): Cost reads "(no limit set)".
+    # a token-limited run (no cost limit): Token cost reads "(no limit set)".
     monkeypatch.setattr(
         tools_mod,
         "sample_limits",
@@ -178,7 +178,7 @@ async def test_resources_tool_lists_all_limits_with_header(
     output = await resources()()
     assert output == (
         f"{_HEADER}\n"
-        "- Cost: $0.00 used (no limit set)\n"
+        "- Token cost: $0.00 used (no limit set)\n"
         "- Tokens: 10,000 used, 990,000 remaining (limit 1,000,000)\n"
         "- Time: 1h used, 35h remaining (limit 36h)"
     )
@@ -187,7 +187,7 @@ async def test_resources_tool_lists_all_limits_with_header(
 async def test_resources_tool_reports_cost_in_usd(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A cost-limited run (no token limit): Cost shows USD, Tokens "(no limit set)".
+    # A cost-limited run (no token limit): Token cost shows USD, Tokens "(no limit set)".
     monkeypatch.setattr(
         tools_mod,
         "sample_limits",
@@ -199,7 +199,7 @@ async def test_resources_tool_reports_cost_in_usd(
     output = await resources()()
     assert output == (
         f"{_HEADER}\n"
-        "- Cost: $1.50 used, $198.50 remaining (limit $200.00)\n"
+        "- Token cost: $1.50 used, $198.50 remaining (limit $200.00)\n"
         "- Tokens: 0 used (no limit set)\n"
         "- Time: 1h used, 71h remaining (limit 72h)"
     )
@@ -221,7 +221,7 @@ async def test_resources_tool_handles_all_limits_unset(
     output = await resources()()
     assert output == (
         f"{_HEADER}\n"
-        "- Cost: $0.00 used (no limit set)\n"
+        "- Token cost: $0.00 used (no limit set)\n"
         "- Tokens: 500 used (no limit set)\n"
         "- Time: 2m used (no limit set)"
     )
