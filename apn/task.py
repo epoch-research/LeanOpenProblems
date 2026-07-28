@@ -147,7 +147,7 @@ def apn_erdos(
     return Task(
         dataset=erdos_dataset(names=name_list),
         solver=lean_prover(
-            max_attempts=99_999_999 if gated else 1,
+            gated=gated,
             literature=literature,
             agent_type=agent_type,
         ),
