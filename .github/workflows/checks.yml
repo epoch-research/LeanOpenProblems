@@ -2,6 +2,7 @@ name: Checks
 
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - main
@@ -65,6 +66,10 @@ jobs:
         run: uv run pytest --ignore=tests/test_gold_proofs.py
 
   gold-proofs:
+    # Not a merge-queue-required check: at ~2h on a single runner it would
+    # serialize every merge, so queue runs skip it (it still runs on PRs and
+    # on every push to main).
+    if: github.event_name != 'merge_group'
     runs-on: epoch-research-x64-64core-256GB-2040GB
     steps:
       - uses: actions/checkout@v4
