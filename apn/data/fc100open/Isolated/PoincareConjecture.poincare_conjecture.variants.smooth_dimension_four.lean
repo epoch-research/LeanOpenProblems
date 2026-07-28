@@ -48,7 +48,6 @@ def SmoothTrueValues : Set ℕ := {1, 2, 3, 5, 6, 12, 56, 61}
 
 /-- The four dimensional case of the smooth version of the conjecture is still open.
 See [Wang2017]. -/
-@[category research open, AMS 54 57]
 theorem poincare_conjecture.variants.smooth_dimension_four : SmoothConjectureFor 4 := by
   sorry
 

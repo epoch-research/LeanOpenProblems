@@ -38,7 +38,6 @@ $$
 where $\||x\|| := \min(|x - \lfloor x \rfloor|, |x - \lceil x \rceil|)$ is the distance
 to the nearest integer, and $|x|_{p}$ is the $p$-adic norm.
 -/
-@[category research open, AMS 11]
 theorem padic_littlewood_conjecture (α : ℝ) (p : ℕ) (hp : p.Prime) :
     atTop.liminf (fun (n : ℕ) ↦ n * padicNorm p n * distToNearestInt (n * α)) = 0 := by
   sorry

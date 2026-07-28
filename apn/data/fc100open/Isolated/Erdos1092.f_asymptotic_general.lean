@@ -54,7 +54,6 @@ noncomputable def f (r n : ℕ) : ℕ :=
       chromaticNumber G ≤ (r + 1 : ℕ∞)}
 
 /-- Asymptotic behavior of $f(r, n)$ for general $r$. -/
-@[category research open, AMS 5]
 theorem f_asymptotic_general :
     ∀ r : ℕ, (fun n : ℕ => ((r : ℝ) * n)) =o[atTop] (fun n : ℕ => (f r n : ℝ)) := by
   sorry

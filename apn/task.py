@@ -9,7 +9,14 @@ from inspect_ai import Task, task
 from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
-from apn.dataset import FC100_SUBSETS_DIR, fc100open_dataset, load_subset, oeis_dataset
+from apn.dataset import (
+    ERDOS_SUBSETS_DIR,
+    FC100_SUBSETS_DIR,
+    erdos_dataset,
+    fc100open_dataset,
+    load_subset,
+    oeis_dataset,
+)
 from apn.scorer import proof_scorer
 
 COMPOSE_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_compose"
@@ -114,6 +121,37 @@ def apn_fc100open(
     name_list = load_subset(subset, FC100_SUBSETS_DIR) if subset is not None else None
     return Task(
         dataset=fc100open_dataset(names=name_list),
+        solver=lean_prover(
+            max_attempts=99_999_999 if gated else 1,
+            literature=literature,
+            agent_type=agent_type,
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", str(get_compose_file(literature))),
+    )
+
+
+@task
+def apn_erdos(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+) -> Task:
+    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763).
+
+    All 353 FC ErdosProblems statements the paper's agent attempted, of which
+    350 ship as samples (3 have no statement at the vendored FC commit; see
+    ``apn/data/erdos/EXCLUDED.txt``). Statement text is FC at 67338a1 -- the
+    exact commit the sandbox images bake -- and every ``answer(...) ↔`` form is
+    certified-rewritten to the attempt-time binary task, plain ``P`` (recorded
+    ``True``/``False`` verdicts un-filled, and FC's recorded-verdict
+    annotations stripped, so the answer key cannot leak). No predefined
+    subsets are shipped; run ad-hoc slices via ``--sample-id``.
+    """
+    name_list = load_subset(subset, ERDOS_SUBSETS_DIR) if subset is not None else None
+    return Task(
+        dataset=erdos_dataset(names=name_list),
         solver=lean_prover(
             max_attempts=99_999_999 if gated else 1,
             literature=literature,

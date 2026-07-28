@@ -52,7 +52,6 @@ def IsAttractingCycle (f : ℂ → ℂ) (n : ℕ) (z : ℂ) : Prop :=
   (0 < n) ∧ f.IsPeriodicPt n z ∧ DifferentiableAt ℂ f^[n] z ∧ ‖deriv f^[n] z‖ < 1
 
 /-- The boundary of the Mandelbrot set is conjectured to have zero area. -/
-@[category research open, AMS 37]
 theorem volume_frontier_mandelbrotSet_eq_zero : volume (frontier mandelbrotSet) = 0 := by
   sorry
 

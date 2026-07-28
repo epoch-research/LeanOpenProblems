@@ -33,7 +33,6 @@ def p (n : ℕ) : ℕ := Fintype.card (Nat.Partition n)
 There are no partition numbers $p(k)$ of the form $x^m$, with $x,m$ integers $>1$.
 See comment by Zhi-Wei Sun (Dec 02 2013).
 -/
-@[category research open, AMS 11]
 theorem noPowerPartitionNumber : ∀ k, ¬IsPerfectPower (p k) := by
   sorry
 

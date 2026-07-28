@@ -55,7 +55,6 @@ There are four possibilities for the density of $A+B$:
 Case 4:
 Does $A + B$ have positive upper and lower density that are unequal?
 -/
-@[category research open, AMS 11]
 theorem erdos_125.variants.positive_unequal_density :
     0 < (A + B).lowerDensity ∧ (A + B).lowerDensity < (A + B).upperDensity := by
   sorry

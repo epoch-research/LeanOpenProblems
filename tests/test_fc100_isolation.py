@@ -41,12 +41,10 @@ from scripts.fc100_isolation import (
     ISOLATED_DIR,
     MAPPING_FILE,
     SOURCES_DIR,
-    iff_true,
-    is_example_command,
     kept_names,
-    normalize_hygiene,
     parse_mapping,
 )
+from scripts.fc_statements import iff_true, is_example_command, normalize_hygiene
 from scripts.isolation import (
     matches_name,
     planned_survivors,

@@ -47,7 +47,6 @@ open Module (finrank)
 /-- The rank of an elliptic curve over a number field is always finite by the Mordell–Weil theorem.
 Consequently, the rank is always finite, so `finrank ℤ E⟮K⟯ = 0` really means that the group of
 rational points is torsion, not that it is of infinite rank. -/
-@[category research solved, AMS 11 14]
 instance {K} [Field K] [NumberField K] (E : WeierstrassCurve K) [E.IsElliptic]
     [AddCommMonoid E⟮K⟯] [Module ℤ E⟮K⟯] :
       Module.Finite ℤ E⟮K⟯ := by
@@ -80,7 +79,6 @@ open Filter (atTop)
 
 /-- [PPVW2016] 8.2(c): the number of elliptic curves over ℚ with rank ≥ 21 and naïve height
 at most `H` is asymptotically at most `H ^ o(1)`. -/
-@[category research open, AMS 11 14]
 theorem twentyone_le_rank_height_count_asymptotic :
     ∃ f : ℕ → ℝ, atTop.Tendsto f (𝓝 0) ∧
       ∀ H : ℕ, 1 < H → {E ∈ heightLE H | 21 ≤ E.rank}.ncard ≤ (H : ℝ) ^ f H := by
@@ -104,7 +102,6 @@ def elkiesKlagsbrun29 : WeierstrassCurve ℚ where
   a₆ := 55258058551342376475736699591118191821521067032535079608372404779149413277716173425636721497
 
 /-- See https://mathoverflow.net/a/478050. -/
-@[category test, AMS 11 14]
 theorem Δ_elkiesKlagsbrun29 : elkiesKlagsbrun29.Δ =
     -2 ^ 19 * 3 ^ 7 * 5 ^ 7 * 7 ^ 4 * 11 ^ 5 * 13 ^ 3 * 17 ^ 4 * 31 ^ 3 * 41 ^ 2 * 43 ^ 2 * 61 ^ 2 *
     233 * 241 ^ 2 * 4139 * 678146849364709860535420504397393 *
@@ -112,7 +109,6 @@ theorem Δ_elkiesKlagsbrun29 : elkiesKlagsbrun29.Δ =
     4402149008473369392540402625019227412319473055901 := by
   rw [elkiesKlagsbrun29, Δ, b₂, b₄, b₆, b₈]; norm_num
 
-@[category test, AMS 11 14]
 instance : elkiesKlagsbrun29.IsElliptic where
   isUnit := by rw [Δ_elkiesKlagsbrun29]; norm_num
 
@@ -126,14 +122,12 @@ def elkies28 : WeierstrassCurve ℚ where
   a₆ := 34481611795030556467032985690390720374855944359319180361266008296291939448732243429
 
 /-- See https://mathoverflow.net/a/478050. -/
-@[category test, AMS 11 14]
 theorem Δ_elkies28 : elkies28.Δ =
     2 ^ 15 * 3 ^ 6 * 5 ^ 6 * 7 ^ 4 * 11 ^ 2 * 13 ^ 4 * 17 ^ 5 * 19 ^ 3 *
     48463 * 20650099 * 315574902691581877528345013999136728634663121 *
     376018840263193489397987439236873583997122096511452343225772113000611087671413 := by
   rw [elkies28, Δ, b₂, b₄, b₆, b₈]; norm_num
 
-@[category test, AMS 11 14]
 instance : elkies28.IsElliptic where
   isUnit := by rw [Δ_elkies28]; norm_num
 

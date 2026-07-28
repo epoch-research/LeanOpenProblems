@@ -58,7 +58,6 @@ or a blue $r$-term progression.
 noncomputable def W (k r : ℕ) : ℕ := sInf (mixedMonoAPGuaranteeSet k r)
 
 /-- $W(3, 37) > 1338$ from [AKS14, Table 3]. -/
-@[category research open, AMS 5 11]
 theorem W_3_37_lower : W 3 37 > 1338 := sorry
 
 end Green14

@@ -278,9 +278,9 @@ All "general" conjectures are restricted to even `N`.
 
 /-- For $N = 6$ and $D = 4$, does there exist no solution to the monochromatic quantum graph
 equation system over $\mathbb{C}$? -/
-@[category research open, AMS 5 14 81]
 theorem eqSystem6_no_solution_d4 :
-    ¬ ∃ W : WeightsN 6 4 ℂ, EqSystemN 6 4 W := by
+    
+      ¬ ∃ W : WeightsN 6 4 ℂ, EqSystemN 6 4 W := by
   sorry
 
 /- ## Open conjectures over ℝ -/

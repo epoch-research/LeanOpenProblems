@@ -53,7 +53,6 @@ def A : Set ℕ := {n | a n}
 abbrev isPrimitiveTerm (n : ℕ) : Prop := A.IsPrimitive n
 
 /-- All members of the sequence satisfy $n \equiv 108 \pmod{216}$. -/
-@[category research open, AMS 11]
 theorem mod_216_of_a {n : ℕ} (h : a n) : n % 216 = 108 := by
   sorry
 

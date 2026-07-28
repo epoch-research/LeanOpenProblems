@@ -16,6 +16,11 @@ FC100_ISOLATED_DIR = FC100_DIR / "Isolated"
 FC100_MAPPING_FILE = FC100_DIR / "MAPPING.txt"
 FC100_SUBSETS_DIR = FC100_DIR / "subsets"
 
+ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
+ERDOS_ISOLATED_DIR = ERDOS_DIR / "Isolated"
+ERDOS_MAPPING_FILE = ERDOS_DIR / "MAPPING.txt"
+ERDOS_SUBSETS_DIR = ERDOS_DIR / "subsets"
+
 _OEIS_NUM_RE = re.compile(r"^(\d+)_")
 
 
@@ -139,10 +144,11 @@ def oeis_dataset(
     return MemoryDataset(samples, name="oeis")
 
 
-def parse_fc100_mapping(text: str) -> list[tuple[str, str]]:
-    """Parse FC100's ``MAPPING.txt`` into ``(full_decl_name, source_relpath)``
-    entries. Each line is ``<full_decl_name> <relpath under Sources/>``; unlike
-    the OEIS mapping, every target has exactly one source file."""
+def parse_decl_mapping(text: str) -> list[tuple[str, str]]:
+    """Parse a ``MAPPING.txt`` (FC100's or Erdős') into ``(full_decl_name,
+    source_relpath)`` entries. Each line is ``<full_decl_name> <relpath under
+    Sources/>``; unlike the OEIS mapping, every target has exactly one source
+    file."""
     entries: list[tuple[str, str]] = []
     for line in text.splitlines():
         parts = line.split()
@@ -158,15 +164,16 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is the
     target's *isolated* spec under ``Isolated/<name>.lean`` -- the source file's
     definitions plus the single target theorem, siblings/test lemmas/``example``
-    commands removed, and propositional ``answer(sorry) ↔ P`` statements
-    rewritten to plain ``P`` (certified by ``tests/test_fc100_isolation.py``).
-    The 14 value-typed ``answer(sorry)`` members of the paper's 100 are excluded
+    commands removed, propositional ``answer(sorry) ↔ P`` statements rewritten
+    to plain ``P`` (certified by ``tests/test_fc100_isolation.py``), and FC's
+    ``@[category ...]`` classification lists dropped. The 14 value-typed
+    ``answer(sorry)`` members of the paper's 100 are excluded
     (``EXCLUDED.txt``).
 
     Args:
         names: If given, keep only these target names (e.g. a curated subset).
     """
-    entries = parse_fc100_mapping(FC100_MAPPING_FILE.read_text())
+    entries = parse_decl_mapping(FC100_MAPPING_FILE.read_text())
     samples: list[Sample] = []
     for name, relpath in entries:
         if names is not None and name not in names:
@@ -178,3 +185,35 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
         }
         samples.append(Sample(input=text, id=name, metadata=metadata))
     return MemoryDataset(samples, name="fc100open")
+
+
+def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The Tsoukalas paper's canonical Erdős attempted set (350 of the 353
+    statements its agent attempted, arXiv 2605.22763) as Samples.
+
+    One sample per ``MAPPING.txt`` entry; the sample id is the target's fully
+    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is the
+    target's *isolated* spec under ``Isolated/<name>.lean`` -- the source
+    file's definitions plus the single target theorem, siblings/test
+    lemmas/``example`` commands removed, and all four ``answer(...) ↔``
+    statement forms rewritten to plain ``P`` (recorded ``True``/``False``
+    verdicts un-filled and FC's recorded-verdict annotations stripped -- the
+    answer key must not leak; certified by ``tests/test_erdos_isolation.py``).
+    Statement text is FC at the baked commit 67338a1; 3 attempted names have
+    no statement there and are excluded (``EXCLUDED.txt``).
+
+    Args:
+        names: If given, keep only these target names (e.g. a curated subset).
+    """
+    entries = parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())
+    samples: list[Sample] = []
+    for name, relpath in entries:
+        if names is not None and name not in names:
+            continue
+        text = strip_license_header((ERDOS_ISOLATED_DIR / f"{name}.lean").read_text())
+        metadata = {
+            "sketch": text,
+            "source_file": relpath,
+        }
+        samples.append(Sample(input=text, id=name, metadata=metadata))
+    return MemoryDataset(samples, name="erdos")

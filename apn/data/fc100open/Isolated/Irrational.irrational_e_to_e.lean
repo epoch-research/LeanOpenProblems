@@ -34,7 +34,6 @@ namespace Irrational
 /--
 Is $e ^ e$ irrational?
 -/
-@[category research open, AMS 33]
 theorem irrational_e_to_e :
     Irrational (e ^ e) := by
   sorry
