@@ -1,0 +1,769 @@
+{
+ "_meta": {
+  "source": "https://www.erdosproblems.com/forum/thread/General%20Erd%C5%91s%20Discussion",
+  "description": "Thomas Bloom's crosswalk of the 1999 booklet 'Some of Paul's favorite problems' (94 entries selected by 18 of Erdős's colleagues) to database problem numbers",
+  "posted": "00:16 on 24 Jan 2026",
+  "retrieved": "2026-07-30"
+ },
+ "entries": [
+  {
+   "entry": "1.1",
+   "section": "Primes",
+   "problems": [
+    4
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "1.2",
+   "section": "Primes",
+   "problems": [
+    1137
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.3",
+   "section": "Primes",
+   "problems": [
+    1138
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.4",
+   "section": "Primes",
+   "problems": [
+    1139
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.5",
+   "section": "Primes",
+   "problems": [
+    1140
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.6",
+   "section": "Primes",
+   "problems": [
+    1141
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.7",
+   "section": "Primes",
+   "problems": [
+    1142
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.8",
+   "section": "Primes",
+   "problems": [
+    1143
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.9",
+   "section": "Primes",
+   "problems": [
+    32
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.10",
+   "section": "Primes",
+   "problems": [
+    371
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.11",
+   "section": "Primes",
+   "problems": [
+    1144
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.12",
+   "section": "Primes",
+   "problems": [
+    164
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "1.13",
+   "section": "Unit Fractions",
+   "problems": [
+    242
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.14",
+   "section": "Unit Fractions",
+   "problems": [
+    300
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "1.15",
+   "section": "Unit Fractions",
+   "problems": [
+    287
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.16",
+   "section": "Additive number theory",
+   "problems": [
+    28,
+    66
+   ],
+   "annotation": "both open"
+  },
+  {
+   "entry": "1.17",
+   "section": "Additive number theory",
+   "problems": [
+    1145
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.18",
+   "section": "Additive number theory",
+   "problems": [
+    30,
+    39
+   ],
+   "annotation": "both open"
+  },
+  {
+   "entry": "1.19",
+   "section": "Additive number theory",
+   "problems": [
+    1146
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.20",
+   "section": "Additive number theory",
+   "problems": [
+    1
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.21",
+   "section": "Additive number theory",
+   "problems": [
+    1147
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.22",
+   "section": "Additive number theory",
+   "problems": [
+    792,
+    790,
+    787,
+    963,
+    963
+   ],
+   "annotation": "all (except perhaps ) open"
+  },
+  {
+   "entry": "1.23",
+   "section": "Additive number theory",
+   "problems": [
+    41
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.24",
+   "section": "Additive number theory",
+   "problems": [
+    253
+   ],
+   "annotation": "solved (in 1960!)"
+  },
+  {
+   "entry": "1.25",
+   "section": "Additive number theory",
+   "problems": [
+    1148
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "1.26",
+   "section": "Additive number theory",
+   "problems": [
+    52
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.27",
+   "section": "Arithmetic progressions",
+   "problems": [
+    142
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.28",
+   "section": "Arithmetic progressions",
+   "problems": [
+    3
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.29",
+   "section": "Arithmetic progressions",
+   "problems": [
+    202
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.30",
+   "section": "Arithmetic progressions",
+   "problems": [
+    67
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "1.31",
+   "section": "Arithmetic progressions",
+   "problems": [
+    2
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "1.32",
+   "section": "Arithmetic progressions",
+   "problems": [
+    672
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "1.33",
+   "section": "More number theory",
+   "problems": [
+    260
+   ],
+   "annotation": "solved (by Erdős himself in 1981)"
+  },
+  {
+   "entry": "1.34",
+   "section": "More number theory",
+   "problems": [
+    1149
+   ],
+   "annotation": "solved (new)"
+  },
+  {
+   "entry": "2.35",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    114
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "2.36",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    1150
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "2.37",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    228
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "2.38",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    119
+   ],
+   "annotation": "partially solved"
+  },
+  {
+   "entry": "2.39",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    973
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "2.40",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    671
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "2.41",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    1151
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "2.42",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    1152
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "2.43",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    1132
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "2.44",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    1153
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "2.45",
+   "section": "Polynomials and interpolation",
+   "problems": [
+    1131
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "2.46",
+   "section": "Measure theory",
+   "problems": [
+    120
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "2.47",
+   "section": "Measure theory",
+   "problems": [
+    352
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "2.48",
+   "section": "Measure theory",
+   "problems": [
+    1154
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "3.49",
+   "section": "Ramsey theory",
+   "problems": [
+    78
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "3.50",
+   "section": "Ramsey theory",
+   "problems": [
+    77
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "3.51",
+   "section": "Ramsey theory",
+   "problems": [
+    166
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "3.52",
+   "section": "Ramsey theory",
+   "problems": [
+    61
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "3.53",
+   "section": "Ramsey theory",
+   "problems": [
+    1036
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "3.54",
+   "section": "Ramsey theory",
+   "problems": [
+    76
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "3.55",
+   "section": "Extremal problems",
+   "problems": [
+    548
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "3.56",
+   "section": "Extremal problems",
+   "problems": [
+    59
+   ],
+   "annotation": "partially solved"
+  },
+  {
+   "entry": "3.57",
+   "section": "Coloring problems",
+   "problems": [
+    19
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "3.58",
+   "section": "Coloring problems",
+   "problems": [
+    57
+   ],
+   "annotation": "solved"
+  },
+  {
+   "entry": "3.59",
+   "section": "Coloring problems",
+   "problems": [
+    108
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "3.60",
+   "section": "Coloring problems",
+   "problems": [
+    1032
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "3.61",
+   "section": "Random structures",
+   "problems": [
+    1155
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "3.62",
+   "section": "Random structures",
+   "problems": [
+    1156
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "3.63",
+   "section": "Set-systems",
+   "problems": [
+    20
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "3.64",
+   "section": "Set-systems",
+   "problems": [
+    1157
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "3.65",
+   "section": "Set-systems",
+   "problems": [
+    1158
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "4.66",
+   "section": "Geometry",
+   "problems": [
+    107
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "4.67",
+   "section": "Geometry",
+   "problems": [
+    90
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "4.68",
+   "section": "Geometry",
+   "problems": [
+    96
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "4.69",
+   "section": "Geometry",
+   "problems": [
+    89
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "4.70",
+   "section": "Geometry",
+   "problems": [
+    1159
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "5.71",
+   "section": "Algebra",
+   "problems": [
+    1160
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "5.72",
+   "section": "Algebra",
+   "problems": [
+    1161
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "5.73",
+   "section": "Algebra",
+   "problems": [
+    1162
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "5.74",
+   "section": "Algebra",
+   "problems": [
+    1163
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "5.75",
+   "section": "Algebra",
+   "problems": [
+    117
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "6.76",
+   "section": "Random walk",
+   "problems": [
+    1164
+   ],
+   "annotation": "solved (new)"
+  },
+  {
+   "entry": "6.77",
+   "section": "Random walk",
+   "problems": [
+    1165
+   ],
+   "annotation": "solved (new)"
+  },
+  {
+   "entry": "6.78",
+   "section": "Random walk",
+   "problems": [
+    1166
+   ],
+   "annotation": "solved (new)"
+  },
+  {
+   "entry": "7.79",
+   "section": "Set theory",
+   "problems": [
+    1167
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.80",
+   "section": "Set theory",
+   "problems": [
+    1168
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.81",
+   "section": "Set theory",
+   "problems": [
+    474
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "7.82",
+   "section": "Set theory",
+   "problems": [
+    591,
+    592
+   ],
+   "annotation": "partially solved"
+  },
+  {
+   "entry": "7.83",
+   "section": "Set theory",
+   "problems": [
+    70
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "7.84",
+   "section": "Set theory",
+   "problems": [
+    1171
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.85",
+   "section": "Set theory",
+   "problems": [
+    1169
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.86",
+   "section": "Set theory",
+   "problems": [
+    1170
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.87",
+   "section": "Set theory",
+   "problems": [
+    1172
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.88",
+   "section": "Set theory",
+   "problems": [
+    1173
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.89",
+   "section": "Set theory",
+   "problems": [
+    62
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "7.90",
+   "section": "Set theory",
+   "problems": [
+    1068
+   ],
+   "annotation": "open"
+  },
+  {
+   "entry": "7.91",
+   "section": "Set theory",
+   "problems": [
+    1174
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.92",
+   "section": "Set theory",
+   "problems": [
+    1175
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.93",
+   "section": "Set theory",
+   "problems": [
+    1176
+   ],
+   "annotation": "open (new)"
+  },
+  {
+   "entry": "7.94",
+   "section": "Set theory",
+   "problems": [
+    1177
+   ],
+   "annotation": "open (new)"
+  }
+ ]
+}

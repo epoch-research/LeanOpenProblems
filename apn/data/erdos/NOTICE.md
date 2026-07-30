@@ -43,6 +43,20 @@ Canonicalization (see `EXCLUDED.txt` and `RENAMED.txt` for the details):
   status: this is the paper's canonical attempted set, regardless of what has
   been resolved since.
 
+**`raw/`** — scraped from erdosproblems.com (© Thomas Bloom and the site's
+contributors; the site publishes no explicit license) on 2026-07-30 by
+`scripts/fetch_erdosproblems_data.py`: `erdosproblems_problems.jsonl` (one row
+per problem — status, prize, statement, source citations, tags),
+`erdosproblems_lists.jsonl` (the site's catalog of the 147 problem-list papers
+Erdős wrote), `booklet_1999_crosswalk.json` and `bloom_top10.json` (Thomas
+Bloom's forum/blog posts), and `green_open_problems.json` (link annotations
+extracted from Ben Green's *100 Open Problems* PDF, © Ben Green). Rows are
+keyed by erdosproblems.com problem number — the `<n>` in `Erdos<n>.erdos_<n>`
+sample ids — and a problem's membership in any of the 147 list-papers is the
+join `sources[].code` × the lists catalog, not a fact baked into the rows.
+The fetch script validates every parsed count against the site's
+self-reported totals.
+
 Everything else in this directory is produced by this repository:
 `MAPPING.txt` (target -> source file) and `Isolated/` (one per-target spec per
 member, with sibling theorems and `example` commands cut and the four

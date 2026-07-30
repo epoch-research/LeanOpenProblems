@@ -1,0 +1,35 @@
+{
+ "_meta": {
+  "source": "https://people.maths.ox.ac.uk/greenbj/papers/open-problems.pdf",
+  "description": "erdosproblems.com URLs hyperlinked in Ben Green's '100 Open Problems' PDF; most of his problems carry no such link and are not mechanically mappable",
+  "retrieved": "2026-07-30"
+ },
+ "uris": [
+  "erdosproblems.com",
+  "https://www.erdosproblems.com/",
+  "https://www.erdosproblems.com/120",
+  "https://www.erdosproblems.com/193",
+  "https://www.erdosproblems.com/30",
+  "https://www.erdosproblems.com/334",
+  "https://www.erdosproblems.com/341",
+  "https://www.erdosproblems.com/342",
+  "https://www.erdosproblems.com/424",
+  "https://www.erdosproblems.com/484",
+  "https://www.erdosproblems.com/689",
+  "https://www.erdosproblems.com/792",
+  "www.erdosproblems.com/160"
+ ],
+ "problems": [
+  30,
+  120,
+  160,
+  193,
+  334,
+  341,
+  342,
+  424,
+  484,
+  689,
+  792
+ ]
+}
