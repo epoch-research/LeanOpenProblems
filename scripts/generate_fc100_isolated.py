@@ -1,9 +1,9 @@
 # type: ignore
 """Generate the per-target isolated FC100OpenSet1 specs in
-``apn/data/fc100open/Isolated/`` (plus ``MAPPING.txt``).
+``apn/data/fc100open/Isolated/`` (plus ``MAPPING.json``).
 
 Membership is the vendored ``FC100OpenSet1.lean`` (the paper's frozen
-100-problem open subset) minus ``EXCLUDED.txt`` (14 value-typed
+100-problem open subset) minus ``EXCLUDED.json`` (14 value-typed
 ``answer(sorry)`` members) -> 86 kept targets. For each kept target this
 resolves the unique vendored ``Sources/`` file declaring it, keeps that file's
 definitions + the single target theorem, and cuts every other standalone
@@ -13,7 +13,7 @@ propositional ``answer(sorry) ↔ P`` statements are rewritten to plain ``P``
 certificate of that rewrite).
 
 This is a *vendor-time* dev tool, not imported at runtime; ``apn/dataset.py``
-reads the committed ``Isolated/`` + ``MAPPING.txt`` directly. The committed
+reads the committed ``Isolated/`` + ``MAPPING.json`` directly. The committed
 files are validated by ``tests/test_fc100_isolation.py`` -- re-extraction
 structural checks incl. the rewrite certificate, and the authoritative
 ``lake env lean -o`` compile gate -- which run the Lean toolchain in a
@@ -34,6 +34,7 @@ Then generate:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -186,7 +187,26 @@ def main() -> None:
     if n_category != 91:
         raise SystemExit(f"expected 91 category lists stripped, got {n_category}")
 
-    MAPPING_FILE.write_text("".join(f"{name} {rel}\n" for name, rel in mapping))
+    MAPPING_FILE.write_text(
+        json.dumps(
+            {
+                "_meta": {
+                    "description": (
+                        "Runnable targets of the FC100OpenSet1 dataset: fully "
+                        "qualified declaration name -> its file under Sources/. "
+                        "One isolated spec per row, under Isolated/<target>.lean."
+                    ),
+                    "generator": "scripts/generate_fc100_isolated.py",
+                },
+                "targets": [
+                    {"target": name, "source_file": rel} for name, rel in mapping
+                ],
+            },
+            indent=1,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
     print(
         f"Wrote {len(mapping)} isolated files ({len(rewritten)} rewritten) to "
         f"{ISOLATED_DIR} and {MAPPING_FILE.name}.\n"

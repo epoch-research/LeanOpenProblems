@@ -40,7 +40,7 @@ _SORRY_RE = re.compile(r"\bsorry\b")
 
 def test_membership_arithmetic() -> None:
     # The vendored subset file is the membership source of truth: exactly 100
-    # distinct members, of which exactly the 14 in EXCLUDED.txt are dropped.
+    # distinct members, of which exactly the 14 in EXCLUDED.json are dropped.
     members = parse_subset_names(SUBSET_FILE.read_text())
     assert len(members) == 100
     assert len(set(members)) == 100
@@ -53,7 +53,7 @@ def test_membership_arithmetic() -> None:
 
 
 def test_mapping_matches_membership() -> None:
-    # MAPPING.txt (generated) covers exactly the kept members, in subset order,
+    # MAPPING.json (generated) covers exactly the kept members, in subset order,
     # and every mapped source file is vendored.
     entries = parse_decl_mapping(FC100_MAPPING_FILE.read_text())
     assert [name for name, _ in entries] == kept_names()
