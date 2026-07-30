@@ -5,7 +5,7 @@ tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn
     items:
-      # Two named subsets (apn/data/oeis/subsets/*.txt), passed as task args so
+      # Two named subsets (apn/data/oeis/subsets/*.json), passed as task args so
       # each apn_oeis item has a distinct Inspect task identifier. Drop the
       # `subset` arg to run the full 492-conjecture OEIS benchmark.
       - name: apn_oeis

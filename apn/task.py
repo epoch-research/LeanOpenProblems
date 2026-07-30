@@ -127,21 +127,27 @@ def apn_fc100open(
 
 @task
 def apn_erdos(
-    subset: str | None = None,
+    subset: str | None = "tsoukalas",
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763).
+    """Erdős problems formalized in Formal Conjectures.
 
-    All 353 FC ErdosProblems statements the paper's agent attempted, of which
-    350 ship as samples (3 have no statement at the vendored FC commit; see
-    ``apn/data/erdos/EXCLUDED.txt``). Statement text is FC at 67338a1 -- the
-    exact commit the sandbox images bake -- and every ``answer(...) ↔`` form is
+    Defaults to ``subset="tsoukalas"``: the paper's canonical attempted set
+    (arXiv 2605.22763) -- all 353 FC ErdosProblems statements its agent
+    attempted, of which 350 ship as samples (3 have no statement at the
+    vendored FC commit; see ``apn/data/erdos/subsets/tsoukalas.json`` for the
+    reason per name). Statement text is FC at 67338a1 -- the exact commit the
+    sandbox images bake -- and every ``answer(...) ↔`` form is
     certified-rewritten to the attempt-time binary task, plain ``P`` (recorded
     ``True``/``False`` verdicts un-filled, and FC's recorded-verdict
-    annotations stripped, so the answer key cannot leak). No predefined
-    subsets are shipped; run ad-hoc slices via ``--sample-id``.
+    annotations stripped, so the answer key cannot leak).
+
+    Pass another name from ``apn/data/erdos/subsets/`` to run a different set,
+    or ``subset=None`` for every runnable target in ``MAPPING.json``; run
+    ad-hoc slices via ``--sample-id``. The default is pinned by name so the
+    paper-parity set stays the default as the runnable universe grows.
     """
     name_list = load_subset(subset, ERDOS_SUBSETS_DIR) if subset is not None else None
     return Task(

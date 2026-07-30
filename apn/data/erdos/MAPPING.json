@@ -2,11 +2,8 @@
  "_meta": {
   "description": "Runnable targets of the Erdős dataset: fully qualified declaration name -> its file under Sources/. One isolated spec per row, under Isolated/<target>.lean. This is the universe of what can be run; which targets form a given evaluation set is defined under subsets/.",
   "generator": "scripts/generate_erdos_isolated.py",
-  "fc_commit": "67338a157bbb8d87e9a349d662f82a868bda6327",
-  "converted_from": {
-   "file": "MAPPING.txt",
-   "sha256": "d4179ec55dd527ef33afe64d7a816e974850a5bbfac23ddde04679de1482336b"
-  }
+  "generated_subset": "tsoukalas",
+  "fc_commit": "67338a157bbb8d87e9a349d662f82a868bda6327"
  },
  "targets": [
   {

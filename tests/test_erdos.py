@@ -28,14 +28,11 @@ from apn.dataset import (
     parse_decl_mapping,
 )
 from scripts.erdos_isolation import (
-    ATTEMPTED_FILE,
-    EXCLUDED_FILE,
-    RENAMED_FILE,
+    GENERATED_SUBSET,
     SORRY_ALLOWLIST,
     SOURCES_DIR,
+    SUBSETS_DIR,
     kept_names,
-    parse_names,
-    parse_renamed,
 )
 from scripts.fc_statements import strip_comments
 from scripts.isolation import matches_name
@@ -59,24 +56,47 @@ def test_sources_corpus_complete_and_unmodified() -> None:
 
 
 def test_membership_arithmetic() -> None:
-    # The vendored attempted list is the membership source of truth: exactly
-    # 353 distinct names, of which exactly the 3 in EXCLUDED.txt are dropped
-    # and the 1 in RENAMED.txt is tracked to its name at the vendored commit.
-    attempted = parse_names(ATTEMPTED_FILE.read_text())
+    # subsets/tsoukalas.json is the membership source of truth: the paper's 353
+    # attempted names, of which exactly its 3 excluded ones are dropped and its
+    # 1 rename is tracked to the name at the vendored FC commit.
+    subset = json.loads((SUBSETS_DIR / f"{GENERATED_SUBSET}.json").read_text())
+    attempted = subset["attempted"]
     assert len(attempted) == 353
     assert len(set(attempted)) == 353
-    excluded = parse_names(EXCLUDED_FILE.read_text())
+    excluded = {row["target"] for row in subset["excluded"]}
     assert len(excluded) == 3
-    assert set(excluded) <= set(attempted)
-    renames = parse_renamed(RENAMED_FILE.read_text())
+    assert excluded <= set(attempted)
+    renames = {row["attempted"]: row["at_fc_commit"] for row in subset["renamed"]}
     assert renames == {"erdos_1082b": "erdos_1082.parts.ii"}
     kept = kept_names()
     assert len(kept) == 350
-    assert set(kept) == (set(attempted) - set(excluded) - set(renames)) | set(renames.values())
+    assert set(kept) == (set(attempted) - excluded - set(renames)) | set(renames.values())
+    # Every entry carries a reason -- the reconciliation must stay documented.
+    assert all(row["reason"].strip() for row in subset["excluded"] + subset["renamed"])
+
+
+def test_attempted_list_matches_upstream_digest() -> None:
+    # The attempted list is a vendored copy of the paper's
+    # erdos_problems_attempted.txt (newline-separated, no trailing newline).
+    # Pinning its digest means an edit to the list cannot silently redefine the
+    # paper's set -- the upstream file is no longer kept alongside it.
+    subset = json.loads((SUBSETS_DIR / f"{GENERATED_SUBSET}.json").read_text())
+    digest = hashlib.sha256("\n".join(subset["attempted"]).encode()).hexdigest()
+    assert digest == subset["_meta"]["upstream"]["sha256"]
+
+
+def test_subset_samples_match_generated_membership() -> None:
+    # The subset's sample ids are the fully qualified resolutions of its kept
+    # short names, in the same order -- what load_subset hands the dataset.
+    samples = load_subset(GENERATED_SUBSET, ERDOS_SUBSETS_DIR)
+    assert len(samples) == 350
+    for full, short in zip(samples, kept_names()):
+        assert matches_name(full, short), f"{full} does not resolve {short}"
+    assert samples == [name for name, _ in parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())]
 
 
 def test_mapping_matches_membership() -> None:
-    # MAPPING.txt (generated) resolves exactly the kept short names, in
+    # MAPPING.json (generated) resolves exactly the kept short names, in
     # attempt-list order, to fully qualified declaration names, and every
     # mapped source file is vendored.
     entries = parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())
@@ -198,7 +218,5 @@ def test_every_target_has_isolated_single_theorem_spec() -> None:
 
 
 def test_load_subset_unknown_raises() -> None:
-    # No predefined subsets are shipped for this dataset; ad-hoc runs go
-    # through --sample-id.
     with pytest.raises(ValueError, match="Unknown subset"):
         load_subset("does_not_exist", ERDOS_SUBSETS_DIR)

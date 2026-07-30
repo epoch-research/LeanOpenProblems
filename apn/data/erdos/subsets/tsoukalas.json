@@ -7,8 +7,8 @@
    "repo": "https://github.com/google-deepmind/alphaproof-nexus-results",
    "commit": "c58c3cd01dd8cb5705606565ac23bfd81d432ae5",
    "path": "erdos_problems_attempted.txt",
-   "sha256": "144046c754a6ba494944bbd9378d26e23355fb0298ef4e78ca821ded44d4f6a3",
-   "license": "CC-BY 4.0, © 2026 Google LLC"
+   "license": "CC-BY 4.0, © 2026 Google LLC",
+   "sha256": "144046c754a6ba494944bbd9378d26e23355fb0298ef4e78ca821ded44d4f6a3"
   },
   "fc_commit": "67338a157bbb8d87e9a349d662f82a868bda6327",
   "counts": {

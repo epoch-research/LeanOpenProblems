@@ -5,23 +5,26 @@ The dataset-neutral cut logic and Docker plumbing live in
 (the ``example``-command cut, the ``answer(...) ↔`` rewrite and its
 re-elaboration certificates) in ``scripts/fc_statements.py``; this module owns
 what is Erdős-specific -- the data locations under ``apn/data/erdos/`` and
-their parsers. Membership comes from the vendored ``ATTEMPTED.txt`` (the 353
-ErdosProblems statements the Tsoukalas paper's agent attempted, arXiv
-2605.22763) minus ``EXCLUDED.txt`` (3 names with no statement at the vendored
-FC commit), with ``RENAMED.txt`` tracking upstream renames -- 350 kept
-targets. Unlike FC100's fully qualified subset names, the attempted names are
-*short* (``erdos_741.parts.i``); resolution against the vendored sources uses
-``matches_name`` suffix semantics and ``MAPPING.txt`` records the resolved
-fully qualified declaration names.
+their parsers. ``Sources/`` is the whole FC ErdosProblems directory at the
+vendored commit, so which statements belong to an evaluation set is not a
+property of the corpus: it comes from a file under ``subsets/``. Generation
+currently covers ``subsets/tsoukalas.json`` -- the 353 ErdosProblems statements
+the Tsoukalas paper's agent attempted (arXiv 2605.22763) minus its 3 excluded
+names, with its 1 rename applied, for 350 kept targets. Unlike FC100's fully
+qualified subset names, the attempted names are *short* (``erdos_741.parts.i``);
+resolution against the vendored sources uses ``matches_name`` suffix semantics
+and ``MAPPING.json`` records the resolved fully qualified declaration names.
 
 Two callers import this module: ``scripts/generate_erdos_isolated.py`` (the
-vendor-time tool that produces ``Isolated/`` + ``MAPPING.txt``) and
+vendor-time tool that produces ``Isolated/`` + ``MAPPING.json``) and
 ``tests/test_erdos_isolation.py`` (the authoritative validation of the
 committed files).
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 
 from apn.dataset import parse_decl_mapping
@@ -33,10 +36,15 @@ parse_mapping = parse_decl_mapping  # re-exported under the dataset-neutral name
 ERDOS_DIR = REPO / "apn" / "data" / "erdos"
 SOURCES_DIR = ERDOS_DIR / "Sources"
 ISOLATED_DIR = ERDOS_DIR / "Isolated"
-ATTEMPTED_FILE = ERDOS_DIR / "ATTEMPTED.txt"
-EXCLUDED_FILE = ERDOS_DIR / "EXCLUDED.txt"
-RENAMED_FILE = ERDOS_DIR / "RENAMED.txt"
-MAPPING_FILE = ERDOS_DIR / "MAPPING.txt"
+MAPPING_FILE = ERDOS_DIR / "MAPPING.json"
+SUBSETS_DIR = ERDOS_DIR / "subsets"
+# The evaluation set generation covers. Sources/ is set-free, so this is the
+# only place the generated universe is scoped to a particular set; widening it
+# means generating specs for further subsets, not editing the corpus.
+GENERATED_SUBSET = "tsoukalas"
+
+# The FC commit Sources/ is vendored at (see SOURCES.json).
+FC_COMMIT = "67338a157bbb8d87e9a349d662f82a868bda6327"
 
 # Targets whose isolated spec may carry a `sorry` outside the target theorem.
 # 1055.lean's kept `noncomputable def p := Nat.find (exists_p r)` depends on
@@ -147,46 +155,37 @@ def strip_fc_annotations(text: str) -> tuple[str, dict[str, int]]:
     return text, counts
 
 
-def parse_names(text: str) -> list[str]:
-    """Names one per line; blank lines and ``#`` comments ignored."""
-    names: list[str] = []
-    for line in text.splitlines():
-        entry = line.split("#", 1)[0].strip()
-        if entry:
-            names.append(entry)
-    return names
-
-
-def parse_renamed(text: str) -> dict[str, str]:
-    """``RENAMED.txt`` as ``{attempt_time_name: name_at_vendored_commit}``
-    (one whitespace-separated pair per line; ``#`` comments ignored)."""
-    renames: dict[str, str] = {}
-    for line in text.splitlines():
-        entry = line.split("#", 1)[0].strip()
-        if entry:
-            old, new = entry.split()
-            renames[old] = new
-    return renames
-
-
 def kept_names() -> list[str]:
-    """The 350 kept short names: ``ATTEMPTED.txt``'s 353 minus
-    ``EXCLUDED.txt``'s 3, with ``RENAMED.txt`` applied, in attempt-list order.
-    Fails loudly if the membership arithmetic is off (a vendoring or
-    exclusion-list error, never something to paper over)."""
-    attempted = parse_names(ATTEMPTED_FILE.read_text())
-    if len(attempted) != 353 or len(set(attempted)) != 353:
-        raise SystemExit(f"expected 353 distinct attempted names, found {len(attempted)}")
-    excluded = parse_names(EXCLUDED_FILE.read_text())
-    if len(excluded) != 3:
-        raise SystemExit(f"expected 3 excluded names, found {len(excluded)}")
-    unknown = sorted(set(excluded) - set(attempted))
+    """The kept short names of the generated subset, in its own order:
+    ``subsets/tsoukalas.json``'s 353 attempted names minus its 3 excluded ones,
+    with its 1 rename applied -> 350. Fails loudly if the membership arithmetic
+    is off (a vendoring or exclusion-list error, never something to paper
+    over)."""
+    subset = json.loads((SUBSETS_DIR / f"{GENERATED_SUBSET}.json").read_text())
+    counts = subset["_meta"]["counts"]
+    attempted = subset["attempted"]
+    if len(attempted) != counts["attempted"] or len(set(attempted)) != counts["attempted"]:
+        raise SystemExit(
+            f"expected {counts['attempted']} distinct attempted names, "
+            f"found {len(attempted)}"
+        )
+    upstream = subset["_meta"]["upstream"]
+    digest = hashlib.sha256("\n".join(attempted).encode()).hexdigest()
+    if digest != upstream["sha256"]:
+        raise SystemExit(
+            f"attempted list hashes to {digest}, expected {upstream['sha256']} "
+            f"({upstream['path']} at {upstream['commit'][:7]})"
+        )
+    excluded = {row["target"] for row in subset["excluded"]}
+    if len(excluded) != counts["excluded"]:
+        raise SystemExit(f"expected {counts['excluded']} excluded names, found {len(excluded)}")
+    unknown = sorted(excluded - set(attempted))
     if unknown:
-        raise SystemExit(f"EXCLUDED.txt names not in the attempted list: {unknown}")
-    renames = parse_renamed(RENAMED_FILE.read_text())
+        raise SystemExit(f"excluded names not in the attempted list: {unknown}")
+    renames = {row["attempted"]: row["at_fc_commit"] for row in subset["renamed"]}
     stale = sorted((set(renames) - set(attempted)) | (set(renames.values()) & set(attempted)))
     if stale:
-        raise SystemExit(f"RENAMED.txt entries inconsistent with the attempted list: {stale}")
-    kept = [renames.get(n, n) for n in attempted if n not in set(excluded)]
-    assert len(kept) == 350 and len(set(kept)) == 350
+        raise SystemExit(f"renamed entries inconsistent with the attempted list: {stale}")
+    kept = [renames.get(n, n) for n in attempted if n not in excluded]
+    assert len(kept) == counts["samples"] and len(set(kept)) == counts["samples"]
     return kept

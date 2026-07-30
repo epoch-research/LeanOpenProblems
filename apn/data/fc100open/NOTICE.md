@@ -15,11 +15,11 @@ the sandbox images already contain), so results are comparable to the tag.
 
 `Sources/<relpath>` mirrors the FC repository's `FormalConjectures/<relpath>`
 for every subset problem file that hosts at least one *kept* target (see
-`EXCLUDED.txt` for the 14 value-typed `answer(sorry)` members that are
+`EXCLUDED.json` for the 14 value-typed `answer(sorry)` members that are
 excluded; files hosting only excluded targets are not vendored).
 
 Everything else in this directory is produced by this repository:
-`MAPPING.txt` (kept target -> source file) and `Isolated/` (one per-target
+`MAPPING.json` (kept target -> source file) and `Isolated/` (one per-target
 spec per kept member, with sibling theorems and `example` commands cut,
 propositional `answer(sorry) ↔ P` statements certified-rewritten to plain `P`,
 and FC's `@[category ..., AMS ...]` classification lists dropped — catalogue

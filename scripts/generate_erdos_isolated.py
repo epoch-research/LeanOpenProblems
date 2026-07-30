@@ -1,11 +1,14 @@
 # type: ignore
 """Generate the per-target isolated Erdős-attempted-set specs in
-``apn/data/erdos/Isolated/`` (plus ``MAPPING.txt``).
+``apn/data/erdos/Isolated/`` (plus ``MAPPING.json``).
 
-Membership is the vendored ``ATTEMPTED.txt`` (the Tsoukalas paper's canonical
-353-statement Erdős attempted set, arXiv 2605.22763) minus ``EXCLUDED.txt``
-(3 names with no statement at the vendored FC commit), with ``RENAMED.txt``
-applied -> 350 kept targets. Each short attempted name is resolved to the
+Membership comes from ``subsets/tsoukalas.json`` (the Tsoukalas paper's
+canonical 353-statement Erdős attempted set, arXiv 2605.22763, minus its 3
+names with no statement at the vendored FC commit, with its 1 upstream rename
+applied) -> 350 kept targets. ``Sources/`` itself is the whole FC
+ErdosProblems directory and says nothing about membership; generating specs
+for a further set means pointing ``GENERATED_SUBSET`` at another subsets/ file.
+Each short attempted name is resolved to the
 unique vendored ``Sources/`` declaration via suffix matching; the resulting
 spec keeps that file's definitions + the single target theorem and cuts every
 other standalone ``theorem``/``lemma`` and FC's anonymous ``example`` sanity
@@ -16,7 +19,7 @@ whose answer key must not leak -- and the per-form census is asserted (see
 in ``scripts/fc_statements.py`` / ``tests/test_erdos_isolation.py``).
 
 This is a *vendor-time* dev tool, not imported at runtime; ``apn/dataset.py``
-reads the committed ``Isolated/`` + ``MAPPING.txt`` directly. The committed
+reads the committed ``Isolated/`` + ``MAPPING.json`` directly. The committed
 files are validated by ``tests/test_erdos_isolation.py`` -- re-extraction
 structural checks incl. the per-form rewrite certificates, and the
 authoritative ``lake env lean -o`` compile gate -- which run the Lean
@@ -38,12 +41,15 @@ Then generate:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
 
 from scripts.erdos_isolation import (
+    FC_COMMIT,
     FORM_CENSUS,
+    GENERATED_SUBSET,
     ISOLATED_DIR,
     MAPPING_FILE,
     SORRY_ALLOWLIST,
@@ -146,15 +152,11 @@ def main() -> None:
     by_rel = extract_sources(args.container, args.exe)
     mapping = build_mapping(names, by_rel)
 
-    mapped_rels = {rel for _, rel in mapping}
-    unused = sorted(set(by_rel) - mapped_rels)
-    if unused:
-        # Vendored files hosting only excluded targets carry dead weight (and
-        # dead license obligations); keep Sources/ exactly the hosting set.
-        raise SystemExit(
-            f"{len(unused)} vendored source file(s) host no kept target -- "
-            f"remove them from Sources/:\n  " + "\n  ".join(unused)
-        )
+    # Sources/ is the whole FC ErdosProblems directory, so most files host no
+    # target of the generated subset; that is expected, not an error.
+    unused = sorted(set(by_rel) - {rel for _, rel in mapping})
+    print(f"{len(mapping)} targets across {len(by_rel) - len(unused)} source files "
+          f"({len(unused)} files host no {GENERATED_SUBSET} target)")
 
     ISOLATED_DIR.mkdir(exist_ok=True)
     for old in ISOLATED_DIR.glob("*.lean"):
@@ -190,7 +192,30 @@ def main() -> None:
     if annotations != ANNOTATION_TOTALS:
         raise SystemExit(f"annotation strip drifted: {annotations} != {ANNOTATION_TOTALS}")
 
-    MAPPING_FILE.write_text("".join(f"{name} {rel}\n" for name, rel in mapping))
+    MAPPING_FILE.write_text(
+        json.dumps(
+            {
+                "_meta": {
+                    "description": (
+                        "Runnable targets of the Erdős dataset: fully qualified "
+                        "declaration name -> its file under Sources/. One isolated "
+                        "spec per row, under Isolated/<target>.lean. This is the "
+                        "universe of what can be run; which targets form a given "
+                        "evaluation set is defined under subsets/."
+                    ),
+                    "generator": "scripts/generate_erdos_isolated.py",
+                    "generated_subset": GENERATED_SUBSET,
+                    "fc_commit": FC_COMMIT,
+                },
+                "targets": [
+                    {"target": name, "source_file": rel} for name, rel in mapping
+                ],
+            },
+            indent=1,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
     n_rewritten = sum(n for form, n in census.items() if form is not None)
     print(
         f"Wrote {len(mapping)} isolated files ({n_rewritten} rewritten: "
