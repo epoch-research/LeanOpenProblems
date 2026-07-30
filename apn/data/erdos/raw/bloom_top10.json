@@ -1,0 +1,72 @@
+{
+ "_meta": {
+  "source": "https://www.erdosproblems.com/forum/thread/blog:5",
+  "description": "Headline entries of Thomas Bloom's 'Top 10 Erdős Problems' blog post",
+  "posted": "16 April 2026",
+  "retrieved": "2026-07-30"
+ },
+ "entries": [
+  {
+   "heading": "[3] and [139] - Sets without arithmetic progressions",
+   "problems": [
+    3,
+    139
+   ]
+  },
+  {
+   "heading": "[4] - Large gaps between primes",
+   "problems": [
+    4
+   ]
+  },
+  {
+   "heading": "[20] - Sunflower conjecture",
+   "problems": [
+    20
+   ]
+  },
+  {
+   "heading": "[28] - Erdős-Turán conjecture on additive bases",
+   "problems": [
+    28
+   ]
+  },
+  {
+   "heading": "[52] - Sum-product problem",
+   "problems": [
+    52
+   ]
+  },
+  {
+   "heading": "[61] - Erdős-Hajnal conjecture",
+   "problems": [
+    61
+   ]
+  },
+  {
+   "heading": "[67] - Erdős discrepancy problem",
+   "problems": [
+    67
+   ]
+  },
+  {
+   "heading": "[77] - Ramsey numbers",
+   "problems": [
+    77
+   ]
+  },
+  {
+   "heading": "[90] - Unit distances",
+   "problems": [
+    90
+   ]
+  },
+  {
+   "heading": "[571] and [713] - Exponents of Turán numbers",
+   "problems": [
+    571,
+    713
+   ]
+  }
+ ]
+}
