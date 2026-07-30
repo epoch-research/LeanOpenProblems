@@ -7,10 +7,6 @@
    "commit": "67338a157bbb8d87e9a349d662f82a868bda6327",
    "path": "FormalConjectures/OEIS/Auto",
    "license": "Apache-2.0, © 2026 The Formal Conjectures Authors"
-  },
-  "converted_from": {
-   "file": "THEOREM_MAPPING.txt",
-   "sha256": "386c0c6e7abf782077b0eee5bf59ddb0caf67acf11db96502b8b2e11bd64c2fe"
   }
  },
  "targets": [

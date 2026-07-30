@@ -1,10 +1,6 @@
 {
  "_meta": {
-  "description": "Members of the paper's frozen 100 that the isolation pipeline cannot ship as samples, with the reason per member. Propositional answer(sorry) ↔ P members are NOT excluded -- they are certified-rewritten to plain P at generation time instead.",
-  "converted_from": {
-   "file": "EXCLUDED.txt",
-   "sha256": "9beb1ba945b9e0540bedc0e443014351c28d722d0f7b1202ab8e4f45837cc954"
-  }
+  "description": "Members of the paper's frozen 100 that the isolation pipeline cannot ship as samples, with the reason per member. Propositional answer(sorry) ↔ P members are NOT excluded -- they are certified-rewritten to plain P at generation time instead."
  },
  "excluded": [
   {

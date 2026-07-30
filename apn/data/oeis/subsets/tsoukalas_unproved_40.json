@@ -1,11 +1,9 @@
 {
  "_meta": {
   "name": "tsoukalas_unproved_40",
-  "description": "The 40 OEIS conjectures the Tsoukalas paper's agent attempted but did not prove.",
-  "converted_from": {
-   "file": "tsoukalas_unproved_40.txt",
-   "sha256": "0cd7a854afc72c121ab32f1c8adf09637fd861e781fa34ef9e20729c2adecc09"
-  }
+  "description": "A random sample of 40 OEIS conjectures with no published AlphaProof Nexus proof output -- the complement of tsoukalas_proved_38, for comparing against that set.",
+  "derivation": "random.Random(20260603).sample(pool, 40), where pool is the 454 conjectures of THEOREM_MAPPING.json, in mapping order, that are not in tsoukalas_proved_38 (492 - 38). Verified to reproduce this list exactly.",
+  "seed": 20260603
  },
  "samples": [
   "oeis_319303_conjecture_0",

@@ -1,11 +1,9 @@
 {
  "_meta": {
   "name": "tsoukalas_proved_38",
-  "description": "The 38 OEIS conjectures the Tsoukalas paper's agent proved (arXiv 2605.13171).",
-  "converted_from": {
-   "file": "tsoukalas_proved_38.txt",
-   "sha256": "23859d230b21f0f5bc50a6fe64315a2d8af2a5fec7d6a197a10dfb06dc437ac2"
-  }
+  "description": "The OEIS conjectures with published AlphaProof Nexus proof outputs: the released results repo ships exactly 38 Lean proof files, each proving a single conjecture (`target_theorem_0`).",
+  "derivation": "One entry per proof file under APNOutputs/OEIS in the AlphaProof Nexus results repository.",
+  "note": "Why 38 and not 44: the paper (arXiv 2605.13171) claims \"proved 44/492 OEIS conjectures\", but only 38 proofs were released. The 6-conjecture gap appears to be a paper miscount, or 6 proofs that were simply never published."
  },
  "samples": [
   "A224515_conjecture_existence",

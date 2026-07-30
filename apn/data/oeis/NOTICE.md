@@ -7,9 +7,8 @@ directory is produced by this repository.
 repository (`auto_oeis` branch, commit `67338a157bbb8d87e9a349d662f82a868bda6327`):
 https://github.com/google-deepmind/formal-conjectures/tree/auto_oeis/FormalConjectures/OEIS/Auto
 © 2026 The Formal Conjectures Authors, Apache License 2.0. The mapping is the
-upstream `THEOREM_MAPPING.txt` converted to JSON; its `_meta.converted_from`
-records the SHA-256 of the txt it was built from. (`Isolated/` is derived from
-these in-repo.)
+upstream file transcribed to JSON; its `_meta.upstream` records the repository,
+branch and commit it came from. (`Isolated/` is derived from these in-repo.)
 
 **`raw/oeis_records.jsonl`, `raw/oeis_history.jsonl`** — fetched from the OEIS
 (https://oeis.org), © The OEIS Foundation Inc., subject to the OEIS license

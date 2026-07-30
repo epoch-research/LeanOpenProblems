@@ -1,11 +1,7 @@
 {
  "_meta": {
   "description": "Runnable targets of the FC100OpenSet1 dataset: fully qualified declaration name -> its file under Sources/. One isolated spec per row, under Isolated/<target>.lean.",
-  "generator": "scripts/generate_fc100_isolated.py",
-  "converted_from": {
-   "file": "MAPPING.txt",
-   "sha256": "7f8c31e8263172f5d194178534fd406aae979bb0a018a9125ab93c431395edfd"
-  }
+  "generator": "scripts/generate_fc100_isolated.py"
  },
  "targets": [
   {
