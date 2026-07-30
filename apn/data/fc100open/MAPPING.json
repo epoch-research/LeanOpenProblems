@@ -1,0 +1,356 @@
+{
+ "_meta": {
+  "description": "Runnable targets of the FC100OpenSet1 dataset: fully qualified declaration name -> its file under Sources/. One isolated spec per row, under Isolated/<target>.lean.",
+  "generator": "scripts/generate_fc100_isolated.py",
+  "converted_from": {
+   "file": "MAPPING.txt",
+   "sha256": "7f8c31e8263172f5d194178534fd406aae979bb0a018a9125ab93c431395edfd"
+  }
+ },
+ "targets": [
+  {
+   "target": "OeisA308734.conjecture",
+   "source_file": "OEIS/308734.lean"
+  },
+  {
+   "target": "Buchi.buchi_problem",
+   "source_file": "Wikipedia/Buchi.lean"
+  },
+  {
+   "target": "Erdos200.erdos_200",
+   "source_file": "ErdosProblems/200.lean"
+  },
+  {
+   "target": "Koethe.KotherConjecture.variants.matrixOver_KotherRadical",
+   "source_file": "Wikipedia/Koethe.lean"
+  },
+  {
+   "target": "Erdos535.erdos_535.variants.first_open_case",
+   "source_file": "ErdosProblems/535.lean"
+  },
+  {
+   "target": "LychrelNumbers.no_lychrel_numbers_base10",
+   "source_file": "Wikipedia/LychrelNumbers.lean"
+  },
+  {
+   "target": "Erdos830.erdos_830.parts.ii",
+   "source_file": "ErdosProblems/830.lean"
+  },
+  {
+   "target": "Erdos125.erdos_125.variants.positive_unequal_density",
+   "source_file": "ErdosProblems/125.lean"
+  },
+  {
+   "target": "Erdos1113.erdos_1113.variants.filaseta_finch_kozek",
+   "source_file": "ErdosProblems/1113.lean"
+  },
+  {
+   "target": "Erdos539.erdos_539.variants.isBigO_sq",
+   "source_file": "ErdosProblems/539.lean"
+  },
+  {
+   "target": "RiemannZetaValues.irrational_five",
+   "source_file": "Wikipedia/RiemannZetaValues.lean"
+  },
+  {
+   "target": "PellNumbers.infinite_pellNumber_primes",
+   "source_file": "Wikipedia/Pell.lean"
+  },
+  {
+   "target": "ClassNumberProblem.class_number_problem",
+   "source_file": "Wikipedia/ClassNumberProblem.lean"
+  },
+  {
+   "target": "Grimm.grimm_conjecture_weak",
+   "source_file": "Wikipedia/Grimm.lean"
+  },
+  {
+   "target": "OeisA63880.mod_216_of_a",
+   "source_file": "OEIS/63880.lean"
+  },
+  {
+   "target": "Erdos12.erdos_12.parts.iii",
+   "source_file": "ErdosProblems/12.lean"
+  },
+  {
+   "target": "Erdos288.erdos_288.variants.exists_k_gt_2",
+   "source_file": "ErdosProblems/288.lean"
+  },
+  {
+   "target": "EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic",
+   "source_file": "Wikipedia/EllipticCurveRank.lean"
+  },
+  {
+   "target": "Erdos647.erdos_647.variants.lim",
+   "source_file": "ErdosProblems/647.lean"
+  },
+  {
+   "target": "Selfridge.selfridge_conjecture",
+   "source_file": "Wikipedia/Selfridge.lean"
+  },
+  {
+   "target": "Erdos340.erdos_340.variants.co_density_zero_sub",
+   "source_file": "ErdosProblems/340.lean"
+  },
+  {
+   "target": "Erdos694.erdos_694.variants.carmichael",
+   "source_file": "ErdosProblems/694.lean"
+  },
+  {
+   "target": "Mathoverflow1973.mathoverflow_1973",
+   "source_file": "Mathoverflow/1973.lean"
+  },
+  {
+   "target": "Erdos479.erdos_479",
+   "source_file": "ErdosProblems/479.lean"
+  },
+  {
+   "target": "OeisA67720.prime_add_one_of_a",
+   "source_file": "OEIS/67720.lean"
+  },
+  {
+   "target": "Erdos1092.f_asymptotic_general",
+   "source_file": "ErdosProblems/1092.lean"
+  },
+  {
+   "target": "Green9.green_9_iii",
+   "source_file": "GreensOpenProblems/9.lean"
+  },
+  {
+   "target": "Erdos770.erdos_770.variants.three",
+   "source_file": "ErdosProblems/770.lean"
+  },
+  {
+   "target": "Erdos137.erdos_137.variants.multiple_powerful_factors",
+   "source_file": "ErdosProblems/137.lean"
+  },
+  {
+   "target": "Irrational.irrational_e_to_e",
+   "source_file": "Wikipedia/Irrational.lean"
+  },
+  {
+   "target": "Erdos324.erdos_324",
+   "source_file": "ErdosProblems/324.lean"
+  },
+  {
+   "target": "Transcendental.pi_pow_pi_pow_pi_transcendental",
+   "source_file": "Wikipedia/Transcendental.lean"
+  },
+  {
+   "target": "Arxiv.«2501.03234».conjecture_4_1",
+   "source_file": "Arxiv/2501.03234/ArithmeticSumS.lean"
+  },
+  {
+   "target": "MonochromaticQuantumGraph.eqSystem10_no_solution_d3",
+   "source_file": "Paper/MonochromaticQuantumGraph.lean"
+  },
+  {
+   "target": "PoincareConjecture.poincare_conjecture.variants.smooth_dimension_four",
+   "source_file": "Millenium/Poincare.lean"
+  },
+  {
+   "target": "Transcendental.pi_pow_sqrt_two_transcendental",
+   "source_file": "Wikipedia/Transcendental.lean"
+  },
+  {
+   "target": "OeisA303656.conjecture",
+   "source_file": "OEIS/303656.lean"
+  },
+  {
+   "target": "Erdos517.erdos_517",
+   "source_file": "ErdosProblems/517.lean"
+  },
+  {
+   "target": "MonochromaticQuantumGraph.eqSystem16_no_solution_d3",
+   "source_file": "Paper/MonochromaticQuantumGraph.lean"
+  },
+  {
+   "target": "Arxiv.«0912.2382».curling_number_conjecture",
+   "source_file": "Arxiv/0912.2382/CurlingNumberConjecture.lean"
+  },
+  {
+   "target": "Grimm.grimm_conjecture",
+   "source_file": "Wikipedia/Grimm.lean"
+  },
+  {
+   "target": "Erdos272.erdos_272.variants.szabo_strong",
+   "source_file": "ErdosProblems/272.lean"
+  },
+  {
+   "target": "UnionClosed.union_closed.variants.cardinality_even_of_union_closed_tight",
+   "source_file": "Wikipedia/UnionClosed.lean"
+  },
+  {
+   "target": "MonochromaticQuantumGraph.eqSystem12_no_solution_d3",
+   "source_file": "Paper/MonochromaticQuantumGraph.lean"
+  },
+  {
+   "target": "Erdos1097.erdos_1097",
+   "source_file": "ErdosProblems/1097.lean"
+  },
+  {
+   "target": "MonochromaticQuantumGraph.eqSystem_no_solution_ge6_ge3_real",
+   "source_file": "Paper/MonochromaticQuantumGraph.lean"
+  },
+  {
+   "target": "Erdos952.erdos_952",
+   "source_file": "ErdosProblems/952.lean"
+  },
+  {
+   "target": "Green58.green_58",
+   "source_file": "GreensOpenProblems/58.lean"
+  },
+  {
+   "target": "Erdos329.erdos_329.variants.converse_implication",
+   "source_file": "ErdosProblems/329.lean"
+  },
+  {
+   "target": "Mandelbrot.MLC",
+   "source_file": "Wikipedia/Mandelbrot.lean"
+  },
+  {
+   "target": "Erdos890.erdos_890.parts.a",
+   "source_file": "ErdosProblems/890.lean"
+  },
+  {
+   "target": "Erdos1002.erdos_1002",
+   "source_file": "ErdosProblems/1002.lean"
+  },
+  {
+   "target": "BabaiSeressConjectures.babai_seress_conjecture_alternating",
+   "source_file": "Wikipedia/DiameterSimpleFiniteGroups.lean"
+  },
+  {
+   "target": "OpenQuantumProblem23.hasSICPOVM_60",
+   "source_file": "OpenQuantumProblems/23.lean"
+  },
+  {
+   "target": "Erdos23.erdos_23",
+   "source_file": "ErdosProblems/23.lean"
+  },
+  {
+   "target": "Gilbreath.gilbreath_conjecture",
+   "source_file": "Wikipedia/Gilbreath.lean"
+  },
+  {
+   "target": "Erdos313.erdos_313",
+   "source_file": "ErdosProblems/313.lean"
+  },
+  {
+   "target": "Green14.W_3_39_lower",
+   "source_file": "GreensOpenProblems/14.lean"
+  },
+  {
+   "target": "Erdos931.erdos_931.variants.exists_prime",
+   "source_file": "ErdosProblems/931.lean"
+  },
+  {
+   "target": "Erdos398.erdos_398",
+   "source_file": "ErdosProblems/398.lean"
+  },
+  {
+   "target": "Erdos61.erdos_61",
+   "source_file": "ErdosProblems/61.lean"
+  },
+  {
+   "target": "Erdos996.erdos_996",
+   "source_file": "ErdosProblems/996.lean"
+  },
+  {
+   "target": "Erdos695.erdos_695",
+   "source_file": "ErdosProblems/695.lean"
+  },
+  {
+   "target": "MonochromaticQuantumGraph.eqSystem10_no_solution_d3_trinary_int",
+   "source_file": "Paper/MonochromaticQuantumGraph.lean"
+  },
+  {
+   "target": "Erdos92.erdos_92.variants.weak",
+   "source_file": "ErdosProblems/92.lean"
+  },
+  {
+   "target": "Erdos385.erdos_385.parts.ii",
+   "source_file": "ErdosProblems/385.lean"
+  },
+  {
+   "target": "LittlewoodConjecture.padic_littlewood_conjecture",
+   "source_file": "Wikipedia/LittlewoodConjecture.lean"
+  },
+  {
+   "target": "Mandelbrot.volume_frontier_mandelbrotSet_eq_zero",
+   "source_file": "Wikipedia/Mandelbrot.lean"
+  },
+  {
+   "target": "Erdos358.erdos_358.variants.prime_set",
+   "source_file": "ErdosProblems/358.lean"
+  },
+  {
+   "target": "OeisA80170.gcdCondition_iff_primePowerCondition",
+   "source_file": "OEIS/80170.lean"
+  },
+  {
+   "target": "Green14.W_3_37_lower",
+   "source_file": "GreensOpenProblems/14.lean"
+  },
+  {
+   "target": "EulerBrick.cuboidThree",
+   "source_file": "Wikipedia/EulerBrick.lean"
+  },
+  {
+   "target": "Erdos269.erdos_269.variants.rational",
+   "source_file": "ErdosProblems/269.lean"
+  },
+  {
+   "target": "Arxiv.«1601.03081».crystals_components_unique",
+   "source_file": "Arxiv/1601.03081/UniqueCrystalComponents.lean"
+  },
+  {
+   "target": "Erdos123.erdos_123.variants.powers_2_3_5_snug",
+   "source_file": "ErdosProblems/123.lean"
+  },
+  {
+   "target": "SumOfThreeCubes.isSumOfThreeCubes_iff_mod_9",
+   "source_file": "Wikipedia/SumOfThreeCubes.lean"
+  },
+  {
+   "target": "WrittenOnTheWallII.GraphConjecture327.conjecture327",
+   "source_file": "WrittenOnTheWallII/GraphConjecture327.lean"
+  },
+  {
+   "target": "WrittenOnTheWallII.GraphConjecture316.conjecture316",
+   "source_file": "WrittenOnTheWallII/GraphConjecture316.lean"
+  },
+  {
+   "target": "Erdos260.erdos_260",
+   "source_file": "ErdosProblems/260.lean"
+  },
+  {
+   "target": "MonochromaticQuantumGraph.eqSystem10_no_solution_d4",
+   "source_file": "Paper/MonochromaticQuantumGraph.lean"
+  },
+  {
+   "target": "Superperfect.twoFivePerfect",
+   "source_file": "Wikipedia/Superperfectnumbers.lean"
+  },
+  {
+   "target": "Erdos307.erdos_307",
+   "source_file": "ErdosProblems/307.lean"
+  },
+  {
+   "target": "MonochromaticQuantumGraph.eqSystem6_no_solution_d4",
+   "source_file": "Paper/MonochromaticQuantumGraph.lean"
+  },
+  {
+   "target": "OeisA41.noPowerPartitionNumber",
+   "source_file": "OEIS/41.lean"
+  },
+  {
+   "target": "Erdos1093.erdos_1093.parts.ii",
+   "source_file": "ErdosProblems/1093.lean"
+  },
+  {
+   "target": "Green61.green_61",
+   "source_file": "GreensOpenProblems/61.lean"
+  }
+ ]
+}

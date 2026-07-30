@@ -1,0 +1,67 @@
+{
+ "_meta": {
+  "description": "Members of the paper's frozen 100 that the isolation pipeline cannot ship as samples, with the reason per member. Propositional answer(sorry) ↔ P members are NOT excluded -- they are certified-rewritten to plain P at generation time instead.",
+  "converted_from": {
+   "file": "EXCLUDED.txt",
+   "sha256": "9beb1ba945b9e0540bedc0e443014351c28d722d0f7b1202ab8e4f45837cc954"
+  }
+ },
+ "excluded": [
+  {
+   "target": "Green31.green_31.variants.upper_eventually",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Equidistribution.isAccumulationPoint_three_halves_pow",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos1074.erdos_1074.parts.ii",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos1074.erdos_1074.parts.iv",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos282.erdos_282.variants.general",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Green24.green_24",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos887.erdos_887.parts.i",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos329.erdos_329",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos409.erdos_409.parts.i.isBigO",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos188.erdos_188",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "RamseyNumbers.ramsey_number_five_five",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos332.erdos_332",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos888.erdos_888",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  },
+  {
+   "target": "Erdos36.erdos_36.variants.lower",
+   "reason": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's `google.answer \"with_auxiliary\"` machinery, and SafeVerify cannot score it"
+  }
+ ]
+}

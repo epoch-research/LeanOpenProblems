@@ -29,10 +29,12 @@ from pathlib import Path
 
 import openai
 
+from apn.dataset import parse_oeis_mapping
+
 ROOT = Path(__file__).parent.parent
 RAW = ROOT / "apn" / "data" / "oeis" / "raw"
 ISOLATED = ROOT / "apn" / "data" / "oeis" / "Isolated"
-MAPPING = ROOT / "apn" / "data" / "oeis" / "THEOREM_MAPPING.txt"
+MAPPING = ROOT / "apn" / "data" / "oeis" / "THEOREM_MAPPING.json"
 
 MODEL = "gpt-5.5"
 # History sections that carry conjecture text / attribution (vs editorial churn).
@@ -64,14 +66,12 @@ def load_jsonl(path: Path) -> dict[str, dict]:
 
 
 def group_conjectures() -> dict[str, list[str]]:
-    """oeis_id -> [theorem_name, ...] from THEOREM_MAPPING.txt."""
+    """oeis_id -> [theorem_name, ...] from THEOREM_MAPPING.json."""
     by_seq: dict[str, list[str]] = defaultdict(list)
-    for line in MAPPING.read_text().splitlines():
-        parts = line.split()
-        if len(parts) >= 2:
-            m = _NUM_RE.match(parts[1])
-            if m:
-                by_seq[f"A{int(m.group(1)):06d}"].append(parts[0])
+    for name, files in parse_oeis_mapping(MAPPING.read_text()):
+        m = _NUM_RE.match(files[0])
+        if m:
+            by_seq[f"A{int(m.group(1)):06d}"].append(name)
     return dict(by_seq)
 
 

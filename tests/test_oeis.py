@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
@@ -79,10 +80,19 @@ def test_oeis_id_from_filename() -> None:
 
 
 def test_parse_oeis_mapping_single_and_multi_file() -> None:
-    text = (
-        "oeis_268597_conjecture_0 268597_aacea533.lean\n"
-        "A230241_conjecture 230241_a4de9e9f.lean 230241_f18255a1.lean\n"
-        "\n"  # blank line ignored
+    text = json.dumps(
+        {
+            "targets": [
+                {
+                    "target": "oeis_268597_conjecture_0",
+                    "source_files": ["268597_aacea533.lean"],
+                },
+                {
+                    "target": "A230241_conjecture",
+                    "source_files": ["230241_a4de9e9f.lean", "230241_f18255a1.lean"],
+                },
+            ]
+        }
     )
     entries = parse_oeis_mapping(text)
     assert entries == [

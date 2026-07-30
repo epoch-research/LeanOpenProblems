@@ -1,6 +1,6 @@
 """Download raw OEIS data for the 492-conjecture evaluation set.
 
-For every unique OEIS sequence referenced by ``THEOREM_MAPPING.txt`` (444 of
+For every unique OEIS sequence referenced by ``THEOREM_MAPPING.json`` (444 of
 them; some sequences contribute more than one conjecture), this fetches two
 artifacts straight from oeis.org and writes them as JSON Lines:
 
@@ -59,7 +59,9 @@ from pathlib import Path
 
 import requests
 
-MAPPING_FILE = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "THEOREM_MAPPING.txt"
+from apn.dataset import parse_oeis_mapping
+
+MAPPING_FILE = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "THEOREM_MAPPING.json"
 DEFAULT_OUT_DIR = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "raw"
 
 RECORD_URL = "https://oeis.org/search?q=id:{oeis_id}&fmt=json"
@@ -72,19 +74,17 @@ _NUM_RE = re.compile(r"^(\d+)_")
 
 
 def unique_oeis_ids(mapping_file: Path) -> list[str]:
-    """Sorted unique A-numbers from ``THEOREM_MAPPING.txt`` (first file per line).
+    """Sorted unique A-numbers from ``THEOREM_MAPPING.json`` (first file per entry).
 
     The A-number is the leading digits of the upstream ``Auto/`` filename, e.g.
     ``129365_aacea533.lean`` -> ``A129365`` -- matching
     ``apn.dataset.oeis_id_from_filename``.
     """
     ids: set[str] = set()
-    for line in mapping_file.read_text().splitlines():
-        parts = line.split()
-        if len(parts) >= 2:
-            match = _NUM_RE.match(parts[1])
-            if match:
-                ids.add(f"A{int(match.group(1)):06d}")
+    for _name, files in parse_oeis_mapping(mapping_file.read_text()):
+        match = _NUM_RE.match(files[0])
+        if match:
+            ids.add(f"A{int(match.group(1)):06d}")
     return sorted(ids)
 
 
@@ -269,7 +269,7 @@ def append_jsonl(path: Path, obj: dict[str, object]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR, help="output directory for the JSONL files")
-    parser.add_argument("--mapping-file", type=Path, default=MAPPING_FILE, help="THEOREM_MAPPING.txt to enumerate sequences")
+    parser.add_argument("--mapping-file", type=Path, default=MAPPING_FILE, help="THEOREM_MAPPING.json to enumerate sequences")
     parser.add_argument("--delay", type=float, default=1.0, help="seconds to sleep between HTTP requests (politeness)")
     parser.add_argument("--limit", type=int, default=None, help="only fetch the first N (not-yet-downloaded) sequences")
     parser.add_argument("--ids", nargs="+", default=None, help="fetch only these A-numbers (e.g. A129365), ignoring the mapping")

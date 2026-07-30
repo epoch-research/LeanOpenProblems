@@ -2,12 +2,12 @@
 
 The dataset-neutral cut logic and Docker plumbing live in
 ``scripts/isolation.py``; this module owns what is OEIS-specific -- the data
-locations under ``apn/data/oeis/`` and the ``THEOREM_MAPPING.txt`` parser.
+locations under ``apn/data/oeis/`` and the ``THEOREM_MAPPING.json`` parser.
 
 Two callers import this module:
 
 * ``scripts/generate_oeis_isolated.py`` -- the vendor-time tool that *produces*
-  ``apn/data/oeis/Isolated/`` from ``Auto/`` + ``THEOREM_MAPPING.txt``.
+  ``apn/data/oeis/Isolated/`` from ``Auto/`` + ``THEOREM_MAPPING.json``.
 * ``tests/test_oeis_isolation.py`` -- the authoritative *validation* of the
   committed ``Isolated/`` files (re-extraction structural check, the
   ``lake env lean -o`` compile gate, and the paper oracle cross-check).
@@ -23,4 +23,4 @@ parse_mapping = parse_oeis_mapping  # re-exported under the dataset-neutral name
 OEIS_DIR = REPO / "apn" / "data" / "oeis"
 AUTO_DIR = OEIS_DIR / "Auto"
 ISOLATED_DIR = OEIS_DIR / "Isolated"
-MAPPING_FILE = OEIS_DIR / "THEOREM_MAPPING.txt"
+MAPPING_FILE = OEIS_DIR / "THEOREM_MAPPING.json"

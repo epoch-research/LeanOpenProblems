@@ -1,0 +1,1413 @@
+{
+ "_meta": {
+  "description": "Runnable targets of the Erdős dataset: fully qualified declaration name -> its file under Sources/. One isolated spec per row, under Isolated/<target>.lean. This is the universe of what can be run; which targets form a given evaluation set is defined under subsets/.",
+  "generator": "scripts/generate_erdos_isolated.py",
+  "fc_commit": "67338a157bbb8d87e9a349d662f82a868bda6327",
+  "converted_from": {
+   "file": "MAPPING.txt",
+   "sha256": "d4179ec55dd527ef33afe64d7a816e974850a5bbfac23ddde04679de1482336b"
+  }
+ },
+ "targets": [
+  {
+   "target": "Erdos10.erdos_10.variants.grechuk",
+   "source_file": "10.lean"
+  },
+  {
+   "target": "Erdos100.erdos_100.variants.strong",
+   "source_file": "100.lean"
+  },
+  {
+   "target": "Erdos1049.erdos_1049",
+   "source_file": "1049.lean"
+  },
+  {
+   "target": "Erdos1056.erdos_1056.variants.noll_simmons",
+   "source_file": "1056.lean"
+  },
+  {
+   "target": "Erdos1060.erdos_1060.parts.i",
+   "source_file": "1060.lean"
+  },
+  {
+   "target": "Erdos1060.erdos_1060.parts.ii",
+   "source_file": "1060.lean"
+  },
+  {
+   "target": "Erdos1062.erdos_1062.parts.ii",
+   "source_file": "1062.lean"
+  },
+  {
+   "target": "Erdos1065.erdos_1065.parts.i",
+   "source_file": "1065.lean"
+  },
+  {
+   "target": "Erdos1065.erdos_1065.parts.ii",
+   "source_file": "1065.lean"
+  },
+  {
+   "target": "Erdos1071.erdos_1071.parts.ii",
+   "source_file": "1071.lean"
+  },
+  {
+   "target": "Erdos1072.erdos_1072.parts.i",
+   "source_file": "1072.lean"
+  },
+  {
+   "target": "Erdos1072.erdos_1072.parts.ii",
+   "source_file": "1072.lean"
+  },
+  {
+   "target": "Erdos1072.erdos_1072.variants.littleo",
+   "source_file": "1072.lean"
+  },
+  {
+   "target": "Erdos1074.erdos_1074.parts.i",
+   "source_file": "1074.lean"
+  },
+  {
+   "target": "Erdos1074.erdos_1074.parts.iii",
+   "source_file": "1074.lean"
+  },
+  {
+   "target": "Erdos1082.erdos_1082.parts.i",
+   "source_file": "1082.lean"
+  },
+  {
+   "target": "Erdos1084.erdos_1084.variants.triangular_optimal_d2",
+   "source_file": "1084.lean"
+  },
+  {
+   "target": "Erdos1085.erdos_1085.variants.upper_d3",
+   "source_file": "1085.lean"
+  },
+  {
+   "target": "Erdos1095.erdos_1095.variants.log_equivalent",
+   "source_file": "1095.lean"
+  },
+  {
+   "target": "Erdos1095.erdos_1095.variants.lower_conjecture",
+   "source_file": "1095.lean"
+  },
+  {
+   "target": "Erdos1095.erdos_1095.variants.upper_conjecture",
+   "source_file": "1095.lean"
+  },
+  {
+   "target": "Erdos1101.erdos_1101.parts.i",
+   "source_file": "1101.lean"
+  },
+  {
+   "target": "Erdos1101.erdos_1101.parts.ii",
+   "source_file": "1101.lean"
+  },
+  {
+   "target": "Erdos1106.erdos_1106.parts.i",
+   "source_file": "1106.lean"
+  },
+  {
+   "target": "Erdos1106.erdos_1106.parts.ii",
+   "source_file": "1106.lean"
+  },
+  {
+   "target": "Erdos1108.erdos_1108.parts.i",
+   "source_file": "1108.lean"
+  },
+  {
+   "target": "Erdos1108.erdos_1108.parts.ii",
+   "source_file": "1108.lean"
+  },
+  {
+   "target": "Erdos1137.erdos_1137",
+   "source_file": "1137.lean"
+  },
+  {
+   "target": "Erdos1139.erdos_1139",
+   "source_file": "1139.lean"
+  },
+  {
+   "target": "Erdos1141.erdos_1141",
+   "source_file": "1141.lean"
+  },
+  {
+   "target": "Erdos1142.erdos_1142",
+   "source_file": "1142.lean"
+  },
+  {
+   "target": "Erdos1148.erdos_1148",
+   "source_file": "1148.lean"
+  },
+  {
+   "target": "Erdos1150.erdos_1150",
+   "source_file": "1150.lean"
+  },
+  {
+   "target": "Erdos1176.erdos_1176",
+   "source_file": "1176.lean"
+  },
+  {
+   "target": "Erdos119.erdos_119.parts.iii",
+   "source_file": "119.lean"
+  },
+  {
+   "target": "Erdos125.erdos_125.variants.positive_lower_density",
+   "source_file": "125.lean"
+  },
+  {
+   "target": "Erdos125.erdos_125.variants.positive_upper_density",
+   "source_file": "125.lean"
+  },
+  {
+   "target": "Erdos13.erdos_13.variants.general",
+   "source_file": "13.lean"
+  },
+  {
+   "target": "Erdos137.erdos_137.variants.multiple_powerful_factors",
+   "source_file": "137.lean"
+  },
+  {
+   "target": "Erdos14.erdos_14.parts.i",
+   "source_file": "14.lean"
+  },
+  {
+   "target": "Erdos14.erdos_14.parts.ii",
+   "source_file": "14.lean"
+  },
+  {
+   "target": "Erdos141.erdos_141.variants.eleven",
+   "source_file": "141.lean"
+  },
+  {
+   "target": "Erdos141.erdos_141.variants.infinite_general_case",
+   "source_file": "141.lean"
+  },
+  {
+   "target": "Erdos141.erdos_141.variants.infinite_three",
+   "source_file": "141.lean"
+  },
+  {
+   "target": "Erdos152.erdos_152.variants.square",
+   "source_file": "152.lean"
+  },
+  {
+   "target": "Erdos158.erdos_158",
+   "source_file": "158.lean"
+  },
+  {
+   "target": "Erdos184.erdos_184",
+   "source_file": "184.lean"
+  },
+  {
+   "target": "Erdos184.erdos_184.variants.covering",
+   "source_file": "184.lean"
+  },
+  {
+   "target": "Erdos193.erdos_193",
+   "source_file": "193.lean"
+  },
+  {
+   "target": "Erdos208.erdos_208.parts.i",
+   "source_file": "208.lean"
+  },
+  {
+   "target": "Erdos208.erdos_208.parts.ii",
+   "source_file": "208.lean"
+  },
+  {
+   "target": "Erdos23.erdos_23",
+   "source_file": "23.lean"
+  },
+  {
+   "target": "Erdos241.erdos_241",
+   "source_file": "241.lean"
+  },
+  {
+   "target": "Erdos241.erdos_241.variants.generalization",
+   "source_file": "241.lean"
+  },
+  {
+   "target": "Erdos242.erdos_242.variants.schinzel_generalization",
+   "source_file": "242.lean"
+  },
+  {
+   "target": "Erdos254.erdos_254",
+   "source_file": "254.lean"
+  },
+  {
+   "target": "Erdos260.erdos_260",
+   "source_file": "260.lean"
+  },
+  {
+   "target": "Erdos307.erdos_307.variants.coprime_one_notMem",
+   "source_file": "307.lean"
+  },
+  {
+   "target": "Erdos313.erdos_313",
+   "source_file": "313.lean"
+  },
+  {
+   "target": "Erdos313.erdos_313.variants.primary_pseudoperfect_are_infinite",
+   "source_file": "313.lean"
+  },
+  {
+   "target": "Erdos318.erdos_318.parts.ii",
+   "source_file": "318.lean"
+  },
+  {
+   "target": "Erdos32.erdos_32",
+   "source_file": "32.lean"
+  },
+  {
+   "target": "Erdos32.erdos_32.variants.log_bound",
+   "source_file": "32.lean"
+  },
+  {
+   "target": "Erdos323.erdos_323.parts.i",
+   "source_file": "323.lean"
+  },
+  {
+   "target": "Erdos323.erdos_323.parts.ii",
+   "source_file": "323.lean"
+  },
+  {
+   "target": "Erdos323.erdos_323.variants.k_gt_2",
+   "source_file": "323.lean"
+  },
+  {
+   "target": "Erdos324.erdos_324.variants.quintic",
+   "source_file": "324.lean"
+  },
+  {
+   "target": "Erdos329.erdos_329.variants.converse_implication",
+   "source_file": "329.lean"
+  },
+  {
+   "target": "Erdos329.erdos_329.variants.of_sub_perfectDifferenceSet",
+   "source_file": "329.lean"
+  },
+  {
+   "target": "Erdos331.erdos_331.variants.ruzsa",
+   "source_file": "331.lean"
+  },
+  {
+   "target": "Erdos342.erdos_342.parts.i",
+   "source_file": "342.lean"
+  },
+  {
+   "target": "Erdos342.erdos_342.parts.ii",
+   "source_file": "342.lean"
+  },
+  {
+   "target": "Erdos342.erdos_342.parts.iii",
+   "source_file": "342.lean"
+  },
+  {
+   "target": "Erdos366.erdos_366.variants.three_two",
+   "source_file": "366.lean"
+  },
+  {
+   "target": "Erdos385.erdos_385.parts.i",
+   "source_file": "385.lean"
+  },
+  {
+   "target": "Erdos385.erdos_385.parts.ii",
+   "source_file": "385.lean"
+  },
+  {
+   "target": "Erdos385.erdos_385.variants.lb",
+   "source_file": "385.lean"
+  },
+  {
+   "target": "Erdos386.erdos_386.variants.forall",
+   "source_file": "386.lean"
+  },
+  {
+   "target": "Erdos386.erdos_386.variants.two",
+   "source_file": "386.lean"
+  },
+  {
+   "target": "Erdos387.erdos_387.variants.guy",
+   "source_file": "387.lean"
+  },
+  {
+   "target": "Erdos387.erdos_387.variants.schinzel",
+   "source_file": "387.lean"
+  },
+  {
+   "target": "Erdos390.erdos_390",
+   "source_file": "390.lean"
+  },
+  {
+   "target": "Erdos394.erdos_394.parts.i",
+   "source_file": "394.lean"
+  },
+  {
+   "target": "Erdos394.erdos_394.parts.ii",
+   "source_file": "394.lean"
+  },
+  {
+   "target": "Erdos394.erdos_394.variants.factorial_gap_conjecture",
+   "source_file": "394.lean"
+  },
+  {
+   "target": "Erdos394.erdos_394.variants.hall_conjecture",
+   "source_file": "394.lean"
+  },
+  {
+   "target": "Erdos400.erdos_400.parts.i",
+   "source_file": "400.lean"
+  },
+  {
+   "target": "Erdos400.erdos_400.parts.ii",
+   "source_file": "400.lean"
+  },
+  {
+   "target": "Erdos409.erdos_409.variants.sigma_prime_termination",
+   "source_file": "409.lean"
+  },
+  {
+   "target": "Erdos413.erdos_413.parts.i",
+   "source_file": "413.lean"
+  },
+  {
+   "target": "Erdos413.erdos_413.parts.ii",
+   "source_file": "413.lean"
+  },
+  {
+   "target": "Erdos413.erdos_413.variants.bigOmega",
+   "source_file": "413.lean"
+  },
+  {
+   "target": "Erdos417.erdos_417.parts.i",
+   "source_file": "417.lean"
+  },
+  {
+   "target": "Erdos417.erdos_417.parts.ii",
+   "source_file": "417.lean"
+  },
+  {
+   "target": "Erdos42.erdos_42.variants.constructive",
+   "source_file": "42.lean"
+  },
+  {
+   "target": "Erdos44.erdos_44.variants.empty_start",
+   "source_file": "44.lean"
+  },
+  {
+   "target": "Erdos445.erdos_445",
+   "source_file": "445.lean"
+  },
+  {
+   "target": "Erdos470.erdos_470.parts.i",
+   "source_file": "470.lean"
+  },
+  {
+   "target": "Erdos470.erdos_470.parts.ii",
+   "source_file": "470.lean"
+  },
+  {
+   "target": "Erdos477.erdos_477.variants.X_pow_three",
+   "source_file": "477.lean"
+  },
+  {
+   "target": "Erdos477.erdos_477.variants.monomial",
+   "source_file": "477.lean"
+  },
+  {
+   "target": "Erdos489.erdos_489",
+   "source_file": "489.lean"
+  },
+  {
+   "target": "Erdos50.erdos_50",
+   "source_file": "50.lean"
+  },
+  {
+   "target": "Erdos516.erdos_516.variants.limsup_ratio_eq_one_of_hasFejerGaps",
+   "source_file": "516.lean"
+  },
+  {
+   "target": "Erdos517.erdos_517",
+   "source_file": "517.lean"
+  },
+  {
+   "target": "Erdos567.erdos_567.parts.i",
+   "source_file": "567.lean"
+  },
+  {
+   "target": "Erdos567.erdos_567.parts.ii",
+   "source_file": "567.lean"
+  },
+  {
+   "target": "Erdos567.erdos_567.parts.iii",
+   "source_file": "567.lean"
+  },
+  {
+   "target": "Erdos680.erdos_680.parts.i",
+   "source_file": "680.lean"
+  },
+  {
+   "target": "Erdos680.erdos_680.parts.ii",
+   "source_file": "680.lean"
+  },
+  {
+   "target": "Erdos686.erdos_686.variants.four",
+   "source_file": "686.lean"
+  },
+  {
+   "target": "Erdos686.erdos_686.variants.square",
+   "source_file": "686.lean"
+  },
+  {
+   "target": "Erdos686.erdos_686.variants.twenty_five",
+   "source_file": "686.lean"
+  },
+  {
+   "target": "Erdos695.erdos_695.variants.upperBound",
+   "source_file": "695.lean"
+  },
+  {
+   "target": "Erdos723.erdos_723.variants.eq_12",
+   "source_file": "723.lean"
+  },
+  {
+   "target": "Erdos727.erdos_727.variants.k_2",
+   "source_file": "727.lean"
+  },
+  {
+   "target": "Erdos741.erdos_741.parts.i",
+   "source_file": "741.lean"
+  },
+  {
+   "target": "Erdos741.erdos_741.parts.ii",
+   "source_file": "741.lean"
+  },
+  {
+   "target": "Erdos770.erdos_770.parts.i",
+   "source_file": "770.lean"
+  },
+  {
+   "target": "Erdos770.erdos_770.parts.ii",
+   "source_file": "770.lean"
+  },
+  {
+   "target": "Erdos770.erdos_770.parts.iii",
+   "source_file": "770.lean"
+  },
+  {
+   "target": "Erdos770.erdos_770.variants.three",
+   "source_file": "770.lean"
+  },
+  {
+   "target": "Erdos812.erdos_812.parts.i",
+   "source_file": "812.lean"
+  },
+  {
+   "target": "Erdos812.erdos_812.parts.ii",
+   "source_file": "812.lean"
+  },
+  {
+   "target": "Erdos835.erdos_835.variants.johnson",
+   "source_file": "835.lean"
+  },
+  {
+   "target": "Erdos853.erdos_853.parts.i",
+   "source_file": "853.lean"
+  },
+  {
+   "target": "Erdos853.erdos_853.parts.ii",
+   "source_file": "853.lean"
+  },
+  {
+   "target": "Erdos865.erdos_865",
+   "source_file": "865.lean"
+  },
+  {
+   "target": "Erdos865.erdos_865.variants.sos",
+   "source_file": "865.lean"
+  },
+  {
+   "target": "Erdos886.erdos_886",
+   "source_file": "886.lean"
+  },
+  {
+   "target": "Erdos887.erdos_887.parts.ii",
+   "source_file": "887.lean"
+  },
+  {
+   "target": "Erdos887.erdos_887.variants.rosenfeld_4",
+   "source_file": "887.lean"
+  },
+  {
+   "target": "Erdos890.erdos_890.parts.a",
+   "source_file": "890.lean"
+  },
+  {
+   "target": "Erdos890.erdos_890.parts.b",
+   "source_file": "890.lean"
+  },
+  {
+   "target": "Erdos891.erdos_891",
+   "source_file": "891.lean"
+  },
+  {
+   "target": "Erdos891.erdos_891.variants.case_k_2",
+   "source_file": "891.lean"
+  },
+  {
+   "target": "Erdos891.erdos_891.variants.weisenberg",
+   "source_file": "891.lean"
+  },
+  {
+   "target": "Erdos912.erdos_912",
+   "source_file": "912.lean"
+  },
+  {
+   "target": "Erdos912.erdos_912.variants.tao",
+   "source_file": "912.lean"
+  },
+  {
+   "target": "Erdos920.erdos_920",
+   "source_file": "920.lean"
+  },
+  {
+   "target": "Erdos944.erdos_944.variants.dirac_conjecture.k_eq_four",
+   "source_file": "944.lean"
+  },
+  {
+   "target": "Erdos951.erdos_951",
+   "source_file": "951.lean"
+  },
+  {
+   "target": "Erdos978.erdos_978.parts.ii",
+   "source_file": "978.lean"
+  },
+  {
+   "target": "Erdos978.erdos_978.parts.iii",
+   "source_file": "978.lean"
+  },
+  {
+   "target": "Erdos996.erdos_996",
+   "source_file": "996.lean"
+  },
+  {
+   "target": "Erdos997.erdos_997",
+   "source_file": "997.lean"
+  },
+  {
+   "target": "Erdos454.erdos_454",
+   "source_file": "454.lean"
+  },
+  {
+   "target": "Erdos422.erdos_422.variants.eventually_const",
+   "source_file": "422.lean"
+  },
+  {
+   "target": "Erdos153.erdos_153",
+   "source_file": "153.lean"
+  },
+  {
+   "target": "Erdos288.erdos_288.variants.exists_k_gt_2",
+   "source_file": "288.lean"
+  },
+  {
+   "target": "Erdos566.erdos_566",
+   "source_file": "566.lean"
+  },
+  {
+   "target": "Erdos120.erdos_120",
+   "source_file": "120.lean"
+  },
+  {
+   "target": "Erdos274.erdos_274",
+   "source_file": "274.lean"
+  },
+  {
+   "target": "Erdos1054.erdos_1054.parts.i",
+   "source_file": "1054.lean"
+  },
+  {
+   "target": "Erdos354.erdos_354.parts.ii",
+   "source_file": "354.lean"
+  },
+  {
+   "target": "Erdos486.erdos_486",
+   "source_file": "486.lean"
+  },
+  {
+   "target": "Erdos1082.erdos_1082.parts.ii",
+   "source_file": "1082.lean"
+  },
+  {
+   "target": "Erdos251.erdos_251",
+   "source_file": "251.lean"
+  },
+  {
+   "target": "Erdos272.erdos_272.variants.szabo_strong",
+   "source_file": "272.lean"
+  },
+  {
+   "target": "Erdos288.erdos_288.variants.k_intervals",
+   "source_file": "288.lean"
+  },
+  {
+   "target": "Erdos307.erdos_307",
+   "source_file": "307.lean"
+  },
+  {
+   "target": "Erdos354.erdos_354.parts.i",
+   "source_file": "354.lean"
+  },
+  {
+   "target": "Erdos730.erdos_730",
+   "source_file": "730.lean"
+  },
+  {
+   "target": "Erdos943.erdos_943",
+   "source_file": "943.lean"
+  },
+  {
+   "target": "Erdos317.erdos_317.variants.claim2",
+   "source_file": "317.lean"
+  },
+  {
+   "target": "Erdos1054.erdos_1054.parts.iii",
+   "source_file": "1054.lean"
+  },
+  {
+   "target": "Erdos238.erdos_238",
+   "source_file": "238.lean"
+  },
+  {
+   "target": "Erdos283.erdos_283",
+   "source_file": "283.lean"
+  },
+  {
+   "target": "Erdos330.erdos_330_statement",
+   "source_file": "330.lean"
+  },
+  {
+   "target": "Erdos351.erdos_351",
+   "source_file": "351.lean"
+  },
+  {
+   "target": "Erdos357.erdos_357.variants.infinite_set_density",
+   "source_file": "357.lean"
+  },
+  {
+   "target": "Erdos357.erdos_357.variants.monotone.parts.i",
+   "source_file": "357.lean"
+  },
+  {
+   "target": "Erdos38.erdos_38",
+   "source_file": "38.lean"
+  },
+  {
+   "target": "Erdos383.erdos_383",
+   "source_file": "383.lean"
+  },
+  {
+   "target": "Erdos387.erdos_387",
+   "source_file": "387.lean"
+  },
+  {
+   "target": "Erdos51.erdos_51",
+   "source_file": "51.lean"
+  },
+  {
+   "target": "Erdos623.erdos_623",
+   "source_file": "623.lean"
+  },
+  {
+   "target": "Erdos750.erdos_750",
+   "source_file": "750.lean"
+  },
+  {
+   "target": "Erdos774.erdos_774",
+   "source_file": "774.lean"
+  },
+  {
+   "target": "Erdos789.erdos_789.variants.isBigO_cube_root_linearithmic",
+   "source_file": "789.lean"
+  },
+  {
+   "target": "Erdos897.erdos_897.variants.parts.i",
+   "source_file": "897.lean"
+  },
+  {
+   "target": "Erdos918.erdos_918.parts.i",
+   "source_file": "918.lean"
+  },
+  {
+   "target": "Erdos939.erdos_939",
+   "source_file": "939.lean"
+  },
+  {
+   "target": "Erdos939.erdos_939.variants.triples",
+   "source_file": "939.lean"
+  },
+  {
+   "target": "Erdos942.erdos_942",
+   "source_file": "942.lean"
+  },
+  {
+   "target": "Erdos269.erdos_269.variants.irrational",
+   "source_file": "269.lean"
+  },
+  {
+   "target": "Erdos889.erdos_889",
+   "source_file": "889.lean"
+  },
+  {
+   "target": "Erdos101.erdos_101",
+   "source_file": "101.lean"
+  },
+  {
+   "target": "Erdos1056.erdos_1056",
+   "source_file": "1056.lean"
+  },
+  {
+   "target": "Erdos123.erdos_123",
+   "source_file": "123.lean"
+  },
+  {
+   "target": "Erdos143.erdos_143.parts.ii",
+   "source_file": "143.lean"
+  },
+  {
+   "target": "Erdos243.erdos_243",
+   "source_file": "243.lean"
+  },
+  {
+   "target": "Erdos257.erdos_257",
+   "source_file": "257.lean"
+  },
+  {
+   "target": "Erdos288.erdos_288.variants.i2_card_eq_1",
+   "source_file": "288.lean"
+  },
+  {
+   "target": "Erdos366.erdos_366",
+   "source_file": "366.lean"
+  },
+  {
+   "target": "Erdos469.erdos_469",
+   "source_file": "469.lean"
+  },
+  {
+   "target": "Erdos68.erdos_68",
+   "source_file": "68.lean"
+  },
+  {
+   "target": "Erdos850.erdos_850",
+   "source_file": "850.lean"
+  },
+  {
+   "target": "Erdos889.erdos_889.variants.general",
+   "source_file": "889.lean"
+  },
+  {
+   "target": "Erdos893.erdos_893",
+   "source_file": "893.lean"
+  },
+  {
+   "target": "Erdos918.erdos_918.parts.ii",
+   "source_file": "918.lean"
+  },
+  {
+   "target": "Erdos92.erdos_92.variants.weak",
+   "source_file": "92.lean"
+  },
+  {
+   "target": "Erdos932.erdos_932",
+   "source_file": "932.lean"
+  },
+  {
+   "target": "Erdos945.erdos_945",
+   "source_file": "945.lean"
+  },
+  {
+   "target": "Erdos971.erdos_971",
+   "source_file": "971.lean"
+  },
+  {
+   "target": "Erdos1093.erdos_1093.parts.i",
+   "source_file": "1093.lean"
+  },
+  {
+   "target": "Erdos1107.erdos_1107",
+   "source_file": "1107.lean"
+  },
+  {
+   "target": "Erdos126.erdos_126",
+   "source_file": "126.lean"
+  },
+  {
+   "target": "Erdos155.erdos_155",
+   "source_file": "155.lean"
+  },
+  {
+   "target": "Erdos17.erdos_17",
+   "source_file": "17.lean"
+  },
+  {
+   "target": "Erdos276.erdos_276",
+   "source_file": "276.lean"
+  },
+  {
+   "target": "Erdos289.erdos_289",
+   "source_file": "289.lean"
+  },
+  {
+   "target": "Erdos352.erdos_352",
+   "source_file": "352.lean"
+  },
+  {
+   "target": "Erdos457.erdos_457.variants.qnk",
+   "source_file": "457.lean"
+  },
+  {
+   "target": "Erdos509.erdos_509",
+   "source_file": "509.lean"
+  },
+  {
+   "target": "Erdos598.erdos_598",
+   "source_file": "598.lean"
+  },
+  {
+   "target": "Erdos789.erdos_789.variants.cube_root_linearithmic",
+   "source_file": "789.lean"
+  },
+  {
+   "target": "Erdos859.erdos_859",
+   "source_file": "859.lean"
+  },
+  {
+   "target": "Erdos931.erdos_931",
+   "source_file": "931.lean"
+  },
+  {
+   "target": "Erdos931.erdos_931.variants.exists_prime",
+   "source_file": "931.lean"
+  },
+  {
+   "target": "Erdos97.erdos_97.variants.k_equidistant",
+   "source_file": "97.lean"
+  },
+  {
+   "target": "Erdos699.erdos_szekeres_strengthening",
+   "source_file": "699.lean"
+  },
+  {
+   "target": "Erdos1074.erdos_1074.variants.EHSNumbers_one_half",
+   "source_file": "1074.lean"
+  },
+  {
+   "target": "Erdos1094.erdos_1094",
+   "source_file": "1094.lean"
+  },
+  {
+   "target": "Erdos137.erdos_137",
+   "source_file": "137.lean"
+  },
+  {
+   "target": "Erdos267.erdos_267",
+   "source_file": "267.lean"
+  },
+  {
+   "target": "Erdos267.erdos_267.variants.generalisation_ratio_limit_to_infinity",
+   "source_file": "267.lean"
+  },
+  {
+   "target": "Erdos340.erdos_340.variants.sub_hasPosDensity",
+   "source_file": "340.lean"
+  },
+  {
+   "target": "Erdos457.erdos_457.variants.one_sub",
+   "source_file": "457.lean"
+  },
+  {
+   "target": "Erdos520.erdos_520",
+   "source_file": "520.lean"
+  },
+  {
+   "target": "Erdos74.erdos_74",
+   "source_file": "74.lean"
+  },
+  {
+   "target": "Erdos938.erdos_938",
+   "source_file": "938.lean"
+  },
+  {
+   "target": "Erdos944.erdos_944",
+   "source_file": "944.lean"
+  },
+  {
+   "target": "Erdos10.erdos_10",
+   "source_file": "10.lean"
+  },
+  {
+   "target": "Erdos11.erdos_11.variants.two_pow_two",
+   "source_file": "11.lean"
+  },
+  {
+   "target": "Erdos138.erdos_138.variants.difference",
+   "source_file": "138.lean"
+  },
+  {
+   "target": "Erdos264.erdos_264.parts.ii",
+   "source_file": "264.lean"
+  },
+  {
+   "target": "Erdos282.erdos_282.variants.graham",
+   "source_file": "282.lean"
+  },
+  {
+   "target": "Erdos416.erdos_416.parts.i",
+   "source_file": "416.lean"
+  },
+  {
+   "target": "Erdos479.erdos_479",
+   "source_file": "479.lean"
+  },
+  {
+   "target": "Erdos647.erdos_647.variants.lim",
+   "source_file": "647.lean"
+  },
+  {
+   "target": "Erdos749.erdos_749",
+   "source_file": "749.lean"
+  },
+  {
+   "target": "Erdos868.erdos_868.parts.ii",
+   "source_file": "868.lean"
+  },
+  {
+   "target": "Erdos913.erdos_913",
+   "source_file": "913.lean"
+  },
+  {
+   "target": "Erdos918.erdos_918.variants.all_subgraphs.parts.i",
+   "source_file": "918.lean"
+  },
+  {
+   "target": "Erdos968.erdos_968",
+   "source_file": "968.lean"
+  },
+  {
+   "target": "Erdos200.erdos_200",
+   "source_file": "200.lean"
+  },
+  {
+   "target": "Erdos341.erdos_341",
+   "source_file": "341.lean"
+  },
+  {
+   "target": "Erdos373.erdos_373.variants.maximal_solution",
+   "source_file": "373.lean"
+  },
+  {
+   "target": "Erdos410.erdos_410",
+   "source_file": "410.lean"
+  },
+  {
+   "target": "Erdos9.erdos_9",
+   "source_file": "9.lean"
+  },
+  {
+   "target": "Erdos931.erdos_931.variants.additional_condition",
+   "source_file": "931.lean"
+  },
+  {
+   "target": "Erdos936.erdos_936.variants.two_pow_add_one",
+   "source_file": "936.lean"
+  },
+  {
+   "target": "Erdos982.erdos_982",
+   "source_file": "982.lean"
+  },
+  {
+   "target": "Erdos1004.erdos_1004",
+   "source_file": "1004.lean"
+  },
+  {
+   "target": "Erdos1059.erdos_1059",
+   "source_file": "1059.lean"
+  },
+  {
+   "target": "Erdos236.erdos_236",
+   "source_file": "236.lean"
+  },
+  {
+   "target": "Erdos422.erdos_422",
+   "source_file": "422.lean"
+  },
+  {
+   "target": "Erdos74.erdos_74.variants.sqrt",
+   "source_file": "74.lean"
+  },
+  {
+   "target": "Erdos868.erdos_868.parts.i",
+   "source_file": "868.lean"
+  },
+  {
+   "target": "Erdos92.erdos_92.variants.strong",
+   "source_file": "92.lean"
+  },
+  {
+   "target": "Erdos930.erdos_930",
+   "source_file": "930.lean"
+  },
+  {
+   "target": "Erdos936.erdos_936.variants.two_pow_sub_one",
+   "source_file": "936.lean"
+  },
+  {
+   "target": "Erdos972.erdos_972",
+   "source_file": "972.lean"
+  },
+  {
+   "target": "Erdos1068.erdos_1068",
+   "source_file": "1068.lean"
+  },
+  {
+   "target": "Erdos108.erdos_108",
+   "source_file": "108.lean"
+  },
+  {
+   "target": "Erdos138.erdos_138.variants.dvd_two_pow",
+   "source_file": "138.lean"
+  },
+  {
+   "target": "Erdos324.erdos_324",
+   "source_file": "324.lean"
+  },
+  {
+   "target": "Erdos325.erdos_325.variants.weaker",
+   "source_file": "325.lean"
+  },
+  {
+   "target": "Erdos340.erdos_340.variants._33_mem_sub",
+   "source_file": "340.lean"
+  },
+  {
+   "target": "Erdos359.erdos_359.variants.isGoodFor_1_asymptotic",
+   "source_file": "359.lean"
+  },
+  {
+   "target": "Erdos364.erdos_364.variants.strong",
+   "source_file": "364.lean"
+  },
+  {
+   "target": "Erdos647.erdos_647.variants.infinite",
+   "source_file": "647.lean"
+  },
+  {
+   "target": "Erdos66.erdos_66",
+   "source_file": "66.lean"
+  },
+  {
+   "target": "Erdos82.erdos_82",
+   "source_file": "82.lean"
+  },
+  {
+   "target": "Erdos11.erdos_11.variants.not_four_dvd",
+   "source_file": "11.lean"
+  },
+  {
+   "target": "Erdos213.erdos_213",
+   "source_file": "213.lean"
+  },
+  {
+   "target": "Erdos340.erdos_340",
+   "source_file": "340.lean"
+  },
+  {
+   "target": "Erdos371.erdos_371",
+   "source_file": "371.lean"
+  },
+  {
+   "target": "Erdos373.erdos_373.variants.suranyi",
+   "source_file": "373.lean"
+  },
+  {
+   "target": "Erdos422.erdos_422.variants.surjective",
+   "source_file": "422.lean"
+  },
+  {
+   "target": "Erdos1.erdos_1.variants.real",
+   "source_file": "1.lean"
+  },
+  {
+   "target": "Erdos10.erdos_10.variants.granville_soundararajan_odd",
+   "source_file": "10.lean"
+  },
+  {
+   "target": "Erdos11.erdos_11",
+   "source_file": "11.lean"
+  },
+  {
+   "target": "Erdos126.erdos_126.variants.isLittleO",
+   "source_file": "126.lean"
+  },
+  {
+   "target": "Erdos141.erdos_141",
+   "source_file": "141.lean"
+  },
+  {
+   "target": "Erdos145.erdos_145",
+   "source_file": "145.lean"
+  },
+  {
+   "target": "Erdos15.erdos_15",
+   "source_file": "15.lean"
+  },
+  {
+   "target": "Erdos247.erdos_247",
+   "source_file": "247.lean"
+  },
+  {
+   "target": "Erdos282.erdos_282.variants.sq",
+   "source_file": "282.lean"
+  },
+  {
+   "target": "Erdos349.erdos_349.variants.floor_3_halves_odd",
+   "source_file": "349.lean"
+  },
+  {
+   "target": "Erdos672.erdos_672",
+   "source_file": "672.lean"
+  },
+  {
+   "target": "Erdos936.erdos_936.variants.factorial_sub_one",
+   "source_file": "936.lean"
+  },
+  {
+   "target": "Erdos1052.erdos_1052",
+   "source_file": "1052.lean"
+  },
+  {
+   "target": "Erdos138.erdos_138.variants.quotient",
+   "source_file": "138.lean"
+  },
+  {
+   "target": "Erdos172.erdos_172",
+   "source_file": "172.lean"
+  },
+  {
+   "target": "Erdos208.erdos_208.variants.log_bound",
+   "source_file": "208.lean"
+  },
+  {
+   "target": "Erdos242.erdos_242",
+   "source_file": "242.lean"
+  },
+  {
+   "target": "Erdos358.erdos_358.variants.prime_set",
+   "source_file": "358.lean"
+  },
+  {
+   "target": "Erdos358.erdos_358.variants.prime_set_density_representation",
+   "source_file": "358.lean"
+  },
+  {
+   "target": "Erdos376.erdos_376",
+   "source_file": "376.lean"
+  },
+  {
+   "target": "Erdos406.erdos_406",
+   "source_file": "406.lean"
+  },
+  {
+   "target": "Erdos414.erdos_414",
+   "source_file": "414.lean"
+  },
+  {
+   "target": "Erdos418.erdos_418.variants.density",
+   "source_file": "418.lean"
+  },
+  {
+   "target": "Erdos1003.erdos_1003.variants.Icc",
+   "source_file": "1003.lean"
+  },
+  {
+   "target": "Erdos212.erdos_212",
+   "source_file": "212.lean"
+  },
+  {
+   "target": "Erdos218.erdos_218.variants.infinite_equal_prime_gap",
+   "source_file": "218.lean"
+  },
+  {
+   "target": "Erdos218.erdos_218.variants.le",
+   "source_file": "218.lean"
+  },
+  {
+   "target": "Erdos364.erdos_364",
+   "source_file": "364.lean"
+  },
+  {
+   "target": "Erdos406.erdos_406.variants.one_two",
+   "source_file": "406.lean"
+  },
+  {
+   "target": "Erdos64.erdos_64",
+   "source_file": "64.lean"
+  },
+  {
+   "target": "Erdos779.erdos_779",
+   "source_file": "779.lean"
+  },
+  {
+   "target": "Erdos849.erdos_849",
+   "source_file": "849.lean"
+  },
+  {
+   "target": "Erdos975.erdos_975",
+   "source_file": "975.lean"
+  },
+  {
+   "target": "Erdos979.erdos_979",
+   "source_file": "979.lean"
+  },
+  {
+   "target": "Erdos1.erdos_1",
+   "source_file": "1.lean"
+  },
+  {
+   "target": "Erdos1003.erdos_1003",
+   "source_file": "1003.lean"
+  },
+  {
+   "target": "Erdos1055.erdos_1055",
+   "source_file": "1055.lean"
+  },
+  {
+   "target": "Erdos107.erdos_107",
+   "source_file": "107.lean"
+  },
+  {
+   "target": "Erdos138.erdos_138",
+   "source_file": "138.lean"
+  },
+  {
+   "target": "Erdos142.erdos_142.variants.lower",
+   "source_file": "142.lean"
+  },
+  {
+   "target": "Erdos20.erdos_20",
+   "source_file": "20.lean"
+  },
+  {
+   "target": "Erdos218.erdos_218.variants.ge",
+   "source_file": "218.lean"
+  },
+  {
+   "target": "Erdos233.erdos_233",
+   "source_file": "233.lean"
+  },
+  {
+   "target": "Erdos234.erdos_234",
+   "source_file": "234.lean"
+  },
+  {
+   "target": "Erdos28.erdos_28",
+   "source_file": "28.lean"
+  },
+  {
+   "target": "Erdos282.erdos_282",
+   "source_file": "282.lean"
+  },
+  {
+   "target": "Erdos3.erdos_3",
+   "source_file": "3.lean"
+  },
+  {
+   "target": "Erdos30.erdos_30",
+   "source_file": "30.lean"
+  },
+  {
+   "target": "Erdos325.erdos_325",
+   "source_file": "325.lean"
+  },
+  {
+   "target": "Erdos349.erdos_349.variants.floor_3_halves_even",
+   "source_file": "349.lean"
+  },
+  {
+   "target": "Erdos39.erdos_39",
+   "source_file": "39.lean"
+  },
+  {
+   "target": "Erdos398.erdos_398",
+   "source_file": "398.lean"
+  },
+  {
+   "target": "Erdos412.erdos_412",
+   "source_file": "412.lean"
+  },
+  {
+   "target": "Erdos495.erdos_495",
+   "source_file": "495.lean"
+  },
+  {
+   "target": "Erdos510.erdos_510",
+   "source_file": "510.lean"
+  },
+  {
+   "target": "Erdos52.erdos_52",
+   "source_file": "52.lean"
+  },
+  {
+   "target": "Erdos562.erdos_562",
+   "source_file": "562.lean"
+  },
+  {
+   "target": "Erdos564.erdos_564",
+   "source_file": "564.lean"
+  },
+  {
+   "target": "Erdos61.erdos_61",
+   "source_file": "61.lean"
+  },
+  {
+   "target": "Erdos694.erdos_694.variants.carmichael",
+   "source_file": "694.lean"
+  },
+  {
+   "target": "Erdos7.erdos_7",
+   "source_file": "7.lean"
+  },
+  {
+   "target": "Erdos723.erdos_723",
+   "source_file": "723.lean"
+  },
+  {
+   "target": "Erdos828.erdos_828.variants.lehmer_conjecture",
+   "source_file": "828.lean"
+  },
+  {
+   "target": "Erdos89.erdos_89",
+   "source_file": "89.lean"
+  },
+  {
+   "target": "Erdos90.erdos_90",
+   "source_file": "90.lean"
+  },
+  {
+   "target": "Erdos913.erdos_913.variants.infinite_many_8p_sq_add_one_primes",
+   "source_file": "913.lean"
+  },
+  {
+   "target": "Erdos936.erdos_936.variants.factorial_add_one",
+   "source_file": "936.lean"
+  },
+  {
+   "target": "Erdos940.erdos_940.variants.three_cubes",
+   "source_file": "940.lean"
+  },
+  {
+   "target": "Erdos952.erdos_952",
+   "source_file": "952.lean"
+  }
+ ]
+}

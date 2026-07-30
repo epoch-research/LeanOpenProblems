@@ -26,9 +26,11 @@ from pathlib import Path
 
 import openai
 
+from apn.dataset import parse_oeis_mapping
+
 ROOT = Path(__file__).parent.parent
 RAW = ROOT / "apn" / "data" / "oeis" / "raw"
-MAPPING = ROOT / "apn" / "data" / "oeis" / "THEOREM_MAPPING.txt"
+MAPPING = ROOT / "apn" / "data" / "oeis" / "THEOREM_MAPPING.json"
 MODEL = "gpt-5.5"
 _NUM_RE = re.compile(r"^(\d+)_")
 _INTERNAL = re.compile(r"(^/|oeis\.org/(A\d|wiki|search)|/b\d+\.txt|/a\d+\.|/wiki/)", re.I)
@@ -55,12 +57,10 @@ def load_records() -> dict[str, dict]:
 
 def group_conjectures() -> dict[str, list[str]]:
     by_seq: dict[str, list[str]] = defaultdict(list)
-    for line in MAPPING.read_text().splitlines():
-        parts = line.split()
-        if len(parts) >= 2:
-            m = _NUM_RE.match(parts[1])
-            if m:
-                by_seq[f"A{int(m.group(1)):06d}"].append(parts[0])
+    for name, files in parse_oeis_mapping(MAPPING.read_text()):
+        m = _NUM_RE.match(files[0])
+        if m:
+            by_seq[f"A{int(m.group(1)):06d}"].append(name)
     return dict(by_seq)
 
 
