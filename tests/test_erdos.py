@@ -11,6 +11,8 @@ and textual invariants of the shipped sketches.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 
 import pytest
@@ -18,6 +20,8 @@ import pytest
 from apn.dataset import (
     ERDOS_ISOLATED_DIR,
     ERDOS_MAPPING_FILE,
+    ERDOS_SOURCES_DIR,
+    ERDOS_SOURCES_MANIFEST,
     ERDOS_SUBSETS_DIR,
     erdos_dataset,
     load_subset,
@@ -39,6 +43,19 @@ from scripts.isolation import matches_name
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
 _DECL_RE = re.compile(r"(?m)^(?:theorem|lemma)\b")
 _SORRY_RE = re.compile(r"\bsorry\b")
+
+
+def test_sources_corpus_complete_and_unmodified() -> None:
+    # Sources/ is the whole FC ErdosProblems directory at the vendored commit,
+    # not just the files an evaluation set happens to use; SOURCES.json pins
+    # its provenance and a digest per file, so this holds without the
+    # (gitignored) local FC clone.
+    manifest = json.loads(ERDOS_SOURCES_MANIFEST.read_text())
+    digests = manifest["files"]
+    assert sorted(p.name for p in ERDOS_SOURCES_DIR.glob("*.lean")) == sorted(digests)
+    for name, digest in digests.items():
+        actual = hashlib.sha256((ERDOS_SOURCES_DIR / name).read_bytes()).hexdigest()
+        assert actual == digest, f"{name} differs from the vendored FC file"
 
 
 def test_membership_arithmetic() -> None:

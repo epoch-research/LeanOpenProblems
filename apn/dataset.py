@@ -19,6 +19,8 @@ FC100_SUBSETS_DIR = FC100_DIR / "subsets"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_ISOLATED_DIR = ERDOS_DIR / "Isolated"
 ERDOS_MAPPING_FILE = ERDOS_DIR / "MAPPING.txt"
+ERDOS_SOURCES_DIR = ERDOS_DIR / "Sources"
+ERDOS_SOURCES_MANIFEST = ERDOS_DIR / "SOURCES.json"
 ERDOS_SUBSETS_DIR = ERDOS_DIR / "subsets"
 
 _OEIS_NUM_RE = re.compile(r"^(\d+)_")
