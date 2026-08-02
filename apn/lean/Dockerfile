@@ -35,9 +35,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 ARG LEAN_VERSION=v4.27.0
-RUN curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh \
-    && sh elan-init.sh -y --default-toolchain "leanprover/lean4:${LEAN_VERSION}" \
-    && rm elan-init.sh
+ARG ELAN_VERSION=v4.2.3
+RUN curl -sSfL "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-$(uname -m)-unknown-linux-gnu.tar.gz" \
+        | tar xz -C /tmp \
+    && /tmp/elan-init -y --default-toolchain "leanprover/lean4:${LEAN_VERSION}" \
+    && rm /tmp/elan-init
 
 ARG FC_BRANCH=auto_oeis
 ARG FC_COMMIT=67338a157bbb8d87e9a349d662f82a868bda6327
