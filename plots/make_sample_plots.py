@@ -13,18 +13,16 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib.patches import Rectangle
 
-from bench_names import BENCH_FULL, BENCH_LITE
+from bench_names import (BENCH_FULL, BENCH_LITE, MODEL_LABELS, PROVIDER_RE,
+                         PROVIDERS, SERIES)
 
 LOGS = Path("logs")
 OUT = Path("plots")
 OUT.mkdir(exist_ok=True)
 
-MODEL_LABELS = {"ant": "Claude Opus 4.8", "oai": "GPT-5.5", "gdm": "Gemini 3.5 Flash"}
-PROVIDERS = ["ant", "oai", "gdm"]
 VARIANTS = ["base", "deep", "lit"]
 
 # palette (dataviz reference, light mode)
-SERIES = {"ant": "#2a78d6", "oai": "#008300", "gdm": "#e87ba4"}
 INK = "#0b0b0b"
 INK2 = "#52514e"
 MUTED = "#898781"
@@ -46,7 +44,7 @@ rcParams.update({
 
 # --- collect ---------------------------------------------------------------
 def parse(eval_set):
-    m = re.match(r"oeis-(full|lite)-(\d+)usd-(?:(deep|lit)-)?(ant|gdm|oai)-", eval_set)
+    m = re.match(rf"oeis-(full|lite)-(\d+)usd-(?:(deep|lit)-)?({PROVIDER_RE})-", eval_set)
     task, budget, variant, provider = m.groups()
     return task, int(budget), variant or "base", provider
 
@@ -105,10 +103,11 @@ def run_label(key, multiline=False):
 
 # === plot 1: solve matrix ===================================================
 lite_by_model = {p: [k for k in lite_keys if k[3] == p] for p in PROVIDERS}
+lite_provs = [p for p in PROVIDERS if lite_by_model[p]]
 lite_samples = sorted(samples[lite_keys[0]])
-# per sample, per model: how many of the 3 agent configs solved it
+# per sample, per model: how many of that model's agent configs solved it
 nsolved = {s: {p: sum(samples[k][s]["solved"] for k in lite_by_model[p])
-               for p in PROVIDERS} for s in lite_samples}
+               for p in lite_provs} for s in lite_samples}
 ever = [s for s in lite_samples if any(nsolved[s].values())]
 never = [s for s in lite_samples if not any(nsolved[s].values())]
 # sort by mean cost across all solving runs, cheapest first
@@ -131,8 +130,13 @@ def mix(hex_color, frac, base=NEUTRAL):
     b = plt.matplotlib.colors.to_rgb(hex_color)
     return tuple(x + frac * (y - x) for x, y in zip(a, b))
 
-SHADE = {0: None, 1: 0.42, 2: 0.68, 3: 1.0}
-ncol, nrow = len(PROVIDERS), len(ever)
+# shade by the fraction of that model's configs that solved it (1/3 palest,
+# all of them full strength); models with a single config always show full
+def shade(n, p):
+    frac = n / len(lite_by_model[p])
+    return 0.42 + (frac - 1 / 3) * 0.87
+
+ncol, nrow = len(lite_provs), len(ever)
 fig, ax = plt.subplots(figsize=(5.2, 0.19 * nrow + 2.4))
 def luminance(rgb):
     r, g, b = (ch / 12.92 if ch <= 0.04045 else ((ch + 0.055) / 1.055) ** 2.4
@@ -140,9 +144,9 @@ def luminance(rgb):
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 for r, s in enumerate(ever):
-    for c, p in enumerate(PROVIDERS):
+    for c, p in enumerate(lite_provs):
         n = nsolved[s][p]
-        color = NEUTRAL if n == 0 else mix(SERIES[p], SHADE[n])
+        color = NEUTRAL if n == 0 else mix(SERIES[p], shade(n, p))
         ax.add_patch(Rectangle((c + 0.06, nrow - 1 - r + 0.06), 0.88, 0.88,
                                facecolor=color, edgecolor="none"))
         if n > 0:
@@ -159,7 +163,7 @@ ax.set_aspect("auto")
 ax.set_yticks([nrow - 1 - r + 0.5 for r in range(nrow)])
 ax.set_yticklabels(labels, fontsize=6.8, color=INK2)
 ax.set_xticks([c + 0.5 for c in range(ncol)])
-ax.set_xticklabels([MODEL_LABELS[p].replace(" ", "\n", 1) for p in PROVIDERS],
+ax.set_xticklabels([MODEL_LABELS[p].replace(" ", "\n", 1) for p in lite_provs],
                    fontsize=9)
 ax.text(ncol / 2, -1.0,
         f"+ {len(never)} of {len(lite_samples)} conjectures solved by no run",
@@ -169,8 +173,9 @@ for side in ("top", "right", "left", "bottom"):
 ax.tick_params(length=0)
 ax.set_title(f"{BENCH_LITE} — which conjectures each model solved\n"
              f"({len(ever)} conjectures solved by ≥1 run; paler shade = solved\n"
-             f"by fewer of the 3 agent configs; cell label = mean cost of the\n"
-             f"solving runs; rows sorted by mean solve cost; $200 budget/sample)",
+             f"by fewer of that model's agent configs; cell label = mean cost\n"
+             f"of the solving runs; rows sorted by mean solve cost; $200\n"
+             f"budget/sample)",
              fontsize=10.5, loc="left", color=INK, pad=14)
 fig.tight_layout()
 fig.savefig(OUT / "solve_matrix.png", dpi=200, bbox_inches="tight")
@@ -180,7 +185,10 @@ print("wrote", OUT / "solve_matrix.png")
 fig, ax = plt.subplots(figsize=(8.2, 4.8))
 # full runs individually; lite runs pooled over the 3 agent configs per model
 curves = [([k], f"{BENCH_FULL} · {MODEL_LABELS[k[3]]}", "-") for k in full_keys]
-curves += [(lite_by_model[p], f"{BENCH_LITE} · {MODEL_LABELS[p]}, 3-agent avg", (0, (4, 2)))
+curves += [(lite_by_model[p],
+            f"{BENCH_LITE} · {MODEL_LABELS[p]}"
+            + (f", {len(lite_by_model[p])}-agent avg" if len(lite_by_model[p]) > 1 else ""),
+            (0, (4, 2)))
            for p in PROVIDERS if lite_by_model[p]]
 for keys, label, style in curves:
     n = sum(len(samples[k]) for k in keys)

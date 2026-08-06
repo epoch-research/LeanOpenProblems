@@ -39,15 +39,16 @@ for line in open("apn/data/oeis/conjecture_provenance.jsonl"):
     proposer_of[d["theorem_name"]] = d.get("proposer") or "(unknown)"
 
 def outcomes(glob_pat):
-    """sample -> solved by >=1 run matching glob_pat"""
+    """(sample -> solved by >=1 run matching glob_pat, number of runs)"""
     solved = defaultdict(bool)
-    for run in glob.glob(str(LOGS / glob_pat / "*_plaintext")):
+    runs = glob.glob(str(LOGS / glob_pat / "*_plaintext"))
+    for run in runs:
         for sd in Path(run).iterdir():
             if not sd.is_dir():
                 continue
             sc = json.loads((sd / "scores.json").read_text())["proof_scorer"]
             solved[sd.name] |= sc["value"] == "C"
-    return dict(solved)
+    return dict(solved), len(runs)
 
 def proposer_plot(solved, top_n, title, fname):
     counts = Counter(proposer_of[s] for s in solved)
@@ -95,13 +96,15 @@ def proposer_plot(solved, top_n, title, fname):
     fig.savefig(OUT / fname, dpi=200, bbox_inches="tight")
     print("wrote", OUT / fname)
 
+full_solved, n_full = outcomes("oeis-full-*")
 proposer_plot(
-    outcomes("oeis-full-*"), 12,
+    full_solved, 12,
     f"{BENCH_FULL} — conjectures by proposer\n"
-    "(solved = ≥1 of the 3 full runs, \\$50/sample)",
+    f"(solved = ≥1 of the {n_full} full runs, \\$50/sample)",
     "proposer_solve_rate_full.png")
+lite_solved, n_lite = outcomes("oeis-lite-*")
 proposer_plot(
-    outcomes("oeis-lite-*"), 8,
+    lite_solved, 8,
     f"{BENCH_LITE} — conjectures by proposer\n"
-    "(solved = ≥1 of the 9 lite runs, \\$200/sample)",
+    f"(solved = ≥1 of the {n_lite} lite runs, \\$200/sample)",
     "proposer_solve_rate_lite.png")

@@ -12,15 +12,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from bench_names import BENCH_FULL, BENCH_LITE
+from bench_names import (BENCH_FULL, BENCH_LITE, MODEL_LABELS, PROVIDER_RE,
+                         PROVIDERS, SERIES)
 
 LOGS = Path("logs")
 OUT = Path("plots")
 
-MODEL_LABELS = {"ant": "Claude Opus 4.8", "oai": "GPT-5.5", "gdm": "Gemini 3.5 Flash"}
-PROVIDERS = ["ant", "oai", "gdm"]
-
-SERIES = {"ant": "#2a78d6", "oai": "#008300", "gdm": "#e87ba4"}
 INK = "#0b0b0b"
 INK2 = "#52514e"
 MUTED = "#898781"
@@ -52,7 +49,7 @@ for line in open("apn/data/oeis/conjecture_provenance.jsonl"):
 def collect(glob_pat):
     hits = defaultdict(lambda: defaultdict(list))
     for run in glob.glob(str(LOGS / glob_pat / "*_plaintext")):
-        prov = re.search(r"-(ant|gdm|oai)-[a-z0-9]+$", Path(run).parent.name).group(1)
+        prov = re.search(rf"-({PROVIDER_RE})-[a-z0-9]+$", Path(run).parent.name).group(1)
         for sd in Path(run).iterdir():
             if not sd.is_dir():
                 continue
@@ -78,17 +75,19 @@ bar_w = 0.26
 for (row_title, frac, bins, ymax), ax in zip(ROWS, axes):
     dated = [s for s in frac if s in year]
     groups = [[s for s in dated if lo <= year[s] <= hi] for _, lo, hi in bins]
-    for j, prov in enumerate(PROVIDERS):
+    provs = [p for p in PROVIDERS if any(p in per for per in frac.values())]
+    w = min(bar_w, 0.84 / len(provs) - 0.02)
+    for j, prov in enumerate(provs):
         xs, ys, errs = [], [], []
         for i, members in enumerate(groups):
             vals = [frac[s].get(prov, 0.0) for s in members]
             n = len(vals)
             mean = sum(vals) / n
             var = sum((v - mean) ** 2 for v in vals) / n
-            xs.append(i + (j - 1) * (bar_w + 0.02))
+            xs.append(i + (j - (len(provs) - 1) / 2) * (w + 0.02))
             ys.append(mean)
             errs.append((var / n) ** 0.5)
-        ax.bar(xs, ys, width=bar_w, color=SERIES[prov], label=MODEL_LABELS[prov])
+        ax.bar(xs, ys, width=w, color=SERIES[prov], label=MODEL_LABELS[prov])
         ax.errorbar(xs, ys, yerr=errs, fmt="none", ecolor=INK2,
                     elinewidth=1, capsize=2)
     ax.set_xticks(range(len(bins)))
@@ -109,7 +108,13 @@ for (row_title, frac, bins, ymax), ax in zip(ROWS, axes):
     ax.set_title(f"{row_title} · {note}", fontsize=10.5, loc="left", color=INK, pad=10)
 
 axes[1].set_xlabel("year the conjecture was proposed", fontsize=9, color=INK2)
-axes[0].legend(frameon=False, fontsize=9, loc="upper left")
+# the lite panel has every provider, the full panel may not; legend from the union
+handles = {}
+for ax in axes:
+    h, l = ax.get_legend_handles_labels()
+    handles.update(zip(l, h))
+axes[0].legend(handles.values(), handles.keys(), frameon=False, fontsize=9,
+               loc="upper left")
 fig.suptitle("Solve rate by year the conjecture was proposed (±1 s.e.)",
              fontsize=11.5, x=0.01, ha="left", color=INK)
 fig.tight_layout(rect=(0, 0, 1, 0.96), h_pad=3)

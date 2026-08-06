@@ -6,13 +6,15 @@ statements that are false as formalized fall to edge-case counterexamples."""
 
 import glob
 import json
+import re
 import statistics
+from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from bench_names import BENCH_FULL, BENCH_LITE
+from bench_names import BENCH_FULL, BENCH_LITE, PROVIDER_RE
 
 LOGS = Path("logs")
 OUT = Path("plots")
@@ -38,8 +40,13 @@ rcParams.update({
 })
 
 data = {"lite": {"proof": [], "disproof": []}, "full": {"proof": [], "disproof": []}}
+provs = defaultdict(set)
+n_runs = defaultdict(int)
 for run in glob.glob(str(LOGS / "oeis-*" / "*_plaintext")):
     kind = "full" if "-full-" in Path(run).parent.name else "lite"
+    provs[kind].add(re.search(rf"-({PROVIDER_RE})-[a-z0-9]+$",
+                              Path(run).parent.name).group(1))
+    n_runs[kind] += 1
     for sd in Path(run).iterdir():
         if not sd.is_dir():
             continue
@@ -59,9 +66,10 @@ def ecdf(xs):
 
 PANELS = [
     ("lite", f"{BENCH_LITE} — solve-cost ECDF by outcome\n"
-             "(100 conjectures, $200 cap, base/deep/lit pooled, 3 models)", 220),
+             f"(100 conjectures, $200 cap, {n_runs['lite']} runs pooled over "
+             f"{len(provs['lite'])} models)", 220),
     ("full", f"{BENCH_FULL} — solve-cost ECDF by outcome\n"
-             "(492 conjectures, $50 cap, 3 models)", 60),
+             f"(492 conjectures, $50 cap, {len(provs['full'])} models)", 60),
 ]
 
 fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.9))

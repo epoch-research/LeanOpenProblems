@@ -13,13 +13,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from bench_names import BENCH_FULL, BENCH_LITE
+from bench_names import (BENCH_FULL, BENCH_LITE, MODEL_LABELS, PROVIDER_RE,
+                         PROVIDERS)
 
 LOGS = Path("logs")
 OUT = Path("plots")
-
-MODEL_LABELS = {"ant": "Claude Opus 4.8", "oai": "GPT-5.5", "gdm": "Gemini 3.5 Flash"}
-PROVIDERS = ["ant", "oai", "gdm"]
 
 PROOF = "#2a78d6"
 DISPROOF = "#eb6834"
@@ -46,7 +44,7 @@ rcParams.update({
 acc = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # kind->prov->sample->list
 for run in glob.glob(str(LOGS / "oeis-*" / "*_plaintext")):
     es = Path(run).parent.name
-    prov = re.search(r"-(ant|gdm|oai)-[a-z0-9]+$", es).group(1)
+    prov = re.search(rf"-({PROVIDER_RE})-[a-z0-9]+$", es).group(1)
     kind = "full" if "-full-" in es else "lite"
     for sd in Path(run).iterdir():
         if not sd.is_dir():
@@ -79,8 +77,9 @@ PANELS = [
 
 fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.6))
 for ax, (kind, title) in zip(axes, PANELS):
-    xs = range(len(PROVIDERS))
-    for i, p in enumerate(PROVIDERS):
+    provs = [p for p in PROVIDERS if acc[kind][p]]
+    xs = range(len(provs))
+    for i, p in enumerate(provs):
         mean_p, mean_d, err_t, n = shares(kind, p)
         ax.bar(i, mean_p, width=0.52, color=PROOF)
         ax.bar(i, mean_d, width=0.52, bottom=mean_p, color=DISPROOF)
@@ -93,9 +92,9 @@ for ax, (kind, title) in zip(axes, PANELS):
         ax.text(i, mean_p + mean_d / 2, f"{mean_d:.0%}", ha="center", va="center",
                 fontsize=8.5, color=SURFACE)
     ax.set_xticks(list(xs))
-    ax.set_xticklabels([MODEL_LABELS[p].replace(" ", "\n", 1) for p in PROVIDERS],
+    ax.set_xticklabels([MODEL_LABELS[p].replace(" ", "\n", 1) for p in provs],
                        fontsize=9.5)
-    ax.set_ylim(0, 0.5)
+    ax.set_ylim(0, 0.55)
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
     ax.yaxis.grid(True, color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
@@ -105,9 +104,9 @@ for ax, (kind, title) in zip(axes, PANELS):
     ax.tick_params(length=0)
     ax.set_title(title, fontsize=10.5, loc="left", color=INK)
 
-axes[0].bar(0, 0, color=PROOF, label="proved")
-axes[0].bar(0, 0, color=DISPROOF, label="disproved")
-axes[0].legend(frameon=False, fontsize=9, loc="upper right")
+axes[1].bar(0, 0, color=PROOF, label="proved")
+axes[1].bar(0, 0, color=DISPROOF, label="disproved")
+axes[1].legend(frameon=False, fontsize=9, loc="upper right")
 fig.tight_layout(w_pad=3)
 fig.savefig(OUT / "proof_disproof.png", dpi=200)
 print("wrote", OUT / "proof_disproof.png")

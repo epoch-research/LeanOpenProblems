@@ -7,7 +7,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from bench_names import ALPHAPROOF_NEXUS, BENCH_FULL, BENCH_LITE
+from bench_names import (ALPHAPROOF_NEXUS, BENCH_FULL, BENCH_LITE,
+                         MODEL_LABELS, PROVIDER_RE, PROVIDERS)
 
 LOGS = Path("logs")
 OUT = Path("plots")
@@ -22,11 +23,10 @@ for scores_path in LOGS.glob("*/*/scores.json"):
     m = scorer["metrics"]
     runs[eval_set] = (m["accuracy"]["value"], m["stderr"]["value"], scorer["scored_samples"])
 
-MODEL_LABELS = {"ant": "Claude Opus 4.8", "oai": "GPT-5.5", "gdm": "Gemini 3.5 Flash"}
 VARIANT_LABELS = {"base": "base", "deep": "deep", "lit": "lit"}
 
 def parse(name):
-    m = re.match(r"oeis-(full|lite)-(\d+usd)-(?:(deep|lit)-)?(ant|gdm|oai)-", name)
+    m = re.match(rf"oeis-(full|lite)-(\d+usd)-(?:(deep|lit)-)?({PROVIDER_RE})-", name)
     task, budget, variant, provider = m.groups()
     return task, budget, variant or "base", provider
 
@@ -55,7 +55,7 @@ rcParams.update({
     "ytick.color": MUTED,
 })
 
-def style_axis(ax, ymax=0.55):
+def style_axis(ax, ymax=0.62):
     ax.set_ylim(0, ymax)
     ax.yaxis.grid(True, color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
@@ -70,12 +70,15 @@ fig, (ax1, ax2) = plt.subplots(
 )
 
 # --- panel 1: lite, model x variant ----------------------------------------
-providers = ["ant", "oai", "gdm"]
 variants = ["base", "deep", "lit"]
+providers = [p for p in PROVIDERS
+             if any(("lite", v, p) in table for v in variants)]
 bar_w = 0.26
 for j, variant in enumerate(variants):
     xs, ys, errs = [], [], []
     for i, prov in enumerate(providers):
+        if ("lite", variant, prov) not in table:
+            continue
         acc, err, _ = table[("lite", variant, prov)]
         xs.append(i + (j - 1) * (bar_w + 0.02))
         ys.append(acc)
@@ -93,7 +96,7 @@ ax1.set_title(f"{BENCH_LITE} — accuracy by model and scaffold variant\n"
               "(n=100 conjectures, $200 budget/sample, ±1 s.e.)",
               fontsize=11, loc="left", color=INK)
 ax1.legend(title="scaffold", frameon=False, fontsize=9.5, title_fontsize=9.5,
-           loc="upper right")
+           loc="upper center", ncols=len(variants))
 
 # --- panel 2: full, base scaffold ------------------------------------------
 full_provs = [p for p in providers if ("full", "base", p) in table]
@@ -124,7 +127,7 @@ ax2.set_title(f"{BENCH_FULL} — accuracy\n(n={n_full}, $50 budget/sample, ±1 s
               fontsize=11, loc="left", color=INK)
 missing = [p for p in providers if ("full", "base", p) not in table]
 if missing:
-    ax2.text(0.98, 0.97, f"{', '.join(MODEL_LABELS[p] for p in missing)}:\nrun not downloaded",
+    ax2.text(0.98, 0.97, f"{', '.join(MODEL_LABELS[p] for p in missing)}:\nno full run downloaded",
              transform=ax2.transAxes, ha="right", va="top", fontsize=8.5, color=MUTED)
 
 fig.tight_layout(w_pad=3)

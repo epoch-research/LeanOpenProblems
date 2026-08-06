@@ -8,3 +8,15 @@ BENCH = "OpenOEIS"
 BENCH_FULL = BENCH
 BENCH_LITE = f"{BENCH} Lite"
 ALPHAPROOF_NEXUS = "AlphaProof Nexus"
+
+# Providers as tagged in eval-set names (oeis-<kind>-<budget>usd[-<variant>]-<provider>-<id>).
+# Not every provider has every run kind; scripts must skip providers with no data.
+MODEL_LABELS = {
+    "ant": "Claude Opus 4.8",
+    "oai": "GPT-5.5",
+    "gdm": "Gemini 3.5 Flash",
+    "fable": "Claude Fable 5",
+}
+PROVIDERS = ["ant", "oai", "gdm", "fable"]
+PROVIDER_RE = "|".join(PROVIDERS)
+SERIES = {"ant": "#2a78d6", "oai": "#008300", "gdm": "#e87ba4", "fable": "#4a3aa7"}

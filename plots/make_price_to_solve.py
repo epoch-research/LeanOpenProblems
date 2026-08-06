@@ -24,15 +24,11 @@ from matplotlib import rcParams
 from scipy.optimize import minimize
 from scipy.stats import norm
 
-from bench_names import BENCH
+from bench_names import BENCH, MODEL_LABELS, PROVIDERS, SERIES
 
 LOGS = Path("logs")
 OUT = Path("plots")
 
-MODEL_LABELS = {"ant": "Claude Opus 4.8", "oai": "GPT-5.5", "gdm": "Gemini 3.5 Flash"}
-PROVIDERS = ["ant", "oai", "gdm"]
-
-SERIES = {"ant": "#2a78d6", "oai": "#008300", "gdm": "#e87ba4"}
 INK = "#0b0b0b"
 INK2 = "#52514e"
 MUTED = "#898781"
@@ -65,9 +61,11 @@ def read_run(run_glob):
             out[sd.name] = (max(cost, 0.01), sc["value"] == "C")
     return out
 
-data = {}  # provider -> list of (time, event)
+data = {}  # provider -> list of (time, event); needs a full run as the backbone
 for p in PROVIDERS:
     full = read_run(f"oeis-full-*-{p}-*")
+    if not full:
+        continue
     lite = read_run(f"oeis-lite-*usd-{p}-*")  # base scaffold only (no deep/lit infix)
     data[p] = [lite[s] if s in lite else full[s] for s in full]
 
@@ -109,7 +107,7 @@ def fit_cure(obs):
 fig, ax = plt.subplots(figsize=(8.6, 5.2))
 X_MAX = 10_000
 notes = []
-for p in PROVIDERS:
+for p in data:
     obs = data[p]
     xs, ys = kaplan_meier(obs)
     km200 = ys[-1]
