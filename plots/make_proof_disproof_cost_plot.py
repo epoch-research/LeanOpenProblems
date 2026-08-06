@@ -92,5 +92,5 @@ for ax, (kind, title, xmax) in zip(axes, PANELS):
     ax.set_title(title, fontsize=10, loc="left", color=INK)
 axes[0].legend(frameon=False, fontsize=9.5, loc="lower right")
 fig.tight_layout(w_pad=3)
-fig.savefig(OUT / "disproof_cost.png", dpi=200)
-print("wrote", OUT / "disproof_cost.png")
+fig.savefig(OUT / "proof_disproof_cost.png", dpi=200)
+print("wrote", OUT / "proof_disproof_cost.png")
