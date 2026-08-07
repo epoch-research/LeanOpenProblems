@@ -34,7 +34,7 @@ INK2 = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
 BASELINE = "#c3c2b7"
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"
 
 rcParams.update({
     "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans"],
@@ -169,7 +169,7 @@ ax.set_xlabel("hypothetical price to solve (log scale)", fontsize=9.5, color=INK
 ax.set_title(f"{BENCH} — price-to-solve distribution, unsolved samples treated as\n"
              "right-censored: Kaplan–Meier (solid, one obs per conjecture,\n"
              "censored at \\$50 or \\$200) with two extrapolations past the data",
-             fontsize=10.5, loc="left", color=INK)
+             fontsize=10.5)
 from matplotlib.lines import Line2D
 handles, labels_ = ax.get_legend_handles_labels()
 handles += [Line2D([], [], color=INK2, linewidth=1.4, linestyle=(0, (2, 2))),

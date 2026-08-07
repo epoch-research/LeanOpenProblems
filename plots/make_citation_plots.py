@@ -21,7 +21,7 @@ INK2 = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
 BASELINE = "#c3c2b7"
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"
 
 rcParams.update({
     "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans"],
@@ -70,10 +70,8 @@ NATIVE_LITE = [("0", 0, 0), ("1–2", 1, 2), ("3+", 3, 10**9)]
 OPENALEX = [("0", 0, 0), ("1+", 1, 10**9)]
 
 ROWS = [
-    (f"{BENCH_FULL} · $50 cap · one run per model", full_frac, full_oeis,
-     NATIVE_FULL),
-    (f"{BENCH_LITE} · $200 cap · pooled over base/deep/lit agent runs", lite_frac,
-     lite_oeis, NATIVE_LITE),
+    (BENCH_FULL, full_frac, full_oeis, NATIVE_FULL),
+    (BENCH_LITE, lite_frac, lite_oeis, NATIVE_LITE),
 ]
 
 fig, axes = plt.subplots(2, 2, figsize=(11.5, 8.6),
@@ -81,7 +79,7 @@ fig, axes = plt.subplots(2, 2, figsize=(11.5, 8.6),
 bar_w = 0.26
 for (row_title, frac, oeis_of, native_bins), (axl, axr) in zip(ROWS, axes):
     for ax, counts, bins, title in [
-        (axl, native, native_bins, "OEIS page citations (links & references)"),
+        (axl, native, native_bins, "OEIS page citations"),
         (axr, openalex, OPENALEX, "OpenAlex citing works"),
     ]:
         groups = [[s for s in frac if lo <= counts.get(oeis_of[s], 0) <= hi]
@@ -128,8 +126,8 @@ for ax in (axes[0][0], axes[1][0]):
     handles.update(zip(l, h))
 axes[0][0].legend(handles.values(), handles.keys(), frameon=False, fontsize=9,
                   loc="upper left")
-fig.suptitle("Solve rate by citation count of the underlying sequence (±1 s.e.)",
-             fontsize=11.5, x=0.01, ha="left", color=INK)
+fig.suptitle("Solve rate by citation count of the underlying sequence",
+             fontsize="x-large")
 fig.tight_layout(rect=(0, 0, 1, 0.95), h_pad=4)
 fig.savefig(OUT / "citations_solve_rate.png", dpi=200)
 print("wrote", OUT / "citations_solve_rate.png")

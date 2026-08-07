@@ -18,7 +18,7 @@ OUT = Path("plots")
 INK = "#0b0b0b"
 INK2 = "#52514e"
 BASELINE = "#c3c2b7"
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"
 NEUTRAL = "#f0efec"
 BLUE = "#2a78d6"
 
@@ -91,20 +91,16 @@ def proposer_plot(solved, top_n, title, fname):
                 va="center", fontsize=8.5, color=INK2)
         lx += 0.028 + 0.011 * len(lbl) + 0.03
     ax.set_xlabel("conjectures", fontsize=9.5, color=INK2)
-    ax.set_title(title, fontsize=11, loc="left", color=INK, pad=10)
+    ax.set_title(title)
     fig.tight_layout()
     fig.savefig(OUT / fname, dpi=200, bbox_inches="tight")
     print("wrote", OUT / fname)
 
 full_solved, n_full = outcomes("oeis-full-*")
-proposer_plot(
-    full_solved, 12,
-    f"{BENCH_FULL} — conjectures by proposer\n"
-    f"(solved = ≥1 of the {n_full} full runs, \\$50/sample)",
-    "proposer_solve_rate_full.png")
+print(f"full: {n_full} runs")
+proposer_plot(full_solved, 12, f"{BENCH_FULL} — conjectures by proposer",
+              "proposer_solve_rate_full.png")
 lite_solved, n_lite = outcomes("oeis-lite-*")
-proposer_plot(
-    lite_solved, 8,
-    f"{BENCH_LITE} — conjectures by proposer\n"
-    f"(solved = ≥1 of the {n_lite} lite runs, \\$200/sample)",
-    "proposer_solve_rate_lite.png")
+print(f"lite: {n_lite} runs")
+proposer_plot(lite_solved, 8, f"{BENCH_LITE} — conjectures by proposer",
+              "proposer_solve_rate_lite.png")

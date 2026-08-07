@@ -23,7 +23,7 @@ INK2 = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
 BASELINE = "#c3c2b7"
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"
 
 rcParams.update({
     "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans"],
@@ -65,9 +65,8 @@ BINS = [("≤2006", 0, 2006), ("2007–11", 2007, 2011), ("2012–16", 2012, 201
         ("2017–21", 2017, 2021), ("2022–25", 2022, 2025)]
 
 ROWS = [
-    (f"{BENCH_FULL} · $50 cap · one run per model", full_frac, BINS, 0.62),
-    (f"{BENCH_LITE} · $200 cap · pooled over base/deep/lit agent runs", lite_frac,
-     BINS, 1.04),
+    (BENCH_FULL, full_frac, BINS, 0.62),
+    (BENCH_LITE, lite_frac, BINS, 1.04),
 ]
 
 fig, axes = plt.subplots(2, 1, figsize=(9.2, 8.4))
@@ -105,7 +104,8 @@ for (row_title, frac, bins, ymax), ax in zip(ROWS, axes):
     note = f"{len(dated)}/{len(frac)} conjectures with a date"
     if n_binned < len(dated):
         note += f", {len(dated) - n_binned} pre-{BINS[0][1]} excluded"
-    ax.set_title(f"{row_title} · {note}", fontsize=10.5, loc="left", color=INK, pad=10)
+    print(f"{row_title}: {note}")
+    ax.set_title(row_title, fontsize=10.5, loc="left", color=INK, pad=10)
 
 axes[1].set_xlabel("year the conjecture was proposed", fontsize=9, color=INK2)
 # the lite panel has every provider, the full panel may not; legend from the union
@@ -115,8 +115,8 @@ for ax in axes:
     handles.update(zip(l, h))
 axes[0].legend(handles.values(), handles.keys(), frameon=False, fontsize=9,
                loc="upper left")
-fig.suptitle("Solve rate by year the conjecture was proposed (±1 s.e.)",
-             fontsize=11.5, x=0.01, ha="left", color=INK)
+fig.suptitle("Solve rate by year the conjecture was proposed",
+             fontsize="x-large")
 fig.tight_layout(rect=(0, 0, 1, 0.96), h_pad=3)
 fig.savefig(OUT / "proposed_year_solve_rate.png", dpi=200)
 print("wrote", OUT / "proposed_year_solve_rate.png")

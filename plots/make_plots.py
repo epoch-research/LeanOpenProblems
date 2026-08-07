@@ -63,7 +63,7 @@ INK2 = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
 BASELINE = "#c3c2b7"
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"
 
 rcParams.update({
     "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans"],
@@ -144,9 +144,7 @@ for j, variant in enumerate(variants):
 ax1.set_xticks(range(len(providers)))
 ax1.set_xticklabels([MODEL_LABELS[p] for p in providers], fontsize=10.5)
 style_axis(ax1)
-ax1.set_title(f"{BENCH_LITE} — accuracy by model and agent variant\n"
-              "(n=100 conjectures, $200 budget/sample, ±1 s.e.)",
-              fontsize=11, loc="left", color=INK)
+ax1.set_title(BENCH_LITE, fontsize=11, loc="left", color=INK)
 variant_legend = ax1.legend(
     title="agent variant", frameon=False, fontsize=9.5, title_fontsize=9.5,
     loc="upper center", bbox_to_anchor=(0.62, 1), ncols=len(variants))
@@ -188,9 +186,7 @@ outcome_legend(ax2, [FULL_COLOR], loc="upper center", ncols=2)
 ax2.set_xticks(list(range(len(labels))))
 ax2.set_xticklabels(labels, fontsize=9.5)
 style_axis(ax2)
-n_full = table[("full", "base", full_provs[0])][2]
-ax2.set_title(f"{BENCH_FULL} — accuracy\n(n={n_full}, $50 budget/sample, ±1 s.e.)",
-              fontsize=11, loc="left", color=INK)
+ax2.set_title(f"{BENCH_FULL} (full set)", fontsize=11, loc="left", color=INK)
 fig.tight_layout(w_pad=3)
 fig.savefig(OUT / "accuracy.png", dpi=200)
 print("wrote", OUT / "accuracy.png")

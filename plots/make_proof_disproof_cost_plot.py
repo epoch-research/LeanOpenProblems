@@ -26,7 +26,7 @@ INK2 = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
 BASELINE = "#c3c2b7"
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"
 
 rcParams.update({
     "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans"],

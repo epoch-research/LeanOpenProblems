@@ -28,7 +28,7 @@ INK2 = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
 BASELINE = "#c3c2b7"
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"
 NEUTRAL = "#f0efec"
 
 rcParams.update({
@@ -176,7 +176,7 @@ ax.set_title(f"{BENCH_LITE} — which conjectures each model solved\n"
              f"by fewer of that model's agent configs; cell label = mean cost\n"
              f"of the solving runs; rows sorted by mean solve cost; $200\n"
              f"budget/sample)",
-             fontsize=10.5, loc="left", color=INK, pad=14)
+             fontsize=10.5, pad=14)
 fig.tight_layout()
 fig.savefig(OUT / "solve_matrix.png", dpi=200, bbox_inches="tight")
 print("wrote", OUT / "solve_matrix.png")
@@ -223,9 +223,7 @@ ax.tick_params(length=0)
 for cap in {keys[0][1] for keys, _, _ in curves}:
     ax.axvline(cap, color=GRID, linewidth=0.8, zorder=0)
 ax.set_xlabel("cost spent on sample at time of solve (log scale)", fontsize=9.5, color=INK2)
-ax.set_title("Fraction of samples solved with spend ≤ x\n"
-             "(each curve ends at its run's per-sample budget cap)",
-             fontsize=11, loc="left", color=INK)
+ax.set_title("Fraction of samples solved with spend ≤ x")
 ax.legend(frameon=False, fontsize=9, loc="upper left")
 fig.tight_layout()
 fig.savefig(OUT / "solve_cost_curves.png", dpi=200)
