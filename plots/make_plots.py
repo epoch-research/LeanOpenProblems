@@ -127,7 +127,7 @@ ax2.set_title(f"{BENCH_FULL} — accuracy\n(n={n_full}, $50 budget/sample, ±1 s
               fontsize=11, loc="left", color=INK)
 missing = [p for p in providers if ("full", "base", p) not in table]
 if missing:
-    ax2.text(0.98, 0.97, f"{', '.join(MODEL_LABELS[p] for p in missing)}:\nno full run downloaded",
+    ax2.text(0.98, 0.97, f"{', '.join(MODEL_LABELS[p] for p in missing)}:\nnot evaluated on the full set",
              transform=ax2.transAxes, ha="right", va="top", fontsize=8.5, color=MUTED)
 
 fig.tight_layout(w_pad=3)
