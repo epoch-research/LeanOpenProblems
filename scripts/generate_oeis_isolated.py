@@ -2,7 +2,7 @@
 """Generate the per-conjecture isolated OEIS specs in ``apn/data/oeis/Isolated/``.
 
 Our harness scores one OEIS *conjecture* per sample, but each upstream
-``Auto/*.lean`` file bundles the sequence definitions, sanity "test" lemmas, and
+``Sources/*.lean`` file bundles the sequence definitions, sanity "test" lemmas, and
 **one or more** conjecture theorems. SafeVerify requires every theorem in the
 target file to be discharged, so a sample about conjecture *T* was only marked
 correct if *all* conjectures in its file were settled. This script reconstructs
@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from apn.dataset import load_manifest
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     DEV_EXE,
@@ -55,7 +56,7 @@ from scripts.isolation import (
     run_extractor,
     tidy,
 )
-from scripts.oeis_isolation import AUTO_DIR, ISOLATED_DIR, MAPPING_FILE, parse_mapping
+from scripts.oeis_isolation import OEIS_DIR, ISOLATED_DIR, SOURCES_DIR
 
 
 def main() -> None:
@@ -66,10 +67,10 @@ def main() -> None:
     ap.add_argument("--exe", default=DEV_EXE, help="extractor path in container (default: dev in-tree)")
     args = ap.parse_args()
 
-    mapping = parse_mapping(MAPPING_FILE.read_text())
-    source_files = sorted({files[0] for _, files in mapping})
+    rows = load_manifest(OEIS_DIR)
+    source_files = sorted({r.source for r in rows})
     print(f"Extracting decl ranges from {len(source_files)} source files...", flush=True)
-    ranges = run_extractor([AUTO_DIR / f for f in source_files], args.container, args.exe)
+    ranges = run_extractor([OEIS_DIR / s for s in source_files], args.container, args.exe)
     by_file = {fr["file"].rsplit("/", 1)[-1]: fr for fr in ranges}
 
     ISOLATED_DIR.mkdir(exist_ok=True)
@@ -77,16 +78,16 @@ def main() -> None:
         old.unlink()
 
     written: dict[str, str] = {}
-    for name, files in mapping:
-        filerec = by_file[files[0]]
-        target = resolve_target(name, filerec)  # the unique target theorem
+    for row in rows:
+        filerec = by_file[row.source.rsplit("/", 1)[-1]]
+        target = resolve_target(row.id, filerec)  # the unique target theorem
         closure = dependency_closure(filerec, target["name"])
         flags = kept_flags(filerec, closure)
-        iso = tidy(isolate((AUTO_DIR / files[0]).read_bytes(), filerec, flags))
-        out = ISOLATED_DIR / f"{name}.lean"
+        iso = tidy(isolate((OEIS_DIR / row.source).read_bytes(), filerec, flags))
+        out = ISOLATED_DIR / f"{row.id}.lean"
         if out.name in written:  # no filename collisions
             raise SystemExit(f"isolated-filename collision: {out.name}")
-        written[out.name] = name
+        written[out.name] = row.id
         out.write_bytes(iso)
 
     print(
