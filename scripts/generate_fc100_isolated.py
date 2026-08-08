@@ -148,8 +148,14 @@ def main() -> None:
 
     rewritten: list[str] = []
     n_category = 0
+    written: set[str] = set()
     for row in (r for r in rows if r.excluded is None):
         name, rel = row.id, row.source.removeprefix("Sources/")
+        # No filename collisions, casefolded: the repo must check out intact
+        # on case-insensitive filesystems.
+        if name.casefold() in written:
+            raise SystemExit(f"isolated-filename collision: {name}")
+        written.add(name.casefold())
         filerec = by_rel[rel]
         src = (SOURCES_DIR / rel).read_bytes()
         target = resolve_target(name, filerec)  # the unique target theorem

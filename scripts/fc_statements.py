@@ -105,16 +105,15 @@ def strip_category_attrs(text: str) -> tuple[str, int]:
     return CATEGORY_ATTR_RE.subn("", text)
 
 
-# The `answer(...) ↔` convention's surface forms. LHS carries the placeholder
-# or a recorded verdict literal; the RHS form only ever appears unfilled
-# (a filled RHS would extend the pattern and fail generation's
-# zero-`answer(` assertion, loudly). The LHS pattern consumes only *horizontal*
+# The `answer(...) ↔` convention's surface forms. Either side may carry the
+# placeholder or a recorded verdict literal (ErdosProblems/198.lean records
+# `P ↔ answer(False)`). The LHS pattern consumes only *horizontal*
 # trailing whitespace: when the iff's right side starts on its own line
 # (ErdosProblems/1139.lean continues with an indentation-sensitive `letI`
 # block), eating the newline would splice that block onto the header line and
 # silently change the parse.
 _ANSWER_LHS_RE = re.compile(r"answer\(\s*(sorry|True|False)\s*\)\s*↔[ \t]*")
-_ANSWER_RHS_RE = re.compile(r"\s*↔\s*answer\(\s*sorry\s*\)")
+_ANSWER_RHS_RE = re.compile(r"\s*↔\s*answer\(\s*(sorry|True|False)\s*\)")
 
 # Form labels, as returned by :func:`detect_answer_form` and
 # :func:`rewrite_answer_iff` and consumed by :func:`answer_certificate`.
@@ -122,6 +121,8 @@ LHS_SORRY = "lhs_sorry"  # answer(sorry) ↔ P
 LHS_TRUE = "lhs_true"  # answer(True) ↔ P   (recorded verdict: P holds)
 LHS_FALSE = "lhs_false"  # answer(False) ↔ P  (recorded verdict: ¬P holds)
 RHS_SORRY = "rhs_sorry"  # P ↔ answer(sorry)
+RHS_TRUE = "rhs_true"  # P ↔ answer(True)   (recorded verdict: P holds)
+RHS_FALSE = "rhs_false"  # P ↔ answer(False)  (recorded verdict: ¬P holds)
 
 
 def detect_answer_form(code: str) -> str | None:
@@ -138,8 +139,9 @@ def detect_answer_form(code: str) -> str | None:
     m = _ANSWER_LHS_RE.search(code)
     if m:
         return f"lhs_{m.group(1).lower()}"
-    if _ANSWER_RHS_RE.search(code):
-        return RHS_SORRY
+    m = _ANSWER_RHS_RE.search(code)
+    if m:
+        return f"rhs_{m.group(1).lower()}"
     raise ValueError(f"unrecognized answer( form: {' '.join(code.split())[:200]}")
 
 
@@ -155,9 +157,10 @@ def rewrite_answer_iff(text: str) -> tuple[str, str | None, int]:
     if m:
         out, n = _ANSWER_LHS_RE.subn("", text)
         return out, f"lhs_{m.group(1).lower()}", n
-    if _ANSWER_RHS_RE.search(text):
+    m = _ANSWER_RHS_RE.search(text)
+    if m:
         out, n = _ANSWER_RHS_RE.subn("", text)
-        return out, RHS_SORRY, n
+        return out, f"rhs_{m.group(1).lower()}", n
     return text, None, 0
 
 
@@ -188,6 +191,8 @@ _WRAPPERS = {
     LHS_TRUE: (("Iff ([mdata answer:1 True]) (", ")"), ("Iff ([mdata answer:1 True]) ", "")),
     LHS_FALSE: (("Iff ([mdata answer:1 False]) (", ")"), ("Iff ([mdata answer:1 False]) ", "")),
     RHS_SORRY: (("Iff (", ") True"), ("Iff ", " True")),
+    RHS_TRUE: (("Iff (", ") ([mdata answer:1 True])"), ("Iff ", " ([mdata answer:1 True])")),
+    RHS_FALSE: (("Iff (", ") ([mdata answer:1 False])"), ("Iff ", " ([mdata answer:1 False])")),
 }
 
 

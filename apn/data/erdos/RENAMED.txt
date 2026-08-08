@@ -1,5 +1,0 @@
-# Attempt-time name -> its name at the vendored FC commit 67338a1 (one pair
-# per line, whitespace-separated). FC PR #2416 renamed erdos_1082b to
-# erdos_1082.parts.ii with the statement text unchanged, so the vendored
-# statement is verbatim what the paper's agent attempted.
-erdos_1082b erdos_1082.parts.ii

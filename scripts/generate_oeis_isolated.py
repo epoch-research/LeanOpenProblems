@@ -85,9 +85,11 @@ def main() -> None:
         flags = kept_flags(filerec, closure)
         iso = tidy(isolate((OEIS_DIR / row.source).read_bytes(), filerec, flags))
         out = ISOLATED_DIR / f"{row.id}.lean"
-        if out.name in written:  # no filename collisions
+        # No filename collisions, casefolded: the repo must check out intact
+        # on case-insensitive filesystems.
+        if out.name.casefold() in written:
             raise SystemExit(f"isolated-filename collision: {out.name}")
-        written[out.name] = row.id
+        written[out.name.casefold()] = row.id
         out.write_bytes(iso)
 
     print(

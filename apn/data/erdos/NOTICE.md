@@ -1,65 +1,55 @@
-# Third-party data
+# The Erdős dataset
 
-**`Sources/`** — vendored verbatim from the Formal Conjectures repository,
-commit `67338a157bbb8d87e9a349d662f82a868bda6327`:
-https://github.com/google-deepmind/formal-conjectures
-© 2026 The Formal Conjectures Authors, Apache License 2.0.
+One row per research-category statement in `FormalConjectures/ErdosProblems`
+at the pinned FC commit, as listed in `samples.jsonl` -- the manifest is the
+universe census, computed from `Sources/` by
+`scripts/generate_erdos_isolated.py`: every `theorem`/`lemma` declaration
+carrying a `@[category research open]` or `@[category research solved]`
+attribute is a member, resolution status notwithstanding. Two member kinds
+ship as `excluded` rows with the reason inline: value-typed `answer(sorry)`
+statements (a `sorryAx` in the elaborated type; unscoreable by SafeVerify) and
+statements whose complete formal proof is in the source file itself (not an
+open task, and the spec would leak the proof). Each row records its
+erdosproblems.com problem number (`erdos_number`, the source file's stem) and,
+for tooling only, `category_at_pin` and `answer_form` -- `apn/dataset.py`
+deliberately keeps those two out of sample metadata, since they encode the
+recorded verdict.
 
-**`ATTEMPTED.txt`** — verbatim copy of `erdos_problems_attempted.txt` from the
-AlphaProof Nexus results repository (commit
-`c58c3cd01dd8cb5705606565ac23bfd81d432ae5`):
-https://github.com/google-deepmind/alphaproof-nexus-results
-© 2026 Google LLC, CC-BY 4.0. It lists the 353 ErdosProblems statements the
-paper's agent attempted (arXiv 2605.22763) — every FC ErdosProblems statement
-as of early Feb 2026 — and is the membership source of truth here.
+Canonicalization of the shipped `Isolated/` specs (one per kept row; sibling
+theorems and `example` commands cut):
 
-`Sources/<file>.lean` mirrors the FC repository's
-`FormalConjectures/ErdosProblems/<file>.lean` for every file hosting at least
-one kept target. Statement text is taken at commit 67338a1 — the exact FC
-state the sandbox images bake, so every spec compiles by construction — not at
-the paper's early-Feb snapshot; 67338a1 carries the paper's own mid-run
-misformalization amendments (erdos_125 lower-density, erdos_741 upper-density),
-which the published solves target.
-
-Canonicalization (see `EXCLUDED.txt` and `RENAMED.txt` for the details):
-
-* 3 of the 353 attempted names are excluded (two never existed in public FC;
-  one exists only past the vendored commit), leaving 350 samples.
-* 1 name is tracked across an upstream rename (`erdos_1082b`).
-* Recorded verdicts are un-filled: `answer(True/False) ↔ P` ships as plain
-  `P`, like the unfilled `answer(sorry)` forms — determining P's truth value
-  is exactly the paper's task, and a recorded literal is the answer key.
+* All `answer(...) ↔` statement forms are rewritten to plain `P` -- recorded
+  `True`/`False` verdicts un-filled like the unfilled `answer(sorry)` forms,
+  because determining P's truth value is exactly the task and a recorded
+  literal is the answer key. The rewrite is certified by re-elaboration
+  (`tests/test_erdos_isolation.py`).
 * FC's annotations are stripped likewise: every kept declaration's
-  `@[category ..., AMS ...]` classification list is dropped whole — it is
-  catalogue metadata, not part of the statement, and its `research solved`
-  category and `formal_proof` URL clauses are the recorded verdict (the same
-  answer key in human-readable form) — as is the doc-comment prose recording
-  resolutions (crediting the DeepMind prover agent, other AI provers, or human
-  authors, sometimes describing the counterexample) and the module-doc
-  reference lines linking solution papers/formalisations
-  (`scripts/erdos_isolation.py:strip_fc_annotations`, exact snippets, counts
-  asserted; assembled from the generation census plus a full agentic audit of
-  every member against its source). Membership itself ignores resolution
-  status: this is the paper's canonical attempted set, regardless of what has
-  been resolved since.
+  `@[category ..., AMS ...]` classification list is dropped whole -- catalogue
+  metadata whose `research solved` category and `formal_proof` URL clauses are
+  the recorded verdict in human-readable form -- as is the doc-comment prose
+  recording resolutions and the module-doc reference lines linking solution
+  papers/formalisations (`scripts/erdos_isolation.py:VERDICT_PROSE`, exact
+  snippets, each asserted to apply). `tests/test_erdos.py` asserts the markers
+  are absent from every shipped sketch.
+* A few specs (allowlisted by file in `scripts/erdos_isolation.py`) carry one
+  extra sorry'd helper theorem that a kept definition depends on; those
+  samples implicitly require proving the helper too.
 
-**`raw/`** — scraped from erdosproblems.com (© Thomas Bloom and the site's
-contributors; the site publishes no explicit license) on 2026-07-30 by
-`scripts/fetch_erdosproblems_data.py`: `erdosproblems_problems.jsonl` (one row
-per problem — status, prize, statement, source citations, tags),
-`erdosproblems_lists.jsonl` (the site's catalog of the 147 problem-list papers
-Erdős wrote), `booklet_1999_crosswalk.json` and `bloom_top10.json` (Thomas
-Bloom's forum/blog posts), and `green_open_problems.json` (link annotations
-extracted from Ben Green's *100 Open Problems* PDF, © Ben Green). Rows are
-keyed by erdosproblems.com problem number — the `<n>` in `Erdos<n>.erdos_<n>`
-sample ids — and a problem's membership in any of the 147 list-papers is the
-join `sources[].code` × the lists catalog, not a fact baked into the rows.
-The fetch script validates every parsed count against the site's
-self-reported totals.
+⚠️ Scope of the verdict-prose strip: the exact-snippet list removes the
+DeepMind-prover-agent / AlphaProof resolution prose (the paper's own
+provenance channel) and the resolution prose recorded on the
+`tsoukalas_attempted` members, assembled from the generation census plus an
+agentic audit of every member against its source. Members *outside* that
+subset -- mostly `research solved` statements added upstream after the paper
+-- may still carry resolution prose in their doc comments (attribution of the
+known result, occasionally an explicit answer or a pointer to a published
+solution). A stronger universe-wide cleanup is deferred; treat full-universe
+runs accordingly.
 
-Everything else in this directory is produced by this repository:
-`MAPPING.txt` (target -> source file) and `Isolated/` (one per-target spec per
-member, with sibling theorems and `example` commands cut and the four
-`answer(...) ↔` statement forms certified-rewritten to plain `P`) are
-generated by `scripts/generate_erdos_isolated.py` and validated by
-`tests/test_erdos_isolation.py`.
+Subsets (`subsets/`): `tsoukalas_attempted.json` -- the Tsoukalas paper's
+canonical 350-statement attempted set (arXiv 2605.22763; derivation and
+upstream hash in its `description`). Bare `apn_erdos` runs the full universe.
+
+Third-party material: `Sources/` (vendored Formal Conjectures files,
+Apache-2.0) and `raw/` (erdosproblems.com scrapes and related material) each
+carry a README with their exact provenance.

@@ -40,13 +40,10 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
+from apn.dataset import ERDOS_DIR, SampleRow, load_manifest
 from scripts.erdos_isolation import (
-    FORM_CENSUS,
     ISOLATED_DIR,
-    MAPPING_FILE,
     SOURCES_DIR,
-    kept_names,
-    parse_mapping,
 )
 from scripts.fc_statements import (
     answer_certified,
@@ -56,7 +53,6 @@ from scripts.fc_statements import (
     strip_comments,
 )
 from scripts.isolation import (
-    matches_name,
     planned_survivors,
     theorem_command_decls,
 )
@@ -76,29 +72,25 @@ class IsoData:
 
 
 @pytest.fixture(scope="session")
-def mapping() -> list[tuple[str, str]]:
-    entries: list[tuple[str, str]] = parse_mapping(MAPPING_FILE.read_text())
-    # The mapping must resolve exactly the kept members (353 attempted minus
-    # the 3 excluded, rename applied), in attempt-list order; the mapped names
-    # are the fully qualified forms of the short kept names.
-    kept = kept_names()
-    assert len(entries) == len(kept)
-    assert all(matches_name(full, short) for (full, _), short in zip(entries, kept))
-    return entries
+def kept_rows() -> list[SampleRow]:
+    # The committed manifest's kept rows are the members with isolated specs;
+    # excluded rows (value-typed / proved-in-file) have none.
+    return [r for r in load_manifest(ERDOS_DIR) if r.excluded is None]
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
-async def iso_data(mapping: list[tuple[str, str]]) -> IsoData:
+async def iso_data(kept_rows: list[SampleRow]) -> IsoData:
     """Bring the sandbox up once and run every Lean step inside it: extract the
     vendored sources and the Isolated files, then compile every Isolated file.
 
     The vendored tree is flat (relpath == basename, unique), so sources stage
-    under their basenames; Isolated basenames (fully qualified decl names) are
-    unique too. Same async/loop-scope arrangement as
-    ``tests/test_fc100_isolation.py::iso_data``, for the same reasons.
+    under their basenames; Isolated basenames are unique too (a case-collision
+    disambiguator keeps them distinct even casefolded). Same async/loop-scope
+    arrangement as ``tests/test_fc100_isolation.py::iso_data``, for the same
+    reasons.
     """
     async with generate_env("pytest_erdos_isolation") as env:
-        rels = sorted({rel for _, rel in mapping})
+        rels = sorted({r.source.removeprefix("Sources/") for r in kept_rows})
         src = await extract(env, [SOURCES_DIR / rel for rel in rels], arcnames=rels)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
         iso = await extract(env, iso_files)
@@ -113,12 +105,13 @@ async def iso_data(mapping: list[tuple[str, str]]) -> IsoData:
 def _source_form(name: str, rel: str, filerec: dict[str, Any]) -> str | None:
     """The ``answer(...) ↔`` form of the target's *source* command, re-detected
     from the vendored span text (comment-stripped) -- independent of what
-    generation did, so the census below is a genuine cross-check."""
+    generation recorded in the manifest, so the per-row cross-check below is
+    genuine."""
     src = (SOURCES_DIR / rel).read_bytes()
     spans = [
         src[c["declStart"] : c["declEnd"]]
         for c in filerec["commands"]
-        if any(d["kind"] == "theorem" and matches_name(d["name"], name) for d in c["decls"])
+        if any(d["kind"] == "theorem" and d["name"] == name for d in c["decls"])
     ]
     assert len(spans) == 1, f"{name}: {len(spans)} source commands declare the target"
     form: str | None = detect_answer_form(strip_comments(spans[0].decode("utf-8")))
@@ -131,24 +124,26 @@ def _source_form(name: str, rel: str, filerec: dict[str, Any]) -> str | None:
 # --------------------------------------------------------------------------- #
 @pytest.mark.asyncio(loop_scope="module")
 async def test_isolated_files_are_structurally_correct(
-    mapping: list[tuple[str, str]], iso_data: IsoData
+    kept_rows: list[SampleRow], iso_data: IsoData
 ) -> None:
     """Each isolated file carries exactly the target + its dependency lemmas
     (the cut's prediction), with the target's statement certified against the
-    source per its re-detected ``answer(...)`` form: equal up to hygiene
-    normalization for plain members, the pinned wrapper of the isolated type
-    for the four rewritten forms."""
+    source per its re-detected ``answer(...)`` form -- which must also match
+    the manifest's recorded ``answer_form``: equal up to hygiene normalization
+    for plain members, the pinned wrapper of the isolated type for the
+    rewritten forms."""
     failures: list[str] = []
-    census: dict[str | None, int] = {form: 0 for form in FORM_CENSUS}
-    for name, rel in mapping:
+    for row in kept_rows:
+        name, rel = row.id, row.source.removeprefix("Sources/")
+        stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
         src_type, planned = planned_survivors(iso_data.src_ranges[rel], name)
         src_type = normalize_hygiene(src_type)
-        fr = iso_data.iso_ranges.get(name)
+        fr = iso_data.iso_ranges.get(stem)
         if fr is None:
             failures.append(f"{name}: no isolated file extracted")
             continue
         thms = theorem_command_decls(fr)
-        target_hits = [d for d in thms if matches_name(d["name"], name)]
+        target_hits = [d for d in thms if d["name"] == name]
         if len(target_hits) != 1:
             failures.append(
                 f"{name}: target appears {len(target_hits)}x among {[d['name'] for d in thms]}"
@@ -159,29 +154,31 @@ async def test_isolated_files_are_structurally_correct(
             failures.append(f"{name}: surviving theorems {remaining} != planned {planned}")
             continue
         form = _source_form(name, rel, iso_data.src_ranges[rel])
-        census[form] += 1
+        if form != row.extra["answer_form"]:
+            failures.append(
+                f"{name}: manifest answer_form {row.extra['answer_form']} != source's {form}"
+            )
+            continue
         iso_type = normalize_hygiene(target_hits[0]["type"])
         if not answer_certified(form, src_type, iso_type):
             failures.append(f"{name}: target statement changed during isolation ({form=})")
     assert not failures, "structural validation failed:\n  " + "\n  ".join(failures)
-    # The set's census: 85 plain propositions and 265 rewritten members across
-    # the four answer(...) ↔ forms, no more, no fewer.
-    assert census == FORM_CENSUS, f"form census drifted: {census} != {FORM_CENSUS}"
 
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_no_example_commands_survive(
-    mapping: list[tuple[str, str]], iso_data: IsoData
+    kept_rows: list[SampleRow], iso_data: IsoData
 ) -> None:
     """FC's anonymous ``example`` sanity checks (1141.lean, 387.lean) are cut:
     keeping one would make the scorer re-run its proof inside the trusted
     target compile on every score call."""
     offenders = []
-    for name, _ in mapping:
-        src = (ISOLATED_DIR / f"{name}.lean").read_bytes()
-        fr = iso_data.iso_ranges[name]
+    for row in kept_rows:
+        src = (ERDOS_DIR / row.statement_path).read_bytes()
+        stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
+        fr = iso_data.iso_ranges[stem]
         if any(is_example_command(src, c) for c in fr["commands"]):
-            offenders.append(name)
+            offenders.append(row.id)
     assert not offenders, f"example commands survived isolation in: {offenders}"
 
 

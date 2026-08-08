@@ -21,13 +21,21 @@ class SampleRow:
     hosting the declaration, an optional exclusion reason for members the
     harness cannot score, and any dataset-specific fields (``oeis_id``,
     ``category_at_pin``, ...) in ``extra``. The isolated spec of a
-    non-excluded row is ``Isolated/<id>.lean`` by convention.
+    non-excluded row is ``Isolated/<id>.lean`` by convention; ``statement``
+    overrides that path for the rare ids it cannot name (two Erdős members
+    differ only in case, which one filename cannot carry on a
+    case-insensitive filesystem).
     """
 
     id: str
     source: str
     excluded: str | None = None
+    statement: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def statement_path(self) -> str:
+        return self.statement or f"Isolated/{self.id}.lean"
 
 
 def load_manifest(dataset_dir: str | Path) -> list[SampleRow]:
@@ -41,6 +49,7 @@ def load_manifest(dataset_dir: str | Path) -> list[SampleRow]:
                 id=rec.pop("id"),
                 source=rec.pop("source"),
                 excluded=rec.pop("excluded", None),
+                statement=rec.pop("statement", None),
                 extra=rec,
             )
         )
@@ -169,9 +178,7 @@ def build_dataset(
         rows = [r for r in rows if r.id in wanted]
     samples: list[Sample] = []
     for row in rows:
-        text = strip_license_header(
-            (dataset_dir / "Isolated" / f"{row.id}.lean").read_text()
-        )
+        text = strip_license_header((dataset_dir / row.statement_path).read_text())
         metadata: dict[str, Any] = {"sketch": text, "source": row.source}
         for key in metadata_keys:
             if key in row.extra:
