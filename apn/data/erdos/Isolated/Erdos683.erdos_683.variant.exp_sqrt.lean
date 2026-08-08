@@ -16,7 +16,6 @@ limitations under the License.
 
 import FormalConjectures.Util.ProblemImports
 
-import FormalConjectures.ErdosProblems.«961»
 
 /-!
 # Erdős Problem 683
@@ -30,7 +29,7 @@ import FormalConjectures.ErdosProblems.«961»
 
 namespace Erdos683
 
-open Filter Real Erdos961
+open Filter Real
 
 /--
 Let $P(n, k)$ be the largest prime factor of $\binom{n}{k}$.
