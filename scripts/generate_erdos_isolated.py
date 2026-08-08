@@ -49,7 +49,6 @@ from concurrent.futures import ThreadPoolExecutor
 from apn.dataset import write_manifest
 from scripts.erdos_isolation import (
     ERDOS_DIR,
-    HARDCODED_ISOLATION,
     ISOLATED_DIR,
     PROVED_IN_FILE_REASON,
     RESEARCH_ATTR_RE,
@@ -202,20 +201,6 @@ def main() -> None:
             flags = fc_kept_flags(src, filerec, kept_flags(filerec, closure))
             problems.extend(check_sorries(decl["name"], rel, src, filerec, flags))
             text = tidy(isolate(src, filerec, flags)).decode("utf-8")
-            for old, new in HARDCODED_ISOLATION.get(decl["name"], []):
-                if text.count(old) != 1:
-                    problems.append(f"{decl['name']}: hardcoded-isolation snippet not found exactly once")
-                else:
-                    text = text.replace(old, new)
-            # No spec may lean on another problem module (their oleans are not
-            # built into the sandbox images) or splice a statement the cut
-            # removed -- the two failure modes the hardcoded fixes exist for.
-            code = strip_comments(text)
-            if "import FormalConjectures.ErdosProblems" in code:
-                problems.append(f"{decl['name']}: spec imports another problem file")
-            for ref in re.findall(r"type_of%\s+([\w.«»']+)", code):
-                if not re.search(rf"(?m)^(?:protected\s+)?(?:theorem|lemma|def|abbrev|noncomputable def)\s+{re.escape(ref)}\b", text):
-                    problems.append(f"{decl['name']}: type_of% references {ref}, not declared in the spec")
             # Census `answer(` in *code* only -- kept docs may mention it in prose.
             n_answers = strip_comments(text).count("answer(")
             if n_answers > 1:

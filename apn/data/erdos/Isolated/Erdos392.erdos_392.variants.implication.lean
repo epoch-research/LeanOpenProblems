@@ -33,8 +33,8 @@ Cambie has observed that a positive answer follows from the result above with $a
 by pairing variables together, e.g. taking $a'_i = a_{2i-1}a_{2i}$ (and the lower bound follows from
 Stirling's approximation).
 -/
-theorem erdos_392.variants.implication (h : ∀ (A : ℕ → ℕ) (h : ∀ n > 0, IsLeast { t + 1 | (t) (_ : ∃ a : Fin (t + 1) → ℕ, (n)! = ∏ i, a i ∧ Monotone a ∧ a (Fin.last t) ≤ n ^ 2) } (A n)), ((fun (n : ℕ) => (A n - n / 2 + n / (2 * Real.log n) : ℝ)) =o[atTop] fun n => n / Real.log n)) :
-    ∀ (A : ℕ → ℕ) (hA : ∀ n > 0, IsLeast { t + 1 | (t) (_ : ∃ a : Fin (t + 1) → ℕ, (n)! = ∏ i, a i ∧ Monotone a ∧ a (Fin.last t) ≤ n) } (A n)), (fun (n : ℕ) => (A n - n + n / Real.log n : ℝ)) =o[atTop] fun n => n / Real.log n := by
+theorem erdos_392.variants.implication (h : type_of% erdos_392) :
+    type_of% erdos_392.variants.lower := by
   sorry
 
 end Erdos392

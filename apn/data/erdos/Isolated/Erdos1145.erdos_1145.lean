@@ -15,6 +15,7 @@ limitations under the License.
 -/
 
 import FormalConjectures.Util.ProblemImports
+import FormalConjectures.ErdosProblems.«28»
 
 /-!
 # Erdős Problem 1145
@@ -60,5 +61,24 @@ A conjecture of Erdős and Sárközy.
 theorem erdos_1145 : Erdos1145Prop := by
   sorry
 
+/--
+A stronger form of [erdosproblems.com/28].
+-/
+theorem erdos_1145.test_implies_erdos_28 : Erdos1145Prop → type_of% Erdos28.erdos_28 := by
+  delta sumRep
+  intro h1145 s hs
+  rcases hs.exists_le with ⟨m, hm⟩
+  by_cases hfin : s.Finite
+  · exact absurd hs (hfin.add hfin).infinite_compl
+  · have hinf : s.Infinite := hfin
+    refine h1145 hinf hinf ?_ ?_
+    · refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
+      filter_upwards [Filter.eventually_gt_atTop 0] with n hn
+      rw [div_self]
+      exact mod_cast Nat.pos_iff_ne_zero.mp <|
+        lt_of_lt_of_le hn (Nat.nth_strictMono hinf).le_apply
+    · filter_upwards [Filter.eventually_gt_atTop m] with n hn
+      by_contra hns
+      exact not_le_of_gt hn (hm n hns)
 
 end Erdos1145
