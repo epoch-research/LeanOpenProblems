@@ -51,5 +51,6 @@ canonical 350-statement attempted set (arXiv 2605.22763; derivation and
 upstream hash in its `description`). Bare `apn_erdos` runs the full universe.
 
 Third-party material: `Sources/` (vendored Formal Conjectures files,
-Apache-2.0) and `raw/` (erdosproblems.com scrapes and related material) each
-carry a README with their exact provenance.
+Apache-2.0) and `metadata/` (data *about* the problems: erdosproblems.com
+scrapes and related material) each carry a README with their exact
+provenance.

@@ -42,7 +42,7 @@ sequence), roughly 15-20 min.
 Usage::
 
     python scripts/fetch_oeis_data.py
-    python scripts/fetch_oeis_data.py --out-dir apn/data/oeis/raw --delay 1.0
+    python scripts/fetch_oeis_data.py --out-dir apn/data/oeis/metadata/snapshots --delay 1.0
     python scripts/fetch_oeis_data.py --limit 5            # smoke test
     python scripts/fetch_oeis_data.py --ids A129365 A268597
 """
@@ -60,7 +60,7 @@ from pathlib import Path
 import requests
 
 OEIS_DIR = Path(__file__).parent.parent / "apn" / "data" / "oeis"
-DEFAULT_OUT_DIR = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "raw"
+DEFAULT_OUT_DIR = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "metadata" / "snapshots"
 
 RECORD_URL = "https://oeis.org/search?q=id:{oeis_id}&fmt=json"
 # History paginates 10 revisions per page (newest first); &start=N walks older

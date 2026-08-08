@@ -58,7 +58,7 @@ what is missing.
 Usage::
 
     python scripts/fetch_erdosproblems_data.py
-    python scripts/fetch_erdosproblems_data.py --out-dir apn/data/erdos/raw
+    python scripts/fetch_erdosproblems_data.py --out-dir apn/data/erdos/metadata/snapshots
     python scripts/fetch_erdosproblems_data.py --cache-dir /tmp/ep-cache
 """
 
@@ -222,7 +222,7 @@ def parse_green_pdf(pdf: bytes) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--out-dir", type=Path,
-                        default=Path("apn/data/erdos/raw"))
+                        default=Path("apn/data/erdos/metadata/snapshots"))
     parser.add_argument("--cache-dir", type=Path, default=None,
                         help="reuse pages already downloaded here; fetch the rest")
     parser.add_argument("--delay", type=float, default=13.0,

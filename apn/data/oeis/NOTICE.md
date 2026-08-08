@@ -20,6 +20,7 @@ generated from `Sources/` by `scripts/generate_oeis_isolated.py` and validated
 by `tests/test_oeis_isolation.py`.
 
 Third-party material: `Sources/` (vendored Formal Conjectures files,
-Apache-2.0) and `raw/` (OEIS snapshots) each carry a README with their exact
-provenance. The underlying integer-sequence data throughout originates from
-the OEIS (https://oeis.org), © The OEIS Foundation Inc.
+Apache-2.0) and `metadata/` (data *about* the conjectures: OEIS snapshots and
+our derived tables) each carry a README with their exact provenance. The
+underlying integer-sequence data throughout originates from the OEIS
+(https://oeis.org), © The OEIS Foundation Inc.

@@ -30,7 +30,7 @@ from pathlib import Path
 import openai
 
 ROOT = Path(__file__).parent.parent
-RAW = ROOT / "apn" / "data" / "oeis" / "raw"
+RAW = ROOT / "apn" / "data" / "oeis" / "metadata" / "snapshots"
 ISOLATED = ROOT / "apn" / "data" / "oeis" / "Isolated"
 OEIS_DIR = ROOT / "apn" / "data" / "oeis"
 
@@ -204,7 +204,7 @@ def done_names(out_path: Path) -> set[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "conjecture_provenance.jsonl")
+    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "metadata" / "derived" / "provenance.jsonl")
     ap.add_argument("--all", action="store_true", help="process every sequence (the full run)")
     ap.add_argument("--n", type=int, default=10, help="random sample size (ignored with --all)")
     ap.add_argument("--ids", nargs="+", default=None, help="process only these A-numbers")

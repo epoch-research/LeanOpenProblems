@@ -143,7 +143,7 @@ def done_ids(path: Path) -> set[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "openalex_citations.jsonl")
+    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "metadata" / "derived" / "citations_openalex.jsonl")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--n", type=int, default=100)
     ap.add_argument("--ids", nargs="+", default=None)

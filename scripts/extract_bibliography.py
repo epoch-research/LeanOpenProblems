@@ -27,7 +27,7 @@ from pathlib import Path
 import openai
 
 ROOT = Path(__file__).parent.parent
-RAW = ROOT / "apn" / "data" / "oeis" / "raw"
+RAW = ROOT / "apn" / "data" / "oeis" / "metadata" / "snapshots"
 OEIS_DIR = ROOT / "apn" / "data" / "oeis"
 MODEL = "gpt-5.5"
 _NUM_RE = re.compile(r"^(\d+)_")
@@ -142,7 +142,7 @@ def done_ids(path: Path) -> set[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "oeis_native_citations.jsonl")
+    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "metadata" / "derived" / "citations_oeis.jsonl")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ids", nargs="+", default=None)
     ap.add_argument("--n", type=int, default=10)
