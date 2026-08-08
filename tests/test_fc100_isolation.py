@@ -37,12 +37,10 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
+from apn.dataset import FC100_DIR, load_manifest
 from scripts.fc100_isolation import (
     ISOLATED_DIR,
-    MAPPING_FILE,
     SOURCES_DIR,
-    kept_names,
-    parse_mapping,
 )
 from scripts.fc_statements import iff_true, is_example_command, normalize_hygiene
 from scripts.isolation import (
@@ -67,11 +65,11 @@ class IsoData:
 
 @pytest.fixture(scope="session")
 def mapping() -> list[tuple[str, str]]:
-    entries: list[tuple[str, str]] = parse_mapping(MAPPING_FILE.read_text())
-    # The mapping must cover exactly the kept members (100 in the subset file
-    # minus the 14 excluded), in subset order.
-    assert [name for name, _ in entries] == kept_names()
-    return entries
+    # The kept manifest rows (the paper's 100 members minus the 14 excluded
+    # value-typed ones) as (id, source relpath) pairs.
+    rows = [r for r in load_manifest(FC100_DIR) if r.excluded is None]
+    assert len(rows) == 86
+    return [(r.id, r.source.removeprefix("Sources/")) for r in rows]
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")

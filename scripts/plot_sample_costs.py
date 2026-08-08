@@ -59,10 +59,10 @@ def _norm_id(name: str) -> str:
 
 
 def _load_subset(name: str) -> set[str]:
-    path = SUBSETS_DIR / f"{name}.txt"
+    path = SUBSETS_DIR / f"{name}.json"
     if not path.exists():
         return set()
-    return {_norm_id(ln) for ln in path.read_text().splitlines() if ln.strip() and not ln.startswith("#")}
+    return {_norm_id(i) for i in json.loads(path.read_text())["ids"]}
 
 
 _SUBSET_SETS = {name: _load_subset(name) for name in ("tsoukalas_proved_38", "tsoukalas_unproved_40", "lite")}

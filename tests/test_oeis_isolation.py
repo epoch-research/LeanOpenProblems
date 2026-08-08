@@ -36,13 +36,14 @@ from typing import Any, cast
 import pytest
 import pytest_asyncio
 
+from apn.dataset import OEIS_DIR, SampleRow, load_manifest
 from scripts.isolation import (
     matches_name,
     planned_survivors,
     theorem_command_decls,
     theorem_decls,
 )
-from scripts.oeis_isolation import AUTO_DIR, ISOLATED_DIR, MAPPING_FILE, parse_mapping
+from scripts.oeis_isolation import ISOLATED_DIR, SOURCES_DIR
 from tests.lean_sandbox import compile_all, extract, generate_env
 
 # The paper's published challenge files (the oracle cross-checks our isolated
@@ -59,24 +60,24 @@ REF_DIR = Path(__file__).resolve().parent / "data" / "gold_proofs"
 class IsoData:
     """Everything the gates need, gathered from a single sandbox bring-up."""
 
-    auto_ranges: dict[str, dict[str, Any]]  # extractor records for distinct Auto/ sources, by filename
+    src_ranges: dict[str, dict[str, Any]]  # extractor records for distinct Sources/ files, by filename
     iso_ranges: dict[str, dict[str, Any]]  # extractor records for every Isolated/ file, by stem (= name)
     ref_ranges: list[dict[str, Any]]  # extractor records for the published challenge files
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
 @pytest.fixture(scope="session")
-def mapping() -> list[tuple[str, list[str]]]:
-    entries = parse_mapping(MAPPING_FILE.read_text())
-    assert len(entries) == 492
-    return entries
+def manifest() -> list[SampleRow]:
+    rows = load_manifest(OEIS_DIR)
+    assert len(rows) == 492
+    return rows
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
-async def iso_data(mapping: list[tuple[str, list[str]]]) -> IsoData:
+async def iso_data(manifest: list[SampleRow]) -> IsoData:
     """Bring the sandbox up once and run every Lean step inside it: extract the
-    Auto sources, the Isolated files, and the reference challenge files, then
-    compile every Isolated file.
+    vendored sources, the Isolated files, and the reference challenge files,
+    then compile every Isolated file.
 
     An async, module-scoped fixture (with the gate tests on the same module-scoped
     event loop) -- the only safe way to drive Inspect's sandbox lifecycle from
@@ -85,15 +86,15 @@ async def iso_data(mapping: list[tuple[str, list[str]]]) -> IsoData:
     pytest-asyncio's own loop avoids that. The gates below just assert against the
     returned data, so they need no further sandbox access."""
     async with generate_env("pytest_oeis_isolation") as env:
-        source_files = sorted({files[0] for _, files in mapping})
-        auto = await extract(env, [AUTO_DIR / f for f in source_files])
+        source_files = sorted({r.source.rsplit("/", 1)[-1] for r in manifest})
+        src = await extract(env, [SOURCES_DIR / f for f in source_files])
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
         iso = await extract(env, iso_files)
         ref_files = sorted(REF_DIR.glob("*.lean"))
         ref = await extract(env, ref_files) if ref_files else []
         failures = await compile_all(env, iso_files)
     return IsoData(
-        auto_ranges={fr["file"]: fr for fr in auto},
+        src_ranges={fr["file"]: fr for fr in src},
         iso_ranges={fr["file"][: -len(".lean")]: fr for fr in iso},
         ref_ranges=ref,
         compile_failures=failures,
@@ -106,13 +107,16 @@ async def iso_data(mapping: list[tuple[str, list[str]]]) -> IsoData:
 # --------------------------------------------------------------------------- #
 @pytest.mark.asyncio(loop_scope="module")
 async def test_isolated_files_are_structurally_correct(
-    mapping: list[tuple[str, list[str]]], iso_data: IsoData
+    manifest: list[SampleRow], iso_data: IsoData
 ) -> None:
     """Each isolated file carries exactly the target + its dependency lemmas (the
     cut's prediction), with the target's statement preserved verbatim."""
     failures: list[str] = []
-    for name, files in mapping:
-        src_type, planned = planned_survivors(iso_data.auto_ranges[files[0]], name)
+    for row in manifest:
+        name = row.id
+        src_type, planned = planned_survivors(
+            iso_data.src_ranges[row.source.rsplit("/", 1)[-1]], name
+        )
         fr = iso_data.iso_ranges.get(name)
         if fr is None:
             failures.append(f"{name}: no isolated file extracted")
