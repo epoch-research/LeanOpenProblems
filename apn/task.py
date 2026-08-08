@@ -10,8 +10,9 @@ from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
 from apn.dataset import (
-    ERDOS_SUBSETS_DIR,
-    FC100_SUBSETS_DIR,
+    ERDOS_DIR,
+    FC100_DIR,
+    OEIS_DIR,
     erdos_dataset,
     fc100open_dataset,
     load_subset,
@@ -91,7 +92,13 @@ def apn_oeis(
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    name_list = load_subset(subset) if subset is not None else None
+    """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
+
+    Predefined subsets (``apn/data/oeis/subsets/``): ``lite`` (a seeded random
+    100 for cheaper sweeps), ``tsoukalas_proved_38``/``tsoukalas_unproved_40``
+    (the AlphaProof Nexus paper's published outcomes).
+    """
+    name_list = load_subset(OEIS_DIR, subset) if subset is not None else None
 
     return Task(
         dataset=oeis_dataset(names=name_list),
@@ -112,7 +119,7 @@ def apn_fc100open(
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    name_list = load_subset(subset, FC100_SUBSETS_DIR) if subset is not None else None
+    name_list = load_subset(FC100_DIR, subset) if subset is not None else None
     return Task(
         dataset=fc100open_dataset(names=name_list),
         solver=lean_prover(
@@ -132,18 +139,17 @@ def apn_erdos(
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763).
+    """Every research-category FC ErdosProblems statement at the pinned commit.
 
-    All 353 FC ErdosProblems statements the paper's agent attempted, of which
-    350 ship as samples (3 have no statement at the vendored FC commit; see
-    ``apn/data/erdos/EXCLUDED.txt``). Statement text is FC at 67338a1 -- the
-    exact commit the sandbox images bake -- and every ``answer(...) ↔`` form is
-    certified-rewritten to the attempt-time binary task, plain ``P`` (recorded
-    ``True``/``False`` verdicts un-filled, and FC's recorded-verdict
-    annotations stripped, so the answer key cannot leak). No predefined
-    subsets are shipped; run ad-hoc slices via ``--sample-id``.
+    Statement text is FC at 67338a1 -- the exact commit the sandbox images
+    bake -- and every ``answer(...) ↔`` form is certified-rewritten to the
+    binary task, plain ``P`` (recorded ``True``/``False`` verdicts un-filled,
+    and FC's recorded-verdict annotations stripped, so the answer key cannot
+    leak). Bare ``apn_erdos`` runs the full universe; the Tsoukalas paper's
+    canonical attempted set (arXiv 2605.22763) is
+    ``subset="tsoukalas_attempted"``.
     """
-    name_list = load_subset(subset, ERDOS_SUBSETS_DIR) if subset is not None else None
+    name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
     return Task(
         dataset=erdos_dataset(names=name_list),
         solver=lean_prover(

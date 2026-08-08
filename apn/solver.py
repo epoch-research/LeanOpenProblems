@@ -65,11 +65,11 @@ def _warn_if_ignored_formalizations(state: TaskState) -> None:
     """Warn when this sample's conjecture had more than one upstream formalization.
 
     The dataset uses the first file and records the rest in
-    ``metadata['unused_formalization_files']``. Warning here (run time, per
-    evaluated sample) rather than at dataset build keeps it scoped to the
-    samples actually run, not those Inspect drops via ``--sample-id``/``--limit``.
+    ``metadata['other_sources']``. Warning here (run time, per evaluated
+    sample) rather than at dataset build keeps it scoped to the samples
+    actually run, not those Inspect drops via ``--sample-id``/``--limit``.
     """
-    unused = state.metadata.get("unused_formalization_files")
+    unused = state.metadata.get("other_sources")
     if unused:
         logger.warning(
             "Conjecture %s had multiple upstream formalizations; using the "
