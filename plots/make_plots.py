@@ -27,11 +27,14 @@ for scores_path in LOGS.glob("*/*/scores.json"):
     (scorer,) = data
     m = scorer["metrics"]
     acc, err, n = m["accuracy"]["value"], m["stderr"]["value"], scorer["scored_samples"]
-    proved = disproved = 0
+    proved = disproved = n_dirs = 0
     for sd in scores_path.parent.iterdir():
         if not sd.is_dir():
             continue
-        sc = json.loads((sd / "scores.json").read_text())["proof_scorer"]
+        n_dirs += 1
+        sc = json.loads((sd / "scores.json").read_text()).get("proof_scorer")
+        if sc is None:
+            continue
         if sc["value"] == "C":
             spec = sd / "Submission" / "Spec.lean"
             is_dis = spec.exists() and ".disproof" in spec.read_text(errors="replace")
@@ -42,6 +45,10 @@ for scores_path in LOGS.glob("*/*/scores.json"):
             f"{eval_set}: per-sample solves ({proved}+{disproved})/{n} disagree "
             f"with scores.json accuracy {acc}; incomplete download?"
         )
+    if n_dirs > n:  # unscored (errored) samples count as failures
+        acc = (proved + disproved) / n_dirs
+        err = (acc * (1 - acc) / (n_dirs - 1)) ** 0.5
+        n = n_dirs
     runs[eval_set] = (acc, err, n, proved / n, disproved / n)
 
 VARIANT_LABELS = {"base": "base agent", "deep": "DeepAgent", "lit": "literature"}

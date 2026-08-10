@@ -16,7 +16,8 @@ MODEL_LABELS = {
     "oai": "GPT-5.5",
     "gdm": "Gemini 3.5 Flash",
     "fable": "Claude Fable 5",
+    "sol": "GPT-5.6 Sol",
 }
-PROVIDERS = ["ant", "oai", "gdm", "fable"]
+PROVIDERS = ["ant", "oai", "gdm", "fable", "sol"]
 PROVIDER_RE = "|".join(PROVIDERS)
-SERIES = {"ant": "#2a78d6", "oai": "#008300", "gdm": "#e87ba4", "fable": "#4a3aa7"}
+SERIES = {"ant": "#2a78d6", "oai": "#008300", "gdm": "#e87ba4", "fable": "#4a3aa7", "sol": "#eb6834"}
