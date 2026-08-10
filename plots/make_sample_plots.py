@@ -62,9 +62,9 @@ for top in sorted(LOGS.glob("*/*_plaintext/scores.json")):
         continue
     runs[key] = key
     for sd in sample_dirs:
-        sc = json.loads((sd / "scores.json").read_text())["proof_scorer"]
+        sc = json.loads((sd / "scores.json").read_text()).get("proof_scorer")
         info = json.loads((sd / "info.json").read_text())
-        md = sc.get("metadata") or {}
+        md = (sc.get("metadata") if sc else None) or {}
         modes = set()
         report = md.get("safeverify_report") or []
         for entry in report if isinstance(report, list) else []:
@@ -85,7 +85,7 @@ for top in sorted(LOGS.glob("*/*_plaintext/scores.json")):
             elif fm is not None:
                 modes.add(str(fm))
         samples[key][sd.name] = dict(
-            solved=sc["value"] == "C",
+            solved=bool(sc) and sc["value"] == "C",
             stage=md.get("stage"),
             modes=sorted(modes),
             cost=sum(u.get("total_cost", 0) for u in (info.get("model_usage") or {}).values()),
@@ -248,7 +248,7 @@ def pooled_shares(keys, extract):
     return {c: v / denom for c, v in total.items()}
 
 def stage_extract(recs):
-    fails = [r for r in recs.values() if not r["solved"]]
+    fails = [r for r in recs.values() if not r["solved"] and r["stage"] is not None]
     return Counter(r["stage"] for r in fails), len(fails)
 
 def mode_extract(recs):
