@@ -1,0 +1,134 @@
+{
+ "note": "Faithfulness audit of the top-100 union solves (out/union.jsonl). 19 rows checked by the main agent, 81 by 7 subagents comparing apn/data/oeis/Isolated/<theorem>.lean against the OEIS record snapshot. Three duplicate formalizations were dropped by hand from out/union.jsonl; regenerating that file with union.py restores them.",
+ "misformalization": [
+  {
+   "rank": 3,
+   "oeis_id": "A333042",
+   "subtype": "weaker_than_claim",
+   "confidence": "medium",
+   "note": "generalized coefficient uses Nat floor division, forcing integrality by construction rather than proving the conjectured integrality"
+  },
+  {
+   "rank": 12,
+   "oeis_id": "A261876",
+   "subtype": "stronger_than_claim",
+   "confidence": "medium",
+   "note": "OEIS says a(n)=1 'only for' n=4^k*m (one direction); Lean asserts a biconditional, so the disproof may rest on the unclaimed converse"
+  },
+  {
+   "rank": 17,
+   "oeis_id": "A002897",
+   "subtype": "weaker_than_claim",
+   "confidence": "high",
+   "note": "Bala conjectured the g.f. is the diagonal of a rational function; the coefficient identity proved is only its stated consequence"
+  },
+  {
+   "rank": 30,
+   "oeis_id": "A120424",
+   "subtype": "bundled_conjunction",
+   "confidence": "high",
+   "note": "two separate OEIS conjectures bundled; proof shows only that they are mutually incompatible, settling neither"
+  },
+  {
+   "rank": 45,
+   "oeis_id": "A309132",
+   "subtype": "stronger_than_claim",
+   "confidence": "medium",
+   "note": "Ordowski states composite+squarefree => Carmichael; Lean asserts the biconditional"
+  },
+  {
+   "rank": 47,
+   "oeis_id": "A340592",
+   "subtype": "weaker_than_claim",
+   "confidence": "medium",
+   "note": "proves 28749 is the least composite with a(n)=0, not the open unbounded claim"
+  }
+ ],
+ "unverifiable": [
+  {
+   "rank": 62,
+   "oeis_id": "A208326",
+   "subtype": "external_data",
+   "confidence": "medium",
+   "note": "partition claim depends on A207672/A207673 definitions absent from the record"
+  },
+  {
+   "rank": 64,
+   "oeis_id": "A275460",
+   "subtype": "external_data",
+   "confidence": "medium",
+   "note": "integrality conjecture is not in the OEIS text; rests on the external Bostan reference"
+  },
+  {
+   "rank": 66,
+   "oeis_id": "A383466",
+   "subtype": "axiomatized_geometry",
+   "confidence": "medium",
+   "note": "pentagram configurations and region counts introduced as bare axioms with no geometric content"
+  },
+  {
+   "rank": 96,
+   "oeis_id": "A145062",
+   "subtype": "external_data",
+   "confidence": "medium",
+   "note": "OEIS is a question referencing a sequence read off Figure 8 of Zhang (2015); transcription not checkable"
+  }
+ ],
+ "faithful_but_weak": [
+  {
+   "rank": 84,
+   "oeis_id": "A385391",
+   "subtype": "finite_computation",
+   "confidence": "medium",
+   "note": "only the six already-computed primorial equalities, none of the open continuation"
+  },
+  {
+   "rank": 88,
+   "oeis_id": "A001359",
+   "subtype": "near_tautology",
+   "confidence": "high",
+   "note": "faithful to Ordowski/Israel, whose catch-all clause makes the iff essentially Wilson's theorem"
+  }
+ ],
+ "duplicate_rows": [
+  {
+   "oeis_id": "A206911",
+   "dropped": "oeis_206911_conjecture",
+   "kept": "oeis_a206911_conjecture",
+   "note": "one OEIS conjecture formalized twice; kept the cheaper settlement"
+  },
+  {
+   "oeis_id": "A340737/A340738",
+   "dropped": "oeis_340737_conjecture_0",
+   "kept": "oeis_340738_conjecture_0",
+   "note": "numerator and denominator sequences carrying the same convergence-to-e claim"
+  },
+  {
+   "oeis_id": "A303639",
+   "dropped": "oeis_303639_conjecture_0",
+   "kept": "oeis_a303639_conjecture",
+   "note": "Sun's a(n)>0 for n>1 formalized twice"
+  }
+ ],
+ "counts": {
+  "checked": 100,
+  "faithful": 88,
+  "misformalization": 6,
+  "unverifiable": 4,
+  "faithful_but_weak": 2
+ },
+ "not_duplicates": [
+  {
+   "oeis_id": "A309132",
+   "note": "two distinct conjectures: Agoh-Giuga equivalence and the Carmichael squarefreeness claim"
+  },
+  {
+   "oeis_id": "A248802",
+   "note": "OEIS Conjecture 1 (a(10n+2)=67) and Conjecture 4 (a(58n+26)=1399)"
+  },
+  {
+   "oeis_id": "A129365",
+   "note": "Bala's Conjecture B (prime divisors) and Conjecture C (p-adic valuation blocks)"
+  }
+ ]
+}
