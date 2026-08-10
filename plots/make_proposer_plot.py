@@ -46,8 +46,8 @@ def outcomes(glob_pat):
         for sd in Path(run).iterdir():
             if not sd.is_dir():
                 continue
-            sc = json.loads((sd / "scores.json").read_text())["proof_scorer"]
-            solved[sd.name] |= sc["value"] == "C"
+            sc = json.loads((sd / "scores.json").read_text()).get("proof_scorer") or {}
+            solved[sd.name] |= sc.get("value") == "C"
     return dict(solved), len(runs)
 
 def proposer_plot(solved, top_n, title, fname):

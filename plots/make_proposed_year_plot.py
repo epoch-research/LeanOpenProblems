@@ -53,9 +53,9 @@ def collect(glob_pat):
         for sd in Path(run).iterdir():
             if not sd.is_dir():
                 continue
-            sc = json.loads((sd / "scores.json").read_text())["proof_scorer"]
+            sc = json.loads((sd / "scores.json").read_text()).get("proof_scorer") or {}
             tid = json.loads((sd / "info.json").read_text())["id"]
-            hits[tid][prov].append(sc["value"] == "C")
+            hits[tid][prov].append(sc.get("value") == "C")
     return {s: {p: sum(v) / len(v) for p, v in per.items()} for s, per in hits.items()}
 
 full_frac = collect("oeis-full-*")

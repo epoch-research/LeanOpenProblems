@@ -54,11 +54,11 @@ def read_run(run_glob):
         for sd in Path(run).iterdir():
             if not sd.is_dir():
                 continue
-            sc = json.loads((sd / "scores.json").read_text())["proof_scorer"]
+            sc = json.loads((sd / "scores.json").read_text()).get("proof_scorer") or {}
             info = json.loads((sd / "info.json").read_text())
             cost = sum(u.get("total_cost", 0)
                        for u in (info.get("model_usage") or {}).values())
-            out[sd.name] = (max(cost, 0.01), sc["value"] == "C")
+            out[sd.name] = (max(cost, 0.01), sc.get("value") == "C")
     return out
 
 data = {}  # provider -> list of (time, event); needs a full run as the backbone

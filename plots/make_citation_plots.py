@@ -55,9 +55,9 @@ def collect(glob_pat):
         for sd in Path(run).iterdir():
             if not sd.is_dir():
                 continue
-            sc = json.loads((sd / "scores.json").read_text())["proof_scorer"]
+            sc = json.loads((sd / "scores.json").read_text()).get("proof_scorer") or {}
             info = json.loads((sd / "info.json").read_text())
-            hits[sd.name][prov].append(sc["value"] == "C")
+            hits[sd.name][prov].append(sc.get("value") == "C")
             oeis_of[sd.name] = info.get("oeis_id")
     frac = {s: {p: sum(v) / len(v) for p, v in per.items()} for s, per in hits.items()}
     return frac, oeis_of

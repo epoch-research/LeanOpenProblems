@@ -50,7 +50,7 @@ for run in glob.glob(str(LOGS / "oeis-*" / "*_plaintext")):
     for sd in Path(run).iterdir():
         if not sd.is_dir():
             continue
-        if json.loads((sd / "scores.json").read_text())["proof_scorer"]["value"] != "C":
+        if (json.loads((sd / "scores.json").read_text()).get("proof_scorer") or {}).get("value") != "C":
             continue
         info = json.loads((sd / "info.json").read_text())
         cost = max(sum(u.get("total_cost", 0)
