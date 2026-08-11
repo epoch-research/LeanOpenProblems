@@ -90,11 +90,13 @@ def style_axis(ax, ymax=0.62):
     for side in ("top", "right", "left"):
         ax.spines[side].set_visible(False)
     ax.spines["bottom"].set_color(BASELINE)
-    ax.tick_params(length=0)
+    ax.tick_params(length=0, labelsize=8)
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
 
+# Drawn at the paper's true print size (\textwidth = 6.5in), so font sizes
+# below are real point sizes on paper -- don't render large and shrink.
 fig, (ax1, ax2) = plt.subplots(
-    1, 2, figsize=(13, 4.6), gridspec_kw={"width_ratios": [3, 2.1]}
+    1, 2, figsize=(6.5, 3.0), gridspec_kw={"width_ratios": [5, 4]}
 )
 
 # pale tint of a series color for the disproof segment (same hue, lighter)
@@ -109,73 +111,62 @@ def stacked_bar(ax, x, proved, disproved, color, width, label=None):
     ax.bar(x, disproved, width=width, bottom=proved, color=tint(color),
            edgecolor=SURFACE, linewidth=0.8)
 
-def outcome_legend(ax, colors, **kwargs):
+def outcome_legend(ax, colors, title=None, **kwargs):
     """proved/disproved legend whose chips show every hue present in the panel,
-    so the solid/pale split visibly applies to all bars, not just one color."""
+    so the solid/pale split visibly applies to all bars, not just one color.
+    Pass a title only when another legend is present to disambiguate."""
     from matplotlib.legend_handler import HandlerTuple
     from matplotlib.patches import Patch
     solid = tuple(Patch(color=c) for c in colors)
     pale = tuple(Patch(color=tint(c)) for c in colors)
     return ax.legend(handles=[solid, pale], labels=["proved", "disproved"],
                      handler_map={tuple: HandlerTuple(ndivide=None, pad=0)},
-                     title="outcome", frameon=False, fontsize=9.5,
-                     title_fontsize=9.5, **kwargs)
+                     title=title, frameon=False, fontsize=8,
+                     title_fontsize=8, handlelength=1.2, handletextpad=0.5,
+                     labelspacing=0.3, **kwargs)
 
-# --- panel 1: lite, model x variant ----------------------------------------
-variants = ["base", "deep", "lit"]
-providers = [p for p in PROVIDERS
-             if any(("lite", v, p) in table for v in variants)]
-bar_w = 0.26
-for j, variant in enumerate(variants):
-    first = True
-    for i, prov in enumerate(providers):
-        if ("lite", variant, prov) not in table:
-            continue
-        acc, err, _, proved, disproved = table[("lite", variant, prov)]
-        x = i + (j - 1) * (bar_w + 0.02)
-        stacked_bar(ax1, x, proved, disproved, SERIES[variant], bar_w,
-                    label=VARIANT_LABELS[variant] if first else None)
-        first = False
-        ax1.errorbar([x], [acc], yerr=[err], fmt="none", ecolor=INK2,
-                     elinewidth=1, capsize=3)
-        ax1.text(x, acc + 0.055, f"{acc:.0%}", ha="center", va="bottom",
-                 fontsize=9, color=INK2)
-        # segment labels: white on the solid fill, ink on the pale one
-        if proved > 0.04:
-            ax1.text(x, proved / 2, f"{proved:.0%}", ha="center", va="center",
-                     fontsize=7.5, color=SURFACE)
-        if disproved > 0.04:
-            ax1.text(x, proved + disproved / 2, f"{disproved:.0%}", ha="center",
-                     va="center", fontsize=7.5, color=INK)
+# --- panel 1: lite, base agent only (variant comparison is its own figure) --
+FULL_COLOR = "#2a78d6"
+lite_provs = [p for p in PROVIDERS if ("lite", "base", p) in table]
+for x, prov in enumerate(lite_provs):
+    acc, err, _, proved, disproved = table[("lite", "base", prov)]
+    stacked_bar(ax1, x, proved, disproved, FULL_COLOR, 0.5)
+    ax1.errorbar([x], [acc], yerr=[err], fmt="none", ecolor=INK2,
+                 elinewidth=0.8, capsize=2.5)
+    ax1.text(x, acc + err + 0.012, f"{acc:.0%}", ha="center", va="bottom",
+             fontsize=7, color=INK2)
+    # segment labels: white on the solid fill, ink on the pale one
+    if proved > 0.04:
+        ax1.text(x, proved / 2, f"{proved:.0%}", ha="center", va="center",
+                 fontsize=7, color=SURFACE)
+    if disproved > 0.04:
+        ax1.text(x, proved + disproved / 2, f"{disproved:.0%}", ha="center",
+                 va="center", fontsize=7, color=INK)
 
-ax1.set_xticks(range(len(providers)))
-ax1.set_xticklabels([MODEL_LABELS[p] for p in providers], fontsize=10.5)
-style_axis(ax1)
-ax1.set_title(BENCH_LITE, fontsize=11, loc="left", color=INK)
-variant_legend = ax1.legend(
-    title="agent variant", frameon=False, fontsize=9.5, title_fontsize=9.5,
-    loc="upper center", bbox_to_anchor=(0.62, 1), ncols=len(variants))
-ax1.add_artist(variant_legend)
-outcome_legend(ax1, [SERIES[v] for v in variants], loc="upper left")
+ax1.set_xticks(range(len(lite_provs)))
+ax1.set_xticklabels([MODEL_LABELS[p].replace(" ", "\n", 1) for p in lite_provs],
+                    fontsize=8)
+style_axis(ax1, ymax=0.56)
+ax1.set_title(BENCH_LITE, fontsize=9.5, loc="left", color=INK)
+outcome_legend(ax1, [FULL_COLOR], loc="upper left", ncols=2)
 
 # --- panel 2: full, base scaffold ------------------------------------------
-FULL_COLOR = "#2a78d6"
-full_provs = [p for p in providers if ("full", "base", p) in table]
+full_provs = [p for p in PROVIDERS if ("full", "base", p) in table]
 labels = [MODEL_LABELS[p].replace(" ", "\n", 1) for p in full_provs]
 for x, prov in enumerate(full_provs):
     acc, err, _, proved, disproved = table[("full", "base", prov)]
     stacked_bar(ax2, x, proved, disproved, FULL_COLOR, 0.5)
     ax2.errorbar([x], [acc], yerr=[err], fmt="none", ecolor=INK2,
-                 elinewidth=1, capsize=3)
+                 elinewidth=0.8, capsize=2.5)
     ax2.text(x, acc + 0.025, f"{acc:.0%}", ha="center", va="bottom",
-             fontsize=9, color=INK2)
+             fontsize=7, color=INK2)
     # segment labels: white on the solid fill, ink on the pale one
     if proved > 0.04:
         ax2.text(x, proved / 2, f"{proved:.0%}", ha="center", va="center",
-                 fontsize=8, color=SURFACE)
+                 fontsize=6.5, color=SURFACE)
     if disproved > 0.04:
         ax2.text(x, proved + disproved / 2, f"{disproved:.0%}", ha="center",
-                 va="center", fontsize=8, color=INK)
+                 va="center", fontsize=6.5, color=INK)
 
 # External reported baseline: AlphaProof Nexus, 44/492 solved (all proofs; no
 # disproof mechanism reported, so the bar is not split)
@@ -184,16 +175,87 @@ apn_acc = 44 / 492
 apn_err = (apn_acc * (1 - apn_acc) / 492) ** 0.5
 ax2.bar(apn_x, apn_acc, width=0.5, color=MUTED)
 ax2.errorbar([apn_x], [apn_acc], yerr=[apn_err], fmt="none", ecolor=INK2,
-             elinewidth=1, capsize=3)
+             elinewidth=0.8, capsize=2.5)
 ax2.text(apn_x, apn_acc + 0.025, f"{apn_acc:.0%}", ha="center", va="bottom",
-         fontsize=9, color=INK2)
-labels.append(f"{ALPHAPROOF_NEXUS}\n(reported)")
+         fontsize=7, color=INK2)
+labels.append(f"{ALPHAPROOF_NEXUS.replace(' ', chr(10))}\n(reported)")
 
 outcome_legend(ax2, [FULL_COLOR], loc="upper center", ncols=2)
 ax2.set_xticks(list(range(len(labels))))
-ax2.set_xticklabels(labels, fontsize=9.5)
-style_axis(ax2)
-ax2.set_title(f"{BENCH_FULL} (full set)", fontsize=11, loc="left", color=INK)
-fig.tight_layout(w_pad=3)
-fig.savefig(OUT / "accuracy.png", dpi=200)
+ax2.set_xticklabels(labels, fontsize=7)
+style_axis(ax2, ymax=0.56)
+ax2.set_title(f"{BENCH_FULL} (full set)", fontsize=9.5, loc="left", color=INK)
+fig.tight_layout(w_pad=1.5)
+fig.savefig(OUT / "accuracy.png", dpi=300)
 print("wrote", OUT / "accuracy.png")
+
+# --- appendix figure: lite, model x agent variant ---------------------------
+# only models actually run with the non-base variants; lone base bars (Fable,
+# Sol) say nothing about variants
+figv, axv = plt.subplots(figsize=(6.5, 3.0))
+variants = ["base", "deep", "lit"]
+var_provs = [p for p in lite_provs
+             if any(("lite", v, p) in table for v in variants[1:])]
+bar_w = 0.26
+for j, variant in enumerate(variants):
+    first = True
+    for i, prov in enumerate(var_provs):
+        if ("lite", variant, prov) not in table:
+            continue
+        acc, err, _, proved, disproved = table[("lite", variant, prov)]
+        x = i + (j - 1) * (bar_w + 0.02)
+        stacked_bar(axv, x, proved, disproved, SERIES[variant], bar_w,
+                    label=VARIANT_LABELS[variant] if first else None)
+        first = False
+        axv.errorbar([x], [acc], yerr=[err], fmt="none", ecolor=INK2,
+                     elinewidth=0.8, capsize=2.5)
+        axv.text(x, acc + err + 0.012, f"{acc:.0%}", ha="center", va="bottom",
+                 fontsize=7, color=INK2)
+        # segment labels: white on the solid fill, ink on the pale one
+        if proved > 0.04:
+            axv.text(x, proved / 2, f"{proved:.0%}", ha="center", va="center",
+                     fontsize=7, color=SURFACE)
+        if disproved > 0.04:
+            axv.text(x, proved + disproved / 2, f"{disproved:.0%}", ha="center",
+                     va="center", fontsize=7, color=INK)
+
+axv.set_xticks(range(len(var_provs)))
+axv.set_xticklabels([MODEL_LABELS[p] for p in var_provs], fontsize=8.5)
+style_axis(axv, ymax=0.68)
+axv.set_title(f"{BENCH_LITE}, by agent variant", fontsize=9.5, loc="left",
+              color=INK)
+variant_legend = axv.legend(
+    title="agent variant", frameon=False, fontsize=8, title_fontsize=8,
+    loc="upper right", bbox_to_anchor=(1, 1), ncols=len(variants),
+    handlelength=1.2, handletextpad=0.5, columnspacing=1.0)
+axv.add_artist(variant_legend)
+outcome_legend(axv, [SERIES[v] for v in variants], title="outcome",
+               loc="upper left")
+figv.tight_layout()
+figv.savefig(OUT / "accuracy_variants.png", dpi=300)
+print("wrote", OUT / "accuracy_variants.png")
+
+# --- standalone full-set plot (social media, not the paper) -----------------
+fig2, ax = plt.subplots(figsize=(6.2, 4.6))
+for x, prov in enumerate(full_provs):
+    acc, err, _, proved, disproved = table[("full", "base", prov)]
+    stacked_bar(ax, x, proved, disproved, FULL_COLOR, 0.55)
+    ax.errorbar([x], [acc], yerr=[err], fmt="none", ecolor=INK2,
+                elinewidth=1, capsize=3)
+    ax.text(x, acc + 0.018, f"{acc:.0%}", ha="center", va="bottom",
+            fontsize=12, color=INK)
+    if proved > 0.04:
+        ax.text(x, proved / 2, f"{proved:.0%}", ha="center", va="center",
+                fontsize=10, color=SURFACE)
+    if disproved > 0.04:
+        ax.text(x, proved + disproved / 2, f"{disproved:.0%}", ha="center",
+                va="center", fontsize=10, color=INK)
+ax.set_xticks(range(len(full_provs)))
+ax.set_xticklabels([MODEL_LABELS[p] for p in full_provs], fontsize=12)
+style_axis(ax, ymax=0.4)
+ax.set_title(f"{BENCH_FULL}: share of 492 open conjectures resolved\n"
+             "(\\$50 budget per conjecture)", fontsize=12, loc="left", color=INK)
+outcome_legend(ax, [FULL_COLOR], loc="upper right")
+fig2.tight_layout()
+fig2.savefig(OUT / "accuracy_full_simple.png", dpi=200)
+print("wrote", OUT / "accuracy_full_simple.png")
