@@ -106,8 +106,10 @@ def tint(hex_color, frac=0.45):
     return tuple(x + frac * (y - x) for x, y in zip(a, b))
 
 def stacked_bar(ax, x, proved, disproved, color, width, label=None):
-    """One solve-rate bar: solid proved segment, pale disproved on top."""
-    ax.bar(x, proved, width=width, color=color, label=label)
+    """One solve-rate bar: solid proved segment, pale disproved on top.
+    Identical edge stroke on both segments so they render the same width."""
+    ax.bar(x, proved, width=width, color=color, label=label,
+           edgecolor=SURFACE, linewidth=0.8)
     ax.bar(x, disproved, width=width, bottom=proved, color=tint(color),
            edgecolor=SURFACE, linewidth=0.8)
 
