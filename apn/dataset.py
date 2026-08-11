@@ -215,19 +215,18 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """Every research-category FC ErdosProblems statement at the pinned commit,
+    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763)
     as Samples.
 
-    One sample per non-excluded manifest row; the sample id is the target's
-    fully qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch
-    is the target's *isolated* spec -- the source file's definitions plus the
+    One sample per manifest row (350; the paper's attempted statements
+    resolvable at the pinned FC commit); the sample id is the target's fully
+    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is
+    the target's *isolated* spec -- the source file's definitions plus the
     single target theorem, siblings/test lemmas/``example`` commands removed,
     and all four ``answer(...) ↔`` statement forms rewritten to plain ``P``
     (recorded ``True``/``False`` verdicts un-filled and FC's recorded-verdict
     annotations stripped -- the answer key must not leak; certified by
-    ``tests/test_erdos_isolation.py``). Value-typed ``answer(sorry)``
-    statements are excluded manifest rows (unscoreable by SafeVerify). The
-    Tsoukalas paper's canonical attempted set (arXiv 2605.22763) is the
-    ``tsoukalas_attempted`` subset.
+    ``tests/test_erdos_isolation.py``). The ``tsoukalas_attempted`` subset
+    names the same 350 ids -- the canonical replication invocation.
     """
     return build_dataset(ERDOS_DIR, "erdos", (), names)

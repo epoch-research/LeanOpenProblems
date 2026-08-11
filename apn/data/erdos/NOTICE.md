@@ -1,21 +1,16 @@
 # The Erdős dataset
 
-One row per research-category statement in `FormalConjectures/ErdosProblems`
-at the pinned FC commit, as listed in `samples.jsonl` -- the manifest is the
-universe census, computed from `Sources/` by
-`scripts/generate_erdos_isolated.py`: every `theorem`/`lemma` declaration
-carrying a `@[category research open]` or `@[category research solved]`
-attribute is a member, resolution status notwithstanding. Two member kinds
-ship as `excluded` rows with the reason inline: value-typed `answer(sorry)`
-statements (a `sorryAx` in the elaborated type; unscoreable by SafeVerify) and
-statements whose complete formal proof is in the source file itself (not an
-open task, and the spec would leak the proof). Each row records its
-erdosproblems.com problem number (`erdos_number`, the source file's stem) and,
-for tooling only, `category_at_pin` and `answer_form` -- `apn/dataset.py`
-deliberately keeps those two out of sample metadata, since they encode the
-recorded verdict.
+The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763): one
+`samples.jsonl` row per FC ErdosProblems statement the paper's agent
+attempted, 350 of the paper's 353 (3 are unresolvable at the pinned FC commit;
+the derivation, upstream commit and hash live in
+`subsets/tsoukalas_attempted.json`'s `description`). `Sources/` vendors
+exactly the 236 files hosting them. Each row records its erdosproblems.com
+problem number (`erdos_number`, the source file's stem) and, for tooling only,
+`category_at_pin` and `answer_form` -- `apn/dataset.py` deliberately keeps
+those two out of sample metadata, since they encode the recorded verdict.
 
-Canonicalization of the shipped `Isolated/` specs (one per kept row; sibling
+Canonicalization of the shipped `Isolated/` specs (one per row; sibling
 theorems and `example` commands cut):
 
 * All `answer(...) ↔` statement forms are rewritten to plain `P` -- recorded
@@ -37,18 +32,21 @@ theorems and `example` commands cut):
 
 ⚠️ Scope of the verdict-prose strip: the exact-snippet list removes the
 DeepMind-prover-agent / AlphaProof resolution prose (the paper's own
-provenance channel) and the resolution prose recorded on the
-`tsoukalas_attempted` members, assembled from the generation census plus an
-agentic audit of every member against its source. Members *outside* that
-subset -- mostly `research solved` statements added upstream after the paper
--- may still carry resolution prose in their doc comments (attribution of the
-known result, occasionally an explicit answer or a pointer to a published
-solution). A stronger universe-wide cleanup is deferred; treat full-universe
-runs accordingly.
+provenance channel) and the resolution prose FC recorded on these members
+between the paper's attempts and the pin, with three known residuals shipped
+as-is for now: `Erdos1141.erdos_1141` and `Erdos318.erdos_318.parts.ii` state
+their recorded verdict and link the published solution in their doc comments,
+and `Erdos997.erdos_997` keeps the solution paper's module-doc reference line.
+Treat results on those three samples accordingly.
 
-Subsets (`subsets/`): `tsoukalas_attempted.json` -- the Tsoukalas paper's
-canonical 350-statement attempted set (arXiv 2605.22763; derivation and
-upstream hash in its `description`). Bare `apn_erdos` runs the full universe.
+Subsets (`subsets/`): `tsoukalas_attempted.json` names the same 350 ids -- the
+canonical replication invocation (`subset="tsoukalas_attempted"`); bare
+`apn_erdos` runs them all.
+
+`scripts/generate_erdos_isolated.py` is the vendor-time bootstrap that
+produced the specs; it censuses *every* research-category statement in
+`Sources/`, so re-running it does not reproduce this manifest -- the committed
+`samples.jsonl` is curated to the attempted set and is the source of truth.
 
 Third-party material: `Sources/` (vendored Formal Conjectures files,
 Apache-2.0) and `metadata/` (data *about* the problems: erdosproblems.com

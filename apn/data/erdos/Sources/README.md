@@ -7,6 +7,6 @@ state the sandbox images bake, so every derived spec compiles by construction:
 https://github.com/google-deepmind/formal-conjectures
 © 2026 The Formal Conjectures Authors, Apache License 2.0.
 
-The tree is the directory's complete `.lean` set at that commit (420 files).
-Do not edit these files. `../samples.jsonl` and `../Isolated/` are derived
-from them by `scripts/generate_erdos_isolated.py`.
+The tree is the 236 files hosting the attempted set's statements (see
+`../NOTICE.md`). Do not edit these files. `../samples.jsonl` and
+`../Isolated/` are derived from them by `scripts/generate_erdos_isolated.py`.

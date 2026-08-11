@@ -4,10 +4,9 @@ The deeper Lean guarantees over the committed ``Isolated/`` specs -- clean
 elaboration, the certified per-form ``answer(...) ↔`` rewrite, only the target
 + its dependency decls surviving -- are enforced authoritatively, in a
 container, by ``tests/test_erdos_isolation.py``. This module checks what can
-be checked cheaply on every run: the manifest census (1124 research-category
-statements at the pin = 1021 kept + 103 excluded), the ``tsoukalas_attempted``
-subset, the dataset/sample shape, and textual invariants of the shipped
-sketches.
+be checked cheaply on every run: the manifest census (the paper's 350
+attempted statements, no excluded rows), the ``tsoukalas_attempted`` subset,
+the dataset/sample shape, and textual invariants of the shipped sketches.
 """
 
 from __future__ import annotations
@@ -23,11 +22,7 @@ from apn.dataset import (
     load_manifest,
     load_subset,
 )
-from scripts.erdos_isolation import (
-    PROVED_IN_FILE_REASON,
-    SORRY_ALLOWLIST_FILES,
-    VALUE_TYPED_REASON,
-)
+from scripts.erdos_isolation import SORRY_ALLOWLIST_FILES
 from scripts.fc_statements import strip_comments
 
 _SORRY_RE = re.compile(r"\bsorry\b")
@@ -37,15 +32,11 @@ _DECL_RE = re.compile(r"(?m)^(?:protected\s+)?(?:theorem|lemma)\s+([^\s:({\[⦃]
 
 
 def test_manifest_census() -> None:
-    # The universe: every research-category statement in the vendored
-    # FormalConjectures/ErdosProblems tree at the pin, with the two
-    # harness-intrinsic exclusion kinds recorded per row.
+    # The universe: the paper's canonical attempted set, one row per
+    # statement, none excluded.
     rows = load_manifest(ERDOS_DIR)
-    assert len(rows) == 1124
-    kept = [r for r in rows if r.excluded is None]
-    assert len(kept) == 1021
-    reasons = Counter(r.excluded for r in rows if r.excluded is not None)
-    assert reasons == {VALUE_TYPED_REASON: 79, PROVED_IN_FILE_REASON: 24}
+    assert len(rows) == 350
+    assert all(r.excluded is None for r in rows)
 
 
 def test_manifest_row_shape() -> None:
@@ -69,13 +60,11 @@ def test_manifest_answer_form_census() -> None:
     # re-checked per member in tests/test_erdos_isolation.py.)
     forms = Counter(r.extra["answer_form"] for r in load_manifest(ERDOS_DIR) if r.excluded is None)
     assert forms == {
-        None: 545,
-        "lhs_sorry": 365,
-        "lhs_true": 69,
-        "lhs_false": 35,
-        "rhs_sorry": 5,
-        "rhs_true": 1,
-        "rhs_false": 1,
+        None: 85,
+        "lhs_sorry": 249,
+        "lhs_true": 7,
+        "lhs_false": 6,
+        "rhs_sorry": 3,
     }
 
 
@@ -96,9 +85,9 @@ def test_tsoukalas_attempted_subset() -> None:
     assert len(erdos_dataset(names=ids)) == 350
 
 
-def test_erdos_dataset_loads_full_universe() -> None:
+def test_erdos_dataset_loads_all_samples() -> None:
     ds = erdos_dataset()
-    assert len(ds) == 1021
+    assert len(ds) == 350
     ids = [s.id for s in ds]
     assert len(set(ids)) == len(ids)
 

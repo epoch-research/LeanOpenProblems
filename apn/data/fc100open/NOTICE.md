@@ -18,9 +18,13 @@ the file itself is not vendored -- it is recoverable from the pinned public
 commit, and the transcription was verified against a byte-verbatim copy at
 conversion time. The paper's `bench-v1-lean4.27.0` tag is an ancestor of the
 pin; the subset file is byte-identical at both, and of its 88 problem files
-only `WrittenOnTheWallII/GraphConjecture316.lean` differs (two `def`s moved
-verbatim into `FormalConjecturesForMathlib`, which the sandbox images already
-contain), so results are comparable to the tag.
+exactly three differ: doc-comment-only edits in
+`Arxiv/0912.2382/CurlingNumberConjecture.lean` and
+`Arxiv/2501.03234/ArithmeticSumS.lean`, and
+`Books/UniformDistributionOfSequences/Equidistribution.lean`, whose two
+`def`s (`IsEquidistributed`, `IsEquidistributedModuloOne`) moved verbatim
+into `FormalConjecturesForMathlib`, which the sandbox images already
+contain. Results are comparable to the tag.
 
 `Isolated/` (one per-target spec per kept member, with sibling theorems and
 `example` commands cut, propositional `answer(sorry) ↔ P` statements

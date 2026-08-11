@@ -139,15 +139,17 @@ def apn_erdos(
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    """Every research-category FC ErdosProblems statement at the pinned commit.
+    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763).
 
-    Statement text is FC at 67338a1 -- the exact commit the sandbox images
-    bake -- and every ``answer(...) ↔`` form is certified-rewritten to the
-    binary task, plain ``P`` (recorded ``True``/``False`` verdicts un-filled,
-    and FC's recorded-verdict annotations stripped, so the answer key cannot
-    leak). Bare ``apn_erdos`` runs the full universe; the Tsoukalas paper's
-    canonical attempted set (arXiv 2605.22763) is
-    ``subset="tsoukalas_attempted"``.
+    All 353 FC ErdosProblems statements the paper's agent attempted, of which
+    350 ship as samples (3 are unresolvable at the vendored FC commit; see
+    ``subsets/tsoukalas_attempted.json``'s description). Statement text is FC
+    at 67338a1 -- the exact commit the sandbox images bake -- and every
+    ``answer(...) ↔`` form is certified-rewritten to the attempt-time binary
+    task, plain ``P`` (recorded ``True``/``False`` verdicts un-filled, and
+    FC's recorded-verdict annotations stripped, so the answer key cannot
+    leak). Bare ``apn_erdos`` runs all 350; ``subset="tsoukalas_attempted"``
+    names the same set -- the canonical replication invocation.
     """
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
     return Task(

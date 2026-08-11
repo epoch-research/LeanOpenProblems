@@ -95,8 +95,8 @@ def proof_is_filled(src: bytes, filerec: dict, decl_name: str) -> bool:
 def extract_sources(container: str, exe: str, jobs: int) -> dict[str, dict]:
     """Extractor records for every vendored source file, keyed by *relative*
     path under ``Sources/`` (flat here, so relpath == basename). Extraction
-    elaborates each file, so the 420-file sweep runs ``jobs`` extractor
-    processes over chunks of the list."""
+    elaborates each file, so the sweep runs ``jobs`` extractor processes over
+    chunks of the list."""
     rels = sorted(str(p.relative_to(SOURCES_DIR)) for p in SOURCES_DIR.rglob("*.lean"))
     print(f"Extracting decl ranges from {len(rels)} source files ({jobs} jobs)...", flush=True)
     chunks = [rels[i::jobs] for i in range(jobs)]

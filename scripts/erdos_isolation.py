@@ -7,11 +7,12 @@ re-elaboration certificates) in ``scripts/fc_statements.py``; this module owns
 what is Erdős-specific -- the data locations under ``apn/data/erdos/`` and the
 universe census. Membership is *defined* by the vendored sources: every
 ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
-attribute in ``Sources/`` (the full ``FormalConjectures/ErdosProblems``
-directory at the pinned FC commit) is a universe member, resolution status
-notwithstanding; the committed ``samples.jsonl`` is the census's output.
-Value-typed ``answer(sorry)`` members (a ``sorryAx`` in the elaborated
-statement type, unscoreable by SafeVerify) ship as ``excluded`` rows.
+attribute in ``Sources/`` (``FormalConjectures/ErdosProblems`` files at the
+pinned FC commit) is a universe member, resolution status notwithstanding;
+the committed ``samples.jsonl`` is curated down to the paper's attempted set
+(see ``apn/data/erdos/NOTICE.md``). Value-typed ``answer(sorry)`` members (a
+``sorryAx`` in the elaborated statement type, unscoreable by SafeVerify)
+become ``excluded`` rows.
 
 Two callers import this module: ``scripts/generate_erdos_isolated.py`` (the
 vendor-time tool that produces ``samples.jsonl`` + ``Isolated/``) and
