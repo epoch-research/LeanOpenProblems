@@ -27,8 +27,8 @@ from pathlib import Path
 import openai
 
 ROOT = Path(__file__).parent.parent
-RAW = ROOT / "apn" / "data" / "oeis" / "raw"
-MAPPING = ROOT / "apn" / "data" / "oeis" / "THEOREM_MAPPING.txt"
+RAW = ROOT / "apn" / "data" / "oeis" / "metadata" / "snapshots"
+OEIS_DIR = ROOT / "apn" / "data" / "oeis"
 MODEL = "gpt-5.5"
 _NUM_RE = re.compile(r"^(\d+)_")
 _INTERNAL = re.compile(r"(^/|oeis\.org/(A\d|wiki|search)|/b\d+\.txt|/a\d+\.|/wiki/)", re.I)
@@ -54,13 +54,11 @@ def load_records() -> dict[str, dict]:
 
 
 def group_conjectures() -> dict[str, list[str]]:
+    from apn.dataset import load_manifest
+
     by_seq: dict[str, list[str]] = defaultdict(list)
-    for line in MAPPING.read_text().splitlines():
-        parts = line.split()
-        if len(parts) >= 2:
-            m = _NUM_RE.match(parts[1])
-            if m:
-                by_seq[f"A{int(m.group(1)):06d}"].append(parts[0])
+    for row in load_manifest(OEIS_DIR):
+        by_seq[row.extra["oeis_id"]].append(row.id)
     return dict(by_seq)
 
 
@@ -144,7 +142,7 @@ def done_ids(path: Path) -> set[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "oeis_native_citations.jsonl")
+    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "metadata" / "derived" / "citations_oeis.jsonl")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ids", nargs="+", default=None)
     ap.add_argument("--n", type=int, default=10)

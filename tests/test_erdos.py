@@ -1,88 +1,95 @@
-"""Tests for the Erdős-attempted-set dataset loader (pure Python, no Docker).
+"""Tests for the Erdős-universe dataset loader (pure Python, no Docker).
 
 The deeper Lean guarantees over the committed ``Isolated/`` specs -- clean
 elaboration, the certified per-form ``answer(...) ↔`` rewrite, only the target
 + its dependency decls surviving -- are enforced authoritatively, in a
 container, by ``tests/test_erdos_isolation.py``. This module checks what can
-be checked cheaply on every run: the membership arithmetic (353 attempted =
-350 kept + 3 excluded, one upstream rename applied), the dataset/sample shape,
-and textual invariants of the shipped sketches.
+be checked cheaply on every run: the manifest census (the paper's 350
+attempted statements, no excluded rows), the ``tsoukalas_attempted`` subset,
+the dataset/sample shape, and textual invariants of the shipped sketches.
 """
 
 from __future__ import annotations
 
 import re
+from collections import Counter
 
 import pytest
 
 from apn.dataset import (
-    ERDOS_ISOLATED_DIR,
-    ERDOS_MAPPING_FILE,
-    ERDOS_SUBSETS_DIR,
+    ERDOS_DIR,
     erdos_dataset,
+    load_manifest,
     load_subset,
-    parse_decl_mapping,
 )
-from scripts.erdos_isolation import (
-    ATTEMPTED_FILE,
-    EXCLUDED_FILE,
-    RENAMED_FILE,
-    SORRY_ALLOWLIST,
-    SOURCES_DIR,
-    kept_names,
-    parse_names,
-    parse_renamed,
-)
+from scripts.erdos_isolation import SORRY_ALLOWLIST_FILES
 from scripts.fc_statements import strip_comments
-from scripts.isolation import matches_name
 
-# A top-level theorem/lemma declaration in an isolated spec (column 0).
-_DECL_RE = re.compile(r"(?m)^(?:theorem|lemma)\b")
 _SORRY_RE = re.compile(r"\bsorry\b")
+# A top-level theorem/lemma declaration in an isolated spec (column 0;
+# `protected` included -- 633.lean's kept dependency lemma is protected).
+_DECL_RE = re.compile(r"(?m)^(?:protected\s+)?(?:theorem|lemma)\s+([^\s:({\[⦃]+)")
 
 
-def test_membership_arithmetic() -> None:
-    # The vendored attempted list is the membership source of truth: exactly
-    # 353 distinct names, of which exactly the 3 in EXCLUDED.txt are dropped
-    # and the 1 in RENAMED.txt is tracked to its name at the vendored commit.
-    attempted = parse_names(ATTEMPTED_FILE.read_text())
-    assert len(attempted) == 353
-    assert len(set(attempted)) == 353
-    excluded = parse_names(EXCLUDED_FILE.read_text())
-    assert len(excluded) == 3
-    assert set(excluded) <= set(attempted)
-    renames = parse_renamed(RENAMED_FILE.read_text())
-    assert renames == {"erdos_1082b": "erdos_1082.parts.ii"}
-    kept = kept_names()
-    assert len(kept) == 350
-    assert set(kept) == (set(attempted) - set(excluded) - set(renames)) | set(renames.values())
+def test_manifest_census() -> None:
+    # The universe: the paper's canonical attempted set, one row per
+    # statement, none excluded.
+    rows = load_manifest(ERDOS_DIR)
+    assert len(rows) == 350
+    assert all(r.excluded is None for r in rows)
 
 
-def test_mapping_matches_membership() -> None:
-    # MAPPING.txt (generated) resolves exactly the kept short names, in
-    # attempt-list order, to fully qualified declaration names, and every
-    # mapped source file is vendored.
-    entries = parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())
-    kept = kept_names()
-    assert len(entries) == len(kept)
-    for (full, relpath), short in zip(entries, kept):
-        assert matches_name(full, short), f"{full} does not resolve {short}"
-        assert (SOURCES_DIR / relpath).is_file(), f"{full}: missing source {relpath}"
+def test_manifest_row_shape() -> None:
+    for row in load_manifest(ERDOS_DIR):
+        assert (ERDOS_DIR / row.source).is_file(), row.id
+        assert row.extra["category_at_pin"] in ("research open", "research solved"), row.id
+        assert row.source == f"Sources/{row.extra['erdos_number']}.lean", row.id
+        if row.excluded is None:
+            assert (ERDOS_DIR / row.statement_path).is_file(), row.id
+            assert row.extra["answer_form"] in (
+                None, "lhs_sorry", "lhs_true", "lhs_false",
+                "rhs_sorry", "rhs_true", "rhs_false",
+            ), row.id
+        else:
+            assert "answer_form" not in row.extra, row.id
 
 
-def test_every_isolated_file_used_exactly_once() -> None:
-    entries = parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())
-    assert sorted(p.name for p in ERDOS_ISOLATED_DIR.glob("*.lean")) == sorted(
-        f"{name}.lean" for name, _ in entries
-    )
+def test_manifest_answer_form_census() -> None:
+    # The kept rows' answer(...)-form distribution; drift means the vendored
+    # sources or the census changed. (The certified rewrite itself is
+    # re-checked per member in tests/test_erdos_isolation.py.)
+    forms = Counter(r.extra["answer_form"] for r in load_manifest(ERDOS_DIR) if r.excluded is None)
+    assert forms == {
+        None: 85,
+        "lhs_sorry": 249,
+        "lhs_true": 7,
+        "lhs_false": 6,
+        "rhs_sorry": 3,
+    }
 
 
-def test_erdos_dataset_loads_full_set() -> None:
+def test_spec_files_match_manifest_exactly() -> None:
+    rows = load_manifest(ERDOS_DIR)
+    expected = sorted((ERDOS_DIR / r.statement_path).name for r in rows if r.excluded is None)
+    on_disk = sorted(p.name for p in (ERDOS_DIR / "Isolated").glob("*.lean"))
+    assert on_disk == expected
+
+
+def test_tsoukalas_attempted_subset() -> None:
+    # The paper's canonical 350-statement attempted set: all ids resolve to
+    # kept manifest rows, and the dataset filtered to it has exactly 350
+    # samples. (The 353->350 derivation lives in the subset's description.)
+    ids = load_subset(ERDOS_DIR, "tsoukalas_attempted")
+    assert len(ids) == 350
+    assert len(set(ids)) == 350
+    assert len(erdos_dataset(names=ids)) == 350
+
+
+def test_erdos_dataset_loads_all_samples() -> None:
     ds = erdos_dataset()
     assert len(ds) == 350
     ids = [s.id for s in ds]
     assert len(set(ids)) == len(ids)
-    assert ids == [name for name, _ in parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())]
 
 
 def test_erdos_dataset_sample_shape() -> None:
@@ -91,7 +98,7 @@ def test_erdos_dataset_sample_shape() -> None:
     sample = ds[0]
     assert sample.id == "Erdos741.erdos_741.parts.i"
     assert sample.metadata is not None
-    assert sample.metadata["source_file"] == "741.lean"
+    assert sample.metadata["source"] == "Sources/741.lean"
     sketch = sample.metadata["sketch"]
     assert sample.input == sketch
     assert "import FormalConjectures.Util.ProblemImports" in sketch
@@ -102,15 +109,25 @@ def test_erdos_dataset_sample_shape() -> None:
     assert "False" not in strip_comments(sketch)
 
 
-def test_erdos_dataset_names_filter_unknown() -> None:
-    assert len(erdos_dataset(names=["does_not_exist"])) == 0
+def test_verdict_material_never_reaches_sample_metadata() -> None:
+    # category_at_pin and answer_form are the recorded verdict in
+    # machine-readable form; they exist for tooling and must not flow to the
+    # agent-facing sample.
+    for sample in erdos_dataset():
+        assert sample.metadata is not None
+        assert set(sample.metadata) == {"sketch", "source"}
+
+
+def test_erdos_dataset_names_filter_unknown_raises() -> None:
+    with pytest.raises(ValueError, match="unknown or excluded"):
+        erdos_dataset(names=["does_not_exist"])
 
 
 def test_sketches_have_no_answer_and_no_banner() -> None:
-    # No `answer(` may survive in any sketch's *code* -- all four statement
-    # forms are rewritten to plain `P`, and no member of this set is
-    # value-typed. (Kept module docs may mention `answer(sorry)` in prose --
-    # hence the comment-stripped census.) The Apache banner is stripped at load.
+    # No `answer(` may survive in any sketch's *code* -- all statement forms
+    # are rewritten to plain `P`, and the value-typed members are excluded
+    # rows. (Kept module docs may mention `answer(sorry)` in prose -- hence
+    # the comment-stripped census.) The Apache banner is stripped at load.
     for sample in erdos_dataset():
         assert sample.metadata is not None
         sketch = sample.metadata["sketch"]
@@ -120,68 +137,89 @@ def test_sketches_have_no_answer_and_no_banner() -> None:
 
 
 def test_sketches_have_no_fc_annotations() -> None:
-    # FC has recorded verdicts on 14 members since the paper's attempts (a
-    # `research solved` category flip, `formal_proof` URL attributes, prose
-    # crediting the prover agent -- one stating the direction outright).
-    # Generation drops every kept declaration's `@[category ...]`
-    # classification list whole and removes the verdict prose
+    # FC records resolutions as a `research solved` category flip,
+    # `formal_proof` URL attributes, and prose crediting the prover. Generation
+    # drops every kept declaration's `@[category ...]` classification list
+    # whole and removes the verdict prose
     # (scripts/erdos_isolation.py:strip_fc_annotations): the recorded answer
     # must not reach the shipped sketch in any form. None of these markers
     # legitimately occurs in problem prose.
+    # "deepmind prover", not bare "deepmind": 488.lean carries a legitimate
+    # implementation comment linking a google-deepmind PR (no verdict in it).
+    markers = (
+        "@[category", "formal_proof", "research solved",
+        "deepmind prover", "prover agent", "alphaproof",
+    )
     for sample in erdos_dataset():
         assert sample.metadata is not None
         sketch = sample.metadata["sketch"].lower()
-        for marker in ("@[category", "formal_proof", "research solved", "deepmind", "prover agent"):
+        for marker in markers:
             assert marker not in sketch, (sample.id, marker)
 
 
 def test_sketches_have_no_example_commands() -> None:
-    # FC's anonymous `example` sanity checks (1141.lean, 387.lean) are cut so
-    # the trusted target compile never executes them at score time.
+    # FC's anonymous `example` sanity checks are cut so the trusted target
+    # compile never executes them at score time. Comment-stripped: module-doc
+    # prose may start a line with the word "example" (602.lean does).
     for sample in erdos_dataset():
         assert sample.metadata is not None
-        assert not re.search(r"(?m)^example\b", sample.metadata["sketch"]), sample.id
+        stripped = strip_comments(sample.metadata["sketch"])
+        assert not re.search(r"(?m)^example\b", stripped), sample.id
 
 
 def test_sketches_sorry_count() -> None:
-    # Exactly one `sorry` per sketch -- the target's proof -- except the
-    # allowlisted erdos_1055 spec, whose kept `def p` depends on FC's own
-    # sorry'd `exists_p` theorem (that sample implicitly requires proving it
-    # too).
+    # Exactly one `sorry` per sketch -- the target's proof -- except in the
+    # allowlisted files, where a kept definition depends on a sorry'd helper
+    # theorem (those samples implicitly require proving it too).
     for sample in erdos_dataset():
         assert sample.metadata is not None
         n = len(_SORRY_RE.findall(strip_comments(sample.metadata["sketch"])))
-        expected = 2 if sample.id in SORRY_ALLOWLIST else 1
-        assert n == expected, f"{sample.id}: {n} sorries"
+        if sample.metadata["source"].removeprefix("Sources/") in SORRY_ALLOWLIST_FILES:
+            assert n in (1, 2), f"{sample.id}: {n} sorries"
+        else:
+            assert n == 1, f"{sample.id}: {n} sorries"
 
 
-# Isolated specs that legitimately retain extra theorem/lemma commands because
-# a kept declaration depends on them: 1055.lean's kept `def p` uses
-# `Nat.find (exists_p r)`, pulling the (sorry'd, allowlisted) `exists_p` into
-# the dependency closure. Keep in sync with
-# scripts/generate_erdos_isolated.py output (a stable property of the data).
-_DEPENDENCY_LEMMA_SPECS = {
-    "Erdos1055.erdos_1055": 2,
+# Universe members that legitimately survive in *sibling* specs: kept
+# definitions depend on them (697's `def δ := (density_exists m α).choose`;
+# 961's `def f := Nat.find (well_defined k hk)`, whose proof uses the
+# Sylvester-Schur statement). Dependency-closure survivors, not cut leaks;
+# keep in sync with generation output (a stable property of the data).
+_DEPENDENCY_KEPT_MEMBERS = {
+    "Erdos697.density_exists",
+    "Erdos961.erdos_961.variants.well_defined",
+    "Erdos961.erdos_961.sylvester_schur",
 }
 
 
-def test_every_target_has_isolated_single_theorem_spec() -> None:
-    # Pure-Python structural guard over the committed, Lean-authored Isolated/
-    # files (CI has no Lean toolchain); the authoritative re-extraction check
-    # lives in tests/test_erdos_isolation.py.
-    entries = parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())
-    for (name, _), short in zip(entries, kept_names()):
-        path = ERDOS_ISOLATED_DIR / f"{name}.lean"
-        assert path.is_file(), f"missing isolated spec for {name}"
-        text = path.read_text()
-        assert "import FormalConjectures.Util.ProblemImports" in text, name
-        assert re.search(rf"\b(?:theorem|lemma)\s+{re.escape(short)}\b", text), name
-        expected = _DEPENDENCY_LEMMA_SPECS.get(name, 1)
-        assert len(_DECL_RE.findall(text)) == expected, name
+def _declares(member_id: str, text_name: str) -> bool:
+    """Whether a spec's declared source-text name is ``member_id``'s -- the
+    text name omits enclosing ``namespace`` components (matches_name
+    semantics)."""
+    return member_id == text_name or member_id.endswith("." + text_name)
 
 
-def test_load_subset_unknown_raises() -> None:
-    # No predefined subsets are shipped for this dataset; ad-hoc runs go
-    # through --sample-id.
-    with pytest.raises(ValueError, match="Unknown subset"):
-        load_subset("does_not_exist", ERDOS_SUBSETS_DIR)
+def test_no_sibling_member_survives_in_any_spec() -> None:
+    # The anti-leak cut property, stated directly: a spec may keep dependency
+    # helpers, but no *universe member* (any manifest row's statement, kept or
+    # excluded) may survive in another member's spec beyond the documented
+    # dependency-kept few. Pure-Python guard over the committed files; the
+    # authoritative re-extraction check lives in tests/test_erdos_isolation.py.
+    rows = load_manifest(ERDOS_DIR)
+    all_ids = [r.id for r in rows]
+    for row in rows:
+        if row.excluded is not None:
+            continue
+        text = (ERDOS_DIR / row.statement_path).read_text()
+        declared = _DECL_RE.findall(text)
+        assert any(_declares(row.id, n) for n in declared), row.id
+        for name in declared:
+            if _declares(row.id, name):
+                continue
+            offenders = [
+                i for i in all_ids
+                if _declares(i, name) and i != row.id and i not in _DEPENDENCY_KEPT_MEMBERS
+            ]
+            assert not offenders, (
+                f"{row.id}: sibling universe member(s) {offenders} survived isolation"
+            )

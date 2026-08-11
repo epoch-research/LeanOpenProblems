@@ -3,10 +3,11 @@
 Every registered OEIS contributor has a self-written wiki user page
 (https://oeis.org/wiki/User:<Name>) that usually states occupation or
 affiliation. We fetch the raw wikitext for each unique proposer named in
-conjecture_provenance.jsonl and have an LLM produce a structured profile.
+metadata/derived/provenance.jsonl and have an LLM produce a structured profile.
 
-Pages are cached in apn/data/oeis/raw/proposer_pages.jsonl; output rows are
-appended to apn/data/oeis/proposer_metadata.jsonl and runs are resumable.
+Pages are cached in apn/data/oeis/metadata/snapshots/proposer_pages.jsonl;
+output rows are appended to
+apn/data/oeis/metadata/derived/proposer_metadata.jsonl and runs are resumable.
 
 Model: gpt-5.5, medium reasoning effort, strict structured output.
 """
@@ -29,8 +30,9 @@ import openai
 from extract_provenance import load_env
 
 ROOT = Path(__file__).parent.parent
-PROVENANCE = ROOT / "apn" / "data" / "oeis" / "conjecture_provenance.jsonl"
-PAGES = ROOT / "apn" / "data" / "oeis" / "raw" / "proposer_pages.jsonl"
+_METADATA = ROOT / "apn" / "data" / "oeis" / "metadata"
+PROVENANCE = _METADATA / "derived" / "provenance.jsonl"
+PAGES = _METADATA / "snapshots" / "proposer_pages.jsonl"
 
 MODEL = "gpt-5.5"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
@@ -150,7 +152,7 @@ def classify(client: openai.OpenAI, name: str, page: dict) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", type=Path, default=ROOT / "apn" / "data" / "oeis" / "proposer_metadata.jsonl")
+    ap.add_argument("--out", type=Path, default=_METADATA / "derived" / "proposer_metadata.jsonl")
     ap.add_argument("--all", action="store_true", help="process every proposer")
     ap.add_argument("--n", type=int, default=10, help="first N proposers (ignored with --all)")
     ap.add_argument("--workers", type=int, default=16)

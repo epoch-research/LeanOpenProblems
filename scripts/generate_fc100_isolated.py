@@ -1,21 +1,22 @@
 # type: ignore
 """Generate the per-target isolated FC100OpenSet1 specs in
-``apn/data/fc100open/Isolated/`` (plus ``MAPPING.txt``).
+``apn/data/fc100open/Isolated/``.
 
-Membership is the vendored ``FC100OpenSet1.lean`` (the paper's frozen
-100-problem open subset) minus ``EXCLUDED.txt`` (14 value-typed
-``answer(sorry)`` members) -> 86 kept targets. For each kept target this
-resolves the unique vendored ``Sources/`` file declaring it, keeps that file's
-definitions + the single target theorem, and cuts every other standalone
-``theorem``/``lemma`` *and* FC's anonymous ``example`` sanity checks; the 46
-propositional ``answer(sorry) ↔ P`` statements are rewritten to plain ``P``
-(see ``scripts/fc100_isolation.py`` for why, and for the re-elaboration
-certificate of that rewrite).
+Membership is the committed ``samples.jsonl`` manifest (the paper's frozen
+100-problem open subset; its 14 value-typed ``answer(sorry)`` members are
+``excluded`` rows) -> 86 kept targets. For each kept target this reads its
+recorded ``Sources/`` file, keeps that file's definitions + the single target
+theorem, and cuts every other standalone ``theorem``/``lemma`` *and* FC's
+anonymous ``example`` sanity checks; the 46 propositional
+``answer(sorry) ↔ P`` statements are rewritten to plain ``P`` (see
+``scripts/fc_statements.py`` for why, and for the re-elaboration certificate
+of that rewrite). Each excluded row's recorded reason is re-verified against
+the elaborated statement (a ``sorryAx`` in its type).
 
 This is a *vendor-time* dev tool, not imported at runtime; ``apn/dataset.py``
-reads the committed ``Isolated/`` + ``MAPPING.txt`` directly. The committed
-files are validated by ``tests/test_fc100_isolation.py`` -- re-extraction
-structural checks incl. the rewrite certificate, and the authoritative
+reads the committed manifest + ``Isolated/`` directly. The committed files are
+validated by ``tests/test_fc100_isolation.py`` -- re-extraction structural
+checks incl. the rewrite certificate, and the authoritative
 ``lake env lean -o`` compile gate -- which run the Lean toolchain in a
 container. After regenerating, run those tests to confirm the output is sound.
 
@@ -38,12 +39,12 @@ import re
 import sys
 from pathlib import Path
 
+from apn.dataset import load_manifest
 from scripts.fc100_isolation import (
+    FC100_DIR,
     ISOLATED_DIR,
-    MAPPING_FILE,
     SORRY_ALLOWLIST,
     SOURCES_DIR,
-    kept_names,
 )
 from scripts.fc_statements import (
     LHS_SORRY,
@@ -62,7 +63,6 @@ from scripts.isolation import (
     matches_name,
     resolve_target,
     run_extractor,
-    theorem_decls,
     tidy,
 )
 
@@ -88,19 +88,14 @@ def extract_sources(container: str, exe: str) -> dict[str, dict]:
     return by_rel
 
 
-def build_mapping(names: list[str], by_rel: dict[str, dict]) -> list[tuple[str, str]]:
-    """Resolve each kept target to the unique source file declaring it."""
-    mapping: list[tuple[str, str]] = []
-    for name in names:
-        hits = [
-            rel
-            for rel, fr in sorted(by_rel.items())
-            if any(matches_name(d["name"], name) for d in theorem_decls(fr))
-        ]
-        if len(hits) != 1:
-            raise SystemExit(f"{name}: declared in {len(hits)} source files: {hits}")
-        mapping.append((name, hits[0]))
-    return mapping
+def check_excluded(row, by_rel: dict[str, dict]) -> None:
+    """Re-verify an excluded row's recorded reason: its statement's elaborated
+    type must carry a ``sorryAx`` (the value-typed ``answer(sorry)``
+    placeholder), the very thing that makes it unscoreable."""
+    rel = row.source.removeprefix("Sources/")
+    target = resolve_target(row.id, by_rel[rel])
+    if "sorryAx" not in target["type"]:
+        raise SystemExit(f"{row.id}: excluded but its statement type has no sorryAx")
 
 
 def check_sorries(name: str, src: bytes, filerec: dict, flags: list[bool]) -> None:
@@ -132,19 +127,20 @@ def main() -> None:
     ap.add_argument("--exe", default=BAKED_EXE, help="extractor path in container (default: baked)")
     args = ap.parse_args()
 
-    names = kept_names()
+    rows = load_manifest(FC100_DIR)
     by_rel = extract_sources(args.container, args.exe)
-    mapping = build_mapping(names, by_rel)
 
-    mapped_rels = {rel for _, rel in mapping}
-    unused = sorted(set(by_rel) - mapped_rels)
+    unused = sorted(set(by_rel) - {r.source.removeprefix("Sources/") for r in rows})
     if unused:
-        # Vendored files hosting only excluded targets carry dead weight (and
-        # dead license obligations); keep Sources/ exactly the hosting set.
+        # Vendored files no row points at carry dead weight (and dead license
+        # obligations); keep Sources/ exactly the hosting set.
         raise SystemExit(
-            f"{len(unused)} vendored source file(s) host no kept target -- "
+            f"{len(unused)} vendored source file(s) host no manifest member -- "
             f"remove them from Sources/:\n  " + "\n  ".join(unused)
         )
+    for row in rows:
+        if row.excluded is not None:
+            check_excluded(row, by_rel)
 
     ISOLATED_DIR.mkdir(exist_ok=True)
     for old in ISOLATED_DIR.glob("*.lean"):
@@ -152,7 +148,14 @@ def main() -> None:
 
     rewritten: list[str] = []
     n_category = 0
-    for name, rel in mapping:
+    written: set[str] = set()
+    for row in (r for r in rows if r.excluded is None):
+        name, rel = row.id, row.source.removeprefix("Sources/")
+        # No filename collisions, casefolded: the repo must check out intact
+        # on case-insensitive filesystems.
+        if name.casefold() in written:
+            raise SystemExit(f"isolated-filename collision: {name}")
+        written.add(name.casefold())
         filerec = by_rel[rel]
         src = (SOURCES_DIR / rel).read_bytes()
         target = resolve_target(name, filerec)  # the unique target theorem
@@ -186,10 +189,9 @@ def main() -> None:
     if n_category != 91:
         raise SystemExit(f"expected 91 category lists stripped, got {n_category}")
 
-    MAPPING_FILE.write_text("".join(f"{name} {rel}\n" for name, rel in mapping))
     print(
-        f"Wrote {len(mapping)} isolated files ({len(rewritten)} rewritten) to "
-        f"{ISOLATED_DIR} and {MAPPING_FILE.name}.\n"
+        f"Wrote {sum(1 for r in rows if r.excluded is None)} isolated files "
+        f"({len(rewritten)} rewritten) to {ISOLATED_DIR}.\n"
         "Validate with: pytest tests/test_fc100_isolation.py"
     )
 

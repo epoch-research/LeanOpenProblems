@@ -1,6 +1,6 @@
 """Download raw OEIS data for the 492-conjecture evaluation set.
 
-For every unique OEIS sequence referenced by ``THEOREM_MAPPING.txt`` (444 of
+For every unique OEIS sequence referenced by the dataset manifest (444 of
 them; some sequences contribute more than one conjecture), this fetches two
 artifacts straight from oeis.org and writes them as JSON Lines:
 
@@ -42,7 +42,7 @@ sequence), roughly 15-20 min.
 Usage::
 
     python scripts/fetch_oeis_data.py
-    python scripts/fetch_oeis_data.py --out-dir apn/data/oeis/raw --delay 1.0
+    python scripts/fetch_oeis_data.py --out-dir apn/data/oeis/metadata/snapshots --delay 1.0
     python scripts/fetch_oeis_data.py --limit 5            # smoke test
     python scripts/fetch_oeis_data.py --ids A129365 A268597
 """
@@ -59,8 +59,8 @@ from pathlib import Path
 
 import requests
 
-MAPPING_FILE = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "THEOREM_MAPPING.txt"
-DEFAULT_OUT_DIR = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "raw"
+OEIS_DIR = Path(__file__).parent.parent / "apn" / "data" / "oeis"
+DEFAULT_OUT_DIR = Path(__file__).parent.parent / "apn" / "data" / "oeis" / "metadata" / "snapshots"
 
 RECORD_URL = "https://oeis.org/search?q=id:{oeis_id}&fmt=json"
 # History paginates 10 revisions per page (newest first); &start=N walks older
@@ -68,24 +68,12 @@ RECORD_URL = "https://oeis.org/search?q=id:{oeis_id}&fmt=json"
 HISTORY_URL = "https://oeis.org/history?seq={oeis_id}&start={start}"
 USER_AGENT = "tsoukalas-lean-oeis-metadata/1.0 (research; contact tom@epochai.org)"
 
-_NUM_RE = re.compile(r"^(\d+)_")
+def unique_oeis_ids(dataset_dir: Path) -> list[str]:
+    """Sorted unique A-numbers from the dataset's ``samples.jsonl`` manifest
+    (each row's ``oeis_id`` field)."""
+    from apn.dataset import load_manifest
 
-
-def unique_oeis_ids(mapping_file: Path) -> list[str]:
-    """Sorted unique A-numbers from ``THEOREM_MAPPING.txt`` (first file per line).
-
-    The A-number is the leading digits of the upstream ``Auto/`` filename, e.g.
-    ``129365_aacea533.lean`` -> ``A129365`` -- matching
-    ``apn.dataset.oeis_id_from_filename``.
-    """
-    ids: set[str] = set()
-    for line in mapping_file.read_text().splitlines():
-        parts = line.split()
-        if len(parts) >= 2:
-            match = _NUM_RE.match(parts[1])
-            if match:
-                ids.add(f"A{int(match.group(1)):06d}")
-    return sorted(ids)
+    return sorted({r.extra["oeis_id"] for r in load_manifest(dataset_dir)})
 
 
 _REVBAR_RE = re.compile(r"<div class=\"?revbar\"?>")
@@ -269,10 +257,10 @@ def append_jsonl(path: Path, obj: dict[str, object]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR, help="output directory for the JSONL files")
-    parser.add_argument("--mapping-file", type=Path, default=MAPPING_FILE, help="THEOREM_MAPPING.txt to enumerate sequences")
+    parser.add_argument("--dataset-dir", type=Path, default=OEIS_DIR, help="dataset dir whose samples.jsonl enumerates the sequences")
     parser.add_argument("--delay", type=float, default=1.0, help="seconds to sleep between HTTP requests (politeness)")
     parser.add_argument("--limit", type=int, default=None, help="only fetch the first N (not-yet-downloaded) sequences")
-    parser.add_argument("--ids", nargs="+", default=None, help="fetch only these A-numbers (e.g. A129365), ignoring the mapping")
+    parser.add_argument("--ids", nargs="+", default=None, help="fetch only these A-numbers (e.g. A129365), ignoring the manifest")
     parser.add_argument("--records-only", action="store_true", help="skip the history pages, fetch only the JSON records")
     parser.add_argument("--history-only", action="store_true", help="skip the JSON records, fetch only the history pages")
     args = parser.parse_args()
@@ -281,7 +269,7 @@ def main() -> None:
     records_path = args.out_dir / "oeis_records.jsonl"
     history_path = args.out_dir / "oeis_history.jsonl"
 
-    ids = args.ids if args.ids is not None else unique_oeis_ids(args.mapping_file)
+    ids = args.ids if args.ids is not None else unique_oeis_ids(args.dataset_dir)
     want_records = not args.history_only
     want_history = not args.records_only
 

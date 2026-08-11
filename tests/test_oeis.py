@@ -7,13 +7,11 @@ import re
 import pytest
 
 from apn.dataset import (
-    OEIS_ISOLATED_DIR,
-    OEIS_MAPPING_FILE,
+    OEIS_DIR,
     available_subsets,
+    load_manifest,
     load_subset,
     oeis_dataset,
-    oeis_id_from_filename,
-    parse_oeis_mapping,
     strip_license_header,
 )
 
@@ -72,28 +70,30 @@ def test_dataset_sketch_has_license_banner_stripped() -> None:
     assert "theorem oeis_268597_conjecture_0" in sketch
 
 
-def test_oeis_id_from_filename() -> None:
-    assert oeis_id_from_filename("268597_aacea533.lean") == "A268597"
-    assert oeis_id_from_filename("7406_a8289e8e.lean") == "A007406"
-    assert oeis_id_from_filename("not_a_number.lean") is None
+def test_manifest_census() -> None:
+    # 492 conjectures (the paper's OEIS evaluation set), none excluded, every
+    # row pointing at a vendored source and carrying its A-number.
+    rows = load_manifest(OEIS_DIR)
+    assert len(rows) == 492
+    assert all(r.excluded is None for r in rows)
+    for row in rows:
+        assert (OEIS_DIR / row.source).is_file(), row.id
+        assert re.fullmatch(r"A\d{6}", row.extra["oeis_id"]), row.id
+        assert (OEIS_DIR / row.statement_path).is_file(), row.id
 
 
-def test_parse_oeis_mapping_single_and_multi_file() -> None:
-    text = (
-        "oeis_268597_conjecture_0 268597_aacea533.lean\n"
-        "A230241_conjecture 230241_a4de9e9f.lean 230241_f18255a1.lean\n"
-        "\n"  # blank line ignored
-    )
-    entries = parse_oeis_mapping(text)
-    assert entries == [
-        ("oeis_268597_conjecture_0", ["268597_aacea533.lean"]),
-        ("A230241_conjecture", ["230241_a4de9e9f.lean", "230241_f18255a1.lean"]),
-    ]
+def test_manifest_multi_file_conjectures() -> None:
+    # 3 conjectures map to more than one upstream formalization file; the
+    # manifest records the unused ones so the solver can warn at run time.
+    rows = [r for r in load_manifest(OEIS_DIR) if "other_sources" in r.extra]
+    assert len(rows) == 3
+    for row in rows:
+        for src in row.extra["other_sources"]:
+            assert (OEIS_DIR / src).is_file(), row.id
 
 
 def test_oeis_dataset_loads_full_set() -> None:
     ds = oeis_dataset()
-    # 492 conjectures (the paper's OEIS evaluation set).
     assert len(ds) == 492
     ids = [s.id for s in ds]
     assert len(set(ids)) == len(ids)  # ids unique
@@ -106,6 +106,7 @@ def test_oeis_dataset_sample_shape() -> None:
     assert sample.id == "oeis_268597_conjecture_0"
     assert sample.metadata is not None
     assert sample.metadata["oeis_id"] == "A268597"
+    assert sample.metadata["source"].startswith("Sources/268597_")
     # The isolated spec is the sketch and the input; it imports the FC library.
     sketch = sample.metadata["sketch"]
     assert "import FormalConjectures.Util.ProblemImports" in sketch
@@ -116,36 +117,42 @@ def test_oeis_dataset_sample_shape() -> None:
     assert len(_DECL_RE.findall(sketch)) == 1
 
 
-def test_oeis_dataset_names_filter_unknown() -> None:
-    assert len(oeis_dataset(names=["does_not_exist"])) == 0
+def test_oeis_dataset_names_filter_unknown_raises() -> None:
+    with pytest.raises(ValueError, match="unknown or excluded"):
+        oeis_dataset(names=["does_not_exist"])
 
 
-def test_available_subsets_ships_tsoukalas_proved_38_and_unproved_40() -> None:
-    assert {"tsoukalas_proved_38", "tsoukalas_unproved_40"} <= set(available_subsets())
+def test_available_subsets() -> None:
+    assert {"lite", "tsoukalas_proved_38", "tsoukalas_unproved_40"} <= set(
+        available_subsets(OEIS_DIR)
+    )
 
 
 def test_load_subset_sizes_and_disjoint() -> None:
-    proved = load_subset("tsoukalas_proved_38")
-    unproved = load_subset("tsoukalas_unproved_40")
+    proved = load_subset(OEIS_DIR, "tsoukalas_proved_38")
+    unproved = load_subset(OEIS_DIR, "tsoukalas_unproved_40")
     assert len(proved) == 38
     assert len(unproved) == 40
-    # No duplicate names within a subset.
-    assert len(set(proved)) == 38
-    assert len(set(unproved)) == 40
     # tsoukalas_unproved_40 is sampled from the complement of tsoukalas_proved_38 -- disjoint.
     assert set(proved).isdisjoint(unproved)
+    # load_subset already validates every id against the manifest; the dataset
+    # filtered to a subset has exactly its size.
+    assert len(oeis_dataset(names=proved)) == 38
 
 
-def test_load_subset_strips_comments_and_resolves_to_real_conjectures() -> None:
-    names = load_subset("tsoukalas_proved_38")
-    assert all(not n.startswith("#") for n in names)
-    # Every name in the subset resolves to a real conjecture in the dataset.
-    assert len(oeis_dataset(names=names)) == len(names)
+def test_lite_subset_reproducible_draw() -> None:
+    # lite is a seeded random draw over the sorted manifest ids; the committed
+    # file must match the draw exactly (results comparability depends on it).
+    import random
+
+    universe = sorted(r.id for r in load_manifest(OEIS_DIR))
+    expected = sorted(random.Random(42).sample(universe, 100))
+    assert load_subset(OEIS_DIR, "lite") == expected
 
 
 def test_load_subset_unknown_raises() -> None:
     with pytest.raises(ValueError, match="Unknown subset"):
-        load_subset("does_not_exist")
+        load_subset(OEIS_DIR, "does_not_exist")
 
 
 # Isolated specs that legitimately retain a *proved* helper lemma because a kept
@@ -159,24 +166,20 @@ _DEPENDENCY_LEMMA_SPECS = {"oeis_a374265_conjecture_1_boundedness"}
 
 def test_every_conjecture_has_isolated_single_theorem_spec() -> None:
     # Pure-Python structural guard over the committed, Lean-authored Isolated/
-    # files (CI has no Lean toolchain). Every mapped conjecture must have an
-    # Isolated/<name>.lean that imports the FC library, declares its own target
+    # files (CI has no Lean toolchain). Every manifest row must have an
+    # isolated spec that imports the FC library, declares its own target
     # theorem, and -- save for the few dependency-lemma specs above -- has exactly
     # one top-level theorem/lemma (one conjecture per spec, siblings and test
     # lemmas removed). The deeper Lean guarantees (clean elaboration, statement
     # preserved, only the target + its dependency lemmas survive) are enforced
     # authoritatively, in a container, by tests/test_oeis_isolation.py.
-    names = [name for name, _ in parse_oeis_mapping(OEIS_MAPPING_FILE.read_text())]
-    assert len(names) == 492
     multi_theorem: set[str] = set()
-    for name in names:
-        path = OEIS_ISOLATED_DIR / f"{name}.lean"
-        assert path.is_file(), f"missing isolated spec for {name}"
-        text = path.read_text()
-        assert "import FormalConjectures.Util.ProblemImports" in text, name
-        assert re.search(rf"\b(?:theorem|lemma)\s+{re.escape(name)}\b", text), name
+    for row in load_manifest(OEIS_DIR):
+        text = (OEIS_DIR / row.statement_path).read_text()
+        assert "import FormalConjectures.Util.ProblemImports" in text, row.id
+        assert re.search(rf"\b(?:theorem|lemma)\s+{re.escape(row.id)}\b", text), row.id
         if len(_DECL_RE.findall(text)) != 1:
-            multi_theorem.add(name)
+            multi_theorem.add(row.id)
     # Only the documented dependency-lemma specs may carry extra theorems; a new
     # entry here means a regenerate left a sibling/test lemma behind (or added a
     # new dependency-lemma spec to acknowledge).

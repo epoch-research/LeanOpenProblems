@@ -1,21 +1,21 @@
-"""Erdős-attempted-set frontend for the per-target isolation pipeline.
+"""Erdős-universe frontend for the per-target isolation pipeline.
 
 The dataset-neutral cut logic and Docker plumbing live in
 ``scripts/isolation.py``, and the Formal-Conjectures statement conventions
 (the ``example``-command cut, the ``answer(...) ↔`` rewrite and its
 re-elaboration certificates) in ``scripts/fc_statements.py``; this module owns
-what is Erdős-specific -- the data locations under ``apn/data/erdos/`` and
-their parsers. Membership comes from the vendored ``ATTEMPTED.txt`` (the 353
-ErdosProblems statements the Tsoukalas paper's agent attempted, arXiv
-2605.22763) minus ``EXCLUDED.txt`` (3 names with no statement at the vendored
-FC commit), with ``RENAMED.txt`` tracking upstream renames -- 350 kept
-targets. Unlike FC100's fully qualified subset names, the attempted names are
-*short* (``erdos_741.parts.i``); resolution against the vendored sources uses
-``matches_name`` suffix semantics and ``MAPPING.txt`` records the resolved
-fully qualified declaration names.
+what is Erdős-specific -- the data locations under ``apn/data/erdos/`` and the
+universe census. Membership is *defined* by the vendored sources: every
+``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
+attribute in ``Sources/`` (``FormalConjectures/ErdosProblems`` files at the
+pinned FC commit) is a universe member, resolution status notwithstanding;
+the committed ``samples.jsonl`` is curated down to the paper's attempted set
+(see ``apn/data/erdos/NOTICE.md``). Value-typed ``answer(sorry)`` members (a
+``sorryAx`` in the elaborated statement type, unscoreable by SafeVerify)
+become ``excluded`` rows.
 
 Two callers import this module: ``scripts/generate_erdos_isolated.py`` (the
-vendor-time tool that produces ``Isolated/`` + ``MAPPING.txt``) and
+vendor-time tool that produces ``samples.jsonl`` + ``Isolated/``) and
 ``tests/test_erdos_isolation.py`` (the authoritative validation of the
 committed files).
 """
@@ -24,65 +24,121 @@ from __future__ import annotations
 
 import re
 
-from apn.dataset import parse_decl_mapping
 from scripts.fc_statements import strip_category_attrs
-from scripts.isolation import REPO
-
-parse_mapping = parse_decl_mapping  # re-exported under the dataset-neutral name
+from scripts.isolation import REPO, is_theorem_command
 
 ERDOS_DIR = REPO / "apn" / "data" / "erdos"
 SOURCES_DIR = ERDOS_DIR / "Sources"
 ISOLATED_DIR = ERDOS_DIR / "Isolated"
-ATTEMPTED_FILE = ERDOS_DIR / "ATTEMPTED.txt"
-EXCLUDED_FILE = ERDOS_DIR / "EXCLUDED.txt"
-RENAMED_FILE = ERDOS_DIR / "RENAMED.txt"
-MAPPING_FILE = ERDOS_DIR / "MAPPING.txt"
 
-# Targets whose isolated spec may carry a `sorry` outside the target theorem.
-# 1055.lean's kept `noncomputable def p := Nat.find (exists_p r)` depends on
-# the sorry'd textbook theorem `exists_p`, which therefore survives the cut;
-# it is deliberately kept as-is (decided at task-addition time, mirroring
-# FC100's EllipticCurveRank instance), so that sample implicitly also requires
-# proving `exists_p` -- a strict weakening of the target itself (infinitude of
-# primes in each class implies existence). Generation reports it instead of
-# failing.
-SORRY_ALLOWLIST = {
-    "Erdos1055.erdos_1055",
+# The reason recorded on value-typed answer(sorry) rows (mirrors fc100open's).
+VALUE_TYPED_REASON = (
+    "value-typed answer(sorry): the placeholder elaborates to a position-labeled "
+    "sorryAx in the statement's type, so the statement cannot be closed (or even "
+    'stated) without the paper\'s google.answer "with_auxiliary" machinery, and '
+    "SafeVerify cannot score it"
+)
+
+# The reason recorded on rows whose declaration carries a complete formal
+# proof in the source file itself (no `sorry` anywhere in the command): the
+# statement is not an open task, and no spec can ship without either leaking
+# the proof text verbatim or inventing un-filling surgery for arbitrary proof
+# terms. Members merely *recorded* solved (category flip, formal_proof URL)
+# whose in-file proof is still `sorry` stay included -- re-deriving those is
+# exactly the task, as for the recorded-verdict answer literals.
+PROVED_IN_FILE_REASON = (
+    "complete formal proof in the source file at the pin: the statement is not "
+    "an open task, and shipping it would leak the proof text"
+)
+
+# Files whose isolated specs may carry a `sorry` outside the target theorem:
+# each has a kept ``def``/``abbrev`` whose dependency closure pulls in a
+# sorry'd helper theorem, which therefore survives the cut -- 1055's
+# `def p := Nat.find (exists_p r)` on the textbook `exists_p` (the precedent,
+# decided at task-addition time, mirroring FC100's EllipticCurveRank
+# instance), 295's `abbrev k := Nat.find (exists_k N)` likewise, 633's
+# `IsCuttable.sq` API lemma, 697's `def δ := (density_exists m α).choose`,
+# and 961's `def f := Nat.find (well_defined k hk)` whose proof uses the
+# sorry'd Sylvester-Schur statement. Those samples implicitly also require
+# proving the helper -- in each case an established result, so a strict
+# weakening of the target. Generation reports these instead of failing.
+SORRY_ALLOWLIST_FILES = {
+    "295.lean",
+    "633.lean",
+    "697.lean",
+    "961.lean",
+    "1055.lean",
 }
 
-# The dataset's answer(...)-form census (short name -> expected count), pinned
-# at task-addition time; see ``scripts/fc_statements.py`` for the form labels.
-# Any drift means the membership files or vendored sources changed.
-FORM_CENSUS = {
-    None: 85,  # plain propositions
-    "lhs_sorry": 249,  # answer(sorry) ↔ P
-    "lhs_true": 7,  # answer(True) ↔ P   (recorded verdict, un-filled)
-    "lhs_false": 6,  # answer(False) ↔ P  (recorded verdict, un-filled)
-    "rhs_sorry": 3,  # P ↔ answer(sorry)
-}
+# A research-category classification attribute and its status field. Matched
+# against a *command's* source span (the extractor includes the attribute list
+# and doc comment in the span), so each hit attaches to a known declaration.
+# Anchored to line starts like ``strip_category_attrs``'s pattern -- prose may
+# quote the attribute mid-line and must not be counted.
+RESEARCH_ATTR_RE = re.compile(r"^@\[category research (open|solved)[^\]]*\]", re.MULTILINE)
 
-# All 353 statements were unresolved when the paper's agent attempted them; FC
-# has since recorded verdicts on 14 members: a `research solved` category
-# flip, for 10 of them a `formal_proof` URL attribute pointing at a complete
-# proof, and doc-comment prose recording the resolution -- crediting the
-# DeepMind prover agent, other AI provers, or human authors, sometimes stating
-# the direction or even describing the counterexample, plus module-doc
+
+def research_categories(span: bytes) -> list[str]:
+    """The research-category statuses (``"research open"``/``"research
+    solved"``) declared in one command's source span, in order."""
+    text = span.decode("utf-8", "replace")
+    return [f"research {m.group(1)}" for m in RESEARCH_ATTR_RE.finditer(text)]
+
+
+def universe_members(src: bytes, filerec: dict) -> list[tuple[dict, str]]:
+    """The file's universe members: ``(theorem_decl, category)`` for every
+    standalone theorem/lemma command carrying a research-category attribute.
+
+    Anonymous ``example`` commands may carry the attribute too (387.lean's
+    sanity check does); they introduce no declaration and are not members.
+    The caller cross-checks that no research attribute was silently skipped by
+    comparing the file-total against the per-command sum.
+    """
+    members: list[tuple[dict, str]] = []
+    for cmd in filerec["commands"]:
+        cats = research_categories(src[cmd["declStart"] : cmd["declEnd"]])
+        if not cats or not cmd["decls"]:
+            continue
+        if not is_theorem_command(cmd) or len(cmd["decls"]) != 1 or len(cats) != 1:
+            raise SystemExit(
+                f"{filerec['file']}: research-category command with unexpected "
+                f"shape: decls={[d['name'] for d in cmd['decls']]}, cats={cats}"
+            )
+        members.append((cmd["decls"][0], cats[0]))
+    return members
+
+
+# All statements ship with recorded verdicts un-filled: FC records a
+# resolution as a `research solved` category flip, a `formal_proof` URL
+# attribute pointing at a complete proof, and doc-comment prose -- crediting
+# the DeepMind prover agent, other AI provers, or human authors, sometimes
+# stating the direction or even describing the counterexample, plus module-doc
 # reference lines linking the solution papers/formalisations. Un-filling the
 # answer literal removes the machine-readable key; these annotations are the
-# same key in human-readable form, so generation strips them back to the
-# attempt-time text: every kept declaration's `@[category ...]` list is
+# same key in human-readable form, so generation strips them back to
+# resolution-free text: every kept declaration's `@[category ...]` list is
 # dropped whole (see ``scripts.fc_statements.strip_category_attrs``; that
 # takes any formal_proof clause with it), and the free prose is removed via
-# the exact snippets in VERDICT_PROSE (assembled from the shipped generation
-# plus a full agentic audit of all 350 members against their sources). Every
-# application is counted and the totals asserted, so upstream drift at
-# regeneration fails loudly instead of leaking. tests/test_erdos.py asserts
-# the markers are absent from every shipped sketch.
+# the exact snippets in VERDICT_PROSE (assembled from the generation census
+# plus an agentic audit of every member against its source). Every application
+# is counted and the totals asserted, so upstream drift at regeneration fails
+# loudly instead of leaking. tests/test_erdos.py asserts the markers are
+# absent from every shipped sketch.
 VERDICT_PROSE = [
     # -- resolutions by the paper's own agent -------------------------------
     "\n\nThis was disproved by the DeepMind prover agent.\n",
     "\n\nThis was proved by DeepMind prover agent.\n",
     "\n\nThe DeepMind prover agent has found a formal proof of this statement.\n",
+    "\n\nThe DeepMind prover agent has found a formal disproof of this statement.\n",  # 12.parts.ii, 26.tenenbaum
+    "\n\nThis was proved formally by the DeepMind prover agent [DM26a].\n",  # 152
+    "\n\nThe DeepMind prover agent found a formal proof for this statement\n",  # 741.variants.upper (no period upstream)
+    "\n\nFormal proof linked here provided by AlphaProof.\n",  # 1052, 233.lower_bound, 1074.EHSNumbers_infinite
+    "\n\nFormal proof provided by AlphaProof\n",  # 267.specialization_pow_two
+    "\nThis was found be AlphaProof for the specific instance $X^2 - X + 1$ and then generalised.\n",  # 477
+    "\n\nThis was found and proved by AlphaProof.\n\nIt also found $(n + 1)! + n$.\n",  # 198.concrete
+    "\n\nAlphaProof has found the following explicit construction: $A = \\{ (n+1)!+n : n\\geq 0\\}$. This is a\n"
+    "Sidon set, and intersects every arithmetic progression, since for any $a,d\\in \\mathbb{N}$,\n"
+    "$(a+d+1)!+(a+d)\\in A$, and $d$ divides $(a+d+1)!+d$.\n",  # 198
     " - [DM26a] DeepMind prover agent, [formal proof of Erdős problem 152]"
     "(https://github.com/mo271/formal-conjectures/blob/"
     "29c60aa79729701905cf9e92517af23f588971f2/FormalConjectures/ErdosProblems/152.lean#L485)"
@@ -124,19 +180,14 @@ VERDICT_PROSE = [
     "- [LaLa26] Larsen and Larsen, [Erdős problem 868]"
     "(https://github.com/Larsen-Daniel/Erdos-868/blob/main/868.pdf) (2026)\n",  # 868 module-doc ref
 ]
-# 351 category lists (one per kept declaration: the 350 targets + 1055's kept
-# `exists_p`) and 18 verdict-prose applications: each snippet applies once,
-# except the 868 module-doc reference line, which lands in both of that file's
-# derived specs (parts.i and parts.ii).
-ANNOTATION_TOTALS = {"category": 351, "prose": 18}
 
 
 def strip_fc_annotations(text: str) -> tuple[str, dict[str, int]]:
     """Remove FC's catalogue/verdict annotations from an isolated spec's text,
     returning the stripped text and per-kind application counts (summed and
-    asserted against ``ANNOTATION_TOTALS`` by generation). Elaboration-neutral
-    by construction -- the attributes never reach the statement's type, prose
-    is prose -- and the certificate + compile gates re-check the result."""
+    asserted by generation). Elaboration-neutral by construction -- the
+    attributes never reach the statement's type, prose is prose -- and the
+    certificate + compile gates re-check the result."""
     counts = {"category": 0, "prose": 0}
     text, counts["category"] = strip_category_attrs(text)
     for snippet in VERDICT_PROSE:
@@ -145,48 +196,3 @@ def strip_fc_annotations(text: str) -> tuple[str, dict[str, int]]:
             newline = "\n" if snippet.startswith("\n") else ""
             text = text.replace(snippet, newline)
     return text, counts
-
-
-def parse_names(text: str) -> list[str]:
-    """Names one per line; blank lines and ``#`` comments ignored."""
-    names: list[str] = []
-    for line in text.splitlines():
-        entry = line.split("#", 1)[0].strip()
-        if entry:
-            names.append(entry)
-    return names
-
-
-def parse_renamed(text: str) -> dict[str, str]:
-    """``RENAMED.txt`` as ``{attempt_time_name: name_at_vendored_commit}``
-    (one whitespace-separated pair per line; ``#`` comments ignored)."""
-    renames: dict[str, str] = {}
-    for line in text.splitlines():
-        entry = line.split("#", 1)[0].strip()
-        if entry:
-            old, new = entry.split()
-            renames[old] = new
-    return renames
-
-
-def kept_names() -> list[str]:
-    """The 350 kept short names: ``ATTEMPTED.txt``'s 353 minus
-    ``EXCLUDED.txt``'s 3, with ``RENAMED.txt`` applied, in attempt-list order.
-    Fails loudly if the membership arithmetic is off (a vendoring or
-    exclusion-list error, never something to paper over)."""
-    attempted = parse_names(ATTEMPTED_FILE.read_text())
-    if len(attempted) != 353 or len(set(attempted)) != 353:
-        raise SystemExit(f"expected 353 distinct attempted names, found {len(attempted)}")
-    excluded = parse_names(EXCLUDED_FILE.read_text())
-    if len(excluded) != 3:
-        raise SystemExit(f"expected 3 excluded names, found {len(excluded)}")
-    unknown = sorted(set(excluded) - set(attempted))
-    if unknown:
-        raise SystemExit(f"EXCLUDED.txt names not in the attempted list: {unknown}")
-    renames = parse_renamed(RENAMED_FILE.read_text())
-    stale = sorted((set(renames) - set(attempted)) | (set(renames.values()) & set(attempted)))
-    if stale:
-        raise SystemExit(f"RENAMED.txt entries inconsistent with the attempted list: {stale}")
-    kept = [renames.get(n, n) for n in attempted if n not in set(excluded)]
-    assert len(kept) == 350 and len(set(kept)) == 350
-    return kept

@@ -4,8 +4,8 @@ The deeper Lean guarantees over the committed ``Isolated/`` specs -- clean
 elaboration, the certified ``answer(sorry) ↔`` rewrite, only the target + its
 dependency decls surviving -- are enforced authoritatively, in a container, by
 ``tests/test_fc100_isolation.py``. This module checks what can be checked
-cheaply on every run: the membership arithmetic (100 = 86 kept + 14 excluded),
-the dataset/sample shape, and textual invariants of the shipped sketches.
+cheaply on every run: the manifest census (100 = 86 kept + 14 excluded), the
+dataset/sample shape, and textual invariants of the shipped sketches.
 """
 
 from __future__ import annotations
@@ -15,22 +15,12 @@ import re
 import pytest
 
 from apn.dataset import (
-    FC100_ISOLATED_DIR,
-    FC100_MAPPING_FILE,
-    FC100_SUBSETS_DIR,
+    FC100_DIR,
     fc100open_dataset,
+    load_manifest,
     load_subset,
-    parse_decl_mapping,
 )
-from scripts.fc100_isolation import (
-    EXCLUDED_FILE,
-    SORRY_ALLOWLIST,
-    SOURCES_DIR,
-    SUBSET_FILE,
-    kept_names,
-    parse_excluded,
-    parse_subset_names,
-)
+from scripts.fc100_isolation import SORRY_ALLOWLIST
 from scripts.fc_statements import strip_comments
 
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
@@ -38,34 +28,27 @@ _DECL_RE = re.compile(r"(?m)^(?:theorem|lemma)\b")
 _SORRY_RE = re.compile(r"\bsorry\b")
 
 
-def test_membership_arithmetic() -> None:
-    # The vendored subset file is the membership source of truth: exactly 100
-    # distinct members, of which exactly the 14 in EXCLUDED.txt are dropped.
-    members = parse_subset_names(SUBSET_FILE.read_text())
-    assert len(members) == 100
-    assert len(set(members)) == 100
-    excluded = parse_excluded(EXCLUDED_FILE.read_text())
-    assert len(excluded) == 14
-    assert set(excluded) <= set(members)
-    kept = kept_names()
+def test_manifest_census() -> None:
+    # The manifest is the membership source of truth: exactly the paper's 100
+    # frozen members, the 14 value-typed answer(sorry) ones excluded with the
+    # reason inline.
+    rows = load_manifest(FC100_DIR)
+    assert len(rows) == 100
+    kept = [r for r in rows if r.excluded is None]
     assert len(kept) == 86
-    assert set(kept) == set(members) - set(excluded)
+    for row in rows:
+        assert (FC100_DIR / row.source).is_file(), row.id
+        if row.excluded is None:
+            assert (FC100_DIR / row.statement_path).is_file(), row.id
+        else:
+            assert row.excluded.startswith("value-typed answer(sorry)"), row.id
 
 
-def test_mapping_matches_membership() -> None:
-    # MAPPING.txt (generated) covers exactly the kept members, in subset order,
-    # and every mapped source file is vendored.
-    entries = parse_decl_mapping(FC100_MAPPING_FILE.read_text())
-    assert [name for name, _ in entries] == kept_names()
-    for name, relpath in entries:
-        assert (SOURCES_DIR / relpath).is_file(), f"{name}: missing source {relpath}"
-
-
-def test_every_isolated_file_used_exactly_once() -> None:
-    entries = parse_decl_mapping(FC100_MAPPING_FILE.read_text())
-    assert sorted(p.name for p in FC100_ISOLATED_DIR.glob("*.lean")) == sorted(
-        f"{name}.lean" for name, _ in entries
-    )
+def test_spec_files_match_manifest_exactly() -> None:
+    rows = load_manifest(FC100_DIR)
+    expected = sorted(f"{r.id}.lean" for r in rows if r.excluded is None)
+    on_disk = sorted(p.name for p in (FC100_DIR / "Isolated").glob("*.lean"))
+    assert on_disk == expected
 
 
 def test_fc100_dataset_loads_full_set() -> None:
@@ -73,7 +56,6 @@ def test_fc100_dataset_loads_full_set() -> None:
     assert len(ds) == 86
     ids = [s.id for s in ds]
     assert len(set(ids)) == len(ids)
-    assert ids == kept_names()
 
 
 def test_fc100_dataset_sample_shape() -> None:
@@ -82,7 +64,7 @@ def test_fc100_dataset_sample_shape() -> None:
     sample = ds[0]
     assert sample.id == "Erdos200.erdos_200"
     assert sample.metadata is not None
-    assert sample.metadata["source_file"] == "ErdosProblems/200.lean"
+    assert sample.metadata["source"] == "Sources/ErdosProblems/200.lean"
     sketch = sample.metadata["sketch"]
     assert sample.input == sketch
     assert "import FormalConjectures.Util.ProblemImports" in sketch
@@ -92,8 +74,15 @@ def test_fc100_dataset_sample_shape() -> None:
     assert "answer(" not in sketch
 
 
-def test_fc100_dataset_names_filter_unknown() -> None:
-    assert len(fc100open_dataset(names=["does_not_exist"])) == 0
+def test_fc100_dataset_names_filter_unknown_raises() -> None:
+    with pytest.raises(ValueError, match="unknown or excluded"):
+        fc100open_dataset(names=["does_not_exist"])
+
+
+def test_excluded_members_do_not_load() -> None:
+    # Excluded rows are census entries, not runnable samples.
+    with pytest.raises(ValueError, match="unknown or excluded"):
+        fc100open_dataset(names=["Green24.green_24"])
 
 
 def test_sketches_have_no_answer_and_no_banner() -> None:
@@ -131,7 +120,8 @@ def test_sketches_have_no_example_commands() -> None:
     # them at score time.
     for sample in fc100open_dataset():
         assert sample.metadata is not None
-        assert not re.search(r"(?m)^example\b", sample.metadata["sketch"]), sample.id
+        stripped = strip_comments(sample.metadata["sketch"])
+        assert not re.search(r"(?m)^example\b", stripped), sample.id
 
 
 def test_sketches_sorry_count() -> None:
@@ -160,17 +150,18 @@ def test_every_target_has_isolated_single_theorem_spec() -> None:
     # Pure-Python structural guard over the committed, Lean-authored Isolated/
     # files (CI has no Lean toolchain); the authoritative re-extraction check
     # lives in tests/test_fc100_isolation.py.
-    for name in kept_names():
-        path = FC100_ISOLATED_DIR / f"{name}.lean"
-        assert path.is_file(), f"missing isolated spec for {name}"
+    for row in load_manifest(FC100_DIR):
+        if row.excluded is not None:
+            continue
+        path = FC100_DIR / row.statement_path
         text = path.read_text()
-        assert "import FormalConjectures.Util.ProblemImports" in text, name
-        short = name.rsplit(".", 1)[-1]
-        assert re.search(rf"\b(?:theorem|lemma)\s+.*{re.escape(short)}\b", text), name
-        expected = _DEPENDENCY_LEMMA_SPECS.get(name, 1)
-        assert len(_DECL_RE.findall(text)) == expected, name
+        assert "import FormalConjectures.Util.ProblemImports" in text, row.id
+        short = row.id.rsplit(".", 1)[-1]
+        assert re.search(rf"\b(?:theorem|lemma)\s+.*{re.escape(short)}\b", text), row.id
+        expected = _DEPENDENCY_LEMMA_SPECS.get(row.id, 1)
+        assert len(_DECL_RE.findall(text)) == expected, row.id
 
 
 def test_load_subset_unknown_raises() -> None:
     with pytest.raises(ValueError, match="Unknown subset"):
-        load_subset("does_not_exist", FC100_SUBSETS_DIR)
+        load_subset(FC100_DIR, "does_not_exist")

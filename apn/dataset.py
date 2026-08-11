@@ -1,55 +1,122 @@
 from __future__ import annotations
 
-import re
+import json
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Iterable
 
 from inspect_ai.dataset import MemoryDataset, Sample
 
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
-OEIS_AUTO_DIR = OEIS_DIR / "Auto"
-OEIS_ISOLATED_DIR = OEIS_DIR / "Isolated"
-OEIS_MAPPING_FILE = OEIS_DIR / "THEOREM_MAPPING.txt"
-OEIS_SUBSETS_DIR = OEIS_DIR / "subsets"
-
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
-FC100_ISOLATED_DIR = FC100_DIR / "Isolated"
-FC100_MAPPING_FILE = FC100_DIR / "MAPPING.txt"
-FC100_SUBSETS_DIR = FC100_DIR / "subsets"
-
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
-ERDOS_ISOLATED_DIR = ERDOS_DIR / "Isolated"
-ERDOS_MAPPING_FILE = ERDOS_DIR / "MAPPING.txt"
-ERDOS_SUBSETS_DIR = ERDOS_DIR / "subsets"
-
-_OEIS_NUM_RE = re.compile(r"^(\d+)_")
 
 
-def available_subsets(subsets_dir: str | Path = OEIS_SUBSETS_DIR) -> list[str]:
-    """Names of a dataset's predefined subsets (one ``<name>.txt`` per subset)."""
-    subsets_dir = Path(subsets_dir)
+@dataclass(frozen=True)
+class SampleRow:
+    """One universe member of a dataset's ``samples.jsonl`` manifest.
+
+    A row records facts about the dataset itself (never benchmark lineage --
+    that lives in ``subsets/``): the sample id, the vendored source file
+    hosting the declaration, an optional exclusion reason for members the
+    harness cannot score, and any dataset-specific fields (``oeis_id``,
+    ``category_at_pin``, ...) in ``extra``. The isolated spec of a
+    non-excluded row is ``Isolated/<id>.lean`` by convention; ``statement``
+    overrides that path for the rare ids it cannot name (two Erdős members
+    differ only in case, which one filename cannot carry on a
+    case-insensitive filesystem).
+    """
+
+    id: str
+    source: str
+    excluded: str | None = None
+    statement: str | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def statement_path(self) -> str:
+        return self.statement or f"Isolated/{self.id}.lean"
+
+
+def load_manifest(dataset_dir: str | Path) -> list[SampleRow]:
+    """Parse a dataset's ``samples.jsonl`` (one JSON object per line)."""
+    dataset_dir = Path(dataset_dir)
+    rows: list[SampleRow] = []
+    for line in (dataset_dir / "samples.jsonl").read_text().splitlines():
+        rec = json.loads(line)
+        rows.append(
+            SampleRow(
+                id=rec.pop("id"),
+                source=rec.pop("source"),
+                excluded=rec.pop("excluded", None),
+                statement=rec.pop("statement", None),
+                extra=rec,
+            )
+        )
+    ids = [r.id for r in rows]
+    if len(set(ids)) != len(ids):
+        dupes = sorted({i for i in ids if ids.count(i) > 1})
+        raise ValueError(f"{dataset_dir.name}: duplicate manifest ids: {dupes}")
+    return rows
+
+
+def write_manifest(dataset_dir: str | Path, rows: Iterable[dict[str, Any]]) -> Path:
+    """Write ``samples.jsonl`` (vendor-time; generators construct the rows).
+
+    Rows are sorted by ``id`` and serialized one compact object per line, keys
+    in the given order with ``id``/``source`` leading -- kept next to
+    :func:`load_manifest` so the format is defined in one place.
+    """
+    out = []
+    for rec in sorted(rows, key=lambda r: r["id"]):
+        ordered = {"id": rec["id"], "source": rec["source"]}
+        ordered.update(rec)
+        out.append(json.dumps(ordered, ensure_ascii=False))
+    path = Path(dataset_dir) / "samples.jsonl"
+    path.write_text("\n".join(out) + "\n")
+    return path
+
+
+def available_subsets(dataset_dir: str | Path) -> list[str]:
+    """Names of a dataset's predefined subsets (one ``subsets/<name>.json`` each)."""
+    subsets_dir = Path(dataset_dir) / "subsets"
     if not subsets_dir.is_dir():
         return []
-    return sorted(p.stem for p in subsets_dir.glob("*.txt"))
+    return sorted(p.stem for p in subsets_dir.glob("*.json"))
 
 
-def load_subset(name: str, subsets_dir: str | Path = OEIS_SUBSETS_DIR) -> list[str]:
-    """Resolve a named subset to its list of target theorem names.
+def load_subset(dataset_dir: str | Path, name: str) -> list[str]:
+    """Resolve a named subset to its list of sample ids.
 
-    Subsets are plain-text files under a dataset's ``subsets/`` directory (one
-    theorem name per line; blank lines and ``#`` comments ignored).
+    A subset is exactly that -- every id must exist in the dataset's manifest;
+    derivation stories (upstream lists, seeds, renames) are prose in the file's
+    ``description``, not membership data.
     """
-    subsets_dir = Path(subsets_dir)
-    path = subsets_dir / f"{name}.txt"
+    dataset_dir = Path(dataset_dir)
+    path = dataset_dir / "subsets" / f"{name}.json"
     if not path.is_file():
         raise ValueError(
-            f"Unknown subset {name!r}; available: {available_subsets(subsets_dir)}"
+            f"Unknown subset {name!r}; available: {available_subsets(dataset_dir)}"
         )
-    names: list[str] = []
-    for line in path.read_text().splitlines():
-        entry = line.split("#", 1)[0].strip()
-        if entry:
-            names.append(entry)
-    return names
+    ids: list[str] = json.loads(path.read_text())["ids"]
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"subset {name!r} has duplicate ids")
+    known = {r.id for r in load_manifest(dataset_dir)}
+    missing = sorted(set(ids) - known)
+    if missing:
+        raise ValueError(f"subset {name!r} ids missing from the manifest: {missing}")
+    return ids
+
+
+def write_subset(path: str | Path, description: str, ids: list[str]) -> Path:
+    """Write a ``subsets/<name>.json`` file (vendor-time; see :func:`load_subset`)."""
+    path = Path(path)
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(
+        json.dumps({"description": description, "ids": ids}, indent=2, ensure_ascii=False)
+        + "\n"
+    )
+    return path
 
 
 def strip_license_header(text: str) -> str:
@@ -81,139 +148,85 @@ def strip_license_header(text: str) -> str:
     return stripped[end:].lstrip()
 
 
-def oeis_id_from_filename(filename: str) -> str | None:
-    """The OEIS A-number for an ``OEIS/Auto`` file (its leading digits).
-
-    Filenames look like ``268597_aacea533.lean`` -> ``A268597``. More reliable
-    than parsing the theorem name, some of which carry no A-number.
-    """
-    match = _OEIS_NUM_RE.match(filename)
-    return f"A{int(match.group(1)):06d}" if match else None
-
-
-def parse_oeis_mapping(text: str) -> list[tuple[str, list[str]]]:
-    """Parse ``THEOREM_MAPPING.txt`` into ``(theorem_name, [files])`` entries.
-
-    Each line is ``<conjecture_theorem_name> <file.lean> [<file.lean> ...]``;
-    one conjecture occasionally has more than one formalization file.
-    """
-    entries: list[tuple[str, list[str]]] = []
-    for line in text.splitlines():
-        parts = line.split()
-        if len(parts) >= 2:
-            entries.append((parts[0], parts[1:]))
-    return entries
-
-
-def oeis_dataset(
-    isolated_dir: str | Path = OEIS_ISOLATED_DIR,
-    mapping_file: str | Path = OEIS_MAPPING_FILE,
+def build_dataset(
+    dataset_dir: str | Path,
+    name: str,
+    metadata_keys: tuple[str, ...] = (),
     names: list[str] | None = None,
 ) -> MemoryDataset:
-    """The Formal Conjectures autoformalized OEIS conjectures as Samples.
+    """A dataset's non-excluded manifest rows as Samples.
 
-    One sample per mapping entry (one conjecture). The sketch is the conjecture's
-    *isolated* spec under ``Isolated/<name>.lean``: the sequence definitions plus
-    the single target theorem (all sibling conjectures and test lemmas removed).
+    Each sample's input is its isolated spec (``Isolated/<id>.lean``, license
+    header stripped). ``Sample.metadata`` gets ``sketch``, ``source``, and the
+    whitelisted ``metadata_keys`` only -- other manifest fields (notably
+    ``category_at_pin``/``answer_form``, the recorded verdict in
+    machine-readable form) exist for tooling and must not reach the agent.
 
     Args:
-        isolated_dir: Directory of per-conjecture ``Isolated/<name>.lean`` specs
-            (generated by ``scripts/generate_oeis_isolated.py``).
-        mapping_file: ``THEOREM_MAPPING.txt`` (theorem name -> source file(s)),
-            used to enumerate conjectures and derive the OEIS id.
-        names: If given, keep only these conjecture theorem names (e.g. a
-            curated subset).
+        dataset_dir: The dataset's directory under ``apn/data/``.
+        name: Dataset name for the ``MemoryDataset``.
+        metadata_keys: Manifest ``extra`` fields to copy into sample metadata.
+        names: If given, keep only these sample ids (e.g. a subset's).
     """
-    isolated = Path(isolated_dir)
-    entries = parse_oeis_mapping(Path(mapping_file).read_text())
+    dataset_dir = Path(dataset_dir)
+    rows = [r for r in load_manifest(dataset_dir) if r.excluded is None]
+    if names is not None:
+        missing = sorted(set(names) - {r.id for r in rows})
+        if missing:
+            raise ValueError(f"{name}: unknown or excluded sample ids: {missing}")
+        wanted = set(names)
+        rows = [r for r in rows if r.id in wanted]
     samples: list[Sample] = []
-    for name, files in entries:
-        if names is not None and name not in names:
-            continue
-        text = strip_license_header((isolated / f"{name}.lean").read_text())
-        metadata: dict[str, str | list[str] | None] = {
-            "sketch": text,
-            "oeis_id": oeis_id_from_filename(files[0]),
-        }
-        # A few conjectures (3/492, only 1 a substantive difference) map to more
-        # than one upstream file; we use files[0] and record the rest so the
-        # solver can warn at run time
-        if len(files) > 1:
-            metadata["unused_formalization_files"] = files[1:]
-        samples.append(Sample(input=text, id=name, metadata=metadata))
-    return MemoryDataset(samples, name="oeis")
+    for row in rows:
+        text = strip_license_header((dataset_dir / row.statement_path).read_text())
+        metadata: dict[str, Any] = {"sketch": text, "source": row.source}
+        for key in metadata_keys:
+            if key in row.extra:
+                metadata[key] = row.extra[key]
+        samples.append(Sample(input=text, id=row.id, metadata=metadata))
+    return MemoryDataset(samples, name=name)
 
 
-def parse_decl_mapping(text: str) -> list[tuple[str, str]]:
-    """Parse a ``MAPPING.txt`` (FC100's or Erdős') into ``(full_decl_name,
-    source_relpath)`` entries. Each line is ``<full_decl_name> <relpath under
-    Sources/>``; unlike the OEIS mapping, every target has exactly one source
-    file."""
-    entries: list[tuple[str, str]] = []
-    for line in text.splitlines():
-        parts = line.split()
-        if len(parts) == 2:
-            entries.append((parts[0], parts[1]))
-    return entries
+def oeis_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The Formal Conjectures autoformalized OEIS conjectures as Samples.
+
+    One sample per manifest row (one conjecture; 492). The sketch is the
+    conjecture's *isolated* spec: the sequence definitions plus the single
+    target theorem (all sibling conjectures and test lemmas removed).
+    ``oeis_id`` and (for the 3 multi-formalization conjectures)
+    ``other_sources`` ride along in metadata.
+    """
+    return build_dataset(OEIS_DIR, "oeis", ("oeis_id", "other_sources"), names)
 
 
 def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     """The FC100OpenSet1 open problems (86 of the paper's frozen 100) as Samples.
 
-    One sample per ``MAPPING.txt`` entry; the sample id is the target's fully
-    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is the
-    target's *isolated* spec under ``Isolated/<name>.lean`` -- the source file's
-    definitions plus the single target theorem, siblings/test lemmas/``example``
-    commands removed, propositional ``answer(sorry) ↔ P`` statements rewritten
-    to plain ``P`` (certified by ``tests/test_fc100_isolation.py``), and FC's
+    One sample per non-excluded manifest row; the sample id is the target's
+    fully qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch
+    is the target's *isolated* spec -- the source file's definitions plus the
+    single target theorem, siblings/test lemmas/``example`` commands removed,
+    propositional ``answer(sorry) ↔ P`` statements rewritten to plain ``P``
+    (certified by ``tests/test_fc100_isolation.py``), and FC's
     ``@[category ...]`` classification lists dropped. The 14 value-typed
-    ``answer(sorry)`` members of the paper's 100 are excluded
-    (``EXCLUDED.txt``).
-
-    Args:
-        names: If given, keep only these target names (e.g. a curated subset).
+    ``answer(sorry)`` members of the paper's 100 are excluded manifest rows.
     """
-    entries = parse_decl_mapping(FC100_MAPPING_FILE.read_text())
-    samples: list[Sample] = []
-    for name, relpath in entries:
-        if names is not None and name not in names:
-            continue
-        text = strip_license_header((FC100_ISOLATED_DIR / f"{name}.lean").read_text())
-        metadata = {
-            "sketch": text,
-            "source_file": relpath,
-        }
-        samples.append(Sample(input=text, id=name, metadata=metadata))
-    return MemoryDataset(samples, name="fc100open")
+    return build_dataset(FC100_DIR, "fc100open", (), names)
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The Tsoukalas paper's canonical Erdős attempted set (350 of the 353
-    statements its agent attempted, arXiv 2605.22763) as Samples.
+    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763)
+    as Samples.
 
-    One sample per ``MAPPING.txt`` entry; the sample id is the target's fully
-    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is the
-    target's *isolated* spec under ``Isolated/<name>.lean`` -- the source
-    file's definitions plus the single target theorem, siblings/test
-    lemmas/``example`` commands removed, and all four ``answer(...) ↔``
-    statement forms rewritten to plain ``P`` (recorded ``True``/``False``
-    verdicts un-filled and FC's recorded-verdict annotations stripped -- the
-    answer key must not leak; certified by ``tests/test_erdos_isolation.py``).
-    Statement text is FC at the baked commit 67338a1; 3 attempted names have
-    no statement there and are excluded (``EXCLUDED.txt``).
-
-    Args:
-        names: If given, keep only these target names (e.g. a curated subset).
+    One sample per manifest row (350; the paper's attempted statements
+    resolvable at the pinned FC commit); the sample id is the target's fully
+    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is
+    the target's *isolated* spec -- the source file's definitions plus the
+    single target theorem, siblings/test lemmas/``example`` commands removed,
+    and all four ``answer(...) ↔`` statement forms rewritten to plain ``P``
+    (recorded ``True``/``False`` verdicts un-filled and FC's recorded-verdict
+    annotations stripped -- the answer key must not leak; certified by
+    ``tests/test_erdos_isolation.py``). The ``tsoukalas_attempted`` subset
+    names the same 350 ids -- the canonical replication invocation.
     """
-    entries = parse_decl_mapping(ERDOS_MAPPING_FILE.read_text())
-    samples: list[Sample] = []
-    for name, relpath in entries:
-        if names is not None and name not in names:
-            continue
-        text = strip_license_header((ERDOS_ISOLATED_DIR / f"{name}.lean").read_text())
-        metadata = {
-            "sketch": text,
-            "source_file": relpath,
-        }
-        samples.append(Sample(input=text, id=name, metadata=metadata))
-    return MemoryDataset(samples, name="erdos")
+    return build_dataset(ERDOS_DIR, "erdos", (), names)

@@ -1,0 +1,100 @@
+{"id": "Arxiv.«0912.2382».curling_number_conjecture", "source": "Sources/Arxiv/0912.2382/CurlingNumberConjecture.lean"}
+{"id": "Arxiv.«1601.03081».crystals_components_unique", "source": "Sources/Arxiv/1601.03081/UniqueCrystalComponents.lean"}
+{"id": "Arxiv.«2501.03234».conjecture_4_1", "source": "Sources/Arxiv/2501.03234/ArithmeticSumS.lean"}
+{"id": "BabaiSeressConjectures.babai_seress_conjecture_alternating", "source": "Sources/Wikipedia/DiameterSimpleFiniteGroups.lean"}
+{"id": "Buchi.buchi_problem", "source": "Sources/Wikipedia/Buchi.lean"}
+{"id": "ClassNumberProblem.class_number_problem", "source": "Sources/Wikipedia/ClassNumberProblem.lean"}
+{"id": "EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic", "source": "Sources/Wikipedia/EllipticCurveRank.lean"}
+{"id": "Equidistribution.isAccumulationPoint_three_halves_pow", "source": "Sources/Books/UniformDistributionOfSequences/Equidistribution.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos1002.erdos_1002", "source": "Sources/ErdosProblems/1002.lean"}
+{"id": "Erdos1074.erdos_1074.parts.ii", "source": "Sources/ErdosProblems/1074.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos1074.erdos_1074.parts.iv", "source": "Sources/ErdosProblems/1074.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos1092.f_asymptotic_general", "source": "Sources/ErdosProblems/1092.lean"}
+{"id": "Erdos1093.erdos_1093.parts.ii", "source": "Sources/ErdosProblems/1093.lean"}
+{"id": "Erdos1097.erdos_1097", "source": "Sources/ErdosProblems/1097.lean"}
+{"id": "Erdos1113.erdos_1113.variants.filaseta_finch_kozek", "source": "Sources/ErdosProblems/1113.lean"}
+{"id": "Erdos12.erdos_12.parts.iii", "source": "Sources/ErdosProblems/12.lean"}
+{"id": "Erdos123.erdos_123.variants.powers_2_3_5_snug", "source": "Sources/ErdosProblems/123.lean"}
+{"id": "Erdos125.erdos_125.variants.positive_unequal_density", "source": "Sources/ErdosProblems/125.lean"}
+{"id": "Erdos137.erdos_137.variants.multiple_powerful_factors", "source": "Sources/ErdosProblems/137.lean"}
+{"id": "Erdos188.erdos_188", "source": "Sources/ErdosProblems/188.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos200.erdos_200", "source": "Sources/ErdosProblems/200.lean"}
+{"id": "Erdos23.erdos_23", "source": "Sources/ErdosProblems/23.lean"}
+{"id": "Erdos260.erdos_260", "source": "Sources/ErdosProblems/260.lean"}
+{"id": "Erdos269.erdos_269.variants.rational", "source": "Sources/ErdosProblems/269.lean"}
+{"id": "Erdos272.erdos_272.variants.szabo_strong", "source": "Sources/ErdosProblems/272.lean"}
+{"id": "Erdos282.erdos_282.variants.general", "source": "Sources/ErdosProblems/282.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos288.erdos_288.variants.exists_k_gt_2", "source": "Sources/ErdosProblems/288.lean"}
+{"id": "Erdos307.erdos_307", "source": "Sources/ErdosProblems/307.lean"}
+{"id": "Erdos313.erdos_313", "source": "Sources/ErdosProblems/313.lean"}
+{"id": "Erdos324.erdos_324", "source": "Sources/ErdosProblems/324.lean"}
+{"id": "Erdos329.erdos_329", "source": "Sources/ErdosProblems/329.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos329.erdos_329.variants.converse_implication", "source": "Sources/ErdosProblems/329.lean"}
+{"id": "Erdos332.erdos_332", "source": "Sources/ErdosProblems/332.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos340.erdos_340.variants.co_density_zero_sub", "source": "Sources/ErdosProblems/340.lean"}
+{"id": "Erdos358.erdos_358.variants.prime_set", "source": "Sources/ErdosProblems/358.lean"}
+{"id": "Erdos36.erdos_36.variants.lower", "source": "Sources/ErdosProblems/36.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos385.erdos_385.parts.ii", "source": "Sources/ErdosProblems/385.lean"}
+{"id": "Erdos398.erdos_398", "source": "Sources/ErdosProblems/398.lean"}
+{"id": "Erdos409.erdos_409.parts.i.isBigO", "source": "Sources/ErdosProblems/409.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos479.erdos_479", "source": "Sources/ErdosProblems/479.lean"}
+{"id": "Erdos517.erdos_517", "source": "Sources/ErdosProblems/517.lean"}
+{"id": "Erdos535.erdos_535.variants.first_open_case", "source": "Sources/ErdosProblems/535.lean"}
+{"id": "Erdos539.erdos_539.variants.isBigO_sq", "source": "Sources/ErdosProblems/539.lean"}
+{"id": "Erdos61.erdos_61", "source": "Sources/ErdosProblems/61.lean"}
+{"id": "Erdos647.erdos_647.variants.lim", "source": "Sources/ErdosProblems/647.lean"}
+{"id": "Erdos694.erdos_694.variants.carmichael", "source": "Sources/ErdosProblems/694.lean"}
+{"id": "Erdos695.erdos_695", "source": "Sources/ErdosProblems/695.lean"}
+{"id": "Erdos770.erdos_770.variants.three", "source": "Sources/ErdosProblems/770.lean"}
+{"id": "Erdos830.erdos_830.parts.ii", "source": "Sources/ErdosProblems/830.lean"}
+{"id": "Erdos887.erdos_887.parts.i", "source": "Sources/ErdosProblems/887.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos888.erdos_888", "source": "Sources/ErdosProblems/888.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Erdos890.erdos_890.parts.a", "source": "Sources/ErdosProblems/890.lean"}
+{"id": "Erdos92.erdos_92.variants.weak", "source": "Sources/ErdosProblems/92.lean"}
+{"id": "Erdos931.erdos_931.variants.exists_prime", "source": "Sources/ErdosProblems/931.lean"}
+{"id": "Erdos952.erdos_952", "source": "Sources/ErdosProblems/952.lean"}
+{"id": "Erdos996.erdos_996", "source": "Sources/ErdosProblems/996.lean"}
+{"id": "EulerBrick.cuboidThree", "source": "Sources/Wikipedia/EulerBrick.lean"}
+{"id": "Gilbreath.gilbreath_conjecture", "source": "Sources/Wikipedia/Gilbreath.lean"}
+{"id": "Green14.W_3_37_lower", "source": "Sources/GreensOpenProblems/14.lean"}
+{"id": "Green14.W_3_39_lower", "source": "Sources/GreensOpenProblems/14.lean"}
+{"id": "Green24.green_24", "source": "Sources/GreensOpenProblems/24.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Green31.green_31.variants.upper_eventually", "source": "Sources/GreensOpenProblems/31.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "Green58.green_58", "source": "Sources/GreensOpenProblems/58.lean"}
+{"id": "Green61.green_61", "source": "Sources/GreensOpenProblems/61.lean"}
+{"id": "Green9.green_9_iii", "source": "Sources/GreensOpenProblems/9.lean"}
+{"id": "Grimm.grimm_conjecture", "source": "Sources/Wikipedia/Grimm.lean"}
+{"id": "Grimm.grimm_conjecture_weak", "source": "Sources/Wikipedia/Grimm.lean"}
+{"id": "Irrational.irrational_e_to_e", "source": "Sources/Wikipedia/Irrational.lean"}
+{"id": "Koethe.KotherConjecture.variants.matrixOver_KotherRadical", "source": "Sources/Wikipedia/Koethe.lean"}
+{"id": "LittlewoodConjecture.padic_littlewood_conjecture", "source": "Sources/Wikipedia/LittlewoodConjecture.lean"}
+{"id": "LychrelNumbers.no_lychrel_numbers_base10", "source": "Sources/Wikipedia/LychrelNumbers.lean"}
+{"id": "Mandelbrot.MLC", "source": "Sources/Wikipedia/Mandelbrot.lean"}
+{"id": "Mandelbrot.volume_frontier_mandelbrotSet_eq_zero", "source": "Sources/Wikipedia/Mandelbrot.lean"}
+{"id": "Mathoverflow1973.mathoverflow_1973", "source": "Sources/Mathoverflow/1973.lean"}
+{"id": "MonochromaticQuantumGraph.eqSystem10_no_solution_d3", "source": "Sources/Paper/MonochromaticQuantumGraph.lean"}
+{"id": "MonochromaticQuantumGraph.eqSystem10_no_solution_d3_trinary_int", "source": "Sources/Paper/MonochromaticQuantumGraph.lean"}
+{"id": "MonochromaticQuantumGraph.eqSystem10_no_solution_d4", "source": "Sources/Paper/MonochromaticQuantumGraph.lean"}
+{"id": "MonochromaticQuantumGraph.eqSystem12_no_solution_d3", "source": "Sources/Paper/MonochromaticQuantumGraph.lean"}
+{"id": "MonochromaticQuantumGraph.eqSystem16_no_solution_d3", "source": "Sources/Paper/MonochromaticQuantumGraph.lean"}
+{"id": "MonochromaticQuantumGraph.eqSystem6_no_solution_d4", "source": "Sources/Paper/MonochromaticQuantumGraph.lean"}
+{"id": "MonochromaticQuantumGraph.eqSystem_no_solution_ge6_ge3_real", "source": "Sources/Paper/MonochromaticQuantumGraph.lean"}
+{"id": "OeisA303656.conjecture", "source": "Sources/OEIS/303656.lean"}
+{"id": "OeisA308734.conjecture", "source": "Sources/OEIS/308734.lean"}
+{"id": "OeisA41.noPowerPartitionNumber", "source": "Sources/OEIS/41.lean"}
+{"id": "OeisA63880.mod_216_of_a", "source": "Sources/OEIS/63880.lean"}
+{"id": "OeisA67720.prime_add_one_of_a", "source": "Sources/OEIS/67720.lean"}
+{"id": "OeisA80170.gcdCondition_iff_primePowerCondition", "source": "Sources/OEIS/80170.lean"}
+{"id": "OpenQuantumProblem23.hasSICPOVM_60", "source": "Sources/OpenQuantumProblems/23.lean"}
+{"id": "PellNumbers.infinite_pellNumber_primes", "source": "Sources/Wikipedia/Pell.lean"}
+{"id": "PoincareConjecture.poincare_conjecture.variants.smooth_dimension_four", "source": "Sources/Millenium/Poincare.lean"}
+{"id": "RamseyNumbers.ramsey_number_five_five", "source": "Sources/Wikipedia/RamseyNumbers.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
+{"id": "RiemannZetaValues.irrational_five", "source": "Sources/Wikipedia/RiemannZetaValues.lean"}
+{"id": "Selfridge.selfridge_conjecture", "source": "Sources/Wikipedia/Selfridge.lean"}
+{"id": "SumOfThreeCubes.isSumOfThreeCubes_iff_mod_9", "source": "Sources/Wikipedia/SumOfThreeCubes.lean"}
+{"id": "Superperfect.twoFivePerfect", "source": "Sources/Wikipedia/Superperfectnumbers.lean"}
+{"id": "Transcendental.pi_pow_pi_pow_pi_transcendental", "source": "Sources/Wikipedia/Transcendental.lean"}
+{"id": "Transcendental.pi_pow_sqrt_two_transcendental", "source": "Sources/Wikipedia/Transcendental.lean"}
+{"id": "UnionClosed.union_closed.variants.cardinality_even_of_union_closed_tight", "source": "Sources/Wikipedia/UnionClosed.lean"}
+{"id": "WrittenOnTheWallII.GraphConjecture316.conjecture316", "source": "Sources/WrittenOnTheWallII/GraphConjecture316.lean"}
+{"id": "WrittenOnTheWallII.GraphConjecture327.conjecture327", "source": "Sources/WrittenOnTheWallII/GraphConjecture327.lean"}
