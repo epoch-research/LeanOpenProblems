@@ -15,6 +15,8 @@ are vendored.
 - `oeis_records.jsonl` -- the full structured entry per sequence (JSON API).
 - `oeis_history.jsonl` -- the per-sequence revision log, parsed from the
   history pages into structured revisions (see the fetch script's docstring).
+- `proposer_pages.jsonl` -- the raw wikitext of each proposer's OEIS wiki user
+  page, fetched by `scripts/extract_proposers.py`.
 
 ## `derived/` — tables we computed (regenerable from the scripts)
 
@@ -25,3 +27,8 @@ are vendored.
   OpenAlex API by `scripts/find_papers.py`.
 - `citations_oeis.jsonl` -- structured bibliography entries extracted from the
   sequence records' own links/references by `scripts/extract_bibliography.py`.
+- `proposer_metadata.jsonl` -- a structured profile per proposer (academic /
+  amateur / ...), LLM-classified from their wiki page by
+  `scripts/extract_proposers.py`.
+- `proposer_metadata_web.jsonl` -- a web-search pass over the
+  highest-frequency proposers the wiki pages left unknown.
