@@ -4,8 +4,18 @@ Every dataset directory here has the same shape:
 
 | Path | Used at runtime | Contents                                                                                                                                                                                                                                                                                     |
 | --- | --- |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `samples.jsonl` | Yes | One row per item with `id`, `source` (vendored file), optional `excluded` (reason inline), optional `statement` (spec-path override), plus dataset extras.                                                                                                                                   |
+| `samples.jsonl` | Yes | One row per item; keys below.                                                                                                                                                                                                                                                                |
 | `Isolated/<id>.lean` | Yes | The source file's definitions plus the single target theorem; sibling theorems, test lemmas and anonymous `example`s cut; `answer(...) ↔` forms rewritten to plain `P` (recorded verdicts un-filled) and `@[category ...]` lists dropped. Isolated is tested by `tests/test_*_isolation.py`. |
 | `subsets/<name>.json` | Yes | `{description, ids}`; every id must exist in the manifest.                                                                                                                                                                                                                                   |
-| `Sources/` | No | Byte-verbatim vendored Lean (Apache-2.0, © The Formal Conjectures Authors); each tree's README records the exact upstream pin.                                                                                                                                                               |
-| `metadata/` | No | Data *about* the problems (scrape snapshots, derived tables). Own README.                                                                                                                                                                                                                    |
+| `Sources/` | No | Verbatim vendored Lean from upstream; each tree's README records the exact upstream pin.                                                                                                                                                                                                     |
+| `metadata/` | No | Data about the problems, may be used for analysis.                                                                                                                                                                                                                                           |
+
+## `samples.jsonl` keys
+
+| Key | Meaning |
+| --- | --- |
+| `id` | The target theorem's fully-qualified Lean name. It is the sample id, and by convention it also names the row's file in `Isolated/`: `Isolated/<id>.lean`. That file states the theorem with a `sorry` proof and is the sample input. |
+| `source` | Dataset-relative path of the vendored file hosting the declaration (`Sources/...`). |
+| `statement` | Optional override of the statement-file path, for ids a filename cannot carry (e.g. two ids differing only in case, indistinguishable on case-insensitive filesystems). When absent, the statement file is `Isolated/<id>.lean`. |
+| `excluded` | Optional; present means the harness cannot score this member and the value is the reason. |
+| everything else | Dataset extras (`oeis_id`, `other_sources`, `erdos_number`, `category_at_pin`, `answer_form`, ...). |
