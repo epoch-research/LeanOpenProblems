@@ -36,8 +36,10 @@ jobs:
         with:
           registry: ${{ vars.ECR_REGISTRY }}
 
-      # ECR tags are immutable and keyed by apn.__version__, so a target is
-      # built only if its tag is missing (i.e. after a version bump).
+      # ECR tags are immutable and keyed by apn.__version__ plus the dataset's
+      # FC pin (apn/data/<dataset>/fc_commit), so a (target, pin) image is
+      # built only if its tag is missing -- i.e. after a version bump or a pin
+      # change. Datasets sharing a pin share tags, so nothing is built twice.
       - name: Find images missing from ECR
         id: missing
         run: |-
@@ -47,30 +49,44 @@ jobs:
             exit 1
           fi
           echo "version=$image_version" >> "$GITHUB_OUTPUT"
-          targets=""
-          for target in agent agent_corpus scorer; do
-            if ! aws ecr describe-images \
-              --repository-name "${IMAGE_NAME#*/}" \
-              --image-ids "imageTag=LeanOpenProblems_${target}_${image_version}" \
-              >/dev/null 2>&1; then
-              targets="$targets $target"
+          commits="$(sort -u apn/data/*/fc_commit)"
+          builds=""
+          while read -r commit; do
+            if ! echo "$commit" | grep -qE '^[0-9a-f]{40}$'; then
+              echo "Invalid fc_commit entry: '$commit'" >&2
+              exit 1
             fi
-          done
-          echo "targets=${targets# }" >> "$GITHUB_OUTPUT"
+            for target in agent agent_corpus scorer; do
+              if ! aws ecr describe-images \
+                --repository-name "${IMAGE_NAME#*/}" \
+                --image-ids "imageTag=LeanOpenProblems_${target}_${image_version}_fc_${commit:0:12}" \
+                >/dev/null 2>&1; then
+                builds="${builds}${target} ${commit}"$'\n'
+              fi
+            done
+          done <<< "$commits"
+          {
+            echo "builds<<APN_EOF"
+            printf '%s' "$builds"
+            echo "APN_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set reproducible build timestamp
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
 
       # The targets are stages of one Dockerfile built on one builder, so
-      # shared stages (the expensive Lean + Mathlib base) are built once.
+      # shared stages (the expensive Lean + Mathlib base) are built once per
+      # FC pin.
       - name: Build and push images
-        if: steps.missing.outputs.targets != ''
+        if: steps.missing.outputs.builds != ''
         working-directory: apn/lean
         run: |-
-          for target in ${{ steps.missing.outputs.targets }}; do
+          while read -r target commit; do
+            [ -z "$target" ] && continue
             docker buildx build \
               --target "$target" \
+              --build-arg "FC_COMMIT=${commit}" \
               --push \
-              -t "${IMAGE_NAME}:LeanOpenProblems_${target}_${{ steps.missing.outputs.version }}" \
+              -t "${IMAGE_NAME}:LeanOpenProblems_${target}_${{ steps.missing.outputs.version }}_fc_${commit:0:12}" \
               .
-          done
+          done <<< "${{ steps.missing.outputs.builds }}"

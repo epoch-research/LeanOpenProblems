@@ -40,7 +40,7 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
-from apn.dataset import ERDOS_DIR, SampleRow, load_manifest
+from apn.dataset import ERDOS_DIR, SampleRow, fc_commit, load_manifest
 from scripts.erdos_isolation import (
     ISOLATED_DIR,
     SOURCES_DIR,
@@ -89,7 +89,7 @@ async def iso_data(kept_rows: list[SampleRow]) -> IsoData:
     arrangement as ``tests/test_fc100_isolation.py::iso_data``, for the same
     reasons.
     """
-    async with generate_env("pytest_erdos_isolation") as env:
+    async with generate_env("pytest_erdos_isolation", fc_commit(ERDOS_DIR)) as env:
         rels = sorted({r.source.removeprefix("Sources/") for r in kept_rows})
         src = await extract(env, [SOURCES_DIR / rel for rel in rels], arcnames=rels)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))

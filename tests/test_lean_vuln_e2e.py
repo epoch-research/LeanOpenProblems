@@ -65,6 +65,7 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import SAFE_VERIFY_BIN, SandboxSafeVerify
+from apn.dataset import OEIS_DIR, fc_commit
 from apn.layout import SUBMISSION_DIR
 from apn.scorer import proof_scorer
 from apn.task import get_compose_file
@@ -260,7 +261,8 @@ async def _sandboxes() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     Per-test bring-up isolates an OOM/crash (and any compile-time tamper) to a
     single case.
     """
-    compose = str(get_compose_file(literature=False))
+    # Dataset-agnostic suite: any dataset's image works, so use the oeis pin.
+    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
     task_name = "pytest_lean_vuln_e2e"
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
@@ -10,6 +11,20 @@ from inspect_ai.dataset import MemoryDataset, Sample
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
+
+
+def fc_commit(dataset_dir: str | Path) -> str:
+    """The dataset's pinned formal-conjectures commit (``fc_commit``).
+
+    The pin is what the dataset's sandbox images bake (compose build arg,
+    image tag component) and what its vendored ``Sources/`` were extracted at.
+    """
+    commit = (Path(dataset_dir) / "fc_commit").read_text().strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError(
+            f"{Path(dataset_dir).name}: fc_commit must hold a 40-hex commit, got {commit!r}"
+        )
+    return commit
 
 
 @dataclass(frozen=True)

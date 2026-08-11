@@ -13,6 +13,12 @@
 #
 # Lean v4.27.0 matches the Formal Conjectures Erdős/OEIS datasets (oleans are
 # version-specific, so the repl and SafeVerify are all built at this version).
+# Every dataset's FC pin must have lean-toolchain = v4.27.0: the FC checkout's
+# own lean-toolchain drives the library build, but PyPantograph's repl (the
+# pinned commit below targets v4.27.0) and the vendored safeverify/ and
+# extract_ranges/ lean-toolchain files must match the oleans they load/replay.
+# Moving past an FC toolchain bump is therefore a coordinated change to all of
+# those pins together.
 #
 # The builder stage clones the whole formal-conjectures repo and builds the
 # library; base copies in ONLY the toolchain, the lake build artifacts
@@ -41,9 +47,10 @@ RUN curl -sSfL "https://github.com/leanprover/elan/releases/download/${ELAN_VERS
     && /tmp/elan-init -y --default-toolchain "leanprover/lean4:${LEAN_VERSION}" \
     && rm /tmp/elan-init
 
-ARG FC_BRANCH=auto_oeis
-ARG FC_COMMIT=67338a157bbb8d87e9a349d662f82a868bda6327
-RUN git clone --filter=blob:none --branch "${FC_BRANCH}" \
+# The dataset's FC pin (apn/data/<dataset>/fc_commit). Required: there is
+# deliberately no default a stale build could silently fall back to
+ARG FC_COMMIT
+RUN git clone --filter=blob:none \
         https://github.com/google-deepmind/formal-conjectures /workspace/leanproject \
     && git -C /workspace/leanproject checkout "${FC_COMMIT}"
 
@@ -255,7 +262,8 @@ CMD ["sleep", "infinity"]
 # a runtime service and kept separate from `scorer` so the scored image stays    #
 # minimal. Source-only COPY (no host .lake); imports only Lean core, so it        #
 # builds offline with no `lake update`. Run via:                                 #
-#   docker build --target generate -t apn-generate apn/lean                      #
+#   docker build --target generate -t apn-generate \                             #
+#     --build-arg FC_COMMIT="$(cat apn/data/<dataset>/fc_commit)" apn/lean    #
 #   docker run --rm -v "$PWD":/repo apn-generate \                               #
 #     python3 /repo/scripts/generate_oeis_isolated.py --container '' ...         #
 # (in practice: build the extractor into a container with the repo mounted).     #
