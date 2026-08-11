@@ -1,6 +1,6 @@
 [project]
 name = "apn"
-version = "0.1.5"
+version = "0.1.6"
 description = "An Inspect implementation of the AlphaProof Nexus formal proof-search framework"
 requires-python = ">=3.13,<3.14"
 dependencies = []
