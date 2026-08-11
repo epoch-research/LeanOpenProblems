@@ -3,9 +3,11 @@
 Bump version in pyproject.toml, apn/__init__.py, and uv.lock.
 Usage: python scripts/bump_version.py [rc|release|major|minor|patch]
 
-The CI image tags (LeanOpenProblems_*_<version>) are keyed on apn.__version__,
-so bumping the version is how you trigger a fresh ECR build of the sandbox
-images. Keep the two version sources in lockstep -- this script edits both.
+The CI image tags (LeanOpenProblems_*_<version>_fc_<commit12>) are keyed on
+apn.__version__ and the per-dataset FC pins (apn/data/<dataset>/fc_commit),
+so bumping the version -- or changing a pin -- triggers a fresh ECR build of
+the sandbox images. Keep the two version sources in lockstep -- this script
+edits both.
 
 Default is 'rc', which produces release candidate versions:
   0.1.3       -> 0.1.4rc1

@@ -70,6 +70,7 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 from apn.checker import SandboxSafeVerify
+from apn.dataset import OEIS_DIR, fc_commit
 from apn.task import get_compose_file
 
 REPO = Path(__file__).resolve().parent.parent
@@ -114,7 +115,8 @@ async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     spans the untrusted ``compile`` and trusted ``scorer`` sandboxes, so we expose
     the whole dict.
     """
-    compose = str(get_compose_file(literature=False))
+    # The gold proofs are OEIS conjectures, so score against the oeis pin's image.
+    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
     task_name = "pytest_gold_proofs_scorer"
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:

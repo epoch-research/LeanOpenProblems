@@ -25,7 +25,11 @@ container with the repo mounted; the baked extractor of the Dockerfile's
 ``generate`` stage is the default ``--exe``:
 
     docker run -d --name apn-isolate-dev -v "$PWD":/repo -w /repo \\
-        "$IMAGE_REPOSITORY:LeanOpenProblems_generate_<version>" sleep infinity
+        "$IMAGE_REPOSITORY:LeanOpenProblems_generate_<version>_fc_<commit12>" sleep infinity
+
+(``<commit12>`` is the first 12 chars of ``apn/data/fc100open/fc_commit``,
+the dataset's FC pin; or build locally with ``docker build --target generate
+--build-arg FC_COMMIT="$(cat apn/data/fc100open/fc_commit)" apn/lean``.)
 
 Then generate:
 

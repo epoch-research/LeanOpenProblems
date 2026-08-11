@@ -30,7 +30,8 @@ Setup (one-time, since there is no local Lean toolchain). Start a Lean
 container with the repo mounted; the baked extractor of the Dockerfile's
 ``generate`` stage is the default ``--exe``:
 
-    docker build --target generate -t apn-generate apn/lean
+    docker build --target generate -t apn-generate \\
+        --build-arg FC_COMMIT="$(cat apn/data/erdos/fc_commit)" apn/lean
     docker run -d --name apn-isolate-dev -v "$PWD":/repo -w /repo \\
         apn-generate sleep infinity
 
