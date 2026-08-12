@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
 from bench_names import (ALPHAPROOF_NEXUS, BENCH_FULL, BENCH_LITE,
+                         BENCH_FULL_BUDGETED, BENCH_LITE_BUDGETED,
                          MODEL_LABELS, PROVIDER_RE, PROVIDERS)
 
 LOGS = Path("logs")
@@ -23,6 +24,10 @@ OUT.mkdir(exist_ok=True)
 runs = {}  # eval_set_name -> (accuracy, stderr, n, frac_proved, frac_disproved)
 for scores_path in LOGS.glob("*/*/scores.json"):
     eval_set = scores_path.parent.parent.name
+    # logs/ may also hold runs of other benchmarks (whose per-sample
+    # scores.json files match this glob); only oeis-* eval sets belong here
+    if not eval_set.startswith("oeis-"):
+        continue
     data = json.loads(scores_path.read_text())
     (scorer,) = data
     m = scorer["metrics"]
@@ -149,7 +154,7 @@ ax1.set_xticks(range(len(lite_provs)))
 ax1.set_xticklabels([MODEL_LABELS[p].replace(" ", "\n", 1) for p in lite_provs],
                     fontsize=8)
 style_axis(ax1, ymax=0.56)
-ax1.set_title(BENCH_LITE, fontsize=9.5, loc="left", color=INK)
+ax1.set_title(BENCH_LITE_BUDGETED, fontsize=9.5, loc="left", color=INK)
 outcome_legend(ax1, [FULL_COLOR], loc="upper left", ncols=2)
 
 # --- panel 2: full, base scaffold ------------------------------------------
@@ -186,7 +191,7 @@ outcome_legend(ax2, [FULL_COLOR], loc="upper center", ncols=2)
 ax2.set_xticks(list(range(len(labels))))
 ax2.set_xticklabels(labels, fontsize=7)
 style_axis(ax2, ymax=0.56)
-ax2.set_title(f"{BENCH_FULL} (full set)", fontsize=9.5, loc="left", color=INK)
+ax2.set_title(BENCH_FULL_BUDGETED, fontsize=9.5, loc="left", color=INK)
 fig.tight_layout(w_pad=1.5)
 fig.savefig(OUT / "accuracy.png", dpi=300)
 print("wrote", OUT / "accuracy.png")

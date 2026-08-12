@@ -10,8 +10,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from bench_names import (BENCH_FULL, BENCH_LITE, MODEL_LABELS, PROVIDER_RE,
-                         PROVIDERS, SERIES)
+from bench_names import (BENCH_FULL_BUDGETED, BENCH_LITE_BUDGETED,
+                         MODEL_LABELS, PROVIDER_RE, PROVIDERS, SERIES)
 
 LOGS = Path("logs")
 OUT = Path("plots")
@@ -70,8 +70,8 @@ NATIVE_LITE = [("0", 0, 0), ("1–2", 1, 2), ("3+", 3, 10**9)]
 OPENALEX = [("0", 0, 0), ("1+", 1, 10**9)]
 
 ROWS = [
-    (BENCH_FULL, full_frac, full_oeis, NATIVE_FULL),
-    (BENCH_LITE, lite_frac, lite_oeis, NATIVE_LITE),
+    (BENCH_FULL_BUDGETED, full_frac, full_oeis, NATIVE_FULL),
+    (BENCH_LITE_BUDGETED, lite_frac, lite_oeis, NATIVE_LITE),
 ]
 
 fig, axes = plt.subplots(2, 2, figsize=(11.5, 8.6),
@@ -124,10 +124,11 @@ handles = {}
 for ax in (axes[0][0], axes[1][0]):
     h, l = ax.get_legend_handles_labels()
     handles.update(zip(l, h))
-axes[0][0].legend(handles.values(), handles.keys(), frameon=False, fontsize=9,
-                  loc="upper left")
+# legend in the strip between the suptitle and the first row, clear of bars
+fig.legend(handles.values(), handles.keys(), frameon=False, fontsize=9.5,
+           ncols=len(handles), loc="upper center", bbox_to_anchor=(0.5, 0.96))
 fig.suptitle("Solve rate by citation count of the underlying sequence",
              fontsize="x-large")
-fig.tight_layout(rect=(0, 0, 1, 0.95), h_pad=4)
+fig.tight_layout(rect=(0, 0, 1, 0.93), h_pad=4)
 fig.savefig(OUT / "citations_solve_rate.png", dpi=200)
 print("wrote", OUT / "citations_solve_rate.png")

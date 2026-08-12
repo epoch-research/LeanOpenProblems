@@ -9,6 +9,14 @@ BENCH_FULL = BENCH
 BENCH_LITE = f"{BENCH} Lite"
 ALPHAPROOF_NEXUS = "AlphaProof Nexus"
 
+# Per-attempt budget annotations for figure titles. The dollar signs are
+# backslash-escaped so matplotlib renders them literally instead of opening
+# mathtext.
+FULL_BUDGET = r"\$50 per attempt"
+LITE_BUDGET = r"\$200 per attempt"
+BENCH_FULL_BUDGETED = f"{BENCH_FULL} ({FULL_BUDGET})"
+BENCH_LITE_BUDGETED = f"{BENCH_LITE} ({LITE_BUDGET})"
+
 # Providers as tagged in eval-set names (oeis-<kind>-<budget>usd[-<variant>]-<provider>-<id>).
 # Not every provider has every run kind; scripts must skip providers with no data.
 MODEL_LABELS = {

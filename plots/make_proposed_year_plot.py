@@ -12,8 +12,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from bench_names import (BENCH_FULL, BENCH_LITE, MODEL_LABELS, PROVIDER_RE,
-                         PROVIDERS, SERIES)
+from bench_names import (BENCH_FULL_BUDGETED, BENCH_LITE_BUDGETED,
+                         MODEL_LABELS, PROVIDER_RE, PROVIDERS, SERIES)
 
 LOGS = Path("logs")
 OUT = Path("plots")
@@ -65,8 +65,8 @@ BINS = [("≤2006", 0, 2006), ("2007–11", 2007, 2011), ("2012–16", 2012, 201
         ("2017–21", 2017, 2021), ("2022–25", 2022, 2025)]
 
 ROWS = [
-    (BENCH_FULL, full_frac, BINS, 0.62),
-    (BENCH_LITE, lite_frac, BINS, 1.04),
+    (BENCH_FULL_BUDGETED, full_frac, BINS, 0.62),
+    (BENCH_LITE_BUDGETED, lite_frac, BINS, 1.04),
 ]
 
 fig, axes = plt.subplots(2, 1, figsize=(9.2, 8.4))
@@ -113,10 +113,11 @@ handles = {}
 for ax in axes:
     h, l = ax.get_legend_handles_labels()
     handles.update(zip(l, h))
-axes[0].legend(handles.values(), handles.keys(), frameon=False, fontsize=9,
-               loc="upper left")
+# legend in the strip between the suptitle and the first panel, clear of bars
+fig.legend(handles.values(), handles.keys(), frameon=False, fontsize=9.5,
+           ncols=len(handles), loc="upper center", bbox_to_anchor=(0.5, 0.955))
 fig.suptitle("Solve rate by year the conjecture was proposed",
              fontsize="x-large")
-fig.tight_layout(rect=(0, 0, 1, 0.96), h_pad=3)
+fig.tight_layout(rect=(0, 0, 1, 0.93), h_pad=3)
 fig.savefig(OUT / "proposed_year_solve_rate.png", dpi=200)
 print("wrote", OUT / "proposed_year_solve_rate.png")
