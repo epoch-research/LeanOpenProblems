@@ -11,6 +11,7 @@ import argparse
 import os
 import shutil
 import stat
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -150,6 +151,15 @@ def plaintext_directory(logs_dir: Path, run: str) -> Path:
     return matches[0]
 
 
+def stage_run(destination: Path, target: Path) -> None:
+    """Stage an exported run without touching unrelated destination files."""
+    relative_target = target.relative_to(destination)
+    subprocess.run(
+        ["git", "-C", str(destination), "add", "--", str(relative_target)],
+        check=True,
+    )
+
+
 def parse_args() -> argparse.Namespace:
     repo_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
@@ -185,6 +195,8 @@ def main() -> int:
         source = plaintext_directory(args.logs_dir, run)
         target = args.dest / "runs" / run
         stats = sync_tree(source, target, dry_run=args.dry_run)
+        if not args.dry_run:
+            stage_run(args.dest, target)
         prefix = "would change" if args.dry_run else "changed"
         print(
             f"{run}: {stats.files} files, {stats.symlinks} symlinks, "
