@@ -1,0 +1,794 @@
+{
+  "A004290": {
+    "name": "Least positive multiple of n that when written in base 10 uses only 0's and 1's.",
+    "description": "Least positive multiple of \\(n\\) whose decimal digits are binary.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A005258": {
+    "name": "Apéry numbers: a(n) = Sum_{k=0..n} binomial(n,k)^2 * binomial(n+k,k).",
+    "description": "Apéry numbers: \\(a(n)=\\sum_{k=0}^n \\binom{n}{k}^2\\binom{n+k}{k}\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A007468": {
+    "name": "Sum of next n primes.",
+    "description": "Sums of successive blocks of 1, 2, 3, ... primes.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A007918": {
+    "name": "Least prime >= n (version 1 of the \"next prime\" function).",
+    "description": "Smallest prime greater than or equal to n.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A010846": {
+    "name": "Number of numbers <= n whose set of prime factors is a subset of the set of prime factors of n.",
+    "description": "Count of \\(k\\le n\\) with all prime factors dividing \\(n\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A011545": {
+    "name": "a(n) is the integer whose decimal digits are the first n+1 decimal digits of Pi.",
+    "description": "Integers formed by the first n+1 decimal digits of π.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A017666": {
+    "name": "Denominator of sum of reciprocals of divisors of n.",
+    "description": "Denominator of the sum of reciprocals of divisors of n.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A022030": {
+    "name": "For even n, a(n+2) is the greatest integer such that a(n+2)/a(n+1) < a(n+1)/a(n); for odd n, the least integer such that a(n+2)/a(n+1) > a(n+1)/a(n); a(0) = 4, a(1) = 16.",
+    "description": "From 4,16, alternating strict lower/upper rounding of \\(a_{n-1}^2/a_{n-2}\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A048153": {
+    "name": "a(n) = Sum_{k=1..n} (k^2 mod n).",
+    "description": "Sum of $k^2 \\bmod n$ for $1\\le k\\le n$",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A053000": {
+    "name": "a(n) = (smallest prime > n^2) - n^2.",
+    "description": "Distance from \\(n^2\\) to the next greater prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A053576": {
+    "name": "Smallest number whose Euler totient is divisible by 2^n.",
+    "description": "Smallest integer whose Euler totient is divisible by \\(2^n\\)",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A062567": {
+    "name": "First multiple of n whose reverse is also divisible by n, or 0 if no such multiple exists.",
+    "description": "Least n-multiple with n-divisible decimal reversal, or 0.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A067857": {
+    "name": "Sum_{k|n} a(k)/k! = Sum_{j=1 to n} 1/j, sum on left is over positive divisors k of n.",
+    "description": "Factorial-scaled Möbius transform of the harmonic numbers.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A071532": {
+    "name": "a(n) = (-1) * Sum_{k=1..n} (-1)^floor((3/2)^k).",
+    "description": "Negative partial sums of \\((-1)^{\\lfloor(3/2)^k\\rfloor}\\), for \\(k\\ge1\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A072780": {
+    "name": "a(n) = sigma_2(n) + phi(n) * sigma(n) - 2*n^2, which is A072779(n) - 2*n^2.",
+    "description": "Values of \\(\\sigma_2(n)+\\varphi(n)\\sigma(n)-2n^2\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A078590": {
+    "name": "a(1)=1, a(2)=1, a(n)=(2^a(n-1) + 1)/a(n-2).",
+    "description": "Recurrence \\(a(n)=(2^{a(n-1)}+1)/a(n-2)\\), starting with \\(1,1\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A091669": {
+    "name": "a(n) = (2^(n-1)/n!) * Product_{k=1..n-1} (2^k-1).",
+    "description": "Numbers \\(2^{n-1}\\prod_{k=1}^{n-1}(2^k-1)/n!\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A092243": {
+    "name": "Score at stage n in \"tug of war\" between prime gap increases vs. prime gap decreases: start with score = 0 at n = 1 and at stage n = k > 1, increase (resp. decrease) the score by 1 if the k-th prime gap is greater (resp. less) than the previous prime gap.",
+    "description": "Cumulative score: +1/-1 for prime-gap increases/decreases.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A103885": {
+    "name": "a(n) = [x^(2*n)] ((1 + x)/(1 - x))^n.",
+    "description": "Coefficient of \\(x^{2n}\\) in \\(((1+x)/(1-x))^n\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A113254": {
+    "name": "Corresponds to m = 8 in a family of 4th-order linear recurrence sequences given by a(m,n) = m^4*a(n-4) + (2*m)^2*a(n-3) - 4*a(m-1), a(m,0) = -1, a(m,1) = 4, a(m,2) = -13 + 6*(m-1) + 3*(m-1)^2, a(m,3) = (-8+m^2)^2.",
+    "description": "Fourth-order recurrence: $a(n)=-4a(n-1)+256a(n-3)+4096a(n-4)$.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A117545": {
+    "name": "Least k such that Phi(k,n), the k-th cyclotomic polynomial evaluated at n, is prime.",
+    "description": "Least \\(k\\) such that \\(\\Phi_k(n)\\) is prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A129365": {
+    "name": "a(n) = A092287(n)/A129364(n).",
+    "description": "Ratios of pairwise GCD products to weighted floor-factorial products.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A135508": {
+    "name": "a(n) = x(n+1)/x(n) - 2 where x(1)=1 and x(n) = 2*x(n-1) + lcm(x(n-1),n).",
+    "description": "\\(x_{n+1}/x_n-2\\), where \\(x_1=1,\\ x_n=2x_{n-1}+\\operatorname{lcm}(x_{n-1},n)\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A176477": {
+    "name": "a(1)=2; for n >= 2, (2n+1)^3*a(n) = 32n^3*a(n-1) + (21n^3 + 22n^2 + 8n + 1)*binomial(2n-1,n)^4.",
+    "description": "Numbers defined by a cubic recurrence involving central binomial coefficients.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A182126": {
+    "name": "a(n) = prime(n)*prime(n+1) mod prime(n+2).",
+    "description": "Product of consecutive primes modulo the following prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A185895": {
+    "name": "Exponential generating function is (1-x^1/1!)(1-x^2/2!)(1-x^3/3!)....",
+    "description": "Coefficients of the e.g.f. \\(\\prod_{k\\ge1}(1-x^k/k!)\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A189409": {
+    "name": "a(n) = prime(n)#^2 + 1, where prime(n)# is the n-th primorial (A002110).",
+    "description": "Squares of the n-th primorial, plus one.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A190363": {
+    "name": "a(n) = n + [n*r/t] + [n*s/t];  r=1, s=sqrt(5/4), t=sqrt(4/5).",
+    "description": "Numbers \\(2n+\\lfloor n\\sqrt5/2\\rfloor+\\lfloor n/4\\rfloor\\), for \\(n\\ge1\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A190969": {
+    "name": "a(n) = 5*a(n-1) - 8*a(n-2), with a(0)=0, a(1)=1.",
+    "description": "Recurrence \\(a(n)=5a(n-1)-8a(n-2)\\), with initial values 0, 1.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A211420": {
+    "name": "a(n) = (8*n)!*n!/((4*n)!*(3*n)!*(2*n)!).",
+    "description": "Factorial ratios \\((8n)!n!/((4n)!(3n)!(2n)!)\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A214497": {
+    "name": "Smallest k>=0 such that (3^n-k)*2^n-1 and (3^n-k)*2^n+1 are a twin prime pair.",
+    "description": "Least \\(k\\ge0\\) making \\((3^n-k)2^n\\pm1\\) twin primes.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A216265": {
+    "name": "Number of primes between n^3 - n and n^3.",
+    "description": "Number of primes in \\((n^3-n,\\,n^3]\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A219055": {
+    "name": "Number of ways to write n = p+q(3-(-1)^n)/2 with p>q and p, q, p-6, q+6 all prime.",
+    "description": "Representations \\(n=p+q(3-(-1)^n)/2\\) with \\(p,q,p-6,q+6\\) prime and \\(p>q\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A223086": {
+    "name": "Trajectory of 64 under the map n-> A006368(n).",
+    "description": "Trajectory of 64 under the map \\(n\\mapsto A006368(n)\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A226163": {
+    "name": "Determinant of the (p_n-1)/2-by-(p_n-1)/2 matrix with (i,j)-entry being the Legendre symbol ((i^2-((p_n-1)/2)!*j)/p_n), where p_n is the n-th prime.",
+    "description": "Determinants of prime-indexed Legendre-symbol matrices involving half-factorials.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A227923": {
+    "name": "Number of ways to write n = x + y (x, y > 0) such that 6*x-1 is a Sophie Germain prime and {6*y-1, 6*y+1} is a twin prime pair.",
+    "description": "Decompositions n=x+y where 6x−1 is Sophie Germain and 6y±1 are twins",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A228304": {
+    "name": "a(n) = Sum_{k=0..n} C(n,k)^4*(-1)^k.",
+    "description": "Alternating sums of fourth powers of binomial coefficients.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A228623": {
+    "name": "Determinant of the n X n matrix with (i,j)-entry (i,j = 0,...,n-1) equal to 1 or 0 according as n + i - j and n - i + j are both prime or not.",
+    "description": "Determinants of matrices indicating primality of both \\(n\\pm(i-j)\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A229969": {
+    "name": "Number of ways to write n = x + y + z with 0 < x <= y <= z such that all the six numbers 2*x-1, 2*y-1, 2*z-1, 2*x*y-1, 2*x*z-1, 2*y*z-1 are prime.",
+    "description": "Counts \\(x\\le y\\le z\\), \\(x+y+z=n\\), with \\(2x-1,2y-1,2z-1,2xy-1,2xz-1,2yz-1\\) prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A232616": {
+    "name": "Least positive integer m such that {2^k - k: k = 1,...,m} contains a complete system of residues modulo n.",
+    "description": "Least \\(m\\) making \\(\\{2^k-k:1\\le k\\le m\\}\\) complete modulo \\(n\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A236998": {
+    "name": "a(n) = |{0 < k < n/2: phi(k)*phi(n-k) is a square}|, where phi(.) is Euler's totient function.",
+    "description": "Number of \\(k\\) with \\(0<k<n/2\\) and \\(\\phi(k)\\phi(n-k)\\) square.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A237348": {
+    "name": "Number of ordered ways to write n = k + m with k > 0 and m > 0 such that prime(k) + 4 and prime(prime(m)) + 4 are both prime.",
+    "description": "Decompositions \\(n=k+m\\) with \\(p_k+4\\) and \\(p_{p_m}+4\\) prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A237720": {
+    "name": "Number of primes p <= (n+1)/2 with floor( sqrt(n-p) ) prime.",
+    "description": "Primes \\(p\\le(n+1)/2\\) with \\(\\lfloor\\sqrt{n-p}\\rfloor\\) prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A238281": {
+    "name": "a(n) = |{0 < k < n: the two intervals (k*n, (k+1)*n) and ((k+1)*n, (k+2)*n) contain the same number of primes}|.",
+    "description": "Number of adjacent length-\\(n\\) intervals containing equal prime counts.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A238585": {
+    "name": "Number of primes p < n with prime(p)^2 + (prime(n)-1)^2 prime.",
+    "description": "Number of prime \\(p<n\\) with \\(\\operatorname{prime}(p)^2+(\\operatorname{prime}(n)-1)^2\\) prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A242775": {
+    "name": "Let b_k=3...3 consist of k>=1 3's. Then a(n) is the smallest k such that the concatenation b_k and prime(n) is prime, or a(n)=0 if there is no such prime.",
+    "description": "Least number of prefixed 3's making prime(n) prime, else 0.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A243512": {
+    "name": "Least index i for which A243473(i)=n, or 0 if no such index exists.",
+    "description": "Least index where n occurs in A243473, or 0.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A249609": {
+    "name": "a(n) is the smallest m, 1<=m<=n, such that binomial(n,m) is evil (A001969); a(n)=0 if there is no such m.",
+    "description": "Least \\(m\\in[1,n]\\) where \\(\\binom nm\\) has even binary weight; 0 otherwise.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A262880": {
+    "name": "Number of ordered ways to write n as w*(w+1)/2 + x^3 + y^3 + 2*z^3 with w > 0, 0 <= x <= y and z >= 0.",
+    "description": "Counts representations \\(n=T_w+x^3+y^3+2z^3\\), with \\(w>0, 0\\le x\\le y, z\\ge0\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A264010": {
+    "name": "Number of ways to write n as x^2 + y*(y+1) + z*(z+1)/2, where x, y and z are nonnegative integers such that y or y+1 is prime, and z or z+1 is prime.",
+    "description": "Nonnegative solutions to \\(n=x^2+y(y+1)+z(z+1)/2\\), with \\(y,z\\) prime-adjacent.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A264025": {
+    "name": "Number of ways to write n as x^2 + y*(2*y+1) + z*(z+1)/2 where x, y and z are nonnegative integers with z or z+1 prime.",
+    "description": "Nonnegative solutions to \\(n=x^2+y(2y+1)+z(z+1)/2\\), with \\(z\\) or \\(z+1\\) prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A265709": {
+    "name": "a(n) = numerator of Sum_{d|n} 1/sigma(d).",
+    "description": "Numerator of \\(\\sum_{d\\mid n} 1/\\sigma(d)\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A268597": {
+    "name": "Smallest x such that x-1 mod phi(x) = n, or 0 if no such x exists.",
+    "description": "Least \\(x\\) with \\((x-1)\\bmod\\phi(x)=n\\), or 0 if nonexistent.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A270966": {
+    "name": "Number of ways to write n as x^2 + y^2 + z*(3z+1)/2, where x, y and z are integers with 0 <= x <= y such that x or y has the form p-1 with p prime.",
+    "description": "Representations \\(n=x^2+y^2+z(3z+1)/2\\), \\(0\\le x\\le y\\), \\(x+1\\) or \\(y+1\\) prime.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A270994": {
+    "name": "a(n) = 9454129 + 11184810*n.",
+    "description": "Sierpiński numbers of the form \\(9454129+11184810n\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A271099": {
+    "name": "Number of ordered ways to write n as u^3 + v^3 + 2*x^3 + 2*y^3 + 3*z^3, where u, v, x, y and z are nonnegative integers with u <= v and x <= y.",
+    "description": "Number of nonnegative solutions to \\(n=u^3+v^3+2x^3+2y^3+3z^3\\), with \\(u\\le v, x\\le y\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A271510": {
+    "name": "Number of ordered ways to write n as x^2 + y^2 + z^2 + w^2 with x >= y >= 0, z >= 0 and w >= 0 such that x^2 + 8*y^2 + 16*z^2 is a square.",
+    "description": "Nonnegative four-square representations with \\(x\\ge y\\) and \\(x^2+8y^2+16z^2\\) square.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A271513": {
+    "name": "Number of ordered ways to write n as w^2 + x^2 + y^2 + z^2  with 3*x^2 + 4*y^2 + 9*z^2 a square, where w, x, y and z are nonnegative integers.",
+    "description": "Ordered nonnegative four-square representations with \\(3x^2+4y^2+9z^2\\) square.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A272479": {
+    "name": "a(n) is the smallest k different from n such that (n, k) is a Harshad amicable pair (see the comments).",
+    "description": "Smallest Harshad-amicable partner distinct from \\(n\\), or 0.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A272979": {
+    "name": "Number of ways to write n as x^2 + 2*y^2 + 3*z^3 + 4*w^4 with x,y,z,w nonnegative integers.",
+    "description": "Representations of \\(n\\) as \\(x^2+2y^2+3z^3+4w^4\\) in nonnegative integers.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A273110": {
+    "name": "Number of ordered ways to write n as x^2 + y^2 + z^2 + w^2 with (x+4*y+4*z)^2 + (9*x+3*y+3*z)^2 a square, where x,y,z,w are nonnegative integers with y > 0 and y >= z <= w.",
+    "description": "Counts constrained four-square representations satisfying a specified Pythagorean condition.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A274274": {
+    "name": "Number of ordered ways to write n as x^3 + y^2 + z^2, where x,y,z are nonnegative integers with y <= z.",
+    "description": "Representations of n as x^3+y^2+z^2 for nonnegative x and y<=z.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A275409": {
+    "name": "Number of ordered ways to write n as 2*w^2 + x^2 + y^2 + z^2 with w + x + 2*y + 4*z a square, where w,x,y,z are nonnegative integers.",
+    "description": "Counts nonnegative solutions of \\(n=2w^2+x^2+y^2+z^2\\), with \\(w+x+2y+4z\\) square.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A275768": {
+    "name": "a(n) is the number of ways to express n = (prime(i) + prime(j))/2 when (prime(i) - prime(j))/2 also is prime.",
+    "description": "Number of Goldbach partitions of \\(2n\\) with prime half-difference.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A295124": {
+    "name": "a(n) = smallest number k with n prime factors such that 2d + k/d is prime for every d | k.",
+    "description": "Least \\(k\\) with \\(n\\) prime factors; \\(2d+k/d\\) prime for every divisor.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A296075": {
+    "name": "Sum of deficiencies of divisors of n.",
+    "description": "Sum of deficiencies of all divisors of n.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A300997": {
+    "name": "a(n) is the number of steps needed to reach a stable configuration in the 1D cellular automaton initialized with one cell with mass n and based on the rule \"each cell gives half of its mass, rounded down, to its right neighbor\".",
+    "description": "Stabilization time of the rightward mass-halving cellular automaton",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A301376": {
+    "name": "Number of ways to write n^2 as x^2 + y^2 + z^2 + w^2 with x,y,z,w nonnegative integers and z <= w such that x^2-(3*y)^2 = 4^k for some k = 0,1,2,....",
+    "description": "Nonnegative \\(n^2=x^2+y^2+z^2+w^2\\) representations with \\(z\\le w\\), \\(x^2-9y^2=4^k\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A306439": {
+    "name": "Number of ways to write n as x*(3x+1)/2 + y*(3y+1)/2 + z*(3z+1) + 3w*(3w+1)/2, where x,y,z,w are nonnegative integers with x <= y.",
+    "description": "Nonnegative solutions to \\(n=p(x)+p(y)+2p(z)+3p(w)\\), \\(x\\le y\\), \\(p(t)=t(3t+1)/2\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A306477": {
+    "name": "Number of ways to write n as C(w+2,2) + C(x+3,4) + C(y+5,6) + C(z+7,8) with w,x,y,z nonnegative integers, where C(m,k) denotes the binomial coefficient m!/(k!*(m-k)!).",
+    "description": "Number of 2-4-6-8 binomial-coefficient representations of n",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A308584": {
+    "name": "Number of ways to write n as a*(a+1)/2 + b*(b+1)/2 + 5^c*8^d, where a,b,c,d are nonnegative integers with a <= b.",
+    "description": "Representations of n as two unordered triangular numbers plus \\(5^c8^d\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A308734": {
+    "name": "Number of ordered ways to write n as (2^a*3^b)^2 + (2^c*5^d)^2 + x^2 + y^2, where a,b,c,d,x,y are nonnegative integers with x <= y.",
+    "description": "Ordered representations \\(n=(2^a3^b)^2+(2^c5^d)^2+x^2+y^2\\) for nonnegative variables, \\(x\\le y\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A308950": {
+    "name": "Number of ways to write n as (p-1)/6 + 2^a*3^b, where p is a prime, and a and b are nonnegative integers.",
+    "description": "Representations \\(n=(p-1)/6+2^a3^b\\), with \\(p\\) prime and \\(a,b\\ge0\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A333042": {
+    "name": "G.f.: exp(Sum_{k>=1} (4*k)!/k!^4 * x^k/k).",
+    "description": "Coefficients of \\(\\exp(\\sum_{k\\ge1}(4k)!x^k/(k!^4k))\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A333096": {
+    "name": "a(n) = the n-th order Taylor polynomial (centered at 0) of c(x)^(4*n) evaluated at x = 1, where c(x) = (1 - sqrt(1 - 4*x))/(2*x) is the o.g.f. of the sequence of Catalan numbers A000108.",
+    "description": "Sums of first \\(n+1\\) coefficients of Catalan OGF’s \\(4n\\)-th power.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A336981": {
+    "name": "a(n) = (Sum_{k=0..n-1} (4290*k + 367)*3136^(n-1-k)*C(2*k, k)*T_k(14, 1)*T_k(17, 16)) / (n*C(2*n-1, n-1)), where T_k(b, c) denotes the coefficient of x^k in the expansion of (x^2 + b*x + c)^k.",
+    "description": "Normalized weighted sums of products of generalized central trinomial coefficients",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A340079": {
+    "name": "a(n) = n / gcd(n, 1+A018804(n)), where A018804(n) = Sum_{k=1..n} gcd(k, n).",
+    "description": "\\(n/\\gcd(n,1+\\sum_{k=1}^n \\gcd(k,n))\\)",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A340881": {
+    "name": "Row sums of A340880.",
+    "description": "Row sums of the triangular array A340880.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A341685": {
+    "name": "Expansion of the 3-adic integer Sum_{k>=0} k!.",
+    "description": "Ternary digits of the 3-adic integer \\(\\sum_{k\\ge0} k!\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A347865": {
+    "name": "Number of ways to write n as w^2 + 2*x^2 + y^4 + 3*z^4, where w,x,y,z are nonnegative integers.",
+    "description": "Nonnegative-integer representations of n as w^2+2x^2+y^4+3z^4.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A352627": {
+    "name": "Number of ways to write n as a^2 + 2*b^2 + c^4 + 4*d^4 + c^2*d^2, where a,b,c,d are nonnegative integers.",
+    "description": "Number of nonnegative solutions to \\(n=a^2+2b^2+c^4+4d^4+c^2d^2\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A354747": {
+    "name": "Start with 2*n-1; repeatedly triple and add 2 until reaching a prime. a(n) = number of steps until reaching a prime > 2*n-1, or 0 if no prime is ever reached.",
+    "description": "Least \\(m\\ge1\\) with \\(2n3^m-1\\) prime, or 0 if none.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A355228": {
+    "name": "a(n) is the smallest integer m such that there exist n of its distinct divisors (d_1, d_2, ..., d_n) with the property that m = d_1 + d_2 + ... + d_n = lcm(d_1, d_2, ..., d_n), or 0 if no such number m exists.",
+    "description": "Smallest sum/LCM of \\(n\\) distinct divisors; zero if impossible.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A355898": {
+    "name": "a(1) = a(2) = 1; a(n) = gcd(a(n-1), a(n-2)) + (a(n-1) + a(n-2))/gcd(a(n-1), a(n-2)).",
+    "description": "From 1,1: GCD plus GCD-normalized sum of predecessors.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A357565": {
+    "name": "a(n) = 3*Sum_{k = 0..n} binomial(n+k-1,k)^2 + 2*Sum_{k = 0..n} binomial(n+k-1,k)^3.",
+    "description": "\\(3\\sum_{k=0}^n\\binom{n+k-1}{k}^2+2\\sum_{k=0}^n\\binom{n+k-1}{k}^3\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A357569": {
+    "name": "a(n) = binomial(3*n,n)^2 - 27*binomial(2*n,n).",
+    "description": "Difference \\(\\binom{3n}{n}^2-27\\binom{2n}{n}\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A357674": {
+    "name": "a(n) = ( Sum_{k = 0..2*n} binomial(n+k-1,k) )^4 * ( Sum_{k = 0..2*n} binomial(n+k-1,k)^2 )^3.",
+    "description": "Fourth power of binomial sums times cube of squared-binomial sums.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A358340": {
+    "name": "a(n) is the smallest n-digit number whose fourth power is zeroless.",
+    "description": "Smallest n-digit number whose fourth power contains no zero digits.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A361883": {
+    "name": "a(n) = (1/n) * Sum_{k = 0..n} (n+2*k) * binomial(n+k-1,k)^3.",
+    "description": "Weighted binomial-cube sums \\(n^{-1}\\sum_{k=0}^n(n+2k)\\binom{n+k-1}{k}^3\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A363347": {
+    "name": "Denominator of the continued fraction 1/(2-3/(3-4/(4-5/(...(n-1)-n/(-4))))).",
+    "description": "Reduced denominators of \\(1/(2-3/(3-4/(\\cdots-(n-1)-n/(-4)))))\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A364173": {
+    "name": "a(n) = (9*n)!*(2*n)!*(3*n/2)!/((9*n/2)!*(4*n)!*(3*n)!*n!).",
+    "description": "Factorial ratio \\((9n)!(2n)!(3n/2)!/((9n/2)!(4n)!(3n)!n!)\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A365416": {
+    "name": "Numbers k such that 2*k-1 and 2*k+1 are both prime powers (A246655).",
+    "description": "Numbers k with both 2k-1 and 2k+1 prime powers.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A374605": {
+    "name": "a(n) = Sum_{k = 0..n} binomial(n, k)^2*binomial(n+k, k)*binomial(3*n+2*k, n).",
+    "description": "Sums of \\(\\binom nk^2\\binom{n+k}k\\binom{3n+2k}n\\) over \\(0\\le k\\le n\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A378143": {
+    "name": "a(n) is the smallest prime of the form (2*p)^(2^n) + 1 for some prime p.",
+    "description": "Smallest prime \\((2p)^{2^n}+1\\) over all primes \\(p\\).",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A379732": {
+    "name": "Decimal expansion of 207/208.",
+    "description": "Decimal digits of 207/208.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A381159": {
+    "name": "Numbers whose prime divisors all end in the same digit.",
+    "description": "Numbers whose prime divisors all end in the same digit.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A381358": {
+    "name": "Row sums of irregular triangle A381587.",
+    "description": "Sums of rows in recursively defined run-length triangle A381587.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A383327": {
+    "name": "a(n) is the number of occurrences of n in A049802.",
+    "description": "Multiplicity of n among terms of A049802.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  },
+  "A389790": {
+    "name": "Number of ways to write 2*n as p + p' + q + q', where p and q are primes with p <= q, and r' is the first prime greater than r.",
+    "description": "Unordered representations of \\(2n\\) as two consecutive-prime pair sums.",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T11-56-35-00-00_summarize-sequences_UPTpiSXr4xA6qvM3DEFZQQ.eval"
+    }
+  }
+}

@@ -1,32 +1,28 @@
-"""Inspect tasks that write LLM summaries of the conjectures settled in an eval run.
+"""Inspect tasks for generating normalized OEIS metadata.
 
-For each conjecture a run settled (hawk-download layout under logs/), two stages
-produce the pieces of a per-conjecture table row for the paper:
+The sequence and conjecture tasks are run once for the Lite dataset. Proof
+summaries are run once per accepted proof in an evaluation run. Deterministic
+collection into ``metadata/*.json`` and per-sample ``metadata.json`` files is
+handled by ``collect.py``.
 
-1. ``summarize_sequences`` -- one agent per unique OEIS sequence, writes a short
-   description of the sequence from its OEIS record (no sandbox).
-2. ``summarize_proofs`` -- one agent per settled conjecture, writes a one-sentence
-   conjecture description and a short proof summary. Runs in the agent docker
-   sandbox with the accepted proof at Submission/Spec.lean and the Mathlib
-   source tree browsable. Takes the stage-1 descriptions as input so it does
-   not repeat them.
+Examples::
 
-Usage:
-    RUN=logs/oeis-lite-200usd-fable-i7s7n9q7v4emgjp7
-    inspect eval scripts/summarize/task.py@summarize_sequences \\
-        -T run_dir=$RUN --model ... --log-dir logs/summarize
-    python scripts/summarize/collect.py --sequences logs/summarize/<seq>.eval -o out
-    inspect eval scripts/summarize/task.py@summarize_proofs \\
-        -T run_dir=$RUN -T sequences=out/sequences.jsonl \\
-        --model ... --log-dir logs/summarize --max-sandboxes 8
-    python scripts/summarize/collect.py \\
-        --sequences logs/summarize/<seq>.eval --proofs logs/summarize/<proof>.eval -o out
+    inspect eval scripts/summarize/task.py@summarize_sequences \
+        -T subset=lite --model openai/gpt-5.6-sol --log-dir logs/summarize
+    inspect eval scripts/summarize/task.py@summarize_conjectures \
+        -T subset=lite -T metadata_dir=metadata \
+        --model openai/gpt-5.6-sol --log-dir logs/summarize
+    inspect eval scripts/summarize/task.py@summarize_proofs \
+        -T run_dir=logs/<run> -T subset=lite -T metadata_dir=metadata \
+        --model openai/gpt-5.6-sol --log-dir logs/summarize
 """
 
+from __future__ import annotations
+
 import json
-from dataclasses import dataclass
+import sys
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from inspect_ai import Task, task
 from inspect_ai.agent import AgentSubmit, as_solver, react
@@ -37,6 +33,7 @@ from inspect_ai.tool import Tool, ToolResult, text_editor, tool
 from inspect_ai.util import sandbox, store
 
 import apn
+from apn.dataset import load_subset, oeis_dataset
 from apn.layout import ENTRY_PATH
 from apn.task import COMPOSE_FILES_DIR, IMAGE_REPOSITORY, get_identifier_for_image
 from apn.tools import bash
@@ -45,18 +42,19 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 OEIS_DATA = Path(apn.__file__).parent / "data" / "oeis"
 RECORDS_PATH = OEIS_DATA / "raw" / "oeis_records.jsonl"
 PROVENANCE_PATH = OEIS_DATA / "conjecture_provenance.jsonl"
-
 MATHLIB_SOURCE = "/workspace/leanproject/.lake/packages/mathlib/"
 
 
 def get_agent_compose_file() -> Path:
-    """Agent-image-only variant of apn.task.get_compose_file. No build section:
-    unlike the apn tasks this must run with a locally available image (no ECR
-    access, and a rebuild would need network)."""
+    """Return a network-isolated compose file for a locally built agent image."""
+    image_context = Path(apn.__file__).parent / "lean"
     content = f"""
 services:
   default:
     image: {IMAGE_REPOSITORY}:{get_identifier_for_image("agent")}
+    build:
+      context: {image_context}
+      target: agent
     init: true
     entrypoint: tail -f /dev/null
     mem_limit: 10g
@@ -69,15 +67,26 @@ services:
     return path
 
 
-def _resolve(path: str) -> Path:
-    """Inspect loads task files with cwd set to the task file's directory, so
-    relative task args are resolved against the repo root instead."""
-    p = Path(path)
-    return p if p.is_absolute() else REPO_ROOT / p
+def _resolve(path: str | Path) -> Path:
+    """Resolve task arguments relative to the repository root."""
+    value = Path(path)
+    return value if value.is_absolute() else REPO_ROOT / value
 
 
 def _read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def _read_json_object(path: Path) -> dict | None:
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"warning: cannot read {path}: {exc}", file=sys.stderr)
+        return None
+    if not isinstance(value, dict):
+        print(f"warning: expected a JSON object in {path}", file=sys.stderr)
+        return None
+    return value
 
 
 def load_records() -> dict[str, dict]:
@@ -88,16 +97,45 @@ def load_provenance() -> dict[str, dict]:
     return {row["theorem_name"]: row for row in _read_jsonl(PROVENANCE_PATH)}
 
 
-@dataclass
-class Solve:
+class Conjecture(NamedTuple):
+    id: str
+    oeis_id: str | None
+    sketch: str
+
+
+class Solve(NamedTuple):
     id: str
     oeis_id: str
     proof: str
-    verdict: Literal["proved", "disproved"]
+    settlement: Literal["proved", "disproved"]
+    directory: Path
+
+
+def subset_conjectures(subset: str) -> list[Conjecture]:
+    """Return the subset's conjectures in its authoritative order."""
+    names = load_subset(subset)
+    samples = {str(sample.id): sample for sample in oeis_dataset(names=names)}
+    conjectures: list[Conjecture] = []
+    for name in names:
+        sample = samples.get(name)
+        if sample is None:
+            print(f"warning: {name} is absent from the OEIS dataset", file=sys.stderr)
+            continue
+        metadata = sample.metadata or {}
+        oeis_id = metadata.get("oeis_id")
+        sketch = metadata.get("sketch")
+        conjectures.append(
+            Conjecture(
+                id=name,
+                oeis_id=str(oeis_id) if oeis_id else None,
+                sketch=str(sketch) if sketch else str(sample.input),
+            )
+        )
+    return conjectures
 
 
 def plaintext_dir(run_dir: Path) -> Path:
-    matches = sorted(run_dir.glob("*_plaintext"))
+    matches = sorted(path for path in run_dir.glob("*_plaintext") if path.is_dir())
     if len(matches) != 1:
         raise ValueError(
             f"expected exactly one *_plaintext dir under {run_dir}, found {len(matches)}"
@@ -106,35 +144,57 @@ def plaintext_dir(run_dir: Path) -> Path:
 
 
 def solved_samples(run_dir: Path) -> list[Solve]:
-    solves = []
+    """Read accepted proofs, skipping incomplete or malformed sample data."""
+    solves: list[Solve] = []
     for sample_dir in sorted(plaintext_dir(run_dir).iterdir()):
         if not sample_dir.is_dir():
             continue
-        score = json.loads((sample_dir / "scores.json").read_text())["proof_scorer"]
-        if score["value"] != "C":
+
+        scores = _read_json_object(sample_dir / "scores.json")
+        score = (scores or {}).get("proof_scorer")
+        if not isinstance(score, dict):
+            print(f"warning: no proof_scorer score for {sample_dir.name}", file=sys.stderr)
             continue
-        proof = (sample_dir / "Submission" / "Spec.lean").read_text()
-        info = json.loads((sample_dir / "info.json").read_text())
+        if score.get("value") != "C":
+            continue
+
+        info = _read_json_object(sample_dir / "info.json")
+        oeis_id = (info or {}).get("oeis_id")
+        if not oeis_id:
+            print(f"warning: no oeis_id for accepted sample {sample_dir.name}", file=sys.stderr)
+            continue
+
+        proof_path = sample_dir / "Submission" / "Spec.lean"
+        try:
+            proof = proof_path.read_text()
+        except OSError as exc:
+            print(f"warning: cannot read accepted proof {proof_path}: {exc}", file=sys.stderr)
+            continue
+
         solves.append(
             Solve(
                 id=sample_dir.name,
-                oeis_id=info["oeis_id"],
+                oeis_id=str(oeis_id),
                 proof=proof,
-                verdict="disproved" if ".disproof" in proof else "proved",
+                settlement="disproved" if ".disproof" in proof else "proved",
+                directory=sample_dir,
             )
         )
-    if not solves:
-        raise ValueError(f"no solved samples under {run_dir}")
     return solves
+
+
+def _load_metadata(path: Path) -> dict[str, dict]:
+    value = _read_json_object(path)
+    return value or {}
 
 
 def sequence_prompt(oeis_id: str, record: dict) -> str:
     return f"""\
-You are writing a short description of the OEIS sequence {oeis_id} for a table in a mathematics paper.
+Write a short description of the OEIS sequence {oeis_id} for a public data catalog.
 The full OEIS record is below.
 
-Call submit_sequence with a description of the sequence of at most about 10 words, suitable for
-a table cell. Plain text, LaTeX math allowed.
+Call submit_sequence with a description of at most about 10 words. Describe the
+sequence itself, not a conjecture about it. Plain text with LaTeX math is allowed.
 
 <oeis_record>
 {json.dumps(record, indent=2)}
@@ -142,30 +202,87 @@ a table cell. Plain text, LaTeX math allowed.
 """
 
 
-def proof_prompt(
-    solve: Solve, record: dict, provenance: dict | None, sequence_description: str
+def conjecture_prompt(
+    conjecture: Conjecture,
+    record: dict,
+    provenance: dict | None,
+    sequence_description: str | None,
 ) -> str:
-    noun = "proof" if solve.verdict == "proved" else "disproof"
     return f"""\
-An AI agent settled a conjecture about the OEIS sequence {solve.oeis_id}: it {solve.verdict} the
-conjecture stated in {ENTRY_PATH}, and that file contains its accepted {noun}. You are
-writing two table cells about this result for a mathematics paper. They will appear in a row
-right after this already-written sequence-description cell:
+Write one concise sentence stating the conjecture {conjecture.id} about OEIS
+sequence {conjecture.oeis_id}. This is canonical conjecture metadata, independent
+of whether any particular model solved it.
 
-    {solve.oeis_id}: {sequence_description}
+The conjecture sentence will be displayed immediately after this separate
+sequence-description field:
 
-Do not repeat information that cell already covers.
+<sequence_description>
+{sequence_description or "(unavailable)"}
+</sequence_description>
 
-1. conjecture: one sentence stating the conjecture.
-2. proof_summary: one or two sentences summarizing the {noun}, naming the key ideas.
+Do not repeat or paraphrase that sequence description, its defining formula, or
+its OEIS identifier. State only the conjectured property, using a(n) directly
+when the sequence description already defines it. For example, prefer "For every
+prime ..." over "For the sequence a(n)=..., every prime ...".
+
+Call submit_conjecture with the sentence. Plain text with LaTeX math is allowed.
+
+<lean_statement>
+{conjecture.sketch}
+</lean_statement>
+
+<oeis_record>
+{json.dumps(record, indent=2)}
+</oeis_record>
+
+<provenance>
+{json.dumps(provenance, indent=2)}
+</provenance>
+"""
+
+
+def proof_prompt(
+    solve: Solve,
+    record: dict,
+    provenance: dict | None,
+    sequence_description: str | None,
+    conjecture_description: str | None,
+) -> str:
+    noun = "proof" if solve.settlement == "proved" else "disproof"
+    return f"""\
+An AI agent {solve.settlement} the conjecture {solve.id} about OEIS sequence
+{solve.oeis_id}. The accepted {noun} is in {ENTRY_PATH}.
+
+Call submit_proof_summary with one or two concise sentences explaining the key
+mathematical ideas of this specific {noun}. Do not restate the sequence or
+conjecture. Focus exclusively on the mathematical argument: omit Lean tactics,
+library lemmas, proof-assistant architecture, implementation details, and claims
+that a computation is "kernel-checked", "verified", or "certified" merely because
+it was formalized. Describe a finite or modular computation by its mathematical
+role instead.
+
+Examples of the intended style:
+- "a kernel-checked finite avoidance computation" becomes
+  "a finite avoidance computation";
+- "a verified bit-sieve" becomes "a bit-sieve";
+- "segmented, kernel-checked binary exponentiation" becomes
+  "segmented binary exponentiation";
+- "Kernel computation checks each candidate" becomes
+  "Direct computation checks each candidate";
+- "Kernel-checked modular computations establish ..." becomes
+  "Modular computations establish ...".
+
+Plain text with LaTeX math is allowed.
+
+Canonical sequence description:
+{sequence_description or "(unavailable)"}
+
+Canonical conjecture description:
+{conjecture_description or "(unavailable)"}
 
 A Lean 4 toolchain with the full Mathlib source tree ({MATHLIB_SOURCE}) is
-available, along with `rg` and `python`. Investigate as much as you find useful.
-
-When ready, call submit_summary. Plain text, LaTeX math allowed.
-
-Context below: the full OEIS record for {solve.oeis_id}, and provenance notes on where the
-conjecture was stated.
+available, along with `rg` and `python`. Investigate the accepted {noun} as much
+as useful before summarizing its mathematical argument.
 
 <oeis_record>
 {json.dumps(record, indent=2)}
@@ -180,7 +297,7 @@ conjecture was stated.
 @tool
 def submit_sequence() -> Tool:
     async def execute(description: str) -> ToolResult:
-        """Submit the sequence description.
+        """Submit a short description of the OEIS sequence.
 
         Args:
           description: Description of the sequence, at most about 10 words.
@@ -192,34 +309,59 @@ def submit_sequence() -> Tool:
 
 
 @tool
-def submit_summary() -> Tool:
-    async def execute(conjecture: str, proof_summary: str) -> ToolResult:
-        """Submit the two table cells.
+def submit_conjecture() -> Tool:
+    async def execute(conjecture: str) -> ToolResult:
+        """Submit a concise statement of the conjecture.
 
         Args:
           conjecture: One sentence stating the conjecture.
-          proof_summary: One or two sentences summarizing the proof or disproof.
         """
-        store().set("summary", {"conjecture": conjecture, "proof_summary": proof_summary})
+        store().set("summary", {"conjecture": conjecture})
+        return "Submitted."
+
+    return execute
+
+
+@tool
+def submit_proof_summary() -> Tool:
+    async def execute(proof_summary: str) -> ToolResult:
+        """Submit a concise summary of the accepted proof or disproof.
+
+        Args:
+          proof_summary: One or two sentences naming the proof's key ideas.
+        """
+        store().set("summary", {"proof_summary": proof_summary})
         return "Submitted."
 
     return execute
 
 
 @solver
-def summarizer(kind: Literal["sequence", "proof"]) -> Solver:
+def summarizer(kind: Literal["sequence", "conjecture", "proof"]) -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         if kind == "proof":
             await sandbox().write_file(ENTRY_PATH, state.metadata["proof"])
             tools = [text_editor(), bash(timeout=300)]
             submit = AgentSubmit(
-                tool=submit_summary(), name="submit_summary", keep_in_messages=True
+                tool=submit_proof_summary(),
+                name="submit_proof_summary",
+                keep_in_messages=True,
+            )
+        elif kind == "conjecture":
+            tools = []
+            submit = AgentSubmit(
+                tool=submit_conjecture(),
+                name="submit_conjecture",
+                keep_in_messages=True,
             )
         else:
             tools = []
             submit = AgentSubmit(
-                tool=submit_sequence(), name="submit_sequence", keep_in_messages=True
+                tool=submit_sequence(),
+                name="submit_sequence",
+                keep_in_messages=True,
             )
+
         agent = react(
             tools=tools,
             submit=submit,
@@ -237,17 +379,25 @@ def summarizer(kind: Literal["sequence", "proof"]) -> Solver:
 
 
 @task
-def summarize_sequences(run_dir: str, token_limit: int = 500_000) -> Task:
+def summarize_sequences(subset: str = "lite", token_limit: int = 500_000) -> Task:
     records = load_records()
     oeis_ids = sorted(
-        {s.oeis_id for s in solved_samples(_resolve(run_dir))}, key=lambda i: int(i[1:])
+        {item.oeis_id for item in subset_conjectures(subset) if item.oeis_id},
+        key=lambda value: int(value[1:]),
     )
-    missing = [i for i in oeis_ids if i not in records]
-    if missing:
-        raise ValueError(f"no OEIS record for {missing} in {RECORDS_PATH}")
-    samples = [
-        Sample(input=sequence_prompt(i, records[i]), id=i) for i in oeis_ids
-    ]
+    samples = []
+    for oeis_id in oeis_ids:
+        record = records.get(oeis_id)
+        if record is None:
+            print(f"warning: no OEIS record for {oeis_id}", file=sys.stderr)
+            continue
+        samples.append(
+            Sample(
+                input=sequence_prompt(oeis_id, record),
+                id=oeis_id,
+                metadata={"oeis_id": oeis_id},
+            )
+        )
     return Task(
         dataset=MemoryDataset(samples),
         solver=summarizer("sequence"),
@@ -256,32 +406,71 @@ def summarize_sequences(run_dir: str, token_limit: int = 500_000) -> Task:
 
 
 @task
-def summarize_proofs(run_dir: str, sequences: str, token_limit: int = 500_000) -> Task:
+def summarize_conjectures(
+    subset: str = "lite",
+    metadata_dir: str = "metadata",
+    token_limit: int = 500_000,
+) -> Task:
     records = load_records()
     provenance = load_provenance()
-    descriptions = {
-        row["oeis_id"]: row["description"] for row in _read_jsonl(_resolve(sequences))
-    }
+    sequences = _load_metadata(_resolve(metadata_dir) / "sequences.json")
+    samples = []
+    for conjecture in subset_conjectures(subset):
+        record = records.get(conjecture.oeis_id or "", {})
+        sequence = sequences.get(conjecture.oeis_id or "") or {}
+        samples.append(
+            Sample(
+                input=conjecture_prompt(
+                    conjecture,
+                    record,
+                    provenance.get(conjecture.id),
+                    sequence.get("description"),
+                ),
+                id=conjecture.id,
+                metadata={"oeis_id": conjecture.oeis_id},
+            )
+        )
+    return Task(
+        dataset=MemoryDataset(samples),
+        solver=summarizer("conjecture"),
+        token_limit=token_limit,
+    )
+
+
+@task
+def summarize_proofs(
+    run_dir: str,
+    subset: str = "lite",
+    metadata_dir: str = "metadata",
+    token_limit: int = 500_000,
+) -> Task:
+    records = load_records()
+    provenance = load_provenance()
+    metadata_root = _resolve(metadata_dir)
+    sequences = _load_metadata(metadata_root / "sequences.json")
+    conjectures = _load_metadata(metadata_root / "conjectures.json")
+
+    allowed = {conjecture.id for conjecture in subset_conjectures(subset)}
     samples = []
     for solve in solved_samples(_resolve(run_dir)):
-        if solve.oeis_id not in descriptions:
-            raise ValueError(
-                f"{sequences} has no description for {solve.oeis_id} "
-                f"(needed by {solve.id}); run summarize_sequences first"
-            )
+        if solve.id not in allowed:
+            continue
+        sequence = sequences.get(solve.oeis_id) or {}
+        conjecture = conjectures.get(solve.id) or {}
         samples.append(
             Sample(
                 input=proof_prompt(
                     solve,
-                    records[solve.oeis_id],
+                    records.get(solve.oeis_id, {}),
                     provenance.get(solve.id),
-                    descriptions[solve.oeis_id],
+                    sequence.get("description"),
+                    conjecture.get("conjecture"),
                 ),
                 id=solve.id,
                 metadata={
                     "proof": solve.proof,
                     "oeis_id": solve.oeis_id,
-                    "verdict": solve.verdict,
+                    "settlement": solve.settlement,
                 },
             )
         )

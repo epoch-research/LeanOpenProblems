@@ -1,0 +1,1002 @@
+{
+  "A211420_general_divisibility_conjecture": {
+    "oeis_id": "A211420",
+    "conjecture": "For every \\(k\\in\\{1,2,3\\}\\) and \\(r\\ge 1\\), there exists a constant \\(C(k,r)\\) such that \\(C(k,r)a(n)/\\prod_{i=1}^{r}(kn+i)\\) is an integer for all \\(n\\ge 0\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2025-08-27",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A264025_conjecture_i": {
+    "oeis_id": "A264025",
+    "conjecture": "For every \\(n>0\\), \\(a(n)>0\\), and \\(a(n)=1\\) if and only if \\(n\\in\\{1,2,3,8,9,23,30,44,48,198,219,1344\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2015-11-01",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A270966_conjecture": {
+    "oeis_id": "A270966",
+    "conjecture": "For every \\(n>0\\), \\(a(n)>0\\), and \\(a(n)=1\\) if and only if \\(n\\in\\{1,49,608\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2016-03-27",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A273110_conjecture": {
+    "oeis_id": "A273110",
+    "conjecture": "For every integer \\(n>0\\), \\(a(n)>0\\), and \\(a(n)=1\\) if and only if \\(n=4^k m\\) for some \\(k\\ge 0\\) and \\(m\\in\\{1,7,23,31,39,47,55,71,79,119,151,191,311,671\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2016-05-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A274274_conjecture_i": {
+    "oeis_id": "A274274",
+    "conjecture": "For every nonnegative integer \\(n\\), if \\(n\\ge 2\\) then \\(a(n)>0\\) or \\(a(n-2)>0\\), if \\(n\\ge 6\\) then \\(a(n)>0\\) or \\(a(n-6)>0\\), and if \\(n=2^k(4m+1)\\) for some nonnegative integers \\(k,m\\) and \\(n\\notin\\{813,4404,6420,28804\\}\\), then \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2016-07-14",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A301376_conjecture": {
+    "oeis_id": "A301376",
+    "conjecture": "For every integer \\(n>0\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2018-03-20",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A306477_conjecture": {
+    "oeis_id": "A306477",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2019-02-18",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A357565_conjecture_2": {
+    "oeis_id": "A357565",
+    "conjecture": "For every prime \\(p\\ge 3\\) and integer \\(r\\ge 2\\), \\(a(p^r)\\equiv a(p^{r-1})\\pmod{p^{3r+3}}\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2022-10-24",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A357674_conjecture_1": {
+    "oeis_id": "A357674",
+    "conjecture": "For every prime \\(p \\ge 3\\), \\(a(p) \\equiv a(1) \\pmod{p^5}\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2022-10-11",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "A381358_limit_exists": {
+    "oeis_id": "A381358",
+    "conjecture": "The limit \\(\\lim_{n\\to\\infty} a(n)^{1/n}\\) exists.",
+    "proposer": "Paul D. Hanna",
+    "proposed_date": "2025-03-03",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "a091669_conjecture_primitive_root": {
+    "oeis_id": "A091669",
+    "conjecture": "For every integer \\(n>2\\), if \\(n\\mid a(n-1)+2^{n-2}\\), then \\(n\\) is prime and 2 is a primitive root modulo \\(n\\).",
+    "proposer": "Amiram Eldar and Thomas Ordowski",
+    "proposed_date": "2020-01-19",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "a306439_conjecture_1": {
+    "oeis_id": "A306439",
+    "conjecture": "For every integer \\(n>5\\), \\(a(n)>0\\), and \\(a(n)=1\\) if and only if \\(n\\in\\{0,2,7,9,11,12,16,31,33,41\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2019-02-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "a_n_is_defined_for_all_n": {
+    "oeis_id": "A117545",
+    "conjecture": "For every integer \\(n \\ge 1\\), \\(a(n)\\) is defined.",
+    "proposer": "T. D. Noe",
+    "proposed_date": "2006-02-24",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "apery_poly_irreducible": {
+    "oeis_id": "A005258",
+    "conjecture": "For every integer \\(n\\ge 1\\), the polynomial \\(\\sum_{k=0}^{n}\\binom{n}{k}^{2}\\binom{n+k}{k}x^{k}\\) is irreducible over \\(\\mathbb{Q}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-03-21",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "general_supercongruence_conjecture": {
+    "oeis_id": "A333042",
+    "conjecture": "For every positive integer \\(m\\), let \\(A_m(x)\\) be the analogous series with \\(4\\) replaced by \\(m\\) and set \\(b_m(n)=[x^n]A_m(x)^n\\); then every \\(b_m(n)\\) is an integer and \\(b_m(np^r)\\equiv b_m(np^{r-1})\\pmod{p^{3r}}\\) for every prime \\(p\\ge5\\) and all positive integers \\(n,r\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2023-02-08",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_113254_conjecture_0": {
+    "oeis_id": "A113254",
+    "conjecture": "For every $n\\ge 0$, $a(2n+1)$ is a perfect square.",
+    "proposer": "Creighton Dement",
+    "proposed_date": "2006-01-24",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_135508_conjecture_0": {
+    "oeis_id": "A135508",
+    "conjecture": "For every prime \\(p\\) such that \\(p-2\\) is not prime, \\(a(p-1)=p\\).",
+    "proposer": "Bill McEachen",
+    "proposed_date": "2025-09-26",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_17666_conjecture_0": {
+    "oeis_id": "A017666",
+    "conjecture": "If \\(a(a(n))\\) is a power of 2, then \\(a(n)\\) is a power of 2.",
+    "proposer": "Jaycob Coleman",
+    "proposed_date": "2014-09-27",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_182126_conjecture_0": {
+    "oeis_id": "A182126",
+    "conjecture": "For every \\(x>10^9\\), every most frequent value among \\(a(1),\\ldots,a(x)\\) is divisible by \\(120\\).",
+    "proposer": "Alex Ratushnyak",
+    "proposed_date": "2012-05-11",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_185895_conjecture_1": {
+    "oeis_id": "A185895",
+    "conjecture": "For every integer \\(n\\ge 1\\), \\(a(n)\\) and \\(a(n-1)\\) have opposite signs if and only if \\(n\\) is a triangular number.",
+    "proposer": "Peter Bala",
+    "proposed_date": "2022-03-17",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_190363_conjecture_0": {
+    "oeis_id": "A190363",
+    "conjecture": "For every \\(n\\ge 1\\), \\(a(n+21)=a(n+17)+a(n+4)-a(n)\\).",
+    "proposer": "Harvey P. Dale",
+    "proposed_date": "2025-01-28",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_214497_conjecture_0": {
+    "oeis_id": "A214497",
+    "conjecture": "For every \\(n>0\\), \\(a(n)\\) exists.",
+    "proposer": "Pierre CAMI",
+    "proposed_date": "2012-07-20",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_216265_conjecture_0": {
+    "oeis_id": "A216265",
+    "conjecture": "For every integer \\(n>13\\), \\(a(n)>0\\).",
+    "proposer": "Alex Ratushnyak",
+    "proposed_date": "2013-03-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_219055_conjecture_1": {
+    "oeis_id": "A219055",
+    "conjecture": "If \\(a(n)>0\\) for every even \\(n>8012\\) and every odd \\(n>15727\\), then Goldbach’s conjecture and Lemoine’s conjecture hold, and there are infinitely many primes \\(p\\) such that \\(p+6\\) is prime.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2012-11-11",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_22030_original_conjecture": {
+    "oeis_id": "A022030",
+    "conjecture": "For the original version of the sequence, \\(\\sum_{n\\ge0} a(n)x^n=(4-x^2)/(1-4x+x^3)\\).",
+    "proposer": "M. F. Hasler",
+    "proposed_date": "2016-02-11",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_223086_conjecture_0": {
+    "oeis_id": "A223086",
+    "conjecture": "For all positive integers \\(i\\) and \\(j\\), \\(a(i)=a(j)\\) implies \\(i=j\\).",
+    "proposer": "N. J. A. Sloane",
+    "proposed_date": "2013-03-22",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_226163_conjecture_0": {
+    "oeis_id": "A226163",
+    "conjecture": "For every $n\\ge 2$, $a(n)=0$ if and only if the $n$-th prime is congruent to $3\\pmod 4$.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-08-05",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_227923_conjecture_1": {
+    "oeis_id": "A227923",
+    "conjecture": "If \\(a(n)>0\\) for every integer \\(n>1\\), then there are infinitely many Sophie Germain primes and infinitely many twin prime pairs.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-10-09",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_228304_conjecture_0": {
+    "oeis_id": "A228304",
+    "conjecture": "For every odd prime \\(p\\), \\(\\det(a(i+j))_{0\\le i,j<p}\\equiv(-1)^{(p-1)/2}\\pmod p\\), and, writing \\(c(n)=\\sum_{k=0}^n(-1)^k\\binom nk^2\\binom{2k}k\\binom{2(n-k)}{n-k}\\), \\(\\det(c(i+j))_{0\\le i,j<p}\\equiv1\\pmod p\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-08-20",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_228623_conjecture_1_implies_goldbach": {
+    "oeis_id": "A228623",
+    "conjecture": "If \\(a(n)\\ne 0\\) for every odd \\(n>120\\), then for every positive integer \\(k\\), \\(4k+2\\) is the sum of two primes.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-08-28",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_232616_conjecture_i": {
+    "oeis_id": "A232616",
+    "conjecture": "For every \\(n>0\\), \\(a(n)<2(p_n-1)\\), where \\(p_n\\) is the \\(n\\)-th prime.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-12-10",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_236977_conjecture_1": {
+    "oeis_id": "A236998",
+    "conjecture": "For every integer \\(n>8\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2014-02-02",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_237348_conjecture_0": {
+    "oeis_id": "A237348",
+    "conjecture": "For every positive integer \\(d\\), there is a positive integer \\(N(d)\\) such that every \\(n>N(d)\\) admits such a decomposition when \\(4\\) is replaced by \\(2d\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2014-02-06",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_238281_conjecture_0": {
+    "oeis_id": "A238281",
+    "conjecture": "For every integer \\(n>1\\), \\(a(n)>0\\), and, if \\(n\\ne8\\), there exists an integer \\(k\\) with \\(0<k<n\\) and \\(2k+1\\) prime such that \\(((k-1)n,kn)\\) and \\((kn,(k+1)n)\\) contain the same number of primes.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2014-02-22",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_238585_conjecture_i": {
+    "oeis_id": "A238585",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n)>0\\) unless \\(n\\mid 6\\), and \\(a(n)=1\\) only for \\(n\\in\\{4,5,7,10,11,12,19,21,22,31,42,44\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2014-03-01",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_242775_conjecture_0": {
+    "oeis_id": "A242775",
+    "conjecture": "For every \\(n \\ge 4\\), \\(a(n)>0\\).",
+    "proposer": "Vladimir Shevelev",
+    "proposed_date": "2014-09-13",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_243512_conjecture_0": {
+    "oeis_id": "A243512",
+    "conjecture": "For every nonnegative integer \\(n\\), \\(a(n) \\ne 0\\).",
+    "proposer": "M. F. Hasler",
+    "proposed_date": "2014-06-07",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_262880_conjecture_1": {
+    "oeis_id": "A262880",
+    "conjecture": "Every positive integer can be written as \\(w(w+1)/2+x^3+b y^3+c z^3\\), where \\(w>0\\) and \\(x,y,z\\ge0\\), for each \\((b,c)\\in\\{(1,2),(1,3),(1,4),(1,6),(2,2),(2,3),(2,4),(2,5),(2,6),(2,7),(2,20),(2,21),(2,34),(3,3),(3,4),(3,5),(3,6),(4,10)\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2015-10-04",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_264010_conjecture_i": {
+    "oeis_id": "A264010",
+    "conjecture": "For every \\(n>2\\), \\(a(n)>0\\), and \\(a(n)=1\\) if and only if \\(n\\in\\{3,4,5,6,10,11,15,20,29,1125\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2015-11-01",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_265709_conjecture_0": {
+    "oeis_id": "A265709",
+    "conjecture": "There exists an integer \\(n>1\\) such that the quantity whose numerator is \\(a(n)\\) is an integer.",
+    "proposer": "Jaroslav Krizek",
+    "proposed_date": "2015-12-24",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_268597_conjecture_0": {
+    "oeis_id": "A268597",
+    "conjecture": "For all \\(n\\ge 0\\), \\(a(n)>0\\).",
+    "proposer": "Christina Steffan",
+    "proposed_date": "2016-02-27",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_270994_conjecture_0": {
+    "oeis_id": "A270994",
+    "conjecture": "For every \\(n\\ge 0\\), \\(a(n)\\) and \\(a(n)+28\\) are consecutive Sierpiński numbers.",
+    "proposer": "Altug Alkan",
+    "proposed_date": "2016-03-29",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_271099_conjecture": {
+    "oeis_id": "A271099",
+    "conjecture": "For every \\(n\\ge0\\), \\(a(n)>0\\), with \\(a(n)=1\\) iff \\(n\\in\\{0,1,10,14,15,17,22,38,39,45,47,50,52,76,102,103,188,295,366,534\\}\\); moreover, every nonnegative integer is representable both as \\(s^4+t^4+2u^4+2v^4+3x^4+3y^4+7z^4\\) and as \\(r^5+s^5+t^5+u^5+2v^5+4w^5+6x^5+9y^5+12z^5\\) using nonnegative variables, and for every integer \\(k>2\\) there exist \\(2k-1\\) positive integers \\(c_1,\\ldots,c_{2k-1}\\), summing to \\(2^k+\\lfloor(3/2)^k\\rfloor-2\\), such that every nonnegative integer equals \\(\\sum_{i=1}^{2k-1}c_i x_i^k\\) for some nonnegative integers \\(x_i\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2016-03-30",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_271513_conjecture_3": {
+    "oeis_id": "A271513",
+    "conjecture": "If positive integers \\(a,b,c\\) are such that every natural number can be written as \\(w^2+x^2+y^2+z^2\\) for integers \\(w,x,y,z\\), with \\(ax^2+by^2+cz^2\\) a square, then \\(a,b,c\\) are not pairwise coprime.",
+    "proposer": null,
+    "proposed_date": null,
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_272479_conjecture_0": {
+    "oeis_id": "A272479",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n) \\ne 0\\).",
+    "proposer": "Waldemar Puszkarz",
+    "proposed_date": "2016-05-04",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_275409_conjecture_0": {
+    "oeis_id": "A275409",
+    "conjecture": "For every \\(n\\ge 0\\), \\(a(n)>0\\) if and only if \\(n\\notin\\{3,10\\}\\), and \\(a(n)=1\\) if and only if \\(n\\in\\{0,2,7,8,9,12,14,15,22,23,24,25,36,39,44,45,60,87,98,106,110,111,183\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2016-07-26",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_275768_conjecture_0": {
+    "oeis_id": "A275768",
+    "conjecture": "There is no nonnegative integer \\(n\\) such that \\(a(n)=4\\).",
+    "proposer": "Michael De Vlieger",
+    "proposed_date": "2017-04-30",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_295124_conjecture_0": {
+    "oeis_id": "A295124",
+    "conjecture": "The sequence \\(a(n)\\) is infinite.",
+    "proposer": "Thomas Ordowski",
+    "proposed_date": "2017-11-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_296075_conjecture_0": {
+    "oeis_id": "A296075",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n)=1\\) if and only if \\(n=1\\) or \\(n=12\\).",
+    "proposer": "Robert Israel",
+    "proposed_date": "2017-12-04",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_306477_conjecture_1": {
+    "oeis_id": "A306477",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2019-02-18",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_308584_conjecture_1": {
+    "oeis_id": "A308584",
+    "conjecture": "For every integer \\(n>0\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2019-06-08",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_308950_conjecture": {
+    "oeis_id": "A308950",
+    "conjecture": "For every integer \\(n>1\\), \\(a(n)>0\\), and the analogous assertion with \\(p-1\\) replaced by \\(p+1\\) also holds.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2019-07-02",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_333096_supercongruence_conjecture": {
+    "oeis_id": "A333096",
+    "conjecture": "For every prime \\(p \\ge 5\\) and all positive integers \\(n,k\\), \\(a(np^k) \\equiv a(np^{k-1}) \\pmod{p^{3k}}\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2020-03-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_340079_conjecture_0": {
+    "oeis_id": "A340079",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n)=1\\) if and only if \\(n=1\\) or \\(n\\) is prime.",
+    "proposer": "Thomas Ordowski",
+    "proposed_date": "2014-10-22",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_340881_conjecture_0": {
+    "oeis_id": "A340881",
+    "conjecture": "For every prime \\(p\\), the sequence \\(a(n) \\bmod p\\) is purely periodic with minimum period dividing \\(2(p-1)\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2021-02-16",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_341685_conjecture_0": {
+    "oeis_id": "A341685",
+    "conjecture": "This 3-adic integer is transcendental over \\(\\mathbb{Q}\\).",
+    "proposer": "Jianing Song",
+    "proposed_date": "2021-02-17",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_347865_conjecture_0": {
+    "oeis_id": "A347865",
+    "conjecture": "For every nonnegative integer \\(n\\), \\(a(n)>0\\) if and only if \\(n\\ne 744\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2022-01-24",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_352627_conjecture_1": {
+    "oeis_id": "A352627",
+    "conjecture": "For every nonnegative integer \\(n\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2022-03-24",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_355228_conjecture_0": {
+    "oeis_id": "A355228",
+    "conjecture": "For every natural number \\(n\\), \\(a(n)>A081512(n)\\) if and only if \\(n=4\\) or \\(n=5\\).",
+    "proposer": "Bernard Schott",
+    "proposed_date": "2022-06-25",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_357569_conjecture_0": {
+    "oeis_id": "A357569",
+    "conjecture": "For every prime \\(p\\ge 3\\) and integer \\(r\\ge 2\\), \\(a(p^r)\\equiv a(p^{r-1})\\pmod{p^{3r+3}}\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2022-10-21",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_361883_conjecture_0": {
+    "oeis_id": "A361883",
+    "conjecture": "For all positive integers \\(n\\) and \\(r\\) and every prime \\(p\\ge 5\\), \\(a(np^r)\\equiv a(np^{r-1})\\pmod{p^{3r}}\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2023-03-28",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_363347_conjecture_2": {
+    "oeis_id": "A363347",
+    "conjecture": "For every prime \\(p\\) congruent to \\(1\\) or \\(9\\) modulo \\(10\\), there exists an \\(n\\) such that \\(a(n)=p\\).",
+    "proposer": "Mohammed Bouras",
+    "proposed_date": "2023-05-30",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_364173_conjecture_0": {
+    "oeis_id": "A364173",
+    "conjecture": "For every prime \\(p \\ge 5\\) and all positive integers \\(n,r\\), \\(a(np^r) \\equiv a(np^{r-1}) \\pmod{p^{3r}}\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2023-07-13",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_365416_conjecture_0": {
+    "oeis_id": "A365416",
+    "conjecture": "The only term for which both prime powers have exponent greater than 1 is \\(a(8)=13\\).",
+    "proposer": "Pillai",
+    "proposed_date": "2023-10-22",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_374605_conjecture_0": {
+    "oeis_id": "A374605",
+    "conjecture": "For every prime \\(p\\ge 5\\) and every integer \\(n\\) with \\(\\left\\lceil(2p+1)/3\\right\\rceil\\le n\\le p-1\\), \\(p^3\\mid a(n)\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2024-07-22",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_378143_conjecture_claim": {
+    "oeis_id": "A378143",
+    "conjecture": "For every integer \\(n\\ge 0\\), if \\(10^{2^n}+1\\) is prime, then either \\(4^{2^n}+1\\) or \\(6^{2^n}+1\\) is prime.",
+    "proposer": "Charles R Greathouse IV",
+    "proposed_date": "2024-11-17",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_379732_conjecture_0": {
+    "oeis_id": "A379732",
+    "conjecture": "The maximum density of a packing of congruent truncated tetrahedra in three-dimensional Euclidean space has decimal digits \\(a(n)\\).",
+    "proposer": "Paolo Xausa",
+    "proposed_date": "2024-12-31",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_381159_conjecture_0": {
+    "oeis_id": "A381159",
+    "conjecture": "There exists an increasing arithmetic progression of 150 values of \\(a(n)\\), all greater than 1, whose common difference is at most 2025.",
+    "proposer": "A. Chironov",
+    "proposed_date": "2025-02-16",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_383327_conjecture_0": {
+    "oeis_id": "A383327",
+    "conjecture": "For every \\(n \\in \\{1,3,5,9,15,23,35,63,65,67\\}\\), \\(a(n)=1\\).",
+    "proposer": "Miles Englezou",
+    "proposed_date": "2025-05-10",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_48153_conjecture_0": {
+    "oeis_id": "A048153",
+    "conjecture": "For every integer \\(n\\ge 1\\), \\(a(n)\\le (n^2-1)/2\\).",
+    "proposer": "Aspen A.M. Meissner",
+    "proposed_date": "2025-03-06",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_53000_conjecture_1": {
+    "oeis_id": "A053000",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n) \\le 1+\\varphi(n)\\).",
+    "proposer": "Jianglin Luo",
+    "proposed_date": "2023-09-23",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_53576_conjecture_0": {
+    "oeis_id": "A053576",
+    "conjecture": "Letting \\(F_{33}=2^{2^{33}}+1\\), one has \\(a(2^{33})=F_{33}\\) if \\(F_{33}\\) is prime, and \\(a(2^{33})=2^{2^{33}+1}\\) otherwise.",
+    "proposer": "Charles R Greathouse IV",
+    "proposed_date": "2013-07-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_62567_conjecture_0": {
+    "oeis_id": "A062567",
+    "conjecture": "For every integer \\(n\\ge 2\\), \\(a(3^n)=10^{3^{n-2}}-1\\) if and only if \\(n\\in\\{2,3,4\\}\\).",
+    "proposer": "Farideh Firoozbakht",
+    "proposed_date": "2006-01-24",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_71532_conjecture_0": {
+    "oeis_id": "A071532",
+    "conjecture": "For all sufficiently large \\(n\\), \\(a(n)>\\sqrt{n}\\).",
+    "proposer": "Ralf Stephan",
+    "proposed_date": "2004-09-22",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_72780_conjecture": {
+    "oeis_id": "A072780",
+    "conjecture": "For every integer \\(n\\ge 1\\), \\(a(n)\\ge 0\\), with \\(a(n)=0\\) if and only if \\(n=1\\) or \\(n\\) is prime, and \\(a(n)=2\\) if and only if \\(n\\) is the product of two distinct primes.",
+    "proposer": "T. D. Noe",
+    "proposed_date": "2003-05-16",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_7468_conjecture_0": {
+    "oeis_id": "A007468",
+    "conjecture": "The only positive integer \\(n\\) for which \\(a(n)\\) is a perfect square is \\(n=38\\).",
+    "proposer": "Carlos Eduardo Olivieri",
+    "proposed_date": "2015-03-09",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_7918_conjecture_1": {
+    "oeis_id": "A007918",
+    "conjecture": "For every integer \\(n>1\\), \\(a(n)<n^{n^{1/n}}\\).",
+    "proposer": "Thomas Ordowski",
+    "proposed_date": "2023-02-23",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_92243_conjecture": {
+    "oeis_id": "A092243",
+    "conjecture": "There exists an \\(n>250000\\) with \\(a(n)>0\\); moreover, \\(a(n)\\) is bounded both above and below and is positive and negative infinitely often.",
+    "proposer": "Joseph L. Pe",
+    "proposed_date": "2004-06-12",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_A067857_conjecture_0": {
+    "oeis_id": "A067857",
+    "conjecture": "For every positive integer \\(n\\), \\(a(n)<0\\) if and only if the total number of prime factors of \\(n\\), counted with multiplicity, is odd and at least 3.",
+    "proposer": "Robert Israel",
+    "proposed_date": "2015-05-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_A078590_conjecture": {
+    "oeis_id": "A078590",
+    "conjecture": "Every term \\(a(n)\\) is an integer.",
+    "proposer": "Benoit Cloitre",
+    "proposed_date": "2003-05-16",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_A229969_conjecture": {
+    "oeis_id": "A229969",
+    "conjecture": "For every integer \\(n>5\\), \\(a(n)>0\\); moreover, every integer \\(n>6\\) admits such a representation with \\(x\\in\\{3,4,6,10,15\\}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-10-10",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_A237720_conjecture_ii": {
+    "oeis_id": "A237720",
+    "conjecture": "For every integer \\(n>2\\), there is a prime \\(p<n\\) such that \\(\\lfloor\\sqrt{n+p}\\rfloor\\) is prime.",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2014-02-12",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_A271510_conjecture_i_positive": {
+    "oeis_id": "A271510",
+    "conjecture": "For every nonnegative integer \\(n\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2016-04-09",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a004290_conjecture_radcliffe": {
+    "oeis_id": "A004290",
+    "conjecture": "For every integer \\(k>0\\) and every \\(n<10^k-1\\), \\(a(n)<a(10^k-1)\\).",
+    "proposer": "David Radcliffe",
+    "proposed_date": "2025-08-01",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a010846_granville_conjecture": {
+    "oeis_id": "A010846",
+    "conjecture": "For every \\(\\epsilon>0\\), there exists \\(N\\) such that \\(a(n)\\ge (\\log n)^{1-\\epsilon}\\) for all \\(n\\ge N\\).",
+    "proposer": "Andrew Granville",
+    "proposed_date": "2010-06-01",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a011545_conjecture_0": {
+    "oeis_id": "A011545",
+    "conjecture": "For every nonnegative integer \\(n\\), the interval \\(\\bigl(\\pi 10^n,\\, \\pi/\\arctan(10^{-n})\\bigr)\\) contains no integer.",
+    "proposer": "Richard Holmes",
+    "proposed_date": "2021-06-17",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a103885_conjecture_0": {
+    "oeis_id": "A103885",
+    "conjecture": "For every integer \\(m\\ge1\\), there exist real polynomials \\(P_m,Q_m\\) of degree \\(2m\\) such that for every integer \\(n\\ge1\\), \\(\\bigl(\\prod_{k=1}^{2m}(2mn+k)\\bigr)P_m(n)a(m(n+1))+(-1)^m\\bigl(\\prod_{k=1}^{2m}(2mn-k)\\bigr)P_m(-n)a(m(n-1))=Q_m(n^2)a(mn)\\), with \\(P_m(x)=P_m(1-x)\\), all zeros of \\(P_m\\) in \\([0,1]\\), and all zeros of \\(Q_m(x^2)\\) in \\([-1,1]\\).",
+    "proposer": "Peter Bala",
+    "proposed_date": "2020-03-02",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a129365_conjecture_C": {
+    "oeis_id": "A129365",
+    "conjecture": "For every positive integer \\(n\\) and prime \\(p\\), the \\(p\\)-adic valuations of \\(a(np),a(np+1),\\ldots,a(np+p-1)\\) are equal.",
+    "proposer": "Peter Bala",
+    "proposed_date": "2007-05-11",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a176477_conjecture": {
+    "oeis_id": "A176477",
+    "conjecture": "For every integer \\(n\\ge 1\\), \\(a(n)\\) is a positive integer, and \\(a(n)\\) is odd if and only if \\(n=2^m\\) for some integer \\(m\\ge 1\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2010-06-01",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a189409_conjectures": {
+    "oeis_id": "A189409",
+    "conjecture": "Every a(n) is squarefree, and a(n) is prime for infinitely many n.",
+    "proposer": "John M. Campbell",
+    "proposed_date": "2011-04-21",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a190969_conjecture_0": {
+    "oeis_id": "A190969",
+    "conjecture": "For every odd prime \\(p\\), \\(\\displaystyle \\sum_{k=0}^{p-1}\\frac{a(4k)\\binom{2k}{k}^3}{(-4096)^k}\\equiv0\\pmod{p^2}\\), and the congruence holds modulo \\(p^3\\) whenever \\(p\\equiv1,2,4\\pmod 7\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2013-03-13",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a249609_conjecture_1": {
+    "oeis_id": "A249609",
+    "conjecture": "For every nonnegative integer \\(n\\), \\(a(n)=0\\) if and only if \\(n\\in\\{0,1,2,7,8\\}\\).",
+    "proposer": "Vladimir Shevelev",
+    "proposed_date": "2014-11-02",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a272979_conjecture_1": {
+    "oeis_id": "A272979",
+    "conjecture": "For positive integers \\(a,b,c,d\\), the associated quadratic–quadratic–cubic–quartic form is universal over the nonnegative integers if and only if \\((a,b,c,d)\\) is one of \\((1,2,1,1),(1,3,1,1),(1,6,1,1),(2,3,1,1),(2,4,1,1),(1,1,2,1),(1,4,2,1),(1,2,3,1),(1,2,4,1),(1,2,12,1),(1,1,1,2),(1,2,1,2),(1,3,1,2),(1,4,1,2),(1,5,1,2),(1,11,1,2),(1,12,1,2),(2,4,1,2),(3,5,1,2),(1,1,4,2),(1,1,1,3),(1,2,1,3),(1,3,1,3),(1,2,4,3),(1,2,1,4),(1,3,1,4),(2,3,1,4),(1,1,2,4),(1,2,2,4),(1,8,2,4),(1,2,3,4),(1,1,1,5),(1,2,1,5),(2,3,1,5),(2,4,1,5),(1,3,2,5),(1,1,1,6),(1,3,1,6),(1,1,2,6),(1,2,1,8),(1,2,4,8),(1,2,1,10),(1,1,2,10),(1,2,1,11),(2,4,1,11),(1,2,1,12),(1,1,2,13),(1,2,1,14),(1,2,1,15)\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2016-07-13",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a300997_finite_difference_is_one_or_two": {
+    "oeis_id": "A300997",
+    "conjecture": "For every \\(n \\ge 1\\), \\(a(n+1)-a(n)\\in\\{1,2\\}\\).",
+    "proposer": "Luc Rousseau",
+    "proposed_date": "2018-06-16",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a308734_conjecture_0": {
+    "oeis_id": "A308734",
+    "conjecture": "For every integer \\(n>1\\), \\(a(n)>0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2019-06-21",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a336981_conjecture_2_i": {
+    "oeis_id": "A336981",
+    "conjecture": "If \\(t(k)=\\frac{4290k+367}{3136^k}\\binom{2k}{k}T_k(14,1)T_k(17,16)\\), then \\(\\sum_{k=0}^{\\infty} t(k)=\\frac{5390}{\\pi}\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2020-08-09",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a354747_conjecture_0": {
+    "oeis_id": "A354747",
+    "conjecture": "\\(a(100943)=0\\).",
+    "proposer": "Felix Fröhlich",
+    "proposed_date": "2022-06-06",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a355898_conjecture": {
+    "oeis_id": "A355898",
+    "conjecture": "For every \\(n\\ge 3775\\), \\(a(n)=1+a(n-1)+a(n-2)=2a(n-1)-a(n-3)=(a(3774)+1)F_{n-3772}-(a(3772)+1)F_{n-3774}-1\\), where \\(F_k\\) is the \\(k\\)-th Fibonacci number.",
+    "proposer": "Giorgos Kalogeropoulos",
+    "proposed_date": "2022-11-01",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a358340_conjecture_k4": {
+    "oeis_id": "A358340",
+    "conjecture": "There are infinitely many natural numbers whose fourth powers are zeroless.",
+    "proposer": "Mohammed Yaseen",
+    "proposed_date": "2022-11-10",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  },
+  "oeis_a389790_conjecture_1": {
+    "oeis_id": "A389790",
+    "conjecture": "For every \\(n \\ge 474\\), \\(a(n) > 0\\).",
+    "proposer": "Zhi-Wei Sun",
+    "proposed_date": "2025-10-15",
+    "generation": {
+      "model": "openai/gpt-5.6-sol",
+      "source_eval": "2026-08-23T12-24-52-00-00_summarize-conjectures_CZxXsq3CQjvgpUmcPhkMaM.eval"
+    }
+  }
+}
