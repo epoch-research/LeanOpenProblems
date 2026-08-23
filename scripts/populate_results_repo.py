@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Populate LeanOpenProblems-results from selected plaintext runs.
+"""Populate LeanOpenProblems-results from metadata and selected plaintext runs.
 
 The export is additive: destination-only files are retained. Agent transcripts
 and operating-system metadata are omitted.
@@ -151,8 +151,8 @@ def plaintext_directory(logs_dir: Path, run: str) -> Path:
     return matches[0]
 
 
-def stage_run(destination: Path, target: Path) -> None:
-    """Stage an exported run without touching unrelated destination files."""
+def stage_path(destination: Path, target: Path) -> None:
+    """Stage one exported subtree without touching unrelated destination files."""
     relative_target = target.relative_to(destination)
     subprocess.run(
         ["git", "-C", str(destination), "add", "--", str(relative_target)],
@@ -182,6 +182,12 @@ def parse_args() -> argparse.Namespace:
         help="source logs directory (default: <repository>/logs)",
     )
     parser.add_argument(
+        "--metadata-dir",
+        type=Path,
+        default=repo_root / "metadata",
+        help="source metadata directory (default: <repository>/metadata)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="compare source and destination without writing files",
@@ -191,12 +197,28 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    metadata_source = args.metadata_dir
+    if not metadata_source.is_dir():
+        raise RuntimeError(f"metadata directory does not exist: {metadata_source}")
+    metadata_target = args.dest / "metadata"
+    metadata_stats = sync_tree(
+        metadata_source, metadata_target, dry_run=args.dry_run
+    )
+    if not args.dry_run:
+        stage_path(args.dest, metadata_target)
+    metadata_prefix = "would change" if args.dry_run else "changed"
+    print(
+        f"metadata: {metadata_stats.files} files, "
+        f"{metadata_stats.symlinks} symlinks, "
+        f"{metadata_prefix} {metadata_stats.changes}"
+    )
+
     for run in args.runs:
         source = plaintext_directory(args.logs_dir, run)
         target = args.dest / "runs" / run
         stats = sync_tree(source, target, dry_run=args.dry_run)
         if not args.dry_run:
-            stage_run(args.dest, target)
+            stage_path(args.dest, target)
         prefix = "would change" if args.dry_run else "changed"
         print(
             f"{run}: {stats.files} files, {stats.symlinks} symlinks, "
