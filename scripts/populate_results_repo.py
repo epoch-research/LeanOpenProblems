@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Populate LeanOpenProblems-results from the 13 published plaintext runs.
+"""Populate LeanOpenProblems-results from selected plaintext runs.
 
 The export is additive: destination-only files are retained. Agent transcripts
 and operating-system metadata are omitted.
@@ -15,21 +15,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-RUNS = (
-    "oeis-full-50usd-ant-j0j0g4uzligm1k41",
-    "oeis-full-50usd-oai-jajpvieznaevpoyg",
-    "oeis-full-50usd-gdm-1s7vwp2si1ap0r6d",
-    "oeis-lite-200usd-ant-me0xxoowyqauyrvj",
-    "oeis-lite-200usd-oai-sgqyns47klfhaw34",
-    "oeis-lite-200usd-gdm-7x8cgb9c5fw6y5d0",
-    "oeis-lite-200usd-fable-i7s7n9q7v4emgjp7",
-    "oeis-lite-200usd-deep-ant-ewytt1ev01pbycd6",
-    "oeis-lite-200usd-deep-oai-fo3ygtloq79bdjph",
-    "oeis-lite-200usd-deep-gdm-4iym6rmds40h3qk8",
-    "oeis-lite-200usd-lit-ant-a1zwt7jqfgg8aao6",
-    "oeis-lite-200usd-lit-oai-8djo5ic71i1m57jm",
-    "oeis-lite-200usd-lit-gdm-qtmt9vugt4ro74ph",
-)
 EXCLUDED_NAMES = frozenset({".DS_Store", "messages.txt", "compactions.txt"})
 DEFAULT_DEST = Path(
     "/Users/t/repos/github.com/epoch-research/LeanOpenProblems-results"
@@ -169,8 +154,13 @@ def parse_args() -> argparse.Namespace:
     repo_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "dest",
-        nargs="?",
+        "runs",
+        nargs="+",
+        metavar="RUN",
+        help="run directory name under the logs directory (repeatable)",
+    )
+    parser.add_argument(
+        "--dest",
         type=Path,
         default=DEFAULT_DEST,
         help=f"results repository (default: {DEFAULT_DEST})",
@@ -191,7 +181,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    for run in RUNS:
+    for run in args.runs:
         source = plaintext_directory(args.logs_dir, run)
         target = args.dest / "runs" / run
         stats = sync_tree(source, target, dry_run=args.dry_run)
