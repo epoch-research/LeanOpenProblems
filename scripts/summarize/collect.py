@@ -28,6 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.summarize.task import (  # noqa: E402
+    PROOF_OUTPUTS,
     load_provenance,
     load_records,
     plaintext_dir,
@@ -43,7 +44,9 @@ class Generated:
     generation: dict[str, str]
 
 
-def _submitted_row(sample: EvalSample, tool_name: str) -> dict[str, Any] | None:
+def _submitted_row(
+    sample: EvalSample, tool_names: tuple[str, ...]
+) -> dict[str, Any] | None:
     if sample.output and sample.output.completion:
         try:
             row = json.loads(sample.output.completion)
@@ -53,13 +56,16 @@ def _submitted_row(sample: EvalSample, tool_name: str) -> dict[str, Any] | None:
             pass
     for message in reversed(sample.messages or []):
         for call in getattr(message, "tool_calls", None) or []:
-            if call.function == tool_name:
+            if call.function in tool_names:
                 return dict(call.arguments)
     return None
 
 
-def extract(log_paths: list[Path], tool_name: str) -> dict[str, Generated]:
+def extract(
+    log_paths: list[Path], tool_name: str | tuple[str, ...]
+) -> dict[str, Generated]:
     """Extract submissions, with later log arguments winning by sample id."""
+    tool_names = (tool_name,) if isinstance(tool_name, str) else tool_name
     generated: dict[str, Generated] = {}
     seen: set[str] = set()
     for path in log_paths:
@@ -68,7 +74,7 @@ def extract(log_paths: list[Path], tool_name: str) -> dict[str, Generated]:
         for sample in log.samples or []:
             sample_id = str(sample.id)
             seen.add(sample_id)
-            row = _submitted_row(sample, tool_name)
+            row = _submitted_row(sample, tool_names)
             if row is None:
                 continue
             generated[sample_id] = Generated(
@@ -78,7 +84,8 @@ def extract(log_paths: list[Path], tool_name: str) -> dict[str, Generated]:
             )
     missing = sorted(seen - generated.keys())
     if missing:
-        print(f"warning: no {tool_name} submission for: {missing}", file=sys.stderr)
+        names = " or ".join(tool_names)
+        print(f"warning: no {names} submission for: {missing}", file=sys.stderr)
     return generated
 
 
@@ -131,8 +138,56 @@ def collect_conjectures(args: argparse.Namespace) -> int:
     return 0
 
 
+def _group_proof_outputs(
+    generated: dict[str, Generated],
+) -> dict[str, dict[str, Generated]]:
+    """Group independently generated summary and full-proof samples."""
+    valid_outputs = {output.name for output in PROOF_OUTPUTS}
+    grouped: dict[str, dict[str, Generated]] = {}
+    for sample_id, item in generated.items():
+        proof_id = item.metadata.get("proof_id")
+        proof_output = item.metadata.get("proof_output")
+        if proof_id is None or proof_output is None:
+            print(
+                f"warning: incomplete proof output metadata for {sample_id}",
+                file=sys.stderr,
+            )
+            continue
+
+        proof_id = str(proof_id)
+        proof_output = str(proof_output)
+        if proof_output not in valid_outputs:
+            print(
+                f"warning: unknown proof output {proof_output!r} for {sample_id}",
+                file=sys.stderr,
+            )
+            continue
+        grouped.setdefault(proof_id, {})[proof_output] = item
+    return grouped
+
+
+def _proof_metadata(
+    settlement: str, generated: dict[str, Generated]
+) -> dict[str, Any]:
+    outputs: dict[str, dict[str, Any]] = {}
+    for output in PROOF_OUTPUTS:
+        item = generated.get(output.name)
+        value = {
+            "text": item.row.get(output.field) if item else None,
+            "generation": item.generation if item else None,
+        }
+        outputs[output.name] = value
+
+    return {
+        "settlement": settlement,
+        **outputs,
+    }
+
+
 def collect_proofs(args: argparse.Namespace) -> int:
-    generated = extract(args.eval, "submit_proof_summary")
+    generated = _group_proof_outputs(
+        extract(args.eval, ("submit_proof_summary", "submit_full_proof"))
+    )
     run_dir = _output_path(args.run_dir)
     allowed = {conjecture.id for conjecture in subset_conjectures(args.subset)}
     solves = {
@@ -144,19 +199,14 @@ def collect_proofs(args: argparse.Namespace) -> int:
     unexpected = sorted(generated.keys() - solves.keys())
     if unexpected:
         print(
-            f"warning: proof summaries do not match accepted samples in {run_dir}: "
+            f"warning: proof outputs do not match accepted samples in {run_dir}: "
             f"{unexpected}",
             file=sys.stderr,
         )
 
     written = 0
     for sample_id, solve in sorted(solves.items()):
-        item = generated.get(sample_id)
-        value = {
-            "settlement": solve.settlement,
-            "proof_summary": item.row.get("proof_summary") if item else None,
-            "generation": item.generation if item else None,
-        }
+        value = _proof_metadata(solve.settlement, generated.get(sample_id, {}))
         write_json(solve.directory / "metadata.json", value)
         written += 1
     print(f"wrote proof metadata for {written} accepted samples under {plaintext_dir(run_dir)}")

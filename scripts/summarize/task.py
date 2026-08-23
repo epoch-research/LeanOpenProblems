@@ -1,9 +1,10 @@
 """Inspect tasks for generating normalized OEIS metadata.
 
-The sequence and conjecture tasks are run once for the Lite dataset. Proof
-summaries are run once per accepted proof in an evaluation run. Deterministic
-collection into ``metadata/*.json`` and per-sample ``metadata.json`` files is
-handled by ``collect.py``.
+The sequence and conjecture tasks are run once for the Lite dataset. A concise
+summary and a full natural-language proof or disproof are generated independently
+for each accepted result in an evaluation run. Deterministic collection into
+``metadata/*.json`` and per-sample ``metadata.json`` files is handled by
+``collect.py``.
 
 Examples::
 
@@ -13,7 +14,7 @@ Examples::
         -T subset=lite -T metadata_dir=metadata \
         --model openai/gpt-5.6-sol --log-dir logs/summarize
     inspect eval scripts/summarize/task.py@summarize_proofs \
-        -T run_dir=logs/<run> -T subset=lite -T metadata_dir=metadata \
+        -T run_dir=logs/<run> -T subset=all -T metadata_dir=metadata \
         --model openai/gpt-5.6-sol --log-dir logs/summarize
 """
 
@@ -115,10 +116,53 @@ class Solve(NamedTuple):
     directory: Path
 
 
+class ProofOutput(NamedTuple):
+    name: str
+    field: str
+    submit_tool: str
+    instruction: str
+
+
+# The full-proof suggestion is deliberately not a limit: informal proofs in the
+# paper's appendix reach roughly 2,000 words.
+PROOF_OUTPUTS = (
+    ProofOutput(
+        name="summary",
+        field="proof_summary",
+        submit_tool="submit_proof_summary",
+        instruction=(
+            "one or two concise sentences explaining the key mathematical "
+            "ideas of this specific {noun}. Do not restate the sequence or "
+            "conjecture"
+        ),
+    ),
+    ProofOutput(
+        name="full_proof",
+        field="full_proof",
+        submit_tool="submit_full_proof",
+        instruction=(
+            "a complete, self-contained natural-language {noun} with every "
+            "essential construction, intermediate result, reduction, and case "
+            "split explained. There is no maximum length: use as much space as "
+            "the argument needs. For example, a 3,000-word exposition is entirely "
+            "acceptable if that is what a clear proof requires. This must be "
+            "the full mathematical argument, not a synopsis or an expanded "
+            "summary; introduce the necessary notation and explain how every "
+            "substantive step follows"
+        ),
+    ),
+)
+
+
 def subset_conjectures(subset: str) -> list[Conjecture]:
     """Return the subset's conjectures in its authoritative order."""
-    names = load_subset(OEIS_DIR, subset)
-    samples = {str(sample.id): sample for sample in oeis_dataset(names=names)}
+    if subset == "all":
+        dataset = oeis_dataset()
+        names = [str(sample.id) for sample in dataset]
+    else:
+        names = load_subset(OEIS_DIR, subset)
+        dataset = oeis_dataset(names=names)
+    samples = {str(sample.id): sample for sample in dataset}
     conjectures: list[Conjecture] = []
     for name in names:
         sample = samples.get(name)
@@ -253,42 +297,41 @@ def proof_prompt(
     provenance: dict[str, Any] | None,
     sequence_description: str | None,
     conjecture_description: str | None,
+    output: ProofOutput,
 ) -> str:
     noun = "proof" if solve.settlement == "proved" else "disproof"
+    output_label = output.name.replace("_", " ")
+    instruction = output.instruction.format(noun=noun)
     return f"""\
 An AI agent {solve.settlement} the conjecture {solve.id} about OEIS sequence
 {solve.oeis_id}. The accepted {noun} is in {ENTRY_PATH}.
 
-Call submit_proof_summary with one or two concise sentences explaining the key
-mathematical ideas of this specific {noun}. Do not restate the sequence or
-conjecture. Focus exclusively on the mathematical argument: omit Lean tactics,
-library lemmas, proof-assistant architecture, implementation details, and claims
-that a computation is "kernel-checked", "verified", or "certified" merely because
-it was formalized. Describe a finite or modular computation by its mathematical
-role instead.
+Call {output.submit_tool} with {instruction}.
+
+Focus exclusively on the mathematical argument: omit Lean tactics, internal
+library-lemma names, proof-assistant architecture, implementation details, and
+claims that a computation is "kernel-checked", "verified", or "certified"
+merely because it was formalized. State the mathematical content of any invoked
+result and describe each finite or modular computation by its mathematical role.
 
 Examples of the intended style:
 - "a kernel-checked finite avoidance computation" becomes
   "a finite avoidance computation";
 - "a verified bit-sieve" becomes "a bit-sieve";
-- "segmented, kernel-checked binary exponentiation" becomes
-  "segmented binary exponentiation";
-- "Kernel computation checks each candidate" becomes
-  "Direct computation checks each candidate";
-- "Kernel-checked modular computations establish ..." becomes
-  "Modular computations establish ...".
 
 Plain text with LaTeX math is allowed.
 
-Canonical sequence description:
+<canonical_sequence_description>
 {sequence_description or "(unavailable)"}
+</canonical_sequence_description>
 
-Canonical conjecture description:
+<canonical_conjecture_description>
 {conjecture_description or "(unavailable)"}
+</canonical_conjecture_description>
 
 A Lean 4 toolchain with the full Mathlib source tree ({MATHLIB_SOURCE}) is
 available, along with `rg` and `python`. Investigate the accepted {noun} as much
-as useful before summarizing its mathematical argument.
+as useful before writing the requested {output_label}.
 
 <oeis_record>
 {json.dumps(record, indent=2)}
@@ -308,7 +351,7 @@ def submit_sequence() -> Tool:
         Args:
           description: Description of the sequence, at most about 10 words.
         """
-        store().set("summary", {"description": description})
+        store().set("submission", {"description": description})
         return "Submitted."
 
     return execute
@@ -322,7 +365,7 @@ def submit_conjecture() -> Tool:
         Args:
           conjecture: One sentence stating the conjecture.
         """
-        store().set("summary", {"conjecture": conjecture})
+        store().set("submission", {"conjecture": conjecture})
         return "Submitted."
 
     return execute
@@ -331,12 +374,26 @@ def submit_conjecture() -> Tool:
 @tool
 def submit_proof_summary() -> Tool:
     async def execute(proof_summary: str) -> ToolResult:
-        """Submit a concise summary of the accepted proof or disproof.
+        """Submit the requested summary of the accepted proof or disproof.
 
         Args:
-          proof_summary: One or two sentences naming the proof's key ideas.
+          proof_summary: Summary respecting the length requested in the prompt.
         """
-        store().set("summary", {"proof_summary": proof_summary})
+        store().set("submission", {"proof_summary": proof_summary})
+        return "Submitted."
+
+    return execute
+
+
+@tool
+def submit_full_proof() -> Tool:
+    async def execute(full_proof: str) -> ToolResult:
+        """Submit the full exposition of the accepted proof or disproof.
+
+        Args:
+          full_proof: Complete natural-language proof with no maximum length.
+        """
+        store().set("submission", {"full_proof": full_proof})
         return "Submitted."
 
     return execute
@@ -348,11 +405,21 @@ def summarizer(kind: Literal["sequence", "conjecture", "proof"]) -> Solver:
         if kind == "proof":
             await sandbox().write_file(ENTRY_PATH, state.metadata["proof"])
             tools = [text_editor(), bash(timeout=300)]
-            submit = AgentSubmit(
-                tool=submit_proof_summary(),
-                name="submit_proof_summary",
-                keep_in_messages=True,
-            )
+            proof_output = state.metadata["proof_output"]
+            if proof_output == "full_proof":
+                submit = AgentSubmit(
+                    tool=submit_full_proof(),
+                    name="submit_full_proof",
+                    keep_in_messages=True,
+                )
+            elif proof_output == "summary":
+                submit = AgentSubmit(
+                    tool=submit_proof_summary(),
+                    name="submit_proof_summary",
+                    keep_in_messages=True,
+                )
+            else:
+                raise ValueError(f"unknown proof output: {proof_output!r}")
         elif kind == "conjecture":
             tools = []
             submit = AgentSubmit(
@@ -375,9 +442,9 @@ def summarizer(kind: Literal["sequence", "conjecture", "proof"]) -> Solver:
         )
         state = await as_solver(agent)(state, generate)
 
-        summary = state.store.get("summary")
-        if summary is not None:
-            state.output.completion = json.dumps(summary)
+        submission = state.store.get("submission")
+        if submission is not None:
+            state.output.completion = json.dumps(submission)
         state.completed = True
         return state
 
@@ -463,23 +530,27 @@ def summarize_proofs(
             continue
         sequence = sequences.get(solve.oeis_id) or {}
         conjecture = conjectures.get(solve.id) or {}
-        samples.append(
-            Sample(
-                input=proof_prompt(
-                    solve,
-                    records.get(solve.oeis_id, {}),
-                    provenance.get(solve.id),
-                    sequence.get("description"),
-                    conjecture.get("conjecture"),
-                ),
-                id=solve.id,
-                metadata={
-                    "proof": solve.proof,
-                    "oeis_id": solve.oeis_id,
-                    "settlement": solve.settlement,
-                },
+        for output in PROOF_OUTPUTS:
+            samples.append(
+                Sample(
+                    input=proof_prompt(
+                        solve,
+                        records.get(solve.oeis_id, {}),
+                        provenance.get(solve.id),
+                        sequence.get("description"),
+                        conjecture.get("conjecture"),
+                        output,
+                    ),
+                    id=f"{solve.id}__{output.name}",
+                    metadata={
+                        "proof": solve.proof,
+                        "proof_id": solve.id,
+                        "oeis_id": solve.oeis_id,
+                        "settlement": solve.settlement,
+                        "proof_output": output.name,
+                    },
+                )
             )
-        )
     return Task(
         dataset=MemoryDataset(samples),
         solver=summarizer("proof"),
