@@ -2,7 +2,7 @@
 name = "apn"
 version = "0.1.6"
 description = "An Inspect implementation of the AlphaProof Nexus formal proof-search framework"
-license = "MIT"
+license = "MIT AND Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
 dependencies = []
