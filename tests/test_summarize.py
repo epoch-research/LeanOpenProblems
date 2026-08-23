@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from apn.dataset import OEIS_DIR, fc_commit
+from apn.dataset import OEIS_DIR, fc_commit, oeis_dataset
 from apn.task import get_identifier_for_image
 from scripts.summarize.collect import (
     Generated,
@@ -26,6 +26,15 @@ def test_lite_catalog_tasks_load_current_dataset(tmp_path: Path) -> None:
 
     assert len(sequences.dataset) == 99  # two Lite conjectures share one sequence
     assert len(conjectures.dataset) == 100
+
+
+def test_all_conjectures_load_full_dataset_in_order() -> None:
+    conjectures = subset_conjectures("all")
+
+    assert len(conjectures) == 492
+    assert [conjecture.id for conjecture in conjectures] == [
+        str(sample.id) for sample in oeis_dataset()
+    ]
 
 
 def test_proof_summarizer_compose_uses_oeis_pin() -> None:

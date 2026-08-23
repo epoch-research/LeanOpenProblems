@@ -14,7 +14,7 @@ Examples::
         -T subset=lite -T metadata_dir=metadata \
         --model openai/gpt-5.6-sol --log-dir logs/summarize
     inspect eval scripts/summarize/task.py@summarize_proofs \
-        -T run_dir=logs/<run> -T subset=lite -T metadata_dir=metadata \
+        -T run_dir=logs/<run> -T subset=all -T metadata_dir=metadata \
         --model openai/gpt-5.6-sol --log-dir logs/summarize
 """
 
@@ -156,8 +156,13 @@ PROOF_OUTPUTS = (
 
 def subset_conjectures(subset: str) -> list[Conjecture]:
     """Return the subset's conjectures in its authoritative order."""
-    names = load_subset(OEIS_DIR, subset)
-    samples = {str(sample.id): sample for sample in oeis_dataset(names=names)}
+    if subset == "all":
+        dataset = oeis_dataset()
+        names = [str(sample.id) for sample in dataset]
+    else:
+        names = load_subset(OEIS_DIR, subset)
+        dataset = oeis_dataset(names=names)
+    samples = {str(sample.id): sample for sample in dataset}
     conjectures: list[Conjecture] = []
     for name in names:
         sample = samples.get(name)
