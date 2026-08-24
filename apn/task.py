@@ -13,11 +13,13 @@ from apn.dataset import (
     ERDOS_DIR,
     FC100_DIR,
     OEIS_DIR,
+    SUNPRIZES_DIR,
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
     load_subset,
     oeis_dataset,
+    sunprizes_dataset,
 )
 from apn.scorer import proof_scorer
 
@@ -138,6 +140,34 @@ def apn_fc100open(
         ),
         scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
         sandbox=("docker", str(get_compose_file(fc_commit(FC100_DIR), literature))),
+    )
+
+
+@task
+def apn_sunprizes(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+) -> Task:
+    """The prized Zhi-Wei Sun conjectures formalized in Formal Conjectures.
+
+    The 8 conjectures carrying cash prizes on Sun's homepage
+    (maths.nju.edu.cn/~zwsun) that are formalized in FC at the dataset's pin
+    (``apn/data/sunprizes/fc_commit``); see ``apn/data/sunprizes/NOTICE.md``
+    for the census. One sample per conjecture; bare ``apn_sunprizes`` runs
+    all 8.
+    """
+    name_list = load_subset(SUNPRIZES_DIR, subset) if subset is not None else None
+    return Task(
+        dataset=sunprizes_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", str(get_compose_file(fc_commit(SUNPRIZES_DIR), literature))),
     )
 
 

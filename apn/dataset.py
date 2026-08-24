@@ -11,6 +11,7 @@ from inspect_ai.dataset import MemoryDataset, Sample
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
+SUNPRIZES_DIR = Path(__file__).parent / "data" / "sunprizes"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -227,6 +228,22 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     ``answer(sorry)`` members of the paper's 100 are excluded manifest rows.
     """
     return build_dataset(FC100_DIR, "fc100open", (), names)
+
+
+def sunprizes_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The prized Zhi-Wei Sun conjectures formalized in FC as Samples.
+
+    One sample per manifest row (8): the conjectures carrying cash prizes on
+    Sun's homepage (maths.nju.edu.cn/~zwsun) that are formalized in Formal
+    Conjectures at the dataset's pin -- see ``apn/data/sunprizes/NOTICE.md``.
+    The sample id is the target's fully qualified declaration name (e.g.
+    ``OeisA303656.conjecture``); the sketch is the target's *isolated* spec
+    (the source file's definitions plus the single target theorem, test lemmas
+    removed). ``oeis_id`` rides along in metadata; the prize fields
+    (``prize_name``/``prize_amount``/``prize_currency``) stay in the manifest
+    for tooling.
+    """
+    return build_dataset(SUNPRIZES_DIR, "sunprizes", ("oeis_id",), names)
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
