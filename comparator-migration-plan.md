@@ -354,11 +354,16 @@ exact-name assertion).
 it elaborates `@foo` to the bare constant (`@` suppresses implicit-argument
 insertion) and returns its stored type — so the declaration's type elaborates
 to `Not (<foo's elaborated statement type>)`, i.e. exactly SafeVerify's
-`negateExpr` result (env types carry no mvars; and `cleanupAnnotations`
-parity is moot at compare time because lean4export strips mdata, so
-comparator's BEq sees mdata-free terms on both sides). Nothing here is our
-metaprogramming: the elaboration machinery is upstream core, and the idiom is
-already exercised *in FormalConjectures itself at our pinned commit*
+`negateExpr` result. For a universe-polymorphic `foo`, `type_of% @foo`
+instantiates `foo` at fresh universe metavariables and declaration elaboration
+generalizes them into the disproof theorem's own `levelParams`; their binder
+names may differ from `foo`'s, but they correspond positionally and express the
+same universe-polymorphic type. This is handled by the vendor-time certificate
+below, not by runtime code. `cleanupAnnotations` parity is moot at compare time
+because lean4export strips mdata, so comparator's BEq sees mdata-free terms on
+both sides. Nothing here is our metaprogramming: the elaboration machinery is
+upstream core, and the idiom is already exercised *in FormalConjectures itself
+at our pinned commit*
 (e.g. `type_of% selfridge_seq_conjecture`, `type_of%
 generalized_riemann_hypothesis`). Scope note: the formalized *statements*
 are untouched — the appended declaration is derived and content-neutral, and
@@ -371,12 +376,18 @@ closure doesn't contain proof values).
 Certification (vendor-time + CI, against the committed files): for every
 Isolated file, build it and independently compute
 `mkNot ∘ cleanupAnnotations ∘ (·.type)` of the target via a throwaway
-metaprogram, and assert the two types are BEq-identical; also assert every
-target has empty `levelParams` (universe-polymorphic statements would make
-`@foo` create universe mvars — none are expected in integer-sequence
-statements, but fail loudly rather than silently if one ever appears). Two
-independent mechanisms agreeing on every statement in all three datasets,
-plus the historical gold-disproof corpus (§7), pins the semantics. The `run_cmd`
+metaprogram. First assert that target and disproof have the same number of
+`levelParams`; then instantiate both parameter lists positionally with the
+same fresh canonical levels and assert that the canonicalized disproof type is
+BEq-identical to `mkNot` of the canonicalized target type. (For monomorphic
+targets this reduces to the previous exact comparison.) This treats universe
+parameter names as binders while still failing on an arity, ordering, or type
+mismatch. It is **certification-only**: runtime Comparator remains unchanged
+and performs its ordinary exact Challenge/Solution comparison; because the
+agent keeps the committed declaration and only fills its `sorry`, both sides
+elaborate the same disproof `levelParams`. Two independent mechanisms agreeing
+on every statement in all three datasets, plus the historical gold-disproof
+corpus (§7), pins the semantics. The `run_cmd`
 `getConstInfo`/`mkNot`/`mkSorry`/`addDecl` postlude survives only inside that
 certification test — not in the scoring path. If `type_of%` ever diverges on
 some statement, the postlude is the ready fallback for the scoring path too.
@@ -570,7 +581,9 @@ Re-derive expectations from Comparator's model — do not blind-port:
     reset + RO-rootfs story end to end.
   - NEW disproof-shape cases: exact `¬ (∀ …)` accepts; `(h : ∀ …) : False`
     form — pin whatever the empirical verdict is; binder-renamed variant —
-    pin alpha-sensitivity.
+    pin alpha-sensitivity. Add one- and two-universe-parameter fixtures that
+    exercise the certification's positional level normalization while the
+    runtime Challenge/Solution comparison remains exact.
   - NEW statement-with-sorry'd-def fixture (the suspected "unusual defect"
     class, §7): document comparator's rejection of a faithful solution.
     Note the harness cannot distinguish this from an agent's own sorry at
