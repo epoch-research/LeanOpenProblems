@@ -197,8 +197,8 @@ def processFile (baseEnv : Environment) (path : String) : IO (Array CmdRec × Ar
 unsafe def main (args : List String) : IO UInt32 := do
   let (utilModule, files) ← match args with
     | "--util-module" :: name :: files => pure (name, files)
-    | _ => throw <| IO.userError
-        "usage: extract_ranges --util-module NAME FILE.lean [FILE.lean ...]"
+    | _ =>
+      throw <| IO.userError "usage: extract_ranges --util-module NAME FILE.lean [FILE.lean ...]"
   initSearchPath (← findSysroot)
   -- We PARSE source (not just replay oleans), so the imported notation/parser
   -- extensions must be live: `enableInitializersExecution` runs module

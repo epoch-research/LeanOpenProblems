@@ -102,9 +102,9 @@ def test_manifest_answer_form_census() -> None:
     # re-checked per member in tests/test_erdos_isolation.py.)
     forms = Counter(r.extra["answer_form"] for r in load_manifest(ERDOS_DIR) if r.excluded is None)
     assert forms == {
-        None: 88,
+        None: 87,
         "lhs_sorry": 52,
-        "lhs_true": 1,
+        "lhs_true": 2,
     }
 
 
