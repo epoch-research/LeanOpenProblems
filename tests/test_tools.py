@@ -29,13 +29,18 @@ def test_user_prompt_mentions_lean_and_pypantograph() -> None:
 
 
 def test_user_prompt_explains_disproof_convention() -> None:
-    # The agent must know it can disprove, and how: the `foo.disproof` naming
-    # convention and that the disproof type is `¬` of the verbatim statement
-    # (the verifier kernel-checks it against `negateExpr`, which is now plain `¬`).
+    # Under the fill-one-sorry contract (comparator-migration-plan.md §4) the
+    # agent must know the file already states both the conjecture and its
+    # `.disproof` negation, that it fills exactly one `sorry`, and that a
+    # disproof's proof must not reference the original theorem.
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
     assert "disprove" in rendered.lower()
-    assert "foo.disproof" in rendered
-    assert "¬" in rendered
+    assert ".disproof" in rendered
+    assert "sorry" in rendered
+    # The old negateExpr contract must be gone -- the agent keeps the file's own
+    # type_of% line rather than restating a negation.
+    assert "negateExpr" not in rendered
+    assert "prepending" not in rendered
 
 
 def test_user_prompt_mentions_prove_or_disprove() -> None:

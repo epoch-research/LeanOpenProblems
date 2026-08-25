@@ -36,7 +36,7 @@ from inspect_ai.util import sandbox, store
 import apn
 from apn.dataset import OEIS_DIR, fc_commit, load_subset, oeis_dataset
 from apn.layout import ENTRY_PATH
-from apn.task import COMPOSE_FILES_DIR, IMAGE_REPOSITORY, get_identifier_for_image
+from apn.task import SANDBOX_FILES_DIR, IMAGE_REPOSITORY, get_identifier_for_image
 from apn.tools import bash
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -65,7 +65,7 @@ services:
     mem_limit: 10g
     network_mode: none
 """
-    path = COMPOSE_FILES_DIR / "summarize" / "compose.yaml"
+    path = SANDBOX_FILES_DIR / "summarize" / "compose.yaml"
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists() or path.read_text() != content:
         path.write_text(content)

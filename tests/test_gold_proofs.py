@@ -5,43 +5,40 @@ The repo vendors the AlphaProof Nexus paper's solved proofs under
 conjecture in the ``tsoukalas_proved_38`` subset (committed copies of the upstream
 ``reference_sources/.../APNOutputs/OEIS`` files, which are gitignored and absent
 in CI; see that dir's README). This test runs each of them through the *real*
-:class:`apn.checker.SandboxSafeVerify` against the live ``scorer`` sandbox -- the
-exact scoring path an eval uses -- and asserts the verdict is accepted. For each
-conjecture:
+:class:`apn.checker.SandboxComparator` against the live ``comparator`` sandbox --
+the exact scoring path an eval uses -- and asserts the verdict is accepted. For
+each conjecture:
 
-* **target** = our committed ``apn/data/oeis/Isolated/<stem>.lean`` spec. This is
+* **spec** = our committed ``apn/data/oeis/Isolated/<stem>.lean`` spec. This is
   the dataset's single source for ``metadata["sketch"]``, i.e. precisely the text
-  the scorer compiles as the trusted target at eval time (a leading license
-  comment never reaches the olean, so reading the file directly is verification-
-  equivalent to going through the dataset).
+  the checker stages as ``run/Challenge.lean`` at eval time (a leading license
+  comment never reaches the export, so reading the file directly is
+  verification-equivalent to going through the dataset).
 * **submission** = the gold proof file, packed as ``Submission/Spec.lean``, with
-  its ``target_theorem_0`` renamed to the spec's own theorem name. The paper
-  names every challenge theorem ``target_theorem_0``; our specs name it after the
-  conjecture, and ``safe_verify`` matches each target declaration against the
-  submission by *exact name*. A real agent keeps the spec's name, so the renamed
-  gold file is exactly the submission a perfect agent would produce.
+  its ``target_theorem_0`` renamed to the spec's own theorem name and the spec's
+  appended ``<target>.disproof := sorry`` declaration added (inert under a proof
+  claim -- it is not a config target and not in the target's export closure). The
+  paper names every challenge theorem ``target_theorem_0``; our specs name it
+  after the conjecture, and Comparator matches the configured target by *exact
+  name*. A real agent keeps the spec's shape, so this is exactly the submission a
+  perfect agent would produce.
 
-This is the complement of every other checker test. Those prove ``safe_verify``
-says **no** to bad proofs (a ``sorry``/custom axiom/compile failure is rejected --
+This is the complement of every other checker test. Those prove Comparator says
+**no** to bad proofs (a ``sorry``/custom axiom/build failure is rejected --
 ``test_singlefile_proof.py``, ``test_checker.py``) and that our isolated
 statements line up with the published ones (the ``test_oeis_isolation.py``
 oracle). This proves it says **yes** to the known-good proofs, end to end. It is
 the only test that catches the over-strict-checker class: an axiom-allowlist
-regression, a break in the module-name flip, a Mathlib/toolchain skew, or a
-``def``-value mismatch between our spec and the gold proof -- any of which would
-silently reject valid proofs and tank the benchmark with every rejection test
-still green.
+regression, a Mathlib/toolchain skew, or a ``def``-value mismatch between our
+spec and the gold proof -- any of which would silently reject valid proofs and
+tank the benchmark with every rejection test still green.
 
-The ``scorer`` sandbox is brought up **once for the whole module** through
+The ``comparator`` sandbox is brought up **once for the whole module** through
 Inspect's lifecycle from the production compose (``apn.task.get_compose_file``,
 which builds from ``apn/lean/Dockerfile``), exactly like
 ``tests/test_singlefile_proof.py``, and every conjecture is a parametrized async
-case that reuses it. This matters for two reasons: ``safe_verify`` materializes
-the full Mathlib environment, so each check peaks at ~20-27 GiB (see the scorer
-``mem_limit`` note in ``apn/task.py``) -- one shared sandbox runs them
-sequentially, each a fresh process that releases that footprint on exit, so they
-never stack; and a single bring-up means a single container to leak if the run is
-interrupted, instead of one per case. The fixture and cases share one
+case that reuses it -- the checker resets the workspace before each check, so a
+shared sandbox is safe for these honest proofs. The fixture and cases share one
 module-scoped event loop (pytest-asyncio ``loop_scope="module"``) -- driving
 Inspect's sandbox lifecycle on pytest-asyncio's own loop is the only safe way
 (an ``asyncio.run`` in a plain fixture spins up a second loop that its loop-bound
@@ -52,12 +49,10 @@ runs.
 from __future__ import annotations
 
 import io
-import re
 import tarfile
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import cast
 
 import pytest
 import pytest_asyncio
@@ -69,8 +64,8 @@ from inspect_ai.util._sandbox.context import (
 from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
-from apn.checker import SandboxSafeVerify
-from apn.dataset import OEIS_DIR, fc_commit
+from apn.checker import SandboxComparator
+from apn.dataset import OEIS_DIR, fc_commit, load_manifest
 from apn.task import get_compose_file
 
 REPO = Path(__file__).resolve().parent.parent
@@ -82,9 +77,12 @@ ISOLATED_DIR = REPO / "apn" / "data" / "oeis" / "Isolated"
 # Collected at import time so each conjecture is its own parametrized case.
 GOLD_STEMS = sorted(p.stem for p in GOLD_DIR.glob("*.lean"))
 
-# These gold proofs exceed the checker's resource ceilings (scorer mem_limit /
-# SafeVerify's 1800s timeout), so a perfect submission would be rejected too;
-# skipped until the ceilings are revisited.
+# Under SafeVerify these three gold proofs exceeded its resource ceilings
+# (mem_limit / 1800s timeout). Comparator's DAG-shaped export is expected to
+# remove the rebuildExpr blowup (plan §7.2), but that peak-RSS/timeout
+# re-measurement is an explicit §7 validation deliverable not yet run, so they
+# stay skipped here until it confirms the comparator mem_limit covers them --
+# at which point this set empties and they become regression guards.
 RESOURCE_BOUND_STEMS = {
     "A382590_conjecture_kth_prime_factor_is_eventually_periodic",
     "oeis_227582_conjecture_0",
@@ -109,15 +107,14 @@ def _tar_of(files: dict[str, str]) -> bytes:
 async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """Bring up the production compose and yield the live ``{name: env}`` dict.
 
-    Mirrors ``tests/test_singlefile_proof.py::_sandbox_envs``: Inspect's sandbox
-    lifecycle against ``apn.task.get_compose_file`` (which builds from
-    ``apn/lean/Dockerfile``), so the image is current by construction. The checker
-    spans the untrusted ``compile`` and trusted ``scorer`` sandboxes, so we expose
-    the whole dict.
+    Mirrors ``tests/test_singlefile_proof.py``: Inspect's sandbox lifecycle
+    against ``apn.task.get_compose_file`` (which builds from
+    ``apn/lean/Dockerfile``), so the image is current by construction. The
+    checker uses the trusted ``comparator`` sandbox, exposed here by name.
     """
     # The gold proofs are OEIS conjectures, so score against the oeis pin's image.
     compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
-    task_name = "pytest_gold_proofs_scorer"
+    task_name = "pytest_gold_proofs_comparator"
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:
         envs = await init_sandbox_environments_sample(
@@ -142,27 +139,27 @@ async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
         await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
 
 
-def _target_theorem(spec_text: str) -> str:
-    """The single target theorem's name in an isolated spec.
-
-    Every isolated spec in tsoukalas_proved_38 declares exactly one theorem (the conjecture
-    target; the cut keeps no surviving dependency lemmas for these), so this is
-    unambiguous -- and it is the name ``safe_verify`` will require the submission
-    to match."""
-    names = re.findall(r"(?m)^theorem\s+([A-Za-z0-9_.]+)", spec_text)
-    assert len(names) == 1, f"expected exactly one theorem in spec, found {names}"
-    return cast(str, names[0])
+# The target theorem's fully qualified name for each gold stem, taken from the
+# manifest (== the id for all 38, none namespaced). Built once at import.
+_DECL_NAME = {r.id: r.decl_name for r in load_manifest(OEIS_DIR)}
 
 
-def _gold_submission(stem: str, theorem: str) -> str:
-    """The gold proof file for ``stem`` with its target theorem renamed to match
-    our spec, ready to pack as ``Submission/Spec.lean``."""
+def _gold_submission(stem: str, decl: str) -> str:
+    """The gold proof file for ``stem`` as ``Submission/Spec.lean``: its
+    ``target_theorem_0`` renamed to the spec's target name, and the spec's
+    appended ``<decl>.disproof := sorry`` declaration added.
+
+    Under a proof claim Comparator exports only ``<decl>``'s closure, so the
+    disproof declaration's ``sorry`` is inert (not a config target, not
+    reachable from the proved theorem); it is present only so the submission is
+    shape-compatible with the committed spec a real agent edits."""
     gold = (GOLD_DIR / f"{stem}.lean").read_text()
     assert gold.count("target_theorem_0") == 1, (
         f"{stem}: expected exactly one 'target_theorem_0' to rename, "
         f"found {gold.count('target_theorem_0')}"
     )
-    return gold.replace("target_theorem_0", theorem)
+    renamed = gold.replace("target_theorem_0", decl)
+    return renamed.rstrip() + f"\n\ntheorem {decl}.disproof : ¬ (type_of% @{decl}) := sorry\n"
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
@@ -199,14 +196,15 @@ async def test_gold_proof_verifies(
     sandbox_envs: dict[str, SandboxEnvironment],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Each published gold proof is accepted by safe_verify against our spec."""
-    monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: sandbox_envs[name])
-    target = (ISOLATED_DIR / f"{stem}.lean").read_text()
-    submission = _gold_submission(stem, _target_theorem(target))
-    outcome = await SandboxSafeVerify(sandbox_name="scorer").check(
-        target, _tar_of({"Spec.lean": submission})
+    """Each published gold proof is accepted by Comparator against our spec."""
+    monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: sandbox_envs["comparator"])
+    spec = (ISOLATED_DIR / f"{stem}.lean").read_text()
+    decl = _DECL_NAME[stem]
+    submission = _gold_submission(stem, decl)
+    outcome = await SandboxComparator().check(
+        spec, _tar_of({"Spec.lean": submission}), decl=decl, claim="proof"
     )
     assert outcome.ok, (
         f"gold proof {stem!r} was rejected at stage={outcome.stage!r}:\n"
-        f"{outcome.detail[:1500]}"
+        f"{outcome.detail[-2000:]}"
     )
