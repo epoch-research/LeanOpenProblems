@@ -43,6 +43,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import pytest
+import pytest_asyncio
 from inspect_ai.util import SandboxEnvironment
 from inspect_ai.util._sandbox.context import (
     cleanup_sandbox_environments_sample,
@@ -90,8 +91,7 @@ async def _comparator_env() -> AsyncIterator[SandboxEnvironment]:
 
     Uses Inspect's sandbox lifecycle against ``apn.task.get_compose_file`` (which
     builds from ``apn/lean/Dockerfile``), so the image is current by
-    construction. Per-test bring-up/tear-down isolates the read-only + tmpfs
-    workspace between cases; the docker cache keeps repeat runs cheap.
+    construction.
     """
     # Dataset-agnostic suite: any dataset's image works, so use the oeis pin.
     compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
@@ -120,7 +120,24 @@ async def _comparator_env() -> AsyncIterator[SandboxEnvironment]:
         await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
 
 
+@pytest_asyncio.fixture(loop_scope="module", scope="module")
+async def comparator_env() -> AsyncIterator[SandboxEnvironment]:
+    """The live ``comparator`` env, brought up **once** for the whole module.
+
+    Every case here is honest, and ``SandboxComparator.check`` resets the
+    workspace before each check, so a shared sandbox is safe -- and it builds
+    the image once instead of per test, shrinking the buildkit flake surface
+    (mirrors ``tests/test_gold_proofs.py``). The fixture and the cases share one
+    module-scoped event loop (pytest-asyncio ``loop_scope="module"``); driving
+    Inspect's sandbox lifecycle on pytest-asyncio's own loop is the only safe
+    way (an ``asyncio.run`` in a plain fixture spins up a second loop its
+    loop-bound globals deadlock against)."""
+    async with _comparator_env() as env:
+        yield env
+
+
 async def _check(
+    env: SandboxEnvironment,
     monkeypatch: pytest.MonkeyPatch,
     spec: str,
     submission: dict[str, str],
@@ -128,25 +145,30 @@ async def _check(
     decl: str = "tgt",
     claim: Claim = "proof",
 ) -> CheckOutcome:
-    """Run the real checker against a freshly built comparator sandbox."""
-    async with _comparator_env() as env:
-        monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
-        return await SandboxComparator().check(spec, _tar_of(submission), decl=decl, claim=claim)
+    """Run the real checker against the shared comparator sandbox."""
+    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
+    return await SandboxComparator().check(spec, _tar_of(submission), decl=decl, claim=claim)
 
 
 # --------------------------------------------------------------------------- #
 # Tests.                                                                        #
 # --------------------------------------------------------------------------- #
-async def test_single_file_proof_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio(loop_scope="module")
+async def test_single_file_proof_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
     spec = _spec("1 + 1 = 2")
     submission = {"Spec.lean": _spec("1 + 1 = 2").replace(
         "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
     )}
-    outcome = await _check(monkeypatch, spec, submission)
+    outcome = await _check(comparator_env, monkeypatch, spec, submission)
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
-async def test_single_file_disproof_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio(loop_scope="module")
+async def test_single_file_disproof_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # A false conjecture: the agent fills the .disproof sorry and declares the
     # disproof claim. The kept `tgt := sorry` is inert (not a config target and
     # not in tgt.disproof's closure).
@@ -155,11 +177,14 @@ async def test_single_file_disproof_is_accepted(monkeypatch: pytest.MonkeyPatch)
         "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry",
         "theorem tgt.disproof : ¬ (type_of% @tgt) := by norm_num",
     )}
-    outcome = await _check(monkeypatch, spec, submission, claim="disproof")
+    outcome = await _check(comparator_env, monkeypatch, spec, submission, claim="disproof")
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
-async def test_helper_import_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio(loop_scope="module")
+async def test_helper_import_is_rejected(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # The single-file guard. Even an *honest* helper is unusable: only Spec.lean
     # becomes run/Solution.lean, `Submission` is not a registered Lake library,
     # so `import Submission.Helpers.Aux` does not resolve and the solution build
@@ -175,13 +200,14 @@ async def test_helper_import_is_rejected(monkeypatch: pytest.MonkeyPatch) -> Non
         ),
         "Helpers/Aux.lean": _IMPORT + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
     }
-    outcome = await _check(monkeypatch, spec, submission)
+    outcome = await _check(comparator_env, monkeypatch, spec, submission)
     assert not outcome.ok, f"a helper import must be rejected:\n{outcome.detail[-1500:]}"
     assert outcome.stage == "comparator"
 
 
+@pytest.mark.asyncio(loop_scope="module")
 async def test_pattern_matching_def_in_entry_is_accepted(
-    monkeypatch: pytest.MonkeyPatch,
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # The submission reproduces a pattern-matching def verbatim and proves the
     # theorem. Comparator builds Challenge and Solution as different modules by
@@ -193,21 +219,27 @@ async def test_pattern_matching_def_in_entry_is_accepted(
         "theorem tgt : parity 0 = true := by sorry",
         "theorem tgt : parity 0 = true := by decide",
     )}
-    outcome = await _check(monkeypatch, spec, submission)
+    outcome = await _check(comparator_env, monkeypatch, spec, submission)
     assert outcome.ok, (
         f"pattern-matching def proof should match, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
     )
 
 
-async def test_missing_entry_module_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio(loop_scope="module")
+async def test_missing_entry_module_is_rejected(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # A submission whose tar omits Spec.lean: rejected host-side as a verdict.
-    outcome = await _check(monkeypatch, _spec("1 + 1 = 2"),
+    outcome = await _check(comparator_env, monkeypatch, _spec("1 + 1 = 2"),
                            {"Other.lean": _IMPORT + "theorem aux : True := trivial\n"})
     assert not outcome.ok
     assert outcome.stage == "entry_missing"
 
 
-async def test_empty_submission_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    outcome = await _check(monkeypatch, _spec("1 + 1 = 2"), {})
+@pytest.mark.asyncio(loop_scope="module")
+async def test_empty_submission_is_rejected(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    outcome = await _check(comparator_env, monkeypatch, _spec("1 + 1 = 2"), {})
     assert not outcome.ok
     assert outcome.stage == "entry_missing"
