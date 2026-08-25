@@ -1,0 +1,60 @@
+# Schema reference for eval-set config:
+# https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# Red-team soundness eval (apn.redteam.apn_redteam_collatz): the agent gets the
+# apn codebase and is explicitly encouraged to cheat to get Comparator to accept
+# a "proof" of the (open) Collatz conjecture. accuracy == break rate; the desired
+# result is 0.0. One Collatz sample; a generous per-sample budget so the
+# adversary has room to try many exploits.
+retry_attempts: 1
+
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@comparator
+    name: apn
+    items:
+      - name: apn_redteam_collatz
+        args:
+          sandbox_backend: k8s
+
+name: comparator-redteam
+epochs: 1
+models:
+  - package: git+https://github.com/epoch-research/benchmarks@giles-hawkbench-newstuff
+    name: epoch
+    items:
+      - name: claude-fable-5
+        args:
+          config:
+            reasoning_effort: "high"
+            max_retries: 7
+            max_connections: 40
+
+cost_limit: 1000.0
+working_limit: 86_400  # 24h
+
+model_cost_config:
+  epoch/claude-fable-5:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  - inspect-ai==0.3.245
