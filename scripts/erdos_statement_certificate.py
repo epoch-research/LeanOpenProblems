@@ -9,8 +9,10 @@ script is the auditable link between the two: for each selected declaration it
 extracts the declaration command's source span (attribute list + statement +
 ``sorry`` body) from ``FormalConjectures/ErdosProblems/<n>.lean`` at *both*
 commits and asserts byte-equality, then summarizes which files carry residual
-(non-selected-statement) diffs. The result is recorded in
-``apn/data/erdos/NOTICE.md``; re-run this whenever either commit moves.
+(non-selected-statement) diffs. Vendor-time run: 48/48 certified; residual
+diffs in 8 files (5, 20, 23, 74, 89, 107, 184, 595), touching only
+variant/test-lemma proofs, a ``formal_proof`` URL attribute, and ``open scoped
+Classical in`` on variants. Re-run this whenever either commit moves.
 
 This is a *vendor-time* one-off, not imported at runtime and not run in CI:
 it needs a local formal-conjectures clone (pass ``--fc-repo``) containing both
