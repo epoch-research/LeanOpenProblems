@@ -16,6 +16,7 @@ from apn.dataset import (
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
+    fc_profile,
     load_subset,
     oeis_dataset,
 )
@@ -108,6 +109,7 @@ def apn_oeis(
     (the AlphaProof Nexus paper's published outcomes).
     """
     name_list = load_subset(OEIS_DIR, subset) if subset is not None else None
+    pin = fc_commit(OEIS_DIR)
 
     return Task(
         dataset=oeis_dataset(names=name_list),
@@ -115,9 +117,10 @@ def apn_oeis(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
-        sandbox=("docker", str(get_compose_file(fc_commit(OEIS_DIR), literature))),
+        sandbox=("docker", str(get_compose_file(pin, literature))),
     )
 
 
@@ -129,15 +132,17 @@ def apn_fc100open(
     agent_type: AgentType = "react",
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
+    pin = fc_commit(FC100_DIR)
     return Task(
         dataset=fc100open_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
-        sandbox=("docker", str(get_compose_file(fc_commit(FC100_DIR), literature))),
+        sandbox=("docker", str(get_compose_file(pin, literature))),
     )
 
 
@@ -162,13 +167,15 @@ def apn_erdos(
     names the same set -- the canonical replication invocation.
     """
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
+    pin = fc_commit(ERDOS_DIR)
     return Task(
         dataset=erdos_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
-        sandbox=("docker", str(get_compose_file(fc_commit(ERDOS_DIR), literature))),
+        sandbox=("docker", str(get_compose_file(pin, literature))),
     )

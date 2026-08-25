@@ -36,7 +36,7 @@ from typing import Any, cast
 import pytest
 import pytest_asyncio
 
-from apn.dataset import OEIS_DIR, SampleRow, fc_commit, load_manifest
+from apn.dataset import OEIS_DIR, SampleRow, fc_commit, fc_profile, load_manifest
 from scripts.isolation import (
     matches_name,
     planned_survivors,
@@ -85,13 +85,15 @@ async def iso_data(manifest: list[SampleRow]) -> IsoData:
     second event loop that Inspect's loop-bound globals deadlock against; sharing
     pytest-asyncio's own loop avoids that. The gates below just assert against the
     returned data, so they need no further sandbox access."""
-    async with generate_env("pytest_oeis_isolation", fc_commit(OEIS_DIR)) as env:
+    pin = fc_commit(OEIS_DIR)
+    util_module = fc_profile(pin).util_module
+    async with generate_env("pytest_oeis_isolation", pin) as env:
         source_files = sorted({r.source.rsplit("/", 1)[-1] for r in manifest})
-        src = await extract(env, [SOURCES_DIR / f for f in source_files])
+        src = await extract(env, [SOURCES_DIR / f for f in source_files], util_module)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
-        iso = await extract(env, iso_files)
+        iso = await extract(env, iso_files, util_module)
         ref_files = sorted(REF_DIR.glob("*.lean"))
-        ref = await extract(env, ref_files) if ref_files else []
+        ref = await extract(env, ref_files, util_module) if ref_files else []
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},

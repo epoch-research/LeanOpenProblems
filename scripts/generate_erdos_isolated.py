@@ -47,7 +47,7 @@ import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from apn.dataset import write_manifest
+from apn.dataset import fc_commit, fc_profile, write_manifest
 from scripts.erdos_isolation import (
     ERDOS_DIR,
     ISOLATED_DIR,
@@ -93,7 +93,7 @@ def proof_is_filled(src: bytes, filerec: dict, decl_name: str) -> bool:
     raise SystemExit(f"{decl_name}: command not found in its file record")
 
 
-def extract_sources(container: str, exe: str, jobs: int) -> dict[str, dict]:
+def extract_sources(container: str, exe: str, util_module: str, jobs: int) -> dict[str, dict]:
     """Extractor records for every vendored source file, keyed by *relative*
     path under ``Sources/`` (flat here, so relpath == basename). Extraction
     elaborates each file, so the sweep runs ``jobs`` extractor processes over
@@ -103,7 +103,9 @@ def extract_sources(container: str, exe: str, jobs: int) -> dict[str, dict]:
     chunks = [rels[i::jobs] for i in range(jobs)]
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = pool.map(
-            lambda chunk: run_extractor([SOURCES_DIR / r for r in chunk], container, exe),
+            lambda chunk: run_extractor(
+                [SOURCES_DIR / r for r in chunk], container, exe, util_module
+            ),
             [c for c in chunks if c],
         )
     prefix = host_to_container(SOURCES_DIR) + "/"
@@ -151,7 +153,9 @@ def main() -> None:
     ap.add_argument("--jobs", type=int, default=6, help="parallel extractor processes")
     args = ap.parse_args()
 
-    by_rel = extract_sources(args.container, args.exe, args.jobs)
+    by_rel = extract_sources(
+        args.container, args.exe, fc_profile(fc_commit(ERDOS_DIR)).util_module, args.jobs
+    )
 
     ISOLATED_DIR.mkdir(exist_ok=True)
     for old in ISOLATED_DIR.glob("*.lean"):

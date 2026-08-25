@@ -12,15 +12,17 @@ from apn.tools import bash, resources
 
 # The solver passes the absolute entry-module path (Submission/Spec.lean).
 PROOF_PATH = ENTRY_PATH
+# Any registered FC util module works here; the prompt renders it verbatim.
+UTIL_MODULE = "FormalConjectures.Util.ProblemImports"
 
 
 def test_user_prompt_references_path() -> None:
-    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
     assert PROOF_PATH in rendered
 
 
 def test_user_prompt_mentions_lean_and_pypantograph() -> None:
-    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
     assert "Lean 4" in rendered
     assert "pantograph" in rendered.lower()
     # Statement-integrity rule must still be present (it's the one substantive
@@ -32,14 +34,14 @@ def test_user_prompt_explains_disproof_convention() -> None:
     # The agent must know it can disprove, and how: the `foo.disproof` naming
     # convention and that the disproof type is `¬` of the verbatim statement
     # (the verifier kernel-checks it against `negateExpr`, which is now plain `¬`).
-    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
     assert "disprove" in rendered.lower()
     assert "foo.disproof" in rendered
     assert "¬" in rendered
 
 
 def test_user_prompt_mentions_prove_or_disprove() -> None:
-    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False)
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
     assert "disproof" in rendered
     assert "Settle" in rendered
 
@@ -47,17 +49,27 @@ def test_user_prompt_mentions_prove_or_disprove() -> None:
 def test_user_prompt_does_not_state_time_budget() -> None:
     # Per the tool-only design: the time budget is discoverable via the
     # `resources` tool, never stated as a number in the prompt.
-    rendered = user_prompt(PROOF_PATH, token_limit=1_000_000, literature=False)
+    rendered = user_prompt(PROOF_PATH, token_limit=1_000_000, literature=False, util_module=UTIL_MODULE)
     assert "36 hours" not in rendered
     assert "129,600" not in rendered
     assert "working time" not in rendered.lower()
 
 
+def test_user_prompt_names_the_util_module() -> None:
+    # The import-integrity rule must name the dataset pin's actual util module
+    # (it differs across FC layouts), not a hardcoded one.
+    rendered = user_prompt(
+        PROOF_PATH, token_limit=None, literature=False, util_module="FormalConjecturesUtil"
+    )
+    assert "`FormalConjecturesUtil` import" in rendered
+    assert "FormalConjectures.Util.ProblemImports" not in rendered
+
+
 def test_user_prompt_literature_note_gated() -> None:
     # The /corpus note is included only on literature runs, so a closed-book
     # agent (whose image has no /corpus) is never told about a corpus it lacks.
-    assert "/corpus" not in user_prompt(PROOF_PATH, token_limit=None, literature=False)
-    assert "/corpus" in user_prompt(PROOF_PATH, token_limit=None, literature=True)
+    assert "/corpus" not in user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
+    assert "/corpus" in user_prompt(PROOF_PATH, token_limit=None, literature=True, util_module=UTIL_MODULE)
 
 
 def _exec_result(returncode: int, stdout: str = "", stderr: str = "") -> ExecResult[str]:

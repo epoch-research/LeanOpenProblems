@@ -45,7 +45,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from apn.dataset import load_manifest
+from apn.dataset import fc_commit, fc_profile, load_manifest
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     DEV_EXE,
@@ -70,7 +70,12 @@ def main() -> None:
     rows = load_manifest(OEIS_DIR)
     source_files = sorted({r.source for r in rows})
     print(f"Extracting decl ranges from {len(source_files)} source files...", flush=True)
-    ranges = run_extractor([OEIS_DIR / s for s in source_files], args.container, args.exe)
+    ranges = run_extractor(
+        [OEIS_DIR / s for s in source_files],
+        args.container,
+        args.exe,
+        fc_profile(fc_commit(OEIS_DIR)).util_module,
+    )
     by_file = {fr["file"].rsplit("/", 1)[-1]: fr for fr in ranges}
 
     ISOLATED_DIR.mkdir(exist_ok=True)
