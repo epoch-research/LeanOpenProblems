@@ -215,3 +215,35 @@ async def test_disproof_false_conclusion_form_rejects(
         f"BEq match must reject it. stage={outcome.stage}\n{outcome.detail[-1200:]}"
     )
     assert outcome.stage == "comparator"
+
+
+# --------------------------------------------------------------------------- #
+# Statement depends on a sorry'd def -- the "unusual defect" class (§7.3, §6).  #
+# --------------------------------------------------------------------------- #
+async def test_statement_with_sorryd_def_rejects_faithful_solution(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When the *statement* depends on a ``def`` whose body is ``sorry``, even a
+    faithful proof pulls ``sorryAx`` into its axiom closure, and Comparator's
+    axiom walk correctly rejects it -- SafeVerify tolerated this via a
+    ``sorryAx ∉ target.axioms`` carve-out; Comparator does not. This is the
+    suspected class behind the paper's five defective formalizations (§7.3): the
+    conjecture stays scoreable but is effectively unsolvable, and the harness
+    cannot distinguish it from an agent's own ``sorry`` at check time (both are
+    an illegal ``sorryAx``). Identification belongs at vendor time (a
+    per-statement axiom scan of the statement's defs), not the scoring path;
+    this test just pins the runtime behavior so the class is documented."""
+    defs = "noncomputable def badConst : Nat := sorry"
+    spec = _IMPORT + defs + "\n" + (
+        "theorem tgt : badConst = badConst := by rfl\n"
+        "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+    )
+    # An honest, complete proof -- yet its closure reaches badConst's sorry.
+    submission = spec
+    async with _comparator_env() as env:
+        outcome = await _check(env, monkeypatch, spec, submission, claim="proof")
+    assert not outcome.ok, (
+        "a statement depending on a sorry'd def must reject (sorryAx in the "
+        f"closure), even for a faithful proof. stage={outcome.stage}\n{outcome.detail[-1200:]}"
+    )
+    assert outcome.stage == "comparator"

@@ -83,6 +83,25 @@ def test_manifest_census() -> None:
         assert (OEIS_DIR / row.statement_path).is_file(), row.id
 
 
+# The only rows whose target's fully-qualified declaration name differs from the
+# sample id: their target theorem lives inside a `namespace`, so the env name
+# carries a prefix (the checker configures Comparator with decl_name, not id).
+_DECL_NAME_OVERRIDES = {
+    "A230507_conjecture_part_ii": "OeisA230507.A230507_conjecture_part_ii",
+    "oeis_230507_verified_up_to_10_pow_6": "OeisA230507.oeis_230507_verified_up_to_10_pow_6",
+    "oeis_271099_conjecture": "A271099.oeis_271099_conjecture",
+}
+
+
+def test_decl_name_overrides_are_pinned() -> None:
+    # Pin exactly which rows carry a decl_name != id (§3.2). A dataset bump that
+    # changes namespace structure -- silently breaking target resolution -- flips
+    # this; the isolation suite's certifier confirms each decl_name against the
+    # actually-declared target in-container.
+    overrides = {r.id: r.decl_name for r in load_manifest(OEIS_DIR) if r.decl_name != r.id}
+    assert overrides == _DECL_NAME_OVERRIDES
+
+
 def test_manifest_multi_file_conjectures() -> None:
     # 3 conjectures map to more than one upstream formalization file; the
     # manifest records the unused ones so the solver can warn at run time.
