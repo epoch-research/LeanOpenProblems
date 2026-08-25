@@ -375,18 +375,35 @@ Upstream recommends putting statement material in a shared `Statement.lean`
 module imported by both sides. We do **not** adopt that workaround in v1: it
 would turn APN's single editable file into a multi-file/wrapper contract and
 would touch dataset generation, prompts, checker staging, and historical proof
-replay. Removing `private` is not an acceptable shortcut either: it changes
-declaration identities and visibility, can introduce name/instance conflicts,
-and does not address #58's non-private generated names or #59's proof-term
-drift.
+replay.
 
-This is fail-closed (faithful submissions can be rejected; invalid ones are not
-accepted). Before cutover, run the §7 corpus inventory and publish the affected
-sample ids. Keep the current single-file layout and no source rewriting. The
-eventual fix must be upstream and robust to generated-declaration drift in
-general; canonicalizing only the top-level module identity is insufficient.
-Advancing the pin can remove this limitation once Comparator implements such a
-fix, without changing APN's task format.
+**Amendment (2026-08-25).** This plan originally also rejected removing
+`private` as a shortcut. That stance was revised after the corpus census
+(`scripts/comparator_drift.py`, which pins its results): 20 of 928
+committed specs were empirically confirmed to false-reject faithful
+submissions, and 19 of those were caused solely by `private` name mangling.
+The **OEIS** generator now strips the `private` modifier at generation time
+(`scripts.isolation.strip_private` in `generate_oeis_isolated.py`), fixing
+that dataset's 14 confirmed cases. In a self-contained isolated spec, privacy
+has no semantic effect beyond name visibility/mangling; the risks called out
+originally are gated loudly rather than silently (name/instance conflicts are
+compile errors caught by the isolation suites, and the gold sweep's
+formerly-rejected `oeis_A258667_conjecture_0` proof is the fix's regression
+guard). The strip is deliberately scoped to OEIS -- the 5 erdos/fc100open
+`private` cases stay unstripped -- and does **not** address #58's
+non-`private` generated names (one confirmed instance-collision case remains);
+all remaining false-reject ids are pinned in
+`scripts.comparator_drift.CONFIRMED_REJECT_IDS`. #59's proof-term drift is
+likewise untouched.
+
+Those remaining cases are fail-closed (faithful submissions can be rejected;
+invalid ones are not accepted) and stay documented rather than worked around.
+Keep the current single-file layout; the only source rewriting is the
+mechanical OEIS isolation-time `private` strip. The eventual fix must be
+upstream and robust to generated-declaration drift in general; canonicalizing
+only the top-level module identity is insufficient. Advancing the pin can
+remove this limitation once Comparator implements such a fix, without changing
+APN's task format.
 
 ## 4. Disproofs: the one mechanism Comparator lacks
 

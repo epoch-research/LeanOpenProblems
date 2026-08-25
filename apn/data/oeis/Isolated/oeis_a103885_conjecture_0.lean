@@ -38,7 +38,7 @@ noncomputable def A103885_subsequence_real (m n : ℕ) : ℝ :=
 open BigOperators
 
 -- The indices k = 1 to 2m, used in the product
-private def product_indices (m : ℕ) : Finset ℕ :=
+def product_indices (m : ℕ) : Finset ℕ :=
   Finset.Ioc 0 (2 * m)
 
 -- The factor Product_{k=1}^{2m} (2mn + k)

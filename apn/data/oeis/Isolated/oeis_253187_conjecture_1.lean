@@ -21,18 +21,18 @@ open Nat Finset
 /--
 The $x$-th pentagonal number, $\frac{x(3x-1)}{2}$, for $x \ge 0$.
 -/
-private def pentagonal_first (x : ℕ) : ℕ := (x * (3 * x - 1)) / 2
+def pentagonal_first (x : ℕ) : ℕ := (x * (3 * x - 1)) / 2
 
 /--
 The $y$-th "second pentagonal number", $\frac{y(3y+1)}{2}$, for $y \ge 0$.
 -/
-private def pentagonal_second (y : ℕ) : ℕ := (y * (3 * y + 1)) / 2
+def pentagonal_second (y : ℕ) : ℕ := (y * (3 * y + 1)) / 2
 
 /--
 The number of $\mathbb{Z}$ indices $m$ such that $m(4m-3)=r$. This is 1 if $r$ is a
 generalized decagonal number (i.e., $16r+9$ is a perfect square), and 0 otherwise.
 -/
-private def count_generalized_decagonal_index (r : ℕ) : ℕ :=
+def count_generalized_decagonal_index (r : ℕ) : ℕ :=
   if Nat.sqrt (16 * r + 9) * Nat.sqrt (16 * r + 9) = 16 * r + 9 then 1 else 0
 
 /--

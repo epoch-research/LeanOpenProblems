@@ -41,7 +41,7 @@ open PowerSeries
 open scoped PowerSeries
 
 -- We work with formal power series over ℚ.
-private abbrev PQS := PowerSeries ℚ
+abbrev PQS := PowerSeries ℚ
 
 /--
 The generating function for A097913, viewed as a power series over ℚ.

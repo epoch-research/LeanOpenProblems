@@ -45,7 +45,7 @@ def A262781 (n : ℕ) : ℕ :=
   )
 
 /-- The set of integers $n$ for which $A262781(n)=1$. -/
-private def A262781_unit_set : Finset ℕ :=
+def A262781_unit_set : Finset ℕ :=
   {3, 5, 9, 10, 17, 20, 24, 25, 31, 36, 45, 73, 80, 101, 136, 145, 388, 649}
 
 /--

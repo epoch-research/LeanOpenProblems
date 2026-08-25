@@ -25,7 +25,7 @@ a_val 1 corresponds to A078590(2).
 a_val (n+2) corresponds to A078590(n+3).
 The definition uses standard natural number division, relying on the conjecture that the division is exact.
 -/
-private noncomputable def a_val : ℕ → ℕ
+noncomputable def a_val : ℕ → ℕ
 | 0 => 1
 | 1 => 1
 | n + 2 =>

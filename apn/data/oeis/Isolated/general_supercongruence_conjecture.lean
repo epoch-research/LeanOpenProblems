@@ -27,7 +27,7 @@ A generalized recursive definition for the coefficients of any exponential serie
 The coefficients $a_k$ satisfy $k \cdot a_k = \sum_{j=1}^k d_j \cdot a_{k-j}$.
 This is a local helper function inside `b_m_int`.
 -/
-private noncomputable def generalized_exp_coeff (d : ℕ → ℕ) : ℕ → ℕ
+noncomputable def generalized_exp_coeff (d : ℕ → ℕ) : ℕ → ℕ
 | 0 => 1
 | k' + 1 =>
   let k := k' + 1

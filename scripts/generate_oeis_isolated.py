@@ -55,6 +55,7 @@ from scripts.isolation import (
     kept_flags,
     resolve_target,
     run_extractor,
+    strip_private,
     tidy,
 )
 from scripts.oeis_isolation import OEIS_DIR, ISOLATED_DIR, SOURCES_DIR
@@ -85,12 +86,15 @@ def main() -> None:
         closure = dependency_closure(filerec, target["name"])
         flags = kept_flags(filerec, closure)
         iso = tidy(isolate((OEIS_DIR / row.source).read_bytes(), filerec, flags))
+        # Drop `private` modifiers: their module-mangled names falsely reject
+        # faithful submissions under Comparator (plan §3.3, comparator#58).
+        text = strip_private(iso.decode("utf-8"))
         # Append the derived disproof declaration under the extractor's
         # fully-qualified target name (comparator-migration-plan.md §4). The
         # OEIS manifest is not (re)written here, so a target whose environment
         # name differs from its id must already carry the matching
         # ``decl_name`` override.
-        text, decl_name = append_disproof(iso.decode("utf-8"), row.id, target["name"])
+        text, decl_name = append_disproof(text, row.id, target["name"])
         if decl_name != row.decl_name:
             raise SystemExit(
                 f"{row.id}: target declaration is {decl_name}, but the manifest "

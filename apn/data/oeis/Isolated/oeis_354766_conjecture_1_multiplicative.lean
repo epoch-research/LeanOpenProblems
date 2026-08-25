@@ -20,7 +20,7 @@ open Int Finset
 open scoped BigOperators
 
 /-- The number of integral pairs $(h, i)$ such that $h+i = a$ and $h^2+i^2 = b$. -/
-private def count_solutions_pair (a b : ℤ) : ℕ :=
+def count_solutions_pair (a b : ℤ) : ℕ :=
   let v : ℤ := 2 * b - a * a
   if v < 0 then 0
   else
@@ -31,7 +31,7 @@ private def count_solutions_pair (a b : ℤ) : ℕ :=
     else 0
 
 /-- The number of integral triples $(h, i, j)$ such that $h+i+j = x$ and $h^2+i^2+j^2 = y$. -/
-private noncomputable def count_solutions_triple (x y : ℤ) : ℕ :=
+noncomputable def count_solutions_triple (x y : ℤ) : ℕ :=
   if y < 0 then 0
   else if x * x > 3 * y then 0
   else

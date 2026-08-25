@@ -19,7 +19,7 @@ import FormalConjectures.Util.ProblemImports
 open Nat Set
 
 /-- The sum of the decimal digits of a natural number $m$. -/
-private def sum_digits_10 (m : ℕ) : ℕ := (Nat.digits 10 m).sum
+def sum_digits_10 (m : ℕ) : ℕ := (Nat.digits 10 m).sum
 
 /--
 A277223: $a(n)$ is the largest multiplier $k$ such that $m = k \cdot n$ is $n$ times the sum of its decimal digits.

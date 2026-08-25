@@ -67,6 +67,7 @@ import apn.checker as checker_mod
 from apn.checker import SandboxComparator
 from apn.dataset import OEIS_DIR, fc_commit, load_manifest
 from apn.task import get_compose_file
+from scripts.isolation import strip_private
 
 REPO = Path(__file__).resolve().parent.parent
 # Vendored, committed copies of the paper's gold proofs (see the dir's README);
@@ -89,19 +90,16 @@ RESOURCE_BOUND_STEMS = {
     "oeis_271591_conjecture_0",
 }
 
-# Known module-sensitive closure drift (comparator-migration-plan.md §3.3),
-# confirmed empirically by this very sweep: this spec has a spec-local `private`
-# declaration in the target's closure, so the `A258667` definition mangles to
-# different names in the Challenge and Solution modules and Comparator rejects a
-# *faithful* gold proof with "Const does not match between challenge and target
-# 'A258667'". This is the documented fail-closed limitation (the id is in
-# scripts.comparator_drift.CANDIDATE_IDS), not a regression, and the plan
-# deliberately ships no source rewrite for it in v1 -- so the gold sweep skips
-# it. Removing it here requires an upstream Comparator fix for generated-name
-# drift; see §3.3.
-MODULE_DRIFT_STEMS = {
-    "oeis_A258667_conjecture_0",
-}
+# Module-sensitive closure drift (comparator-migration-plan.md §3.3,
+# comparator#58): `private` declarations mangle their module name into the
+# exported closure, so Comparator falsely rejected faithful proofs (this sweep
+# caught oeis_A258667_conjecture_0 with "Const does not match between challenge
+# and target 'A258667'"). The OEIS generator now strips `private` at generation
+# (scripts.isolation.strip_private) -- semantics are unchanged, only name
+# visibility/mangling -- so no gold stem (all OEIS) drifts anymore and A258667
+# serves as the fix's regression guard. The remaining (non-gold) drift cases
+# are documented in scripts.comparator_drift.CONFIRMED_REJECT_IDS.
+MODULE_DRIFT_STEMS: set[str] = set()
 
 SKIP_STEMS = RESOURCE_BOUND_STEMS | MODULE_DRIFT_STEMS
 
@@ -162,8 +160,12 @@ _DECL_NAME = {r.id: r.decl_name for r in load_manifest(OEIS_DIR)}
 
 def _gold_submission(stem: str, decl: str) -> str:
     """The gold proof file for ``stem`` as ``Submission/Spec.lean``: its
-    ``target_theorem_0`` renamed to the spec's target name, and the spec's
-    appended ``<decl>.disproof := sorry`` declaration added.
+    ``target_theorem_0`` renamed to the spec's target name, its ``private``
+    modifiers stripped (the committed specs strip them at isolation, so a real
+    agent's submission -- an edit of the spec -- has none; the vendored gold
+    files stay verbatim per their README, so the staging transform mirrors the
+    strip), and the spec's appended ``<decl>.disproof := sorry`` declaration
+    added.
 
     Under a proof claim Comparator exports only ``<decl>``'s closure, so the
     disproof declaration's ``sorry`` is inert (not a config target, not
@@ -174,7 +176,7 @@ def _gold_submission(stem: str, decl: str) -> str:
         f"{stem}: expected exactly one 'target_theorem_0' to rename, "
         f"found {gold.count('target_theorem_0')}"
     )
-    renamed = gold.replace("target_theorem_0", decl)
+    renamed = strip_private(gold.replace("target_theorem_0", decl))
     return renamed.rstrip() + f"\n\ntheorem {decl}.disproof : ¬ (type_of% @{decl}) := sorry\n"
 
 

@@ -22,7 +22,7 @@ open Nat
 The weights for the level steps in the weighted Motzkin path model associated with A145062.
 These are the coefficients $\alpha_k$ of $x$ in the denominators of the continued fraction, $1, 0, 2, 0, 3, 0, \ldots$.
 -/
-private def b_A145062 (k : ℕ) : ℕ :=
+def b_A145062 (k : ℕ) : ℕ :=
   match k with
   | 0 => 1
   -- For $k \ge 1$, $b_k = k/2 + 1$ if $k$ is even, 0 if $k$ is odd.

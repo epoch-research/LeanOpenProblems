@@ -25,7 +25,7 @@ def A060957 (n : ℕ) : ℕ :=
   (Icc 1 n).powerset.image (fun s : Finset ℕ => s.prod id) |>.card
 
 -- Convenience definition for the set of products
-private def products (n : ℕ) : Finset ℕ :=
+def products (n : ℕ) : Finset ℕ :=
   (Icc 1 n).powerset.image (fun s : Finset ℕ => s.prod id)
 
 /--

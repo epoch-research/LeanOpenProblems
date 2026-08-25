@@ -22,7 +22,7 @@ open BigOperators Nat Int Real Asymptotics Filter
 The inner sum of the formula used in A258667:
 $$\sum_{\max(k-n+5, 0) \le j \le \min(k,4)} \binom{8-j}{j}\binom{2n-k+j-10}{k-j}$$
 -/
-private def A258667_inner_sum (n k : ℕ) : ℤ :=
+def A258667_inner_sum (n k : ℕ) : ℤ :=
   let L : ℕ := max 0 (k + 5 - n)
   let U : ℕ := min k 4
   Finset.sum (Finset.Icc L U) fun j =>

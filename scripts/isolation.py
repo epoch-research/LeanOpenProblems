@@ -339,6 +339,43 @@ def strip_comments_and_strings(text: str) -> str:
     return "".join(out)
 
 
+# The `private` visibility modifier in declaration position: optionally
+# followed by other modifiers, then a declaration keyword. Matched against the
+# comment/string-masked text, so prose mentions never count.
+_PRIVATE_MODIFIER_RE = re.compile(
+    r"\bprivate[ \t]+"
+    r"(?=(?:(?:noncomputable|unsafe|partial|nonrec)[ \t]+)*"
+    r"(?:def|abbrev|theorem|lemma|instance|structure|inductive|class|opaque|axiom)\b)"
+)
+
+
+def strip_private(text: str) -> str:
+    """Remove the ``private`` visibility modifier from every declaration.
+
+    Lean mangles a private declaration's exported name with its *module* name
+    (``_private.<Module>.0.<name>``), so under Comparator the byte-identical
+    Challenge and Solution builds elaborate to different closures and faithful
+    submissions are falsely rejected (comparator-migration-plan.md §3.3,
+    comparator#58; census in ``scripts/comparator_drift.py``). Privacy has no
+    semantic effect beyond name visibility/mangling, so isolated specs drop the
+    modifier. Currently applied by the OEIS generator only (the erdos/fc100open
+    private cases remain documented fail-closed limitations). Comment/string-
+    aware; fails loudly if any ``private`` survives in code (a shape this
+    helper does not account for, e.g. ``open private``).
+    """
+    masked = strip_comments_and_strings(text)
+    parts: list[str] = []
+    last = 0
+    for m in _PRIVATE_MODIFIER_RE.finditer(masked):
+        parts.append(text[last : m.start()])
+        last = m.end()
+    parts.append(text[last:])
+    out = "".join(parts)
+    if re.search(r"\bprivate\b", strip_comments_and_strings(out)):
+        raise ValueError("unhandled 'private' occurrence survived strip_private")
+    return out
+
+
 def split_name_components(ident: str) -> list[str]:
     """Split a Lean hierarchical identifier on dots, respecting ``«...»``
     segments (whose contents may themselves contain dots)."""
