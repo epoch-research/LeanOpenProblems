@@ -158,7 +158,7 @@ def apn_erdos(
     Thomas Bloom selected 70 Erdős problem numbers for review; 48 have
     formalized statements in formal-conjectures, and the review picked one
     representative statement per problem (see
-    ``apn/data/erdos/metadata/ERDOS_PROBLEM_STATEMENT_SELECTION.md`` and
+    ``apn/data/erdos/ERDOS_PROBLEM_STATEMENT_SELECTION.md`` and
     ``NOTICE.md``). Statement text is FC at the dataset's pin
     (``apn/data/erdos/fc_commit``) -- the exact commit the sandbox images
     bake, certified statement-identical to the review commit -- and every

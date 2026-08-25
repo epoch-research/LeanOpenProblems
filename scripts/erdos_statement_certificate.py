@@ -1,7 +1,7 @@
 # type: ignore
 """Certify the vendored Erdős pin against the Bloom-review commit.
 
-The Bloom statement selection (``apn/data/erdos/metadata/
+The Bloom statement selection (``apn/data/erdos/
 ERDOS_PROBLEM_STATEMENT_SELECTION.md``) was reviewed against FC commit
 ``56534c04`` (Lean v4.33.1), but the dataset vendors ``488aade2`` (the last FC
 commit on this harness's Lean v4.27.0 toolchain, 21 commits earlier). This
@@ -33,7 +33,7 @@ from apn.dataset import fc_commit
 
 REPO = Path(__file__).resolve().parent.parent
 ERDOS_DIR = REPO / "apn" / "data" / "erdos"
-SELECTION_DOC = ERDOS_DIR / "metadata" / "ERDOS_PROBLEM_STATEMENT_SELECTION.md"
+SELECTION_DOC = ERDOS_DIR / "ERDOS_PROBLEM_STATEMENT_SELECTION.md"
 REVIEW_COMMIT = "56534c04092446f2fd549d2865f2496924812da8"
 
 # A markdown table row of the selection doc: | <problem> | `<decl>` | <reason> |

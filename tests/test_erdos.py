@@ -37,7 +37,7 @@ _SORRY_RE = re.compile(r"\bsorry\b")
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
 _DECL_RE = re.compile(r"(?m)^(?:protected\s+)?(?:theorem|lemma)\s+([^\s:({\[⦃]+)")
 
-# The Bloom selection (metadata/ERDOS_PROBLEM_STATEMENT_SELECTION.md): the
+# The Bloom selection (apn/data/erdos/ERDOS_PROBLEM_STATEMENT_SELECTION.md):
 # selected statement's short name per problem number. 508's selection is the
 # excluded value-typed HadwigerNelsonProblem, so the *scoreable* selection --
 # the bloom_selection subset -- is the other 47.

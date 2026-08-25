@@ -9,9 +9,9 @@ universe census. Membership is *defined* by the vendored sources: every
 ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
 attribute in ``Sources/`` (the Bloom statement selection's 48
 ``FormalConjectures/ErdosProblems`` files at the pinned FC commit -- see
-``apn/data/erdos/NOTICE.md`` and ``metadata/
-ERDOS_PROBLEM_STATEMENT_SELECTION.md``) is a universe member, resolution
-status notwithstanding. Value-typed ``answer(sorry)`` members (a ``sorryAx``
+``apn/data/erdos/NOTICE.md`` and
+``ERDOS_PROBLEM_STATEMENT_SELECTION.md`` next to it) is a universe member,
+resolution status notwithstanding. Value-typed ``answer(sorry)`` members (a ``sorryAx``
 in the elaborated statement type, unscoreable by the verifier) and members
 carrying a complete in-file proof become ``excluded`` rows.
 
