@@ -1,42 +1,50 @@
 
 from __future__ import annotations
 
+import io
 import json
+import tarfile
 from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
+from pathlib import PurePosixPath
+from typing import Literal, Protocol, runtime_checkable
 
-from inspect_ai.util import OutputLimitExceededError, sandbox
+from inspect_ai.util import sandbox
 
-from apn.layout import (
-    ENTRY_PATH,
-    ENTRY_REL,
-    PROJECT,
-    SUBMISSION_DIR,
-)
+from apn.layout import ENTRY_REL, PROJECT
 
-# Paths inside the sandbox images (the scorer stage of apn/lean/Dockerfile,
-# shared by the `compile` and `scorer` sandboxes -- both use that image). The
-# Lean files live inside the lake project so `lake env lean -o` resolves imports
+# Paths inside the trusted `comparator` sandbox (the comparator stage of
+# apn/lean/Dockerfile). The challenge/solution pair is staged into the lake
+# project's `run/` scratch libs (registered in the image's lakefile.toml), and
+# the comparator binary is invoked under `lake env` so builds/exports resolve
 # against the prebuilt Mathlib + FormalConjectures oleans.
+RUN_DIR = f"{PROJECT}/run"
+CHALLENGE_PATH = f"{RUN_DIR}/Challenge.lean"
+SOLUTION_PATH = f"{RUN_DIR}/Solution.lean"
+CONFIG_PATH = f"{RUN_DIR}/config.json"
 
-# --- compile sandbox (UNTRUSTED) --------------------------------------------- #
-# The agent's tar is unpacked into SUBMISSION_DIR (= PROJECT/Submission) and the
-# entry module compiled standalone to this olean. Compiling elaborates the
-# agent's Lean, so this is where any compile-time code execution is contained.
-COMPILE_DIR = f"{PROJECT}/_apn_compile"
-COMPILE_SUBMISSION_TAR = f"{COMPILE_DIR}/submission.tar"
-COMPILE_SUBMISSION_OLEAN = f"{COMPILE_DIR}/submission.olean"
+COMPARATOR_BIN = "/opt/apn/comparator/bin/comparator"
+LEAN4EXPORT_BIN = "/opt/apn/lean4export/bin/lean4export"
+LANDRUN_BIN = "/usr/local/bin/landrun"
+RESET_SCRIPT = "/opt/apn/reset-workspace.sh"
 
-# --- scorer sandbox (TRUSTED) ------------------------------------------------ #
-# The trusted target compiles to TARGET_OLEAN; the olean produced in the compile
-# sandbox is copied in to SUBMISSION_OLEAN; safe_verify reads both and writes its
-# report to REPORT_PATH. Both oleans live under the score scratch dir (cleared
-# each call), not the lake build tree.
-SCORE_DIR = f"{PROJECT}/_apn_score"
-TARGET_OLEAN = f"{SCORE_DIR}/target.olean"
-SUBMISSION_OLEAN = f"{SCORE_DIR}/submission.olean"
-REPORT_PATH = f"{SCORE_DIR}/outcome.json"
-SAFE_VERIFY_BIN = "/opt/apn/safeverify/.lake/build/bin/safe_verify"
+# The axioms a solution's proof closure may use (comparator rejects everything
+# else, `sorryAx` and `Lean.ofReduceBool` included). Mirrored in the prompt.
+PERMITTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
+
+# Comparator's own phase marker: `safeLakeBuild` prints "Building Solution"
+# before the first byte of agent code runs. Output containing it means the
+# trusted challenge build+export completed, so any later failure is
+# attributable to the submission; a failure *without* it is ours (the
+# challenge spec, the config, or the image) and raises instead of scoring.
+_SOLUTION_PHASE_MARKER = "Building Solution"
+
+# Cap on the extracted Spec.lean member. The submission tar itself is already
+# capped by the sandbox read (MAX_READ_FILE_SIZE, 100 MiB) and tar is
+# uncompressed, so only a sparse member can claim more than the tar's size --
+# adversarial by construction, so it is folded into the entry_missing verdict.
+MAX_ENTRY_BYTES = 100 * 1024 * 1024
+
+Claim = Literal["proof", "disproof"]
 
 
 @dataclass(frozen=True)
@@ -46,223 +54,159 @@ class CheckOutcome:
     ok: bool
     stage: str
     detail: str
-    # safe_verify's ``--save`` JSON. Present only when safe_verify actually ran.
-    report: list[dict[str, Any]] | None = None
 
 
 @runtime_checkable
-class SafeVerifyChecker(Protocol):
+class ProofChecker(Protocol):
     async def check(
-        self, target: str, submission_tar: bytes
+        self, spec: str, submission_tar: bytes, decl: str, claim: Claim
     ) -> CheckOutcome:
         ...
 
 
-class SandboxSafeVerify:
-    """Compiles the submission in an untrusted sandbox, then runs ``safe_verify``
-    against the trusted target in a separate trusted sandbox."""
+def extract_entry(submission_tar: bytes) -> str | None:
+    """The submission's ``Spec.lean`` text, extracted host-side.
+
+    Exactly one member of the agent's ``Submission/`` tar is scored --
+    ``Spec.lean`` at the archive root (the tar is created with ``-C
+    Submission/ .``, so the member is named ``./Spec.lean`` or ``Spec.lean``).
+    Extraction happens here in Python (``tarfile``), never with ``tar(1)``
+    inside the trusted container: the throwaway compile container used to
+    absorb the risk of untrusted archives, and this is what replaces it.
+    Returns ``None`` for anything that does not yield the member: a malformed
+    tar, a missing/duplicated member, an oversized (sparse) member, or
+    non-UTF-8 contents.
+    """
+    try:
+        with tarfile.open(fileobj=io.BytesIO(submission_tar)) as tf:
+            hits = [
+                m
+                for m in tf.getmembers()
+                # "./Spec.lean" and "Spec.lean" normalize alike ("." collapses).
+                if m.isfile() and PurePosixPath(m.name) == PurePosixPath("Spec.lean")
+            ]
+            if len(hits) != 1 or hits[0].size > MAX_ENTRY_BYTES:
+                return None
+            extracted = tf.extractfile(hits[0])
+            if extracted is None:
+                return None
+            return extracted.read().decode("utf-8")
+    except (tarfile.TarError, UnicodeDecodeError, ValueError):
+        return None
+
+
+def comparator_config(decl: str, claim: Claim) -> str:
+    """The per-check comparator config (see its README).
+
+    The challenge is the sample's committed spec verbatim; it states both the
+    target theorem and its ``.disproof`` negation, and the claim selects which
+    one this check verifies. Nothing else varies per claim.
+    """
+    target = decl if claim == "proof" else f"{decl}.disproof"
+    return json.dumps(
+        {
+            "challenge_module": "Challenge",
+            "solution_module": "Solution",
+            "theorem_names": [target],
+            "permitted_axioms": list(PERMITTED_AXIOMS),
+        },
+        indent=2,
+    )
+
+
+class SandboxComparator:
+    """Runs Lean FRO's Comparator against the trusted ``comparator`` sandbox.
+
+    Per check (comparator-migration-plan.md §3.2): reset the sandbox's
+    workspace to the image's pristine tree, stage the sample's spec as
+    ``run/Challenge.lean`` and the agent's ``Spec.lean`` as
+    ``run/Solution.lean``, and invoke the comparator binary under ``lake env``.
+    Comparator builds+exports the challenge first (trusted), then builds the
+    solution inside a landrun (Landlock) sandbox, exports it, compares the
+    statement closures, checks the axiom closure, and kernel-replays the whole
+    solution export. Exit 0 is the only accept.
+
+    Error attribution keeps SafeVerify's reference/submission split: failures
+    before comparator prints "Building Solution" happened while only *our*
+    inputs were in play (workspace reset, challenge build/export, config) and
+    raise -- erroring the sample; failures after it are a verdict on the
+    agent's submission and score INCORRECT. A timeout of the whole exec cannot
+    be phase-attributed (the provider raises without output) and is charged to
+    the submission: the challenge phase re-elaborates one committed spec
+    against prebuilt oleans, minutes at most against a much larger budget.
+    """
 
     def __init__(
         self,
-        sandbox_name: str | None = None,
-        compile_sandbox_name: str = "compile",
-        timeout: int = 30*60,
-        allow_disproofs: bool = True,
+        sandbox_name: str | None = "comparator",
+        timeout: int = 60 * 60,
     ) -> None:
-        # The TRUSTED verify sandbox (trusted-target compile + safe_verify). Kept
-        # as ``sandbox_name`` for back-compat -- callers pass sandbox_name="scorer".
         self._sandbox_name = sandbox_name
-        # The UNTRUSTED, throwaway sandbox where the submission is unpacked and
-        # compiled to an olean. Compile-time agent code runs only here.
-        self._compile_sandbox_name = compile_sandbox_name
         self._timeout = timeout
-        self._allow_disproofs = allow_disproofs
-
-    async def _exec_reference(
-        self, cmd: list[str], sandbox_name: str | None
-    ) -> tuple[int, str]:
-        """Run a *reference-side* step (scratch bookkeeping, trusted-target compile).
-
-        Any failure is our infrastructure: a signal kill (exit >= 128) raises,
-        and a ``TimeoutError`` / ``UnicodeDecodeError`` from the provider is left
-        to propagate. The caller turns a nonzero exit into a raise too.
-        """
-        result = await sandbox(sandbox_name).exec(
-            cmd, cwd=PROJECT, timeout=self._timeout
-        )
-        output = (result.stdout + "\n" + result.stderr).strip()
-        if result.returncode >= 128:
-            raise RuntimeError(
-                f"Reference SafeVerify step {cmd[:3]} was killed "
-                f"(exit {result.returncode}). Output tail:\n{output}"
-            )
-        return result.returncode, output
-
-    async def _exec_submission(
-        self, cmd: list[str], sandbox_name: str | None
-    ) -> tuple[str, str]:
-        """Run an *agent-side* step (submission compile, safe_verify replay).
-
-        Returns ``(mode, output)`` where ``mode`` is one of ``"ok"`` (exit 0),
-        ``"exit"`` (plain nonzero), ``"resource"`` (signal kill, e.g. 137 OOM),
-        ``"timeout"``, or ``"decode"``. Failures map to a verdict, never a raise:
-        a timeout and an undecodable byte are *raised* by the sandbox provider
-        (so they are caught here at the ``.exec()`` call), while an OOM comes
-        back as a returned exit code >= 128.
-        """
-        try:
-            result = await sandbox(sandbox_name).exec(
-                cmd, cwd=PROJECT, timeout=self._timeout
-            )
-        except TimeoutError as exc:
-            return "timeout", str(exc)
-        except UnicodeDecodeError as exc:
-            return "decode", str(exc)
-        output = (result.stdout + "\n" + result.stderr).strip()
-        if result.returncode >= 128:
-            return "resource", f"killed (exit {result.returncode})\n{output}"
-        if result.returncode != 0:
-            return "exit", output
-        return "ok", output
 
     async def check(
-        self, target: str, submission_tar: bytes
+        self, spec: str, submission_tar: bytes, decl: str, claim: Claim
     ) -> CheckOutcome:
-        compile_sb = sandbox(self._compile_sandbox_name)
-        verify_sb = sandbox(self._sandbox_name)
+        sb = sandbox(self._sandbox_name)
 
-        # ============================ COMPILE PHASE ========================== #
-        # Runs in the UNTRUSTED compile sandbox. Elaborating the agent's Lean can
-        # execute arbitrary code (a compile-time `#eval`/`initialize`).
-
-        # Clear prior artifacts, then recreate the dirs
-        await self._exec_reference(
-            ["rm", "-rf", COMPILE_DIR, SUBMISSION_DIR], self._compile_sandbox_name
-        )
-        await self._exec_reference(
-            ["mkdir", "-p", COMPILE_DIR, SUBMISSION_DIR], self._compile_sandbox_name
-        )
-
-        # Unpack the agent's tar straight into SUBMISSION_DIR
-        await compile_sb.write_file(COMPILE_SUBMISSION_TAR, submission_tar)
-        mode, output = await self._exec_submission(
-            ["tar", "-xf", COMPILE_SUBMISSION_TAR, "-C", SUBMISSION_DIR],
-            self._compile_sandbox_name,
-        )
-        if mode != "ok":
-            return CheckOutcome(ok=False, stage="compile_submission", detail=output)
-
-        # The entry module must exist after unpacking
-        returncode, _ = await self._exec_reference(
-            ["test", "-f", ENTRY_PATH], self._compile_sandbox_name
-        )
-        if returncode != 0:
+        # Host-side: pull exactly Spec.lean out of the agent's tar.
+        solution = extract_entry(submission_tar)
+        if solution is None:
             return CheckOutcome(
                 ok=False,
-                stage="compile_submission",
-                detail=f"entry module missing: {ENTRY_REL} not in submission",
+                stage="entry_missing",
+                detail=f"submission tar does not contain a well-formed {ENTRY_REL}",
             )
 
-        # Compile the submission standalone to an olean.
-        mode, output = await self._exec_submission(
-            ["lake", "env", "lean", "-o", COMPILE_SUBMISSION_OLEAN, ENTRY_REL],
-            self._compile_sandbox_name,
-        )
-        if mode in ("resource", "timeout", "decode"):
-            return CheckOutcome(ok=False, stage=f"compile_submission_{mode}", detail=output)
-        if mode != "ok":
-            return CheckOutcome(ok=False, stage="compile_submission", detail=output)
+        # Trusted filesystem reset (a reference step: failure raises). It
+        # restores the pristine workspace; it does not terminate processes a
+        # prior check left behind (Inspect issue #5034).
+        reset = await sb.exec([RESET_SCRIPT], timeout=self._timeout)
+        if reset.returncode != 0:
+            raise RuntimeError(
+                f"workspace reset failed (exit {reset.returncode}):\n"
+                f"{(reset.stdout + reset.stderr)[-2000:]}"
+            )
 
-        # Read the produced olean out of the compile sandbox.
+        # Stage the check's inputs. The challenge is the committed spec
+        # verbatim -- nothing is composed at scoring time.
+        await sb.write_file(CHALLENGE_PATH, spec)
+        await sb.write_file(SOLUTION_PATH, solution)
+        await sb.write_file(CONFIG_PATH, comparator_config(decl, claim))
+
         try:
-            submission_olean = await compile_sb.read_file(
-                COMPILE_SUBMISSION_OLEAN, text=False
+            result = await sb.exec(
+                ["lake", "env", COMPARATOR_BIN, CONFIG_PATH],
+                cwd=PROJECT,
+                env={
+                    "COMPARATOR_LEAN4EXPORT": LEAN4EXPORT_BIN,
+                    "COMPARATOR_LANDRUN": LANDRUN_BIN,
+                },
+                timeout=self._timeout,
             )
-        except FileNotFoundError:
+        except TimeoutError as exc:
+            return CheckOutcome(ok=False, stage="comparator_timeout", detail=str(exc))
+        except UnicodeDecodeError as exc:
+            # Non-UTF-8 bytes in the output stream come from the submission's
+            # build (comparator's own output is clean text).
+            return CheckOutcome(ok=False, stage="comparator", detail=str(exc))
+
+        output = (result.stdout + "\n" + result.stderr).strip()
+        if result.returncode == 0:
+            return CheckOutcome(ok=True, stage="comparator", detail=output)
+
+        submission_phase = _SOLUTION_PHASE_MARKER in output
+        if not submission_phase:
+            # The challenge build/export (or the reset workspace/config) failed
+            # before any agent code ran: our infrastructure, not a verdict.
+            raise RuntimeError(
+                f"comparator failed before the solution phase "
+                f"(exit {result.returncode}):\n{output[-4000:]}"
+            )
+        if result.returncode >= 128:
             return CheckOutcome(
                 ok=False,
-                stage="compile_submission",
-                detail="submission compiled but produced no readable olean",
+                stage="comparator_resource",
+                detail=f"killed (exit {result.returncode})\n{output}",
             )
-        except OutputLimitExceededError as exc:
-            # The compile succeeded but produced an olean too large to read out of
-            # the sandbox (Inspect's MAX_READ_FILE_SIZE).
-            return CheckOutcome(
-                ok=False, stage="compile_submission_oversize", detail=str(exc)
-            )
-
-        # ============================ VERIFY PHASE =========================== #
-        # Runs in the TRUSTED scorer sandbox. We compile the trusted target spec and run
-        # safe_verify on the two oleans.
-        #
-        # Clear prior artifacts, then recreate the dirs.
-        await self._exec_reference(
-            ["rm", "-rf", SCORE_DIR, SUBMISSION_DIR], self._sandbox_name
-        )
-        await self._exec_reference(
-            ["mkdir", "-p", SCORE_DIR, SUBMISSION_DIR], self._sandbox_name
-        )
-
-        # Compile the trusted target spec *at the submission's entry
-        # path* (Submission/Spec.lean) so Lean assigns it the same module name
-        # (Submission.Spec) the submission got. Lean derives a file's
-        # module name from its path relative to the project root and bakes that
-        # name into every private / compiler-generated declaration: a
-        # pattern-matching ``def a`` emits equational lemmas that mangle to
-        # ``_private.<module>.0.a.match_1.eq_1`` (and ``.splitter`` /
-        # ``._arg_pusher``). SafeVerify matches each target declaration against the
-        # submission by *exact name*, so if the two compiled under different module
-        # names those private lemmas could never match and a faithful
-        # proof would be rejected as "declaration not found". Compiling both at
-        # Submission/Spec.lean makes the module name -- and thus every mangled
-        # private name -- identical.
-        # SafeVerify reads the two
-        # oleans by path and replays them into separate environments, so the shared
-        # module name causes no collision.
-
-        await verify_sb.write_file(ENTRY_PATH, target)
-        returncode, output = await self._exec_reference(
-            ["lake", "env", "lean", "-o", TARGET_OLEAN, ENTRY_REL], self._sandbox_name
-        )
-        if returncode != 0:
-            raise RuntimeError(f"target spec failed to compile:\n{output}")
-
-        # Copy the submission olean (built in the compile sandbox) into the scorer.
-        await verify_sb.write_file(SUBMISSION_OLEAN, submission_olean)
-
-        # safe_verify exits 0 only on the verification-passed path
-        safe_verify_cmd = ["lake", "env", SAFE_VERIFY_BIN]
-        if self._allow_disproofs:
-            safe_verify_cmd.append("--disproofs")
-        safe_verify_cmd.append("--verbose")
-        # --save makes safe_verify dump a per-declaration JSON report (kind,
-        # axioms, failure mode), written whether it accepts or rejects.
-        safe_verify_cmd += ["--save", REPORT_PATH]
-        safe_verify_cmd += [TARGET_OLEAN, SUBMISSION_OLEAN]
-        mode, output = await self._exec_submission(safe_verify_cmd, self._sandbox_name)
-        report = await self._read_report()
-        if mode in ("resource", "timeout", "decode"):
-            return CheckOutcome(
-                ok=False, stage=f"safeverify_{mode}", detail=output, report=report
-            )
-        return CheckOutcome(
-            ok=mode == "ok", stage="safeverify", detail=output, report=report
-        )
-
-    async def _read_report(self) -> list[dict[str, Any]] | None:
-        """Best-effort read of safe_verify's ``--save`` JSON from the sandbox.
-
-        safe_verify writes it whenever it runs (accept or reject), and ``check``
-        clears ``SCORE_DIR`` up front, so a present file is always this call's.
-        A missing file is not an error -- it just means no report (e.g. safe_verify was OOM-killed
-        before writing), so we return ``None``.
-        """
-        try:
-            raw = await sandbox(self._sandbox_name).read_file(REPORT_PATH)
-        except (FileNotFoundError, OutputLimitExceededError):
-            return None
-        try:
-            parsed = json.loads(raw)
-        except ValueError:
-            return None
-        return parsed if isinstance(parsed, list) else None
+        return CheckOutcome(ok=False, stage="comparator", detail=output)

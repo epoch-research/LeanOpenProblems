@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import os
 import re
 import tempfile
 from pathlib import Path
+from typing import Any, Literal
 
+import yaml
 from inspect_ai import Task, task
 
 from apn import __version__
 from apn.solver import AgentType, lean_prover
-from apn.checker import SandboxSafeVerify
+from apn.checker import SandboxComparator
 from apn.dataset import (
     ERDOS_DIR,
     FC100_DIR,
@@ -21,8 +24,37 @@ from apn.dataset import (
 )
 from apn.scorer import proof_scorer
 
-COMPOSE_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_compose"
-IMAGE_REPOSITORY = "${LEAN_OPEN_PROBLEMS_IMAGE_NAME:-leanopenproblems}"
+SANDBOX_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_sandbox"
+IMAGE_REPOSITORY_VAR = "LEAN_OPEN_PROBLEMS_IMAGE_NAME"
+IMAGE_REPOSITORY_DEFAULT = "leanopenproblems"
+# Compose interpolates ${VAR:-default} itself; the k8s values file is consumed
+# verbatim by the Helm chart, so its writer resolves the variable at write time.
+IMAGE_REPOSITORY = f"${{{IMAGE_REPOSITORY_VAR}:-{IMAGE_REPOSITORY_DEFAULT}}}"
+
+SandboxBackend = Literal["docker", "k8s"]
+
+# --------------------------------------------------------------------------- #
+# Shared sandbox constants. Both backend writers draw from these so the two    #
+# artifacts cannot drift semantically (each still states its backend's keys in #
+# that backend's native vocabulary -- there is deliberately no conversion       #
+# between them; see comparator-migration-plan.md §5).                          #
+# --------------------------------------------------------------------------- #
+AGENT_MEMORY_GIB = 10
+# Comparator holds both text exports in memory and replays the solution's
+# closure through its kernel; 16 GiB is the §7 starting point (the DAG-shaped
+# export removes SafeVerify's rebuildExpr blowup).
+COMPARATOR_MEMORY_GIB = 16
+
+# The comparator container runs a read-only rootfs; these are its only mutable
+# spots. Sizes are hard caps (docker tmpfs is RAM-backed and k8s emptyDirs are
+# evicted past sizeLimit), so an untrusted build filling them hits a bounded
+# ceiling instead of the node's disk/RAM.
+WRITABLE_MOUNTS: list[tuple[str, int]] = [
+    # (mount path, size cap in MiB)
+    ("/workspace/leanproject/.lake", 6144),  # solution/challenge build artifacts
+    ("/workspace/leanproject/run", 64),  # the staged Challenge/Solution pair
+    ("/tmp", 2048),
+]
 
 
 def _docker_tag_component(value: str) -> str:
@@ -36,62 +68,155 @@ def get_identifier_for_image(image_kind: str, fc_commit: str) -> str:
     return f"LeanOpenProblems_{image_kind}_{image_version}_fc_{fc_commit[:12]}"
 
 
-def _build_section(target: str, fc_commit: str) -> str:
-    return f"""\
-    build:
-      context: {Path(__file__).parent / "lean"}
-      target: {target}
-      args:
-        FC_COMMIT: {fc_commit}
-"""
+def _agent_image_kind(literature: bool) -> str:
+    return "agent_corpus" if literature else "agent"
+
+
+def _build_section(target: str, fc_commit: str) -> dict[str, Any]:
+    return {
+        "context": str(Path(__file__).parent / "lean"),
+        "target": target,
+        "args": {"FC_COMMIT": fc_commit},
+    }
 
 
 def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
-    agent_kind = "agent_corpus" if literature else "agent"
-    agent_tag = get_identifier_for_image(agent_kind, fc_commit)
-    scorer_tag = get_identifier_for_image("scorer", fc_commit)
-    return f"""
-services:
-  default:
-    image: {IMAGE_REPOSITORY}:{agent_tag}
-{_build_section(agent_kind, fc_commit)}    init: true
-    entrypoint: tail -f /dev/null
-    mem_limit: 10g
-    network_mode: none
-  compile:
-    image: {IMAGE_REPOSITORY}:{scorer_tag}
-{_build_section("scorer", fc_commit)}    init: true
-    entrypoint: tail -f /dev/null
-    mem_limit: 10g
-    network_mode: none
-  scorer:
-    image: {IMAGE_REPOSITORY}:{scorer_tag}
-{_build_section("scorer", fc_commit)}    init: true
-    entrypoint: tail -f /dev/null
-    mem_limit: 50g
-    network_mode: none
-"""
+    """The docker-backend sandbox config (local runs, CI tests).
+
+    Two services: the agent's workspace, and the trusted `comparator` verifier.
+    The comparator service is hardened per comparator-migration-plan.md §3.1:
+    read-only rootfs with size-capped tmpfs mounts at its only mutable spots,
+    so nothing an untrusted build writes survives outside them and the
+    per-check reset-workspace.sh restores a pristine tree.
+    """
+    agent_kind = _agent_image_kind(literature)
+    compose: dict[str, Any] = {
+        "services": {
+            "default": {
+                "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image(agent_kind, fc_commit)}",
+                "build": _build_section(agent_kind, fc_commit),
+                "init": True,
+                "entrypoint": "tail -f /dev/null",
+                "mem_limit": f"{AGENT_MEMORY_GIB}g",
+                "network_mode": "none",
+            },
+            "comparator": {
+                "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image('comparator', fc_commit)}",
+                "build": _build_section("comparator", fc_commit),
+                "init": True,
+                "entrypoint": "tail -f /dev/null",
+                "mem_limit": f"{COMPARATOR_MEMORY_GIB}g",
+                "network_mode": "none",
+                "read_only": True,
+                "volumes": [
+                    {
+                        "type": "tmpfs",
+                        "target": path,
+                        "tmpfs": {"size": size_mib * 1024 * 1024},
+                    }
+                    for path, size_mib in WRITABLE_MOUNTS
+                ],
+            },
+        }
+    }
+    return yaml.safe_dump(compose, sort_keys=False)
 
 
-def get_compose_file(fc_commit: str, literature: bool = False) -> Path:
-    # Both variants are named compose.yaml, isolated in per-(FC pin, variant)
-    # subdirs so they don't clobber each other.
-    # k8s_sandbox only treats a sandbox config as a compose file when its name *ends* in
-    # "compose.yaml"/"compose.yml" (is_docker_compose_file); anything else
-    # would be fed to the agent-env Helm chart verbatim.
+def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
+    """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
+
+    Written directly in the Helm chart's vocabulary (no compose conversion --
+    Hawk's compose path hard-fails on the hardening keys, so nothing
+    security-relevant may ride through a translation layer). Notes:
+
+    - ``runtimeClassName: CLUSTER_DEFAULT`` is the chart's magic string for
+      "do not set a runtime class": pods run under the node's default runtime
+      (runc), where landrun's Landlock syscalls exist. Without the pin the
+      chart defaults to gvisor, whose sentry does not implement Landlock --
+      and until comparator#83 lands upstream that failure is *silent*, so this
+      eval must not run under gvisor/`isolation: strict` (plan §7.6).
+    - The image repository is resolved at write time (Helm does not
+      interpolate environment variables).
+    - ``emptyDir`` volumes (node disk, evicted past sizeLimit) stand in for
+      the docker backend's tmpfs mounts.
+    """
+    repository = os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
+    agent_kind = _agent_image_kind(literature)
+
+    def resources(memory_gib: int) -> dict[str, Any]:
+        return {
+            "requests": {"memory": f"{memory_gib}Gi", "cpu": "1"},
+            "limits": {"memory": f"{memory_gib}Gi", "cpu": "4"},
+        }
+
+    values: dict[str, Any] = {
+        "services": {
+            "default": {
+                "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
+                "runtimeClassName": "CLUSTER_DEFAULT",
+                "networkIsolated": True,
+                "dnsRecord": True,
+                "resources": resources(AGENT_MEMORY_GIB),
+            },
+            "comparator": {
+                "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
+                "runtimeClassName": "CLUSTER_DEFAULT",
+                "networkIsolated": True,
+                "dnsRecord": True,
+                "resources": resources(COMPARATOR_MEMORY_GIB),
+                "securityContext": {"readOnlyRootFilesystem": True},
+                "volumes": [
+                    {
+                        "name": f"writable-{i}",
+                        "emptyDir": {"sizeLimit": f"{size_mib}Mi"},
+                    }
+                    for i, (_path, size_mib) in enumerate(WRITABLE_MOUNTS)
+                ],
+                "volumeMounts": [
+                    {"name": f"writable-{i}", "mountPath": path}
+                    for i, (path, _size_mib) in enumerate(WRITABLE_MOUNTS)
+                ],
+            },
+        }
+    }
+    return yaml.safe_dump(values, sort_keys=False)
+
+
+def get_sandbox_config(
+    fc_commit: str, literature: bool, backend: SandboxBackend
+) -> tuple[str, str]:
+    """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend.
+
+    Each backend gets its own generated artifact (``compose.yaml`` for docker,
+    ``values.yaml`` for k8s -- k8s_sandbox treats any config file NOT named
+    ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
+    per-(version, FC pin, variant) subdirs so they don't clobber each other.
+    """
     variant = "corpus" if literature else "closed-book"
-    compose_path = (
-        COMPOSE_FILES_DIR
+    directory = (
+        SANDBOX_FILES_DIR
         / _docker_tag_component(__version__)
         / f"fc_{fc_commit[:12]}"
         / variant
-        / "compose.yaml"
     )
-    compose_path.parent.mkdir(parents=True, exist_ok=True)
-    content = get_compose_file_content(fc_commit, literature)
-    if not compose_path.exists() or compose_path.read_text() != content:
-        compose_path.write_text(content)
-    return compose_path
+    directory.mkdir(parents=True, exist_ok=True)
+    if backend == "docker":
+        path = directory / "compose.yaml"
+        content = get_compose_file_content(fc_commit, literature)
+    elif backend == "k8s":
+        path = directory / "values.yaml"
+        content = get_values_file_content(fc_commit, literature)
+    else:
+        raise ValueError(f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'.")
+    if not path.exists() or path.read_text() != content:
+        path.write_text(content)
+    return (backend, str(path))
+
+
+def get_compose_file(fc_commit: str, literature: bool = False) -> Path:
+    """The docker-backend compose file (kept for the test suites, which drive
+    the docker sandbox lifecycle directly)."""
+    return Path(get_sandbox_config(fc_commit, literature, "docker")[1])
 
 
 @task
@@ -100,6 +225,7 @@ def apn_oeis(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
+    sandbox_backend: SandboxBackend = "docker",
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
 
@@ -116,8 +242,8 @@ def apn_oeis(
             literature=literature,
             agent_type=agent_type,
         ),
-        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
-        sandbox=("docker", str(get_compose_file(fc_commit(OEIS_DIR), literature))),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(fc_commit(OEIS_DIR), literature, sandbox_backend),
     )
 
 
@@ -127,6 +253,7 @@ def apn_fc100open(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
+    sandbox_backend: SandboxBackend = "docker",
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
     return Task(
@@ -136,8 +263,8 @@ def apn_fc100open(
             literature=literature,
             agent_type=agent_type,
         ),
-        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
-        sandbox=("docker", str(get_compose_file(fc_commit(FC100_DIR), literature))),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(fc_commit(FC100_DIR), literature, sandbox_backend),
     )
 
 
@@ -147,6 +274,7 @@ def apn_erdos(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
+    sandbox_backend: SandboxBackend = "docker",
 ) -> Task:
     """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763).
 
@@ -169,6 +297,6 @@ def apn_erdos(
             literature=literature,
             agent_type=agent_type,
         ),
-        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
-        sandbox=("docker", str(get_compose_file(fc_commit(ERDOS_DIR), literature))),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(fc_commit(ERDOS_DIR), literature, sandbox_backend),
     )
