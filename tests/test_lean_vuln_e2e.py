@@ -135,6 +135,18 @@ CASES: list[Case] = [
         secure_accept=False,
     ),
     Case(
+        # The disproof-claim counterpart of sorry_in_entry, and the basic
+        # soundness floor of the disproof path: submit under claim="disproof"
+        # with the .disproof theorem left as sorry. Comparator targets
+        # tgt.disproof, whose sorry pulls sorryAx into its axiom closure ->
+        # reject. (The kept `tgt := sorry` is inert -- not the config target.)
+        "sorry_in_disproof",
+        _spec("2 + 2 = 5"),
+        {"Spec.lean": _spec("2 + 2 = 5")},
+        secure_accept=False,
+        claim="disproof",
+    ),
+    Case(
         "native_decide_forbidden_axiom",
         _spec("2 + 2 = 4"),
         {"Spec.lean": _IMPORT + "theorem tgt : 2 + 2 = 4 := by native_decide\n"
