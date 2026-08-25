@@ -60,3 +60,5 @@ $n \in \{1, 2, \dots, 15, 18, 21, 24, 51, 84, 1011, 59586\}$.
 -/
 theorem oeis_A157237_sun_conjecture : ∀ n : ℕ, n > 0 → (a n = 0 ↔ n ≤ 15 ∨ n = 18 ∨ n = 21 ∨ n = 24 ∨ n = 51 ∨ n = 84 ∨ n = 1011 ∨ n = 59586) :=
 by sorry
+
+theorem oeis_A157237_sun_conjecture.disproof : ¬ (type_of% @oeis_A157237_sun_conjecture) := sorry

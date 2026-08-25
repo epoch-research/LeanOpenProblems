@@ -43,3 +43,5 @@ It is conjectured that `A282459 n > 0` for all `n > 52`.
 -/
 theorem oeis_282459_conjecture_0 : ∀ n : ℕ, n > 52 → A282459 n > 0 :=
   by sorry
+
+theorem oeis_282459_conjecture_0.disproof : ¬ (type_of% @oeis_282459_conjecture_0) := sorry

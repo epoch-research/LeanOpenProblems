@@ -37,3 +37,5 @@ theorem erdos_477.variants.monomial (k : ℕ) (hk : 2 ≤ k) :
   sorry
 
 end Erdos477
+
+theorem Erdos477.erdos_477.variants.monomial.disproof : ¬ (type_of% @Erdos477.erdos_477.variants.monomial) := sorry

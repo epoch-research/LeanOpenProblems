@@ -33,3 +33,5 @@ theorem erdos_218.variants.infinite_equal_prime_gap : {n | primeGap n = primeGap
   sorry
 
 end Erdos218
+
+theorem Erdos218.erdos_218.variants.infinite_equal_prime_gap.disproof : ¬ (type_of% @Erdos218.erdos_218.variants.infinite_equal_prime_gap) := sorry

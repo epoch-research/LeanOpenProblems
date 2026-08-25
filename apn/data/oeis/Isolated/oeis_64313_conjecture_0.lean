@@ -40,3 +40,5 @@ Usually (perhaps always?) $\lfloor n^2/(4\pi) - \pi/12 \rfloor$ for a polygon of
 theorem oeis_64313_conjecture_0 (n : ℕ) (hn : n ≥ 2) :
     a n = (Int.floor ((n : ℝ)^2 / (4 * Real.pi) - Real.pi / 12)).toNat := by
   sorry
+
+theorem oeis_64313_conjecture_0.disproof : ¬ (type_of% @oeis_64313_conjecture_0) := sorry

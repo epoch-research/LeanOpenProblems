@@ -40,3 +40,5 @@ theorem erdos_349.variants.floor_3_halves_even :
   sorry
 
 end Erdos349
+
+theorem Erdos349.erdos_349.variants.floor_3_halves_even.disproof : ¬ (type_of% @Erdos349.erdos_349.variants.floor_3_halves_even) := sorry

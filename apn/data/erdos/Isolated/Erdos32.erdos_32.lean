@@ -50,3 +50,5 @@ theorem erdos_32 : ∃ A : Set ℕ,
   sorry
 
 end Erdos32
+
+theorem Erdos32.erdos_32.disproof : ¬ (type_of% @Erdos32.erdos_32) := sorry

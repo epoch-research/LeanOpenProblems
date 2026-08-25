@@ -42,3 +42,5 @@ theorem erdos_126 : ∀ (f : ℕ → ℕ), IsMaximalAddFactorsCard f →
   sorry
 
 end Erdos126
+
+theorem Erdos126.erdos_126.disproof : ¬ (type_of% @Erdos126.erdos_126) := sorry

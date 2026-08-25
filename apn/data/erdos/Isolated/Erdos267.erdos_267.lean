@@ -34,3 +34,5 @@ theorem erdos_267 : ∀ᵉ (n : ℕ → ℕ) (c > (1 : ℚ)), StrictMono n → (
   sorry
 
 end Erdos267
+
+theorem Erdos267.erdos_267.disproof : ¬ (type_of% @Erdos267.erdos_267) := sorry

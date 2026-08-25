@@ -34,3 +34,5 @@ theorem erdos_1082.parts.i : ∀ (A : Finset ℝ²) (hA_n3c : NonTrilinear (A : 
   sorry
 
 end Erdos1082
+
+theorem Erdos1082.erdos_1082.parts.i.disproof : ¬ (type_of% @Erdos1082.erdos_1082.parts.i) := sorry

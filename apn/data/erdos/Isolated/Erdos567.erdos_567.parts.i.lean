@@ -60,3 +60,5 @@ theorem erdos_567.parts.i : IsRamseySizeLinear Q3 := by
   sorry
 
 end Erdos567
+
+theorem Erdos567.erdos_567.parts.i.disproof : ¬ (type_of% @Erdos567.erdos_567.parts.i) := sorry

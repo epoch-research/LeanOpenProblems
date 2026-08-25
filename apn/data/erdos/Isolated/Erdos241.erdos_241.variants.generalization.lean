@@ -62,3 +62,5 @@ theorem erdos_241.variants.generalization (r : ℕ) (hr : r ≥ 2) :  BoseChowla
   sorry
 
 end Erdos241
+
+theorem Erdos241.erdos_241.variants.generalization.disproof : ¬ (type_of% @Erdos241.erdos_241.variants.generalization) := sorry

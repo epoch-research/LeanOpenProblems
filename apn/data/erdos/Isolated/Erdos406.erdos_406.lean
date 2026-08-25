@@ -32,3 +32,5 @@ theorem erdos_406 : { n | n.isPowerOfTwo ∧ Nat.digits 3 n ⊆ [0, 1] }.Finite 
   sorry
 
 end Erdos406
+
+theorem Erdos406.erdos_406.disproof : ¬ (type_of% @Erdos406.erdos_406) := sorry

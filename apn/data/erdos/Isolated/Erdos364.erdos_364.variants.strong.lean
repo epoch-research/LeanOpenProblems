@@ -38,3 +38,5 @@ theorem erdos_364.variants.strong :
   sorry
 
 end Erdos364
+
+theorem Erdos364.erdos_364.variants.strong.disproof : ¬ (type_of% @Erdos364.erdos_364.variants.strong) := sorry

@@ -52,3 +52,5 @@ but I will include (ii) as well for completeness, as it's a nearby mathematical 
 theorem oeis_A275678_conjecture_ii (n : ℕ) (hn : n > 0) :
   ∃ k x y z : ℕ, n = 4^k * (1 + 4 * x^2 + y^2) + z^2 ∧ x ≤ z :=
 by sorry
+
+theorem oeis_A275678_conjecture_ii.disproof : ¬ (type_of% @oeis_A275678_conjecture_ii) := sorry

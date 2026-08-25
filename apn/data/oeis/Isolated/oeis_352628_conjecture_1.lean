@@ -50,3 +50,5 @@ Conjecture: a(n) > 0 for all n = 0,1,2,.... In other words, each nonnegative int
 -/
 theorem oeis_352628_conjecture_1 (n : ℕ) : A352628 n > 0 :=
   by sorry
+
+theorem oeis_352628_conjecture_1.disproof : ¬ (type_of% @oeis_352628_conjecture_1) := sorry

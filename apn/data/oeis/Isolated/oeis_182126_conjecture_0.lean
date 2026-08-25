@@ -53,3 +53,5 @@ theorem oeis_182126_conjecture_0 :
     ∀ v₀ : ℕ,
       is_most_frequent x v₀ →
       120 ∣ v₀ := by sorry
+
+theorem oeis_182126_conjecture_0.disproof : ¬ (type_of% @oeis_182126_conjecture_0) := sorry

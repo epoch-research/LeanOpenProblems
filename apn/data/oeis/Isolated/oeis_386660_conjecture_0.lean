@@ -33,3 +33,5 @@ theorem oeis_386660_conjecture_0 :
   let f (n : ℕ) : ℝ := (a n : ℝ) ^ (1 / (n : ℝ))
   ∃ L : ℝ, Filter.Tendsto f Filter.atTop (nhds L) := by
   sorry
+
+theorem oeis_386660_conjecture_0.disproof : ¬ (type_of% @oeis_386660_conjecture_0) := sorry

@@ -39,3 +39,5 @@ Conjecture: infinitely many elements of this sequence are equal to 0.
 -/
 theorem oeis_196698_conjecture_2 : ∀ M : ℕ, ∃ n : ℕ, n > M ∧ A196698 n = 0 := by
   sorry
+
+theorem oeis_196698_conjecture_2.disproof : ¬ (type_of% @oeis_196698_conjecture_2) := sorry

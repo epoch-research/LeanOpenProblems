@@ -38,3 +38,5 @@ theorem erdos_387 : ∃ c : ℝ, 0 < c ∧ ∀ n k : ℕ, 1 ≤ k → k < n →
   sorry
 
 end Erdos387
+
+theorem Erdos387.erdos_387.disproof : ¬ (type_of% @Erdos387.erdos_387) := sorry

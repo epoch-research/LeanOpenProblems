@@ -44,3 +44,5 @@ theorem erdos_944.variants.dirac_conjecture.k_eq_four :
   sorry
 
   end Erdos944
+
+theorem Erdos944.erdos_944.variants.dirac_conjecture.k_eq_four.disproof : ¬ (type_of% @Erdos944.erdos_944.variants.dirac_conjecture.k_eq_four) := sorry

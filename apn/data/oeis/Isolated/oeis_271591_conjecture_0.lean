@@ -61,3 +61,5 @@ theorem oeis_271591_conjecture_0 :
   (∀ n L, is_maximal_run 0 n L → (L = 4 ∨ L = 5)) ∧
   (∀ n L, is_maximal_run 1 n L → (L = 3 ∨ L = 4)) :=
 by sorry
+
+theorem oeis_271591_conjecture_0.disproof : ¬ (type_of% @oeis_271591_conjecture_0) := sorry

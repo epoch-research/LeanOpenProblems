@@ -31,3 +31,5 @@ theorem erdos_376 : { (n : ℕ) | n.centralBinom.Coprime 105 }.Infinite := by
   sorry
 
 end Erdos376
+
+theorem Erdos376.erdos_376.disproof : ¬ (type_of% @Erdos376.erdos_376) := sorry

@@ -33,3 +33,5 @@ theorem erdos_288.variants.k_intervals : ∀ k, Set.Finite { I : Fin k → ℕ+ 
   sorry
 
 end Erdos288
+
+theorem Erdos288.erdos_288.variants.k_intervals.disproof : ¬ (type_of% @Erdos288.erdos_288.variants.k_intervals) := sorry

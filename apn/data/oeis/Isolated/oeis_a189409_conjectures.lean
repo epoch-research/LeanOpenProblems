@@ -34,3 +34,5 @@ and that there are infinitely many primes in this sequence.
 theorem oeis_a189409_conjectures :
   (∀ (n : ℕ), Squarefree (a n)) ∧ Set.Infinite {n : ℕ | Nat.Prime (a n)} :=
 by sorry
+
+theorem oeis_a189409_conjectures.disproof : ¬ (type_of% @oeis_a189409_conjectures) := sorry

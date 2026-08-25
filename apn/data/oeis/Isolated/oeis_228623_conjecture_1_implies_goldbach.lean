@@ -51,3 +51,5 @@ theorem oeis_228623_conjecture_1_implies_goldbach :
   (∀ n : ℕ, n > 120 → Odd n → A228623 n ≠ 0) →
   (∀ k : ℕ, k > 0 → ∃ p q : ℕ, Nat.Prime p ∧ Nat.Prime q ∧ 4 * k + 2 = p + q) := by
   sorry
+
+theorem oeis_228623_conjecture_1_implies_goldbach.disproof : ¬ (type_of% @oeis_228623_conjecture_1_implies_goldbach) := sorry

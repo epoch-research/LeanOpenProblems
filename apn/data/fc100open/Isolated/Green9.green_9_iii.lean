@@ -46,3 +46,5 @@ theorem green_9_iii :
 -- TODO(jeangud): Add some additional bounds from the literature.
 
 end Green9
+
+theorem Green9.green_9_iii.disproof : ¬ (type_of% @Green9.green_9_iii) := sorry

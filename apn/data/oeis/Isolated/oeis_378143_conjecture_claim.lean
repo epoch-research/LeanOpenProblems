@@ -34,3 +34,5 @@ theorem oeis_378143_conjecture_claim :
     Nat.Prime (10 ^ (2 ^ n) + 1) →
       Nat.Prime (4 ^ (2 ^ n) + 1) ∨ Nat.Prime (6 ^ (2 ^ n) + 1) :=
   by sorry
+
+theorem oeis_378143_conjecture_claim.disproof : ¬ (type_of% @oeis_378143_conjecture_claim) := sorry

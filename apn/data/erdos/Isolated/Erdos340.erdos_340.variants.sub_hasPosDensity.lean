@@ -69,3 +69,5 @@ theorem erdos_340.variants.sub_hasPosDensity :
   sorry
 
 end Erdos340
+
+theorem Erdos340.erdos_340.variants.sub_hasPosDensity.disproof : ¬ (type_of% @Erdos340.erdos_340.variants.sub_hasPosDensity) := sorry

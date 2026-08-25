@@ -33,3 +33,5 @@ Equivalently $p^3$ divides $2^{p-1}-1$, but no such prime $p$ is known. - Thomas
 theorem oeis_2326_conjecture_0 (p : ℕ) (hp_prime : p.Prime) (hp_odd : p ≠ 2) :
   a ((p^3 - 1) / 2) = p * a ((p^2 - 1) / 2) := by
   sorry
+
+theorem oeis_2326_conjecture_0.disproof : ¬ (type_of% @oeis_2326_conjecture_0) := sorry

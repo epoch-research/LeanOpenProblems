@@ -35,3 +35,5 @@ theorem erdos_940.variants.three_cubes :
   sorry
 
 end Erdos940
+
+theorem Erdos940.erdos_940.variants.three_cubes.disproof : ¬ (type_of% @Erdos940.erdos_940.variants.three_cubes) := sorry

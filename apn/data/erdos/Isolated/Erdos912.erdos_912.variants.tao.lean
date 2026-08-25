@@ -40,3 +40,5 @@ theorem erdos_912.variants.tao :
   sorry
 
 end Erdos912
+
+theorem Erdos912.erdos_912.variants.tao.disproof : ¬ (type_of% @Erdos912.erdos_912.variants.tao) := sorry

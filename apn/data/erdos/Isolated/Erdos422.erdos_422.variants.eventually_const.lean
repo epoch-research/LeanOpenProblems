@@ -47,3 +47,5 @@ theorem erdos_422.variants.eventually_const : EventuallyConst f atTop := by
   sorry
 
 end Erdos422
+
+theorem Erdos422.erdos_422.variants.eventually_const.disproof : ¬ (type_of% @Erdos422.erdos_422.variants.eventually_const) := sorry

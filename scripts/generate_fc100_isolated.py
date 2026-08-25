@@ -60,6 +60,7 @@ from scripts.fc_statements import (
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     BAKED_EXE,
+    append_disproof,
     dependency_closure,
     host_to_container,
     isolate,
@@ -180,6 +181,11 @@ def main() -> None:
             rewritten.append(name)
         text, n = strip_category_attrs(text)
         n_category += n
+        # Append the derived disproof declaration (plan §4); this subset's ids
+        # are the fully-qualified names, so no decl_name override can arise.
+        text, decl_name = append_disproof(text, name, target["name"])
+        if decl_name != name:
+            raise SystemExit(f"{name}: target declaration is {decl_name}, not the id")
         (ISOLATED_DIR / f"{name}.lean").write_text(text)
 
     # The subset's census: 46 propositional answer(sorry) ↔ members among the

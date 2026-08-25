@@ -36,3 +36,5 @@ theorem erdos_414 : ∀ᵉ  (m > 0) (n > 0), ∃ i j, h^[i] m = h^[j] n := by
   sorry
 
 end Erdos414
+
+theorem Erdos414.erdos_414.disproof : ¬ (type_of% @Erdos414.erdos_414) := sorry

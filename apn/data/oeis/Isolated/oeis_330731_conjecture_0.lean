@@ -112,3 +112,5 @@ A330731 a(n) is conjectured to be normal by virtue of its construction.
 -/
 theorem oeis_330731_conjecture_0 : is_normal_A330731 := by
   sorry
+
+theorem oeis_330731_conjecture_0.disproof : ¬ (type_of% @oeis_330731_conjecture_0) := sorry

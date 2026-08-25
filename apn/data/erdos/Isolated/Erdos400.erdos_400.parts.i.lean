@@ -44,3 +44,5 @@ theorem erdos_400.parts.i :
   sorry
 
 end Erdos400
+
+theorem Erdos400.erdos_400.parts.i.disproof : ¬ (type_of% @Erdos400.erdos_400.parts.i) := sorry

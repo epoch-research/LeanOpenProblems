@@ -36,3 +36,5 @@ theorem erdos_727.variants.k_2 :
   sorry
 
 end Erdos727
+
+theorem Erdos727.erdos_727.variants.k_2.disproof : ¬ (type_of% @Erdos727.erdos_727.variants.k_2) := sorry

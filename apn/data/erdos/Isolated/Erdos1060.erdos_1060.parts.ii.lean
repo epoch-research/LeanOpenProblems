@@ -32,3 +32,5 @@ theorem erdos_1060.parts.ii :
       (fun n ↦ log n ^ C) := by sorry
 
 end Erdos1060
+
+theorem Erdos1060.erdos_1060.parts.ii.disproof : ¬ (type_of% @Erdos1060.erdos_1060.parts.ii) := sorry

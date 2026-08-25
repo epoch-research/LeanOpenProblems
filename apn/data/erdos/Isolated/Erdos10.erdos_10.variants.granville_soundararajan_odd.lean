@@ -45,3 +45,5 @@ theorem erdos_10.variants.granville_soundararajan_odd :
   sorry
 
 end Erdos10
+
+theorem Erdos10.erdos_10.variants.granville_soundararajan_odd.disproof : ¬ (type_of% @Erdos10.erdos_10.variants.granville_soundararajan_odd) := sorry

@@ -44,3 +44,5 @@ theorem erdos_891.variants.weisenberg (k : ℕ) (hk : k ≥ 2) :
   sorry
 
 end Erdos891
+
+theorem Erdos891.erdos_891.variants.weisenberg.disproof : ¬ (type_of% @Erdos891.erdos_891.variants.weisenberg) := sorry

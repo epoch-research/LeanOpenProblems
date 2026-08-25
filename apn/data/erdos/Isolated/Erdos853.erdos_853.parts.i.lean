@@ -43,3 +43,5 @@ theorem erdos_853.parts.i : atTop.Tendsto r atTop := by
   sorry
 
 end Erdos853
+
+theorem Erdos853.erdos_853.parts.i.disproof : ¬ (type_of% @Erdos853.erdos_853.parts.i) := sorry

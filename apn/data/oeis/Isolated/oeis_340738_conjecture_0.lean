@@ -89,3 +89,5 @@ Formally, the sequence of fractions $A340737(n) / A340738(n)$ converges to $e$.
 theorem oeis_340738_conjecture_0 :
   Tendsto sequence_of_fractions atTop (nhds (Real.exp 1)) :=
 by sorry
+
+theorem oeis_340738_conjecture_0.disproof : ¬ (type_of% @oeis_340738_conjecture_0) := sorry

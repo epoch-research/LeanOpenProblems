@@ -52,3 +52,5 @@ Cf. W. Kohnen (link) and my conjecture in A348829. - _Thomas Ordowski_, Jan 05 2
 theorem oeis_114362_conjecture_0 (n : ℕ) (hn_gt_one : 1 < n) (hn_odd : Odd n) :
   Irrational ((riemannZeta (2 * n : ℂ) / (riemannZeta (n : ℂ)) ^ 2).re) :=
 by sorry
+
+theorem oeis_114362_conjecture_0.disproof : ¬ (type_of% @oeis_114362_conjecture_0) := sorry

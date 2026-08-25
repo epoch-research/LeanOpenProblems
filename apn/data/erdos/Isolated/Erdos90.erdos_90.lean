@@ -59,3 +59,5 @@ theorem erdos_90 : ∃ (O : ℕ → ℝ) (hO : O =O[atTop] (fun n => 1 / (n : �
 -- TODO(firsching): add the statements from the rest of the page.
 
 end Erdos90
+
+theorem Erdos90.erdos_90.disproof : ¬ (type_of% @Erdos90.erdos_90) := sorry

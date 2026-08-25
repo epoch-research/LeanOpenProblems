@@ -45,3 +45,5 @@ theorem oeis_358684_conjecture_1 :
     a 22 = 4194189 ∧
     a 23 = 8388581 := by
   sorry
+
+theorem oeis_358684_conjecture_1.disproof : ¬ (type_of% @oeis_358684_conjecture_1) := sorry

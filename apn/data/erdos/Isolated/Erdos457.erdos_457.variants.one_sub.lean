@@ -44,3 +44,5 @@ theorem erdos_457.variants.one_sub : ∃ ε > (0 : ℝ),
   sorry
 
 end Erdos457
+
+theorem Erdos457.erdos_457.variants.one_sub.disproof : ¬ (type_of% @Erdos457.erdos_457.variants.one_sub) := sorry

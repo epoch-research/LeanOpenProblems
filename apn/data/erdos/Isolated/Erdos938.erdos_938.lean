@@ -34,3 +34,5 @@ theorem erdos_938 : {P : Finset ℕ | (P : Set ℕ).IsAPOfLength 3 ∧ ∃ k,
   sorry
 
 end Erdos938
+
+theorem Erdos938.erdos_938.disproof : ¬ (type_of% @Erdos938.erdos_938) := sorry

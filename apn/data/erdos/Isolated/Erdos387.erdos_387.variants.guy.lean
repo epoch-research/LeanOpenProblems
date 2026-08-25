@@ -38,3 +38,5 @@ theorem erdos_387.variants.guy : ∀ c : ℝ, c < 1 → ∀ᶠ n : ℕ in atTop,
   sorry
 
 end Erdos387
+
+theorem Erdos387.erdos_387.variants.guy.disproof : ¬ (type_of% @Erdos387.erdos_387.variants.guy) := sorry

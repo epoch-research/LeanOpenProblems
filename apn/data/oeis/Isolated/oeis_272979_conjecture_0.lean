@@ -79,3 +79,5 @@ by
 -- the expression `(a, b, c, d) ∈ sun_49_quadruples` correctly checks for membership of the tuple.
 -- I slightly modified the list definition I had planned to make it a list of a single tuple type,
 -- which simplifies the check.
+
+theorem oeis_272979_conjecture_0.disproof : ¬ (type_of% @oeis_272979_conjecture_0) := sorry

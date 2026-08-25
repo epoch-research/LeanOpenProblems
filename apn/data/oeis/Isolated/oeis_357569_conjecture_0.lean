@@ -27,3 +27,5 @@ def a (n : ℕ) : ℤ :=
 theorem oeis_357569_conjecture_0 (p r : ℕ) (hp : Nat.Prime p) (hp3 : p ≥ 3) (hr : r ≥ 2) :
   a (p ^ r) ≡ a (p ^ (r - 1)) [ZMOD ((p : ℤ) ^ (3 * r + 3))] :=
 by sorry
+
+theorem oeis_357569_conjecture_0.disproof : ¬ (type_of% @oeis_357569_conjecture_0) := sorry

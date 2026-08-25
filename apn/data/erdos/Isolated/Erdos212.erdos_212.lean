@@ -32,3 +32,5 @@ theorem erdos_212 :
     ∃ u : Set ℂ, Dense u ∧ u.Pairwise fun c₁ c₂ => dist c₁ c₂ ∈ Set.range Rat.cast := by sorry
 
 end Erdos212
+
+theorem Erdos212.erdos_212.disproof : ¬ (type_of% @Erdos212.erdos_212) := sorry

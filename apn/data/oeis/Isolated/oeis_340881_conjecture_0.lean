@@ -33,3 +33,5 @@ minimum period dividing 2*(p - 1).
 -/
 theorem oeis_340881_conjecture_0 (p : ℕ) (hp : Nat.Prime p) :
   ∀ (n : ℕ), n ≥ 1 → a (n + 2 * (p - 1)) % p = a n % p := by sorry
+
+theorem oeis_340881_conjecture_0.disproof : ¬ (type_of% @oeis_340881_conjecture_0) := sorry

@@ -42,3 +42,5 @@ theorem oeis_318199_conjecture_0 :
   -- We look for a segment of length 18 (i.e., 17 steps) that is strictly increasing.
   ¬ ∃ (N : ℕ) (hN : 0 < N),
     ∀ (i : ℕ), i < 17 → A318199 (N + i) < A318199 (N + i + 1) := by sorry
+
+theorem oeis_318199_conjecture_0.disproof : ¬ (type_of% @oeis_318199_conjecture_0) := sorry

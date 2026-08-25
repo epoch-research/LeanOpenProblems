@@ -65,3 +65,5 @@ theorem erdos_358.variants.prime_set_density_representation :
   sorry
 
 end Erdos358
+
+theorem Erdos358.erdos_358.variants.prime_set_density_representation.disproof : ¬ (type_of% @Erdos358.erdos_358.variants.prime_set_density_representation) := sorry

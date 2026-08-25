@@ -41,3 +41,5 @@ theorem erdos_354.parts.i : ∀ᵉ (α > 0) (β > 0), Irrational (α / β) →
   sorry
 
 end Erdos354
+
+theorem Erdos354.erdos_354.parts.i.disproof : ¬ (type_of% @Erdos354.erdos_354.parts.i) := sorry

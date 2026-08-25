@@ -35,3 +35,5 @@ theorem erdos_978.parts.iii : {n : ℕ | Squarefree (n ^ 4 + 2)}.Infinite := by
   sorry
 
 end Erdos978
+
+theorem Erdos978.erdos_978.parts.iii.disproof : ¬ (type_of% @Erdos978.erdos_978.parts.iii) := sorry

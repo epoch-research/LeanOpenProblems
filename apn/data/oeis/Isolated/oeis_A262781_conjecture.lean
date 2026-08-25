@@ -70,3 +70,5 @@ Conjecture from OEIS A262781:
 (ii) For any integer n > 4, we can write 2*n as phi(p^2) + phi(x^2) + phi(y^2) with p prime and p <= x <= y.
 -/
 theorem oeis_A262781_conjecture : oeis_A262781_conjecture_statement := by sorry
+
+theorem oeis_A262781_conjecture.disproof : ¬ (type_of% @oeis_A262781_conjecture) := sorry

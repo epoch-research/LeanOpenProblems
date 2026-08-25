@@ -36,3 +36,5 @@ theorem erdos_3 : ∀ A : Set ℕ,
 -- TODO(firsching): add the various known bounds as variants.
 
 end Erdos3
+
+theorem Erdos3.erdos_3.disproof : ¬ (type_of% @Erdos3.erdos_3) := sorry

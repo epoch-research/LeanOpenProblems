@@ -65,3 +65,5 @@ theorem erdos_340.variants._33_mem_sub :
   sorry
 
 end Erdos340
+
+theorem Erdos340.erdos_340.variants._33_mem_sub.disproof : ¬ (type_of% @Erdos340.erdos_340.variants._33_mem_sub) := sorry

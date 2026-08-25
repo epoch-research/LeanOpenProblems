@@ -32,3 +32,5 @@ A340079: It is conjectured that this is 1 iff n is 1 or a prime. See _Thomas Ord
 -/
 theorem oeis_340079_conjecture_0 (n : ℕ) : a n = 1 ↔ (n = 1 ∨ Nat.Prime n) := by
   sorry
+
+theorem oeis_340079_conjecture_0.disproof : ¬ (type_of% @oeis_340079_conjecture_0) := sorry

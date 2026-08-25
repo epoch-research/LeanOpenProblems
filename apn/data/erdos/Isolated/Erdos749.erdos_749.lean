@@ -37,3 +37,5 @@ theorem erdos_749 : ∀ ε > (0 : ℝ),
 
 -- TODO(firsching): add a "similar question" for the upper density.
 end Erdos749
+
+theorem Erdos749.erdos_749.disproof : ¬ (type_of% @Erdos749.erdos_749) := sorry

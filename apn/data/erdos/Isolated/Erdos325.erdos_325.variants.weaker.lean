@@ -42,3 +42,5 @@ theorem erdos_325.variants.weaker :
   sorry
 
 end Erdos325
+
+theorem Erdos325.erdos_325.variants.weaker.disproof : ¬ (type_of% @Erdos325.erdos_325.variants.weaker) := sorry

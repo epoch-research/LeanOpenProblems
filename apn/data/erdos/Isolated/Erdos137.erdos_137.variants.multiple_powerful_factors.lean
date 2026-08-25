@@ -40,3 +40,5 @@ theorem erdos_137.variants.multiple_powerful_factors (k : ℕ) : ∀ᶠ n in Fil
   sorry
 
 end Erdos137
+
+theorem Erdos137.erdos_137.variants.multiple_powerful_factors.disproof : ¬ (type_of% @Erdos137.erdos_137.variants.multiple_powerful_factors) := sorry

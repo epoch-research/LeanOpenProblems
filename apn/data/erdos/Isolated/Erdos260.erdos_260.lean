@@ -41,3 +41,5 @@ theorem erdos_260 :
 -- TODO: Add a proof of the theorem under the strong assumption $a_n \gg n\sqrt{\log{n}\log{\log{n}}}$
 
 end Erdos260
+
+theorem Erdos260.erdos_260.disproof : ¬ (type_of% @Erdos260.erdos_260) := sorry

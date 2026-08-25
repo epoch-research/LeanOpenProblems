@@ -35,3 +35,5 @@ theorem erdos_931.variants.exists_prime (k₁ k₂ n₁ n₂ : ℕ) (h₁ : k₂
   sorry
 
 end Erdos931
+
+theorem Erdos931.erdos_931.variants.exists_prime.disproof : ¬ (type_of% @Erdos931.erdos_931.variants.exists_prime) := sorry

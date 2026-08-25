@@ -63,3 +63,5 @@ theorem oeis_a206911_conjecture :
     3.5 < l ∧ l < 3.6 ∧
     Tendsto ratio_threes_to_twos atTop (nhds l)) := by
   sorry
+
+theorem oeis_a206911_conjecture.disproof : ¬ (type_of% @oeis_a206911_conjecture) := sorry

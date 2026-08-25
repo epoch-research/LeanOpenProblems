@@ -37,3 +37,5 @@ theorem erdos_64 :
 -- TODO(firsching): add more context
 
 end Erdos64
+
+theorem Erdos64.erdos_64.disproof : ¬ (type_of% @Erdos64.erdos_64) := sorry

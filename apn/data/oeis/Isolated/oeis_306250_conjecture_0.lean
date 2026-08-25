@@ -47,3 +47,5 @@ def A306250 (n : ℕ) : ℕ :=
 Conjecture: a(n) > 0 for any nonnegative integer n.
 -/
 theorem oeis_306250_conjecture_0 (n : ℕ) : A306250 n > 0 := by sorry
+
+theorem oeis_306250_conjecture_0.disproof : ¬ (type_of% @oeis_306250_conjecture_0) := sorry

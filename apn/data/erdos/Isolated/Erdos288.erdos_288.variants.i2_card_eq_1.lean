@@ -32,3 +32,5 @@ theorem erdos_288.variants.i2_card_eq_1 : Set.Finite { (I, n₂) : (ℕ+ × ℕ+
   sorry
 
 end Erdos288
+
+theorem Erdos288.erdos_288.variants.i2_card_eq_1.disproof : ¬ (type_of% @Erdos288.erdos_288.variants.i2_card_eq_1) := sorry

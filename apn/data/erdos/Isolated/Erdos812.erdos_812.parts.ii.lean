@@ -44,3 +44,5 @@ theorem erdos_812.parts.ii :
 --  TODO: Add Erdos Problem 165 implication when Erdos Problem 165 is formalized.
 
 end Erdos812
+
+theorem Erdos812.erdos_812.parts.ii.disproof : ¬ (type_of% @Erdos812.erdos_812.parts.ii) := sorry

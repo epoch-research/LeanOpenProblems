@@ -32,3 +32,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 theorem a084046_conjecture_0 :
   ∀ k : ℕ, a k = 0 → ∃ m : ℕ, k = (2 * m) ^ 2 :=
 by sorry
+
+theorem a084046_conjecture_0.disproof : ¬ (type_of% @a084046_conjecture_0) := sorry

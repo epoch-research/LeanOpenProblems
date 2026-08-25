@@ -32,3 +32,5 @@ theorem erdos_11 (n : ℕ) (hn : Odd n) (hn' : 1 < n) :
   sorry
 
 end Erdos11
+
+theorem Erdos11.erdos_11.disproof : ¬ (type_of% @Erdos11.erdos_11) := sorry

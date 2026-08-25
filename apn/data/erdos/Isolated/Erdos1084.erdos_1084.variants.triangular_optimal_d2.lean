@@ -52,3 +52,5 @@ theorem erdos_1084.variants.triangular_optimal_d2 : f 2 (3 * n ^ 2 + 3 * n + 1) 
   sorry
 
 end Erdos1084
+
+theorem Erdos1084.erdos_1084.variants.triangular_optimal_d2.disproof : ¬ (type_of% @Erdos1084.erdos_1084.variants.triangular_optimal_d2) := sorry

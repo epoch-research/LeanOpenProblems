@@ -32,3 +32,5 @@ theorem erdos_218.variants.le : {n | primeGap n ≤ primeGap (n + 1)}.HasDensity
   sorry
 
 end Erdos218
+
+theorem Erdos218.erdos_218.variants.le.disproof : ¬ (type_of% @Erdos218.erdos_218.variants.le) := sorry

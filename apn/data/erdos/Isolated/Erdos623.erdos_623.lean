@@ -40,3 +40,5 @@ theorem erdos_623 : ∀ (X : Type u) (hX : #X = ℵ_ ω)
 -- TODO(firsching): formalize the statement about X < ℵ_ω
 
 end Erdos623
+
+theorem Erdos623.erdos_623.disproof : ¬ (type_of% @Erdos623.erdos_623) := sorry

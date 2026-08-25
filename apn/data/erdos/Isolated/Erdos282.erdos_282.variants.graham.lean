@@ -56,3 +56,5 @@ theorem erdos_282.variants.graham {x : ℚ} (hx : x ∈ Set.Ioo 0 1) {a d : ℕ}
   sorry
 
 end Erdos282
+
+theorem Erdos282.erdos_282.variants.graham.disproof : ¬ (type_of% @Erdos282.erdos_282.variants.graham) := sorry

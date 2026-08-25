@@ -68,3 +68,5 @@ def erdos_1148_weaker_prop (n : ℕ) : Prop :=
     (z ^ 2 : ℝ) ≤ n + 2 * Real.sqrt n
 
 end Erdos1148
+
+theorem Erdos1148.erdos_1148.disproof : ¬ (type_of% @Erdos1148.erdos_1148) := sorry

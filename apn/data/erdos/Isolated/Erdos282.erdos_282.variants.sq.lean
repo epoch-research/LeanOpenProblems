@@ -55,3 +55,5 @@ theorem erdos_282.variants.sq :
   sorry
 
 end Erdos282
+
+theorem Erdos282.erdos_282.variants.sq.disproof : ¬ (type_of% @Erdos282.erdos_282.variants.sq) := sorry

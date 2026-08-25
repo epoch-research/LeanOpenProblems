@@ -44,3 +44,5 @@ theorem erdos_373.variants.suranyi :
   sorry
 
 end Erdos373
+
+theorem Erdos373.erdos_373.variants.suranyi.disproof : ¬ (type_of% @Erdos373.erdos_373.variants.suranyi) := sorry

@@ -64,3 +64,5 @@ theorem gcdCondition_iff_primePowerCondition (k : ℕ) (hk : 2 ≤ k) :
   sorry
 
 end OeisA80170
+
+theorem OeisA80170.gcdCondition_iff_primePowerCondition.disproof : ¬ (type_of% @OeisA80170.gcdCondition_iff_primePowerCondition) := sorry

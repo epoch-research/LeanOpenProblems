@@ -51,3 +51,5 @@ theorem oeis_108_conjecture_2 :
      (j₁, k₁) ≠ (j₂, k₂) →
      frac_part (catalan_reciprocal_sum j₁ k₁) ≠ frac_part (catalan_reciprocal_sum j₂ k₂)
   := by sorry
+
+theorem oeis_108_conjecture_2.disproof : ¬ (type_of% @oeis_108_conjecture_2) := sorry

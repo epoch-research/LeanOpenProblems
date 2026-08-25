@@ -37,3 +37,5 @@ def a (n : ℕ) : ℕ :=
 theorem oeis_196697_conjecture_0 :
   ∀ n : ℕ, 1 ≤ n → a n > 0 :=
 by sorry
+
+theorem oeis_196697_conjecture_0.disproof : ¬ (type_of% @oeis_196697_conjecture_0) := sorry

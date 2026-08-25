@@ -41,3 +41,5 @@ theorem erdos_242.variants.schinzel_generalization
   sorry
 
 end Erdos242
+
+theorem Erdos242.erdos_242.variants.schinzel_generalization.disproof : ¬ (type_of% @Erdos242.erdos_242.variants.schinzel_generalization) := sorry

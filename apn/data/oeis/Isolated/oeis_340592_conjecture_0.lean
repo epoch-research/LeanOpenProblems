@@ -46,3 +46,5 @@ theorem oeis_340592_conjecture_0 :
   (Nat.composite 28749 ∧ a 28749 = 0) ∧
   (∀ n : ℕ, Nat.composite n ∧ n < 28749 → a n ≠ 0) :=
 by sorry
+
+theorem oeis_340592_conjecture_0.disproof : ¬ (type_of% @oeis_340592_conjecture_0) := sorry

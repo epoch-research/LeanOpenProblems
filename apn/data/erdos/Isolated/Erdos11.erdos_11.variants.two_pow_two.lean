@@ -32,3 +32,5 @@ theorem erdos_11.variants.two_pow_two (n : ℕ) (hn : Odd n) (hn' : 1 < n) :
   sorry
 
 end Erdos11
+
+theorem Erdos11.erdos_11.variants.two_pow_two.disproof : ¬ (type_of% @Erdos11.erdos_11.variants.two_pow_two) := sorry

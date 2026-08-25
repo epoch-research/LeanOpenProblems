@@ -70,3 +70,5 @@ theorem erdos_340 (ε : ℝ) (hε : ε > 0) :
   sorry
 
 end Erdos340
+
+theorem Erdos340.erdos_340.disproof : ¬ (type_of% @Erdos340.erdos_340) := sorry

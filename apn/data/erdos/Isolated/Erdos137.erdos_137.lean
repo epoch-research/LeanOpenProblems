@@ -33,3 +33,5 @@ theorem erdos_137 : ∀ k ≥ 3, ∀ n, ¬ (∏ x ∈ Finset.Ioc n (n + k), x).P
   sorry
 
 end Erdos137
+
+theorem Erdos137.erdos_137.disproof : ¬ (type_of% @Erdos137.erdos_137) := sorry

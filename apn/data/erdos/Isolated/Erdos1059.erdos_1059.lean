@@ -48,3 +48,5 @@ def DecidableAllFactorialSubtractionsComposite (n : ℕ) : Prop :=
   ∀ d ∈ decidableFactorialsLessThanN n, (n - d).Composite
 
 end Erdos1059
+
+theorem Erdos1059.erdos_1059.disproof : ¬ (type_of% @Erdos1059.erdos_1059) := sorry

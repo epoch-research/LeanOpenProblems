@@ -39,3 +39,5 @@ theorem erdos_158 : ∀ A : Set ℕ, A.Infinite → B2 2 A →
   sorry
 
 end Erdos158
+
+theorem Erdos158.erdos_158.disproof : ¬ (type_of% @Erdos158.erdos_158) := sorry

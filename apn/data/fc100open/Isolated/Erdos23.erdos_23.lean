@@ -50,3 +50,5 @@ theorem erdos_23 :
 -- TODO: add the remaining variants/statements/comments
 
 end Erdos23
+
+theorem Erdos23.erdos_23.disproof : ¬ (type_of% @Erdos23.erdos_23) := sorry

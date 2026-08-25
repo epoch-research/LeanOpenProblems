@@ -46,3 +46,5 @@ theorem oeis_381159_conjecture_0 :
     d ≤ 2025 ∧ -- difference not exceeding 2025
     ∀ (i : Fin 150), A381159_condition (a + i.val * d)
   := by sorry
+
+theorem oeis_381159_conjecture_0.disproof : ¬ (type_of% @oeis_381159_conjecture_0) := sorry

@@ -47,3 +47,5 @@ theorem erdos_13.variants.general : ∀ r : ℕ, ∃ C : ℝ, ∀ N : ℕ,
   sorry
 
 end Erdos13
+
+theorem Erdos13.erdos_13.variants.general.disproof : ¬ (type_of% @Erdos13.erdos_13.variants.general) := sorry

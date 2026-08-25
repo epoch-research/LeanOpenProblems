@@ -41,3 +41,5 @@ theorem erdos_1074.variants.EHSNumbers_one_half : EHSNumbers.HasDensity (1 / 2) 
   sorry
 
 end Erdos1074
+
+theorem Erdos1074.erdos_1074.variants.EHSNumbers_one_half.disproof : ¬ (type_of% @Erdos1074.erdos_1074.variants.EHSNumbers_one_half) := sorry

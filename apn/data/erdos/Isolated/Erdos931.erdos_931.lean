@@ -39,3 +39,5 @@ theorem erdos_931 : ∀ᵉ (k₁ : ℕ) (k₂ ≥ 3), k₂ ≤ k₁ →
   sorry
 
 end Erdos931
+
+theorem Erdos931.erdos_931.disproof : ¬ (type_of% @Erdos931.erdos_931) := sorry

@@ -70,3 +70,5 @@ theorem erdos_509 : ∀ (f : ℂ[X]), f.Monic → f.natDegree ≠ 0 →
   sorry
 
 end Erdos509
+
+theorem Erdos509.erdos_509.disproof : ¬ (type_of% @Erdos509.erdos_509) := sorry

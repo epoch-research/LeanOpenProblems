@@ -53,3 +53,5 @@ theorem erdos_1095.variants.log_equivalent : (fun k ↦ log (g k)) ~[atTop] (fun
   sorry
 
 end Erdos1095
+
+theorem Erdos1095.erdos_1095.variants.log_equivalent.disproof : ¬ (type_of% @Erdos1095.erdos_1095.variants.log_equivalent) := sorry

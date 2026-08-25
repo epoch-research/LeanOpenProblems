@@ -40,3 +40,5 @@ theorem oeis_238585_conjecture_i :
   (∀ n : ℕ, n > 0 → (a n > 0 ↔ ¬ (n ∣ 6))) ∧
   (∀ n : ℕ, n > 0 → (a n = 1 ↔ n = 4 ∨ n = 5 ∨ n = 7 ∨ n = 10 ∨ n = 11 ∨ n = 12 ∨ n = 19 ∨ n = 21 ∨ n = 22 ∨ n = 31 ∨ n = 42 ∨ n = 44)) :=
 by sorry
+
+theorem oeis_238585_conjecture_i.disproof : ¬ (type_of% @oeis_238585_conjecture_i) := sorry

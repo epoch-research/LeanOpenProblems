@@ -41,3 +41,5 @@ theorem erdos_359.variants.isGoodFor_1_asymptotic (A : ℕ → ℕ) (hA : IsGood
   sorry
 
 end Erdos359
+
+theorem Erdos359.erdos_359.variants.isGoodFor_1_asymptotic.disproof : ¬ (type_of% @Erdos359.erdos_359.variants.isGoodFor_1_asymptotic) := sorry

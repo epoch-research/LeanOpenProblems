@@ -46,3 +46,5 @@ theorem erdos_510 :
 -- TODO(firsching): add the additional material
 
 end Erdos510
+
+theorem Erdos510.erdos_510.disproof : ¬ (type_of% @Erdos510.erdos_510) := sorry

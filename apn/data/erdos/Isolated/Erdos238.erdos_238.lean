@@ -37,3 +37,5 @@ theorem erdos_238 : ∀ᵉ (c₁ > 0) (c₂ > 0), ∀ᶠ (x : ℝ) in atTop, ∃
   sorry
 
 end Erdos238
+
+theorem Erdos238.erdos_238.disproof : ¬ (type_of% @Erdos238.erdos_238) := sorry

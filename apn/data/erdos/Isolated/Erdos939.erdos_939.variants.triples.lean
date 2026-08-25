@@ -45,3 +45,5 @@ theorem erdos_939.variants.triples :
   sorry
 
 end Erdos939
+
+theorem Erdos939.erdos_939.variants.triples.disproof : ¬ (type_of% @Erdos939.erdos_939.variants.triples) := sorry

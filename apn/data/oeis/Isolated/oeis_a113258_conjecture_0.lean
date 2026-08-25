@@ -32,3 +32,5 @@ such that $a(n)$ is a perfect power with base $> 1$ and exponent $> 1$?
 theorem oeis_a113258_conjecture_0 :
   ∃ (n : ℕ), 4 < n ∧ ∃ (b e : ℕ), 1 < b ∧ 1 < e ∧ a n = b ^ e := by
   sorry
+
+theorem oeis_a113258_conjecture_0.disproof : ¬ (type_of% @oeis_a113258_conjecture_0) := sorry

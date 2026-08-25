@@ -46,3 +46,5 @@ theorem crystals_components_unique (n a b c d : ℕ)
   sorry
 
 end Arxiv.«1601.03081»
+
+theorem Arxiv.«1601.03081».crystals_components_unique.disproof : ¬ (type_of% @Arxiv.«1601.03081».crystals_components_unique) := sorry

@@ -41,3 +41,5 @@ theorem erdos_243 (a : ℕ → ℕ) (ha₀ : StrictMono a)
   sorry
 
 end Erdos243
+
+theorem Erdos243.erdos_243.disproof : ¬ (type_of% @Erdos243.erdos_243) := sorry

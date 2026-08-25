@@ -35,3 +35,5 @@ theorem erdos_386.variants.forall :
     sorry
 
 end Erdos386
+
+theorem Erdos386.erdos_386.variants.forall.disproof : ¬ (type_of% @Erdos386.erdos_386.variants.forall) := sorry

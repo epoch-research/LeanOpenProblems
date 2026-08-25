@@ -36,3 +36,5 @@ theorem erdos_931.variants.additional_condition : ∀ᵉ (k₁ : ℕ) (k₂ ≥ 
   sorry
 
 end Erdos931
+
+theorem Erdos931.erdos_931.variants.additional_condition.disproof : ¬ (type_of% @Erdos931.erdos_931.variants.additional_condition) := sorry

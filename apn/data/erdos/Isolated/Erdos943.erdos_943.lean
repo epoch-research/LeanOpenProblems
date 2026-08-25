@@ -34,3 +34,5 @@ theorem erdos_943 :
   sorry
 
 end Erdos943
+
+theorem Erdos943.erdos_943.disproof : ¬ (type_of% @Erdos943.erdos_943) := sorry

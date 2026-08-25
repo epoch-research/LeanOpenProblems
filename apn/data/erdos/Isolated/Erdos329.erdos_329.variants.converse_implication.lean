@@ -50,3 +50,5 @@ theorem erdos_329.variants.converse_implication :
 /-  ## Related results and examples -/
 
 end Erdos329
+
+theorem Erdos329.erdos_329.variants.converse_implication.disproof : ¬ (type_of% @Erdos329.erdos_329.variants.converse_implication) := sorry

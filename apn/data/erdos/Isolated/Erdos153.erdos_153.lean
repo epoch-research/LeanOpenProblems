@@ -43,3 +43,5 @@ theorem erdos_153 : Tendsto f atTop atTop := by
   sorry
 
 end Erdos153
+
+theorem Erdos153.erdos_153.disproof : ¬ (type_of% @Erdos153.erdos_153) := sorry

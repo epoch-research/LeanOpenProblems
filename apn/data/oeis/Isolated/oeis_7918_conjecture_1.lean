@@ -33,3 +33,5 @@ Conjecture: if n > 1, then a(n) < n^(n^(1/n)). - _Thomas Ordowski_, Feb 23 2023
 theorem oeis_7918_conjecture_1 (n : ℕ) (h_n : 1 < n) :
     (a n : ℝ) < (n : ℝ) ^ ((n : ℝ) ^ (1 / (n : ℝ))) := by
   sorry
+
+theorem oeis_7918_conjecture_1.disproof : ¬ (type_of% @oeis_7918_conjecture_1) := sorry

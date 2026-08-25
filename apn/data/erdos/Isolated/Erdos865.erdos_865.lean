@@ -49,3 +49,5 @@ noncomputable def f (N k : ℕ) : ℕ :=
     ∃ S ⊆ A, S.card = k ∧ ∀ x ∈ S, ∀ y ∈ S, x ≠ y → x + y ∈ A}
 
 end Erdos865
+
+theorem Erdos865.erdos_865.disproof : ¬ (type_of% @Erdos865.erdos_865) := sorry

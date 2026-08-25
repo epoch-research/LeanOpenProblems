@@ -43,3 +43,5 @@ Note: Since `a n` is non-zero for $n > 0$, $p \mid a n$ iff $p$ is in the factor
 theorem oeis_a129365_conjecture_B (n p : ℕ) (hn : 0 < n) (hp : Nat.Prime p) :
   p ∣ a n ↔ p ≤ n / 3 := by
   sorry
+
+theorem oeis_a129365_conjecture_B.disproof : ¬ (type_of% @oeis_a129365_conjecture_B) := sorry

@@ -36,3 +36,5 @@ theorem erdos_234 : ∃ f : ℝ≥0 → ℝ, Continuous f ∧
   sorry
 
 end Erdos234
+
+theorem Erdos234.erdos_234.disproof : ¬ (type_of% @Erdos234.erdos_234) := sorry

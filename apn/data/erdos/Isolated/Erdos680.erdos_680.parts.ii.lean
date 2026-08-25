@@ -36,3 +36,5 @@ theorem erdos_680.parts.ii : ∀ ε > 0, ∃ C > 0,
   sorry
 
 end Erdos680
+
+theorem Erdos680.erdos_680.parts.ii.disproof : ¬ (type_of% @Erdos680.erdos_680.parts.ii) := sorry

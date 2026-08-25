@@ -49,3 +49,5 @@ def expProd (n : ℕ) : ℕ :=
   n.factorization.prod fun _ e => e
 
 end Erdos413
+
+theorem Erdos413.erdos_413.parts.i.disproof : ¬ (type_of% @Erdos413.erdos_413.parts.i) := sorry

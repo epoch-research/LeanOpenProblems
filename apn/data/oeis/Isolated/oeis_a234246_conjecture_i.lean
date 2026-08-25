@@ -41,3 +41,5 @@ theorem oeis_a234246_conjecture_i :
   (∀ n : ℕ, 0 < n → (¬ (n ∣ 6) → a n > 0)) ∧
   (∀ n : ℕ, a n = 1 ↔ n ∈ S) :=
 by sorry
+
+theorem oeis_a234246_conjecture_i.disproof : ¬ (type_of% @oeis_a234246_conjecture_i) := sorry

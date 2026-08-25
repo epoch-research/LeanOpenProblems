@@ -40,3 +40,5 @@ theorem erdos_918.variants.all_subgraphs.parts.i :
   sorry
 
 end Erdos918
+
+theorem Erdos918.erdos_918.variants.all_subgraphs.parts.i.disproof : ¬ (type_of% @Erdos918.erdos_918.variants.all_subgraphs.parts.i) := sorry

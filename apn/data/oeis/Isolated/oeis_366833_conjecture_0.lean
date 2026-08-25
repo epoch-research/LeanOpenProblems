@@ -44,3 +44,5 @@ Conjecture: a(n) can be only 1, 2, or 3 (with the first occurrences of 3 appeari
 -/
 theorem oeis_366833_conjecture_0 : ∀ (n : ℕ), 1 ≤ n → A366833 n ∈ ({1, 2, 3} : Finset ℕ) := by
   sorry
+
+theorem oeis_366833_conjecture_0.disproof : ¬ (type_of% @oeis_366833_conjecture_0) := sorry

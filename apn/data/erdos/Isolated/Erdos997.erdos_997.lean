@@ -62,3 +62,5 @@ theorem erdos_997 :
   sorry
 
 end Erdos997
+
+theorem Erdos997.erdos_997.disproof : ¬ (type_of% @Erdos997.erdos_997) := sorry

@@ -33,3 +33,5 @@ This means the property A290012(n+1) = A290012(n) + 2 holds if and only if n = 2
 theorem oeis_a290012_conjecture_unique_twin_prime :
   ∀ n : ℕ, 1 ≤ n → (A290012 (n + 1) = A290012 n + 2 ↔ n = 2) :=
 by sorry
+
+theorem oeis_a290012_conjecture_unique_twin_prime.disproof : ¬ (type_of% @oeis_a290012_conjecture_unique_twin_prime) := sorry

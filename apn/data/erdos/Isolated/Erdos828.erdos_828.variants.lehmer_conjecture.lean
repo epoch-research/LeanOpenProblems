@@ -33,3 +33,5 @@ theorem erdos_828.variants.lehmer_conjecture : ∀ n > 1, φ n ∣ n - 1 ↔ Pri
   sorry
 
 end Erdos828
+
+theorem Erdos828.erdos_828.variants.lehmer_conjecture.disproof : ¬ (type_of% @Erdos828.erdos_828.variants.lehmer_conjecture) := sorry

@@ -33,3 +33,5 @@ def b (m : ℕ) (n : ℕ) : ℕ :=
 theorem oeis_375178_conjecture_2b (m : ℕ) (hm : 0 < m) (r : ℕ) (hr : 2 ≤ r) (p : ℕ) (hp : Nat.Prime p) :
   p ≥ 2 * m + 5 → b m (p^r) ≡ b m (p^(r - 1)) [MOD p ^ (3 * r + 2 * m + 1)] :=
 by sorry
+
+theorem oeis_375178_conjecture_2b.disproof : ¬ (type_of% @oeis_375178_conjecture_2b) := sorry

@@ -40,3 +40,5 @@ theorem oeis_A386548_supercongruence_conjecture :
   ∀ (n k : ℕ), n > 0 → k > 0 →
   a (n * p ^ k) ≡ a (n * p ^ (k - 1)) [ZMOD (p ^ (2 * k) : ℤ)] :=
 by sorry
+
+theorem oeis_A386548_supercongruence_conjecture.disproof : ¬ (type_of% @oeis_A386548_supercongruence_conjecture) := sorry

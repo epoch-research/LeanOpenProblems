@@ -69,3 +69,5 @@ theorem oeis_A389790_conjecture_max_n :
   is_conjectured_largest_value 3091 9 ∧
   is_conjectured_largest_value 3238 10
 := by sorry
+
+theorem oeis_A389790_conjecture_max_n.disproof : ¬ (type_of% @oeis_A389790_conjecture_max_n) := sorry

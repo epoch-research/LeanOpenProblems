@@ -35,3 +35,5 @@ theorem erdos_267.variants.generalisation_ratio_limit_to_infinity : ∀ (n : ℕ
   sorry
 
 end Erdos267
+
+theorem Erdos267.erdos_267.variants.generalisation_ratio_limit_to_infinity.disproof : ¬ (type_of% @Erdos267.erdos_267.variants.generalisation_ratio_limit_to_infinity) := sorry

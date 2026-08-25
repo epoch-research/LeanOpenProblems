@@ -44,3 +44,5 @@ def a (n : ℕ) : ℕ :=
 theorem oeis_a363102_conjecture_1 :
   ∀ n : ℕ, 3 ≤ n → a n = 1 ∨ Nat.Prime (a n) := by
   sorry
+
+theorem oeis_a363102_conjecture_1.disproof : ¬ (type_of% @oeis_a363102_conjecture_1) := sorry

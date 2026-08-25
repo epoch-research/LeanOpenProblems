@@ -40,3 +40,5 @@ theorem erdos_1107 : ∀ r ≥ 2, ∀ᶠ n in atTop, SumOfRPowerful r n := by
   sorry
 
 end Erdos1107
+
+theorem Erdos1107.erdos_1107.disproof : ¬ (type_of% @Erdos1107.erdos_1107) := sorry

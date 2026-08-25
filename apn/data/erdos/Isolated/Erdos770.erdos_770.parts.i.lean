@@ -41,3 +41,5 @@ theorem erdos_770.parts.i : ∀ p : ℕ, p.Prime → ∃ a, HasDensity {n | h n 
   sorry
 
 end Erdos770
+
+theorem Erdos770.erdos_770.parts.i.disproof : ¬ (type_of% @Erdos770.erdos_770.parts.i) := sorry

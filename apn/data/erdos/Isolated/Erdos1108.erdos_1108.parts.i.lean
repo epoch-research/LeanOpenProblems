@@ -46,3 +46,5 @@ theorem erdos_1108.parts.i : ∀ k ≥ 2,
   sorry
 
 end Erdos1108
+
+theorem Erdos1108.erdos_1108.parts.i.disproof : ¬ (type_of% @Erdos1108.erdos_1108.parts.i) := sorry

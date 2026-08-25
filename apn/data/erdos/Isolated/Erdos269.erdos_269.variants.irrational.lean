@@ -62,3 +62,5 @@ theorem erdos_269.variants.irrational :
   sorry
 
 end Erdos269
+
+theorem Erdos269.erdos_269.variants.irrational.disproof : ¬ (type_of% @Erdos269.erdos_269.variants.irrational) := sorry

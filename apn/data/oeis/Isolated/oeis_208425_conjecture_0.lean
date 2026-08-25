@@ -32,3 +32,5 @@ the number (a(p*n)-a(n))/(p*n)^3 is always a p-adic integer. -/
 theorem oeis_208425_conjecture_0 (p : ℕ) (hp : p.Prime) (hpgt3 : p > 3) (n : ℕ) (hn : n > 0) :
   padicValRat p (((a (p * n) : ℚ) - (a n : ℚ)) / ((p * n : ℚ) ^ 3)) ≥ 0 :=
 by sorry
+
+theorem oeis_208425_conjecture_0.disproof : ¬ (type_of% @oeis_208425_conjecture_0) := sorry

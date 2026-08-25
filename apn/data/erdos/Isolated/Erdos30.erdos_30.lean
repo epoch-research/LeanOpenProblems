@@ -40,3 +40,5 @@ theorem erdos_30 :
 
 -- TODO(firsching): add the various known bounds as variants.
 end Erdos30
+
+theorem Erdos30.erdos_30.disproof : ¬ (type_of% @Erdos30.erdos_30) := sorry

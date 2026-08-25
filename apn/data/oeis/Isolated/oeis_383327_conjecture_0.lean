@@ -44,3 +44,5 @@ theorem oeis_383327_conjecture_0 :
   let S : Finset ℕ := {1, 3, 5, 9, 15, 23, 35, 63, 65, 67}
   ∀ n : ℕ, n ∈ S → a n = 1 :=
 by sorry
+
+theorem oeis_383327_conjecture_0.disproof : ¬ (type_of% @oeis_383327_conjecture_0) := sorry

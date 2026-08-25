@@ -43,3 +43,5 @@ theorem erdos_695.variants.upperBound :
   sorry
 
 end Erdos695
+
+theorem Erdos695.erdos_695.variants.upperBound.disproof : ¬ (type_of% @Erdos695.erdos_695.variants.upperBound) := sorry

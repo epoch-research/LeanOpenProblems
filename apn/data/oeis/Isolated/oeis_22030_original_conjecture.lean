@@ -88,3 +88,5 @@ theorem oeis_22030_original_conjecture (n : ℕ) :
       4 * (A022030_original (n - 1)) - (A022030_original (n - 3))
   ) :=
 by sorry
+
+theorem oeis_22030_original_conjecture.disproof : ¬ (type_of% @oeis_22030_original_conjecture) := sorry

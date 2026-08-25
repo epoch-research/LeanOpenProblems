@@ -36,3 +36,5 @@ theorem erdos_44.variants.empty_start : ∀ᵉ (ε > (0 : ℝ)), ∀ᶠ (M : ℕ
 /-  ## Related results and examples -/
 
 end Erdos44
+
+theorem Erdos44.erdos_44.variants.empty_start.disproof : ¬ (type_of% @Erdos44.erdos_44.variants.empty_start) := sorry

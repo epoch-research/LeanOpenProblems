@@ -67,3 +67,5 @@ theorem erdos_92.variants.strong :
 -- TODO(firsching): formalize the rest of the remarks
 
 end Erdos92
+
+theorem Erdos92.erdos_92.variants.strong.disproof : ¬ (type_of% @Erdos92.erdos_92.variants.strong) := sorry

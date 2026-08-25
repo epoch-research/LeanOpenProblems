@@ -52,3 +52,5 @@ theorem oeis_a179524_sun_conjecture_1 (p : ℕ) (hp : Nat.Prime p) :
   ( (pZ ≡ 11 [ZMOD 20] ∨ pZ ≡ 13 [ZMOD 20] ∨ pZ ≡ 17 [ZMOD 20] ∨ pZ ≡ 19 [ZMOD 20]) →
     S ≡ 0 [ZMOD pZ ^ 2] )
   := by sorry
+
+theorem oeis_a179524_sun_conjecture_1.disproof : ¬ (type_of% @oeis_a179524_sun_conjecture_1) := sorry

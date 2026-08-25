@@ -44,3 +44,5 @@ Any counterexample would be a case of $a(n) > 0$ with $n > 3$.
 And such a case with $k = 1$ would be a counterexample to the Erdos-Moser conjecture. -/
 theorem oeis_230718_conjecture_1 : ∀ (n : ℕ), n > 3 → A230718 n = 0 := by
   sorry
+
+theorem oeis_230718_conjecture_1.disproof : ¬ (type_of% @oeis_230718_conjecture_1) := sorry

@@ -36,3 +36,5 @@ theorem erdos_257 : ∀ (A : Set ℕ), A.Infinite →
   sorry
 
 end Erdos257
+
+theorem Erdos257.erdos_257.disproof : ¬ (type_of% @Erdos257.erdos_257) := sorry

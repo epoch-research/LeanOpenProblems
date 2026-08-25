@@ -56,3 +56,5 @@ def nextPrime (k : ℕ) : ℕ :=
   Nat.find (Nat.exists_infinite_primes k)
 
 end Erdos930
+
+theorem Erdos930.erdos_930.disproof : ¬ (type_of% @Erdos930.erdos_930) := sorry

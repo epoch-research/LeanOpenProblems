@@ -40,3 +40,5 @@ theorem erdos_10 : ∃ k, sumPrimeAndTwoPows k = Set.univ \ {0, 1} := by
   sorry
 
 end Erdos10
+
+theorem Erdos10.erdos_10.disproof : ¬ (type_of% @Erdos10.erdos_10) := sorry

@@ -43,3 +43,5 @@ theorem isSumOfThreeCubes_iff_mod_9 :
   sorry
 
 end SumOfThreeCubes
+
+theorem SumOfThreeCubes.isSumOfThreeCubes_iff_mod_9.disproof : ¬ (type_of% @SumOfThreeCubes.isSumOfThreeCubes_iff_mod_9) := sorry

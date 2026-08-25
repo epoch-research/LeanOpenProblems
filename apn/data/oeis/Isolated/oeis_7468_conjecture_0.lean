@@ -36,3 +36,5 @@ Conjecture: The only positive integer $n$ such that $a(n)$ is a perfect square i
 -/
 theorem oeis_7468_conjecture_0 : ∀ n : ℕ, 0 < n → IsSquare (a n) → n = 38 := by
   sorry
+
+theorem oeis_7468_conjecture_0.disproof : ¬ (type_of% @oeis_7468_conjecture_0) := sorry

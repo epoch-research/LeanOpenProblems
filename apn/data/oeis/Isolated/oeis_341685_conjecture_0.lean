@@ -68,3 +68,5 @@ Formally, $\xi_3$ is not algebraic over $\mathbb{Q}$.
 -/
 theorem oeis_341685_conjecture_0 : ¬ IsAlgebraic ℚ (xi_3) := by
   sorry
+
+theorem oeis_341685_conjecture_0.disproof : ¬ (type_of% @oeis_341685_conjecture_0) := sorry

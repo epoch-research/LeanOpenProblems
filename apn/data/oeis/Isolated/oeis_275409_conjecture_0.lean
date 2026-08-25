@@ -71,3 +71,5 @@ theorem oeis_275409_conjecture_0 :
   (∀ n : ℕ, (a n > 0 ↔ n ∉ A275409_zero_set)) ∧
   (∀ n : ℕ, (a n = 1 ↔ n ∈ A275409_one_set)) :=
 by sorry
+
+theorem oeis_275409_conjecture_0.disproof : ¬ (type_of% @oeis_275409_conjecture_0) := sorry

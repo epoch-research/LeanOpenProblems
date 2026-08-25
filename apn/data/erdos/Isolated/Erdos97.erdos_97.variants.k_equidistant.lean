@@ -85,3 +85,5 @@ def IsCut (V A B : Finset ℝ²) : Prop :=
   Disjoint (convexHull ℝ (A : Set ℝ²)) (convexHull ℝ (B : Set ℝ²))
 
 end Erdos97
+
+theorem Erdos97.erdos_97.variants.k_equidistant.disproof : ¬ (type_of% @Erdos97.erdos_97.variants.k_equidistant) := sorry

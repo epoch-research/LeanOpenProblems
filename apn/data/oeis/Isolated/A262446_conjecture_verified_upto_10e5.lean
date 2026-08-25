@@ -45,3 +45,5 @@ The mathematical statement verified up to $10^5$ is that the full conjecture hol
 theorem A262446_conjecture_verified_upto_10e5 :
   ∀ n : ℕ, 3 < n ∧ n ≤ 100000 → A262446 n > 0 ∧ (A262446 n = 1 ↔ n ∈ A262446_unique_n_set) := by
   sorry
+
+theorem A262446_conjecture_verified_upto_10e5.disproof : ¬ (type_of% @A262446_conjecture_verified_upto_10e5) := sorry

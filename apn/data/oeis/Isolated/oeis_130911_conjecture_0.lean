@@ -41,3 +41,5 @@ noncomputable def A130911 (n : ℕ) : ℤ :=
 /-- Shevelev conjectures that a(n) >= 0 for n > 3. -/
 theorem oeis_130911_conjecture_0 (n : ℕ) (h : n > 3) : A130911 n ≥ 0 := by
   sorry
+
+theorem oeis_130911_conjecture_0.disproof : ¬ (type_of% @oeis_130911_conjecture_0) := sorry

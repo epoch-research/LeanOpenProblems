@@ -48,3 +48,5 @@ This specific conjecture states that all coefficients $a(n)$ are integers.
 -/
 theorem A275460_is_integral (n : ℕ) : (A275460_rational n).isInt := by
   sorry
+
+theorem A275460_is_integral.disproof : ¬ (type_of% @A275460_is_integral) := sorry

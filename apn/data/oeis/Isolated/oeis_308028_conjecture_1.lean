@@ -44,3 +44,5 @@ The 2-4-6 Conjecture: a(n) > 0 for all n > 6. In other words, any odd integer gr
 -/
 theorem oeis_308028_conjecture_1 : ∀ (n : ℕ), 6 < n → 0 < A308028 n :=
 by sorry
+
+theorem oeis_308028_conjecture_1.disproof : ¬ (type_of% @oeis_308028_conjecture_1) := sorry

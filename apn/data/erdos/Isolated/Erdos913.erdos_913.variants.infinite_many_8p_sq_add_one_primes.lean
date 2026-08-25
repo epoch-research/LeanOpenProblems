@@ -34,3 +34,5 @@ theorem erdos_913.variants.infinite_many_8p_sq_add_one_primes :
   sorry
 
 end Erdos913
+
+theorem Erdos913.erdos_913.variants.infinite_many_8p_sq_add_one_primes.disproof : ¬ (type_of% @Erdos913.erdos_913.variants.infinite_many_8p_sq_add_one_primes) := sorry

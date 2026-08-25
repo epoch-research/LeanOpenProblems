@@ -43,3 +43,5 @@ theorem erdos_1072.variants.littleo :
   sorry
 
 end Erdos1072
+
+theorem Erdos1072.erdos_1072.variants.littleo.disproof : ¬ (type_of% @Erdos1072.erdos_1072.variants.littleo) := sorry

@@ -41,3 +41,5 @@ theorem erdos_770.variants.three : {n | h n = 3}.Infinite := by
   sorry
 
 end Erdos770
+
+theorem Erdos770.erdos_770.variants.three.disproof : ¬ (type_of% @Erdos770.erdos_770.variants.three) := sorry

@@ -44,3 +44,5 @@ The remarks from the erdosproblems site are the same as those in
 -/
 
 end Erdos51
+
+theorem Erdos51.erdos_51.disproof : ¬ (type_of% @Erdos51.erdos_51) := sorry

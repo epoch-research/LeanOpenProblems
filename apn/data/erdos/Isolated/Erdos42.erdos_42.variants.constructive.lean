@@ -47,3 +47,5 @@ theorem erdos_42.variants.constructive :
 /-  ## Related results and examples -/
 
 end Erdos42
+
+theorem Erdos42.erdos_42.variants.constructive.disproof : ¬ (type_of% @Erdos42.erdos_42.variants.constructive) := sorry

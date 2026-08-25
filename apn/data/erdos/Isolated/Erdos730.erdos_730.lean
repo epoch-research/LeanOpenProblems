@@ -36,3 +36,5 @@ theorem erdos_730 : S.Infinite := by
   sorry
 
 end Erdos730
+
+theorem Erdos730.erdos_730.disproof : ¬ (type_of% @Erdos730.erdos_730) := sorry

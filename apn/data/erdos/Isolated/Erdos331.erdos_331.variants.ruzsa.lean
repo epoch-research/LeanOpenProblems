@@ -42,3 +42,5 @@ theorem erdos_331.variants.ruzsa :
         a₁ ≠ a₂ ∧ a₁ + b₂ = a₂ + b₁ }.Infinite := by
   sorry
 end Erdos331
+
+theorem Erdos331.erdos_331.variants.ruzsa.disproof : ¬ (type_of% @Erdos331.erdos_331.variants.ruzsa) := sorry

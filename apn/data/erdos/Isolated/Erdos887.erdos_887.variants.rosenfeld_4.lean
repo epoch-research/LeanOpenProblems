@@ -38,3 +38,5 @@ theorem erdos_887.variants.rosenfeld_4 :
   sorry
 
 end Erdos887
+
+theorem Erdos887.erdos_887.variants.rosenfeld_4.disproof : ¬ (type_of% @Erdos887.erdos_887.variants.rosenfeld_4) := sorry

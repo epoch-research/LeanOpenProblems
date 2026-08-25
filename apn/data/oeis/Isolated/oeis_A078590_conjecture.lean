@@ -56,3 +56,5 @@ This is framed as a divisibility conjecture, ensuring that the division in the d
 Specifically, for $n \ge 3$, $a(n-2)$ divides $2^{a(n-1)} + 1$.
 -/
 theorem oeis_A078590_conjecture : ∀ (n : ℕ), 3 ≤ n → A078590 (n-2) ∣ (2 ^ A078590 (n-1) + 1) := by sorry
+
+theorem oeis_A078590_conjecture.disproof : ¬ (type_of% @oeis_A078590_conjecture) := sorry

@@ -46,3 +46,5 @@ theorem a091669_conjecture_primitive_root (n : ℕ) (hn : n > 2) :
   n ∣ (a (n - 1) + 2 ^ (n - 2)) →
   Nat.Prime n ∧ IsPrimitiveRoot (2 : ZMod n) (Nat.totient n) :=
 by sorry
+
+theorem a091669_conjecture_primitive_root.disproof : ¬ (type_of% @a091669_conjecture_primitive_root) := sorry

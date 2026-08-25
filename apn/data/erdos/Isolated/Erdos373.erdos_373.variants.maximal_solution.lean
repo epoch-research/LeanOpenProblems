@@ -43,3 +43,5 @@ theorem erdos_373.variants.maximal_solution :
   sorry
 
 end Erdos373
+
+theorem Erdos373.erdos_373.variants.maximal_solution.disproof : ¬ (type_of% @Erdos373.erdos_373.variants.maximal_solution) := sorry

@@ -38,3 +38,5 @@ $a(n) \cdot K(r)/((8*n - 1)*(8*n - 3)*...*(8*n - (2*r+1)))$ is an integer for al
 theorem oeis_211420_conjecture_1 : ∀ r : ℕ, ∃ K : ℤ, K > 0 ∧ ∀ n : ℕ,
     denominator_product n r ∣ (a n : ℤ) * K := by
   sorry
+
+theorem oeis_211420_conjecture_1.disproof : ¬ (type_of% @oeis_211420_conjecture_1) := sorry

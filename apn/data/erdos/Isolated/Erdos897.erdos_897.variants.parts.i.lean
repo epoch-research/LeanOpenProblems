@@ -50,3 +50,5 @@ theorem erdos_897.variants.parts.i : ∀ (f : ℕ → ℝ),
   sorry
 
 end Erdos897
+
+theorem Erdos897.erdos_897.variants.parts.i.disproof : ¬ (type_of% @Erdos897.erdos_897.variants.parts.i) := sorry

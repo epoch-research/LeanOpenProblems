@@ -41,3 +41,5 @@ theorem erdos_470.parts.i : ∃ n : ℕ, n.Weird ∧ Odd n := by
   sorry
 
 end Erdos470
+
+theorem Erdos470.erdos_470.parts.i.disproof : ¬ (type_of% @Erdos470.erdos_470.parts.i) := sorry

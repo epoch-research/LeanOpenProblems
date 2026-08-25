@@ -31,3 +31,5 @@ The conjecture asks if for every integer $z$, the set of natural numbers $n$ suc
 -/
 theorem oeis_180017_conjecture_0 :
   ∀ z : ℤ, Set.Infinite { n : ℕ | a n = z } := by sorry
+
+theorem oeis_180017_conjecture_0.disproof : ¬ (type_of% @oeis_180017_conjecture_0) := sorry

@@ -56,3 +56,5 @@ theorem erdos_282 {x : ℚ} (hx : x ∈ Set.Ioo 0 1) (hx_den : Odd x.den) :
   sorry
 
 end Erdos282
+
+theorem Erdos282.erdos_282.disproof : ¬ (type_of% @Erdos282.erdos_282) := sorry

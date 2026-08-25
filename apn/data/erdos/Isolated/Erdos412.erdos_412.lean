@@ -36,3 +36,5 @@ theorem erdos_412 : ∀ᵉ (m ≥ 2) (n ≥ 2), ∃ i j, (σ 1)^[i] m = (σ 1)^[
   sorry
 
 end Erdos412
+
+theorem Erdos412.erdos_412.disproof : ¬ (type_of% @Erdos412.erdos_412) := sorry

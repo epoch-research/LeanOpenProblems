@@ -36,3 +36,5 @@ theorem erdos_385.parts.i : ∀ᶠ n in atTop, n < F n := by
   sorry
 
 end Erdos385
+
+theorem Erdos385.erdos_385.parts.i.disproof : ¬ (type_of% @Erdos385.erdos_385.parts.i) := sorry

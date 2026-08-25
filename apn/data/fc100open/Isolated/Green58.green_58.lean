@@ -39,3 +39,5 @@ theorem green_58 :
   sorry
 
 end Green58
+
+theorem Green58.green_58.disproof : ¬ (type_of% @Green58.green_58) := sorry

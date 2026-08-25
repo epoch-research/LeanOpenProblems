@@ -68,3 +68,5 @@ theorem oeis_340726_conjecture_0 (n : ℕ) :
   (∃ R : ℚ, IsResistanceOfNUnitResistors R n ∧ ResistanceToProduct R = A340726 n) ∧
   (∀ R : ℚ, IsResistanceOfNUnitResistors R n → ResistanceToProduct R ≤ A340726 n)
   := by sorry
+
+theorem oeis_340726_conjecture_0.disproof : ¬ (type_of% @oeis_340726_conjecture_0) := sorry

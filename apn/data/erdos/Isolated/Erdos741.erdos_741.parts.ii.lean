@@ -39,3 +39,5 @@ theorem erdos_741.parts.ii : ∃ A : Set ℕ, IsAddBasisOfOrder (A ∪ {0}) 2 �
   sorry
 
 end Erdos741
+
+theorem Erdos741.erdos_741.parts.ii.disproof : ¬ (type_of% @Erdos741.erdos_741.parts.ii) := sorry

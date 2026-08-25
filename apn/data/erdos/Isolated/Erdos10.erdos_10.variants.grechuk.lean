@@ -43,3 +43,5 @@ theorem erdos_10.variants.grechuk :
   sorry
 
 end Erdos10
+
+theorem Erdos10.erdos_10.variants.grechuk.disproof : ¬ (type_of% @Erdos10.erdos_10.variants.grechuk) := sorry

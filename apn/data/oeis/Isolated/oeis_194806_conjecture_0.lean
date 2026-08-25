@@ -75,3 +75,5 @@ theorem oeis_194806_conjecture_0 :
   ∃ C : ℝ, ∀ n : ℕ, 2 ≤ n →
     (a n : ℝ) / (Nat.primeCounting n : ℝ) ≤ C :=
   by sorry
+
+theorem oeis_194806_conjecture_0.disproof : ¬ (type_of% @oeis_194806_conjecture_0) := sorry

@@ -61,3 +61,7 @@ In [Er81] Erdős asks whether $\frac{W(k+1)}{W(k)} \to \infty$.
 theorem erdos_138.variants.quotient :
     atTop.Tendsto (fun k => ((W (k + 1) : ℚ)/(W k))) atTop := by
   sorry
+
+end Erdos138
+
+theorem Erdos138.erdos_138.variants.quotient.disproof : ¬ (type_of% @Erdos138.erdos_138.variants.quotient) := sorry

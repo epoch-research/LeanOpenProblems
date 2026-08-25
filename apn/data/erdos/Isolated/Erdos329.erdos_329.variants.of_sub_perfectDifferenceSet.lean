@@ -50,3 +50,5 @@ theorem erdos_329.variants.of_sub_perfectDifferenceSet :
 /-  ## Related results and examples -/
 
 end Erdos329
+
+theorem Erdos329.erdos_329.variants.of_sub_perfectDifferenceSet.disproof : ¬ (type_of% @Erdos329.erdos_329.variants.of_sub_perfectDifferenceSet) := sorry

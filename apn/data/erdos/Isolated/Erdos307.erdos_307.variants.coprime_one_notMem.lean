@@ -35,3 +35,5 @@ theorem erdos_307.variants.coprime_one_notMem : ∃ P Q : Finset ℕ, 0 ∉ P �
   sorry
 
 end Erdos307
+
+theorem Erdos307.erdos_307.variants.coprime_one_notMem.disproof : ¬ (type_of% @Erdos307.erdos_307.variants.coprime_one_notMem) := sorry

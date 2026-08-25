@@ -34,3 +34,5 @@ theorem erdos_386.variants.two :
     sorry
 
 end Erdos386
+
+theorem Erdos386.erdos_386.variants.two.disproof : ¬ (type_of% @Erdos386.erdos_386.variants.two) := sorry

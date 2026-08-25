@@ -33,3 +33,5 @@ theorem pi_pow_sqrt_two_transcendental : Transcendental ℚ (π ^ √2) := by
   sorry
 
 end Transcendental
+
+theorem Transcendental.pi_pow_sqrt_two_transcendental.disproof : ¬ (type_of% @Transcendental.pi_pow_sqrt_two_transcendental) := sorry

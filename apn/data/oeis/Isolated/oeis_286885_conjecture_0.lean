@@ -52,3 +52,5 @@ Conjecture: a(n) > 0 for all n = 0,1,2,....
 -/
 theorem oeis_286885_conjecture_0 : ∀ n : ℕ, a n > 0 := by
   sorry
+
+theorem oeis_286885_conjecture_0.disproof : ¬ (type_of% @oeis_286885_conjecture_0) := sorry

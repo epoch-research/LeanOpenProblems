@@ -62,3 +62,5 @@ theorem erdos_789.variants.isBigO_cube_root_linearithmic :
   sorry
 
 end Erdos789
+
+theorem Erdos789.erdos_789.variants.isBigO_cube_root_linearithmic.disproof : ¬ (type_of% @Erdos789.erdos_789.variants.isBigO_cube_root_linearithmic) := sorry

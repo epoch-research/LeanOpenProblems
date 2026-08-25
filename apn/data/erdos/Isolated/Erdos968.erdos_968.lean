@@ -54,3 +54,5 @@ theorem erdos_968 : {n : ℕ | u n < u (n + 1)}.HasPosDensity := by
   sorry
 
 end Erdos968
+
+theorem Erdos968.erdos_968.disproof : ¬ (type_of% @Erdos968.erdos_968) := sorry

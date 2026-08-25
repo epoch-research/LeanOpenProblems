@@ -57,3 +57,5 @@ theorem A274274_conjecture_i :
     (has_form_two_pow_k_times_four_m_plus_one n →
       (n ≠ 813 ∧ n ≠ 4404 ∧ n ≠ 6420 ∧ n ≠ 28804) → A274274 n ≠ 0) :=
 by sorry
+
+theorem A274274_conjecture_i.disproof : ¬ (type_of% @A274274_conjecture_i) := sorry

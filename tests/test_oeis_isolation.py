@@ -15,10 +15,15 @@ be true):
 
 * **Structural** -- re-extract each isolated file and confirm the target theorem
   is present exactly once, the surviving theorem/lemma commands are exactly the
-  ones the cut predicts (target + its definitional-dependency lemmas, nothing
-  else), and the target's elaborated statement is byte-for-byte the source's.
-* **Compile** -- every isolated file compiles cleanly with the scorer's exact
-  command, in parallel in the container.
+  ones the cut predicts (target + its definitional-dependency lemmas + the
+  appended ``.disproof`` declaration, nothing else), and the target's elaborated
+  statement is byte-for-byte the source's.
+* **Disproof certification** -- every spec declares exactly its target plus
+  ``<target>.disproof``, whose elaborated type an independent metaprogram
+  (``certify_disproof``, recomputing via ``mkNot``) certifies as exactly the
+  target statement's negation (comparator-migration-plan.md §4).
+* **Compile** -- every isolated file compiles cleanly with ``lake env lean -o``,
+  in parallel in the container.
 * **Oracle** -- for the paper's solved problems, our isolated target's elaborated
   type matches the published challenge file's ``target_theorem_0``.
 
@@ -44,7 +49,7 @@ from scripts.isolation import (
     theorem_decls,
 )
 from scripts.oeis_isolation import ISOLATED_DIR, SOURCES_DIR
-from tests.lean_sandbox import compile_all, extract, generate_env
+from tests.lean_sandbox import certify, compile_all, extract, generate_env
 
 # The paper's published challenge files (the oracle cross-checks our isolated
 # target's elaborated type against each one's ``target_theorem_0``). Vendored and
@@ -63,6 +68,7 @@ class IsoData:
     src_ranges: dict[str, dict[str, Any]]  # extractor records for distinct Sources/ files, by filename
     iso_ranges: dict[str, dict[str, Any]]  # extractor records for every Isolated/ file, by stem (= name)
     ref_ranges: list[dict[str, Any]]  # extractor records for the published challenge files
+    cert_verdicts: dict[str, dict[str, Any]]  # certify_disproof verdicts, by stem
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
@@ -92,11 +98,13 @@ async def iso_data(manifest: list[SampleRow]) -> IsoData:
         iso = await extract(env, iso_files)
         ref_files = sorted(REF_DIR.glob("*.lean"))
         ref = await extract(env, ref_files) if ref_files else []
+        cert = await certify(env, iso_files)
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},
         iso_ranges={fr["file"][: -len(".lean")]: fr for fr in iso},
         ref_ranges=ref,
+        cert_verdicts={v["file"][: -len(".lean")]: v for v in cert},
         compile_failures=failures,
     )
 
@@ -127,12 +135,37 @@ async def test_isolated_files_are_structurally_correct(
             failures.append(f"{name}: target appears {len(target_hits)}x among {[d['name'] for d in thms]}")
             continue
         remaining = sorted(d["name"] for d in thms)
-        if remaining != planned:
-            failures.append(f"{name}: surviving theorems {remaining} != planned {planned}")
+        # The committed spec is the cut's prediction plus the appended
+        # `.disproof` declaration (comparator-migration-plan.md §4).
+        expected = sorted(planned + [f"{row.decl_name}.disproof"])
+        if remaining != expected:
+            failures.append(f"{name}: surviving theorems {remaining} != expected {expected}")
             continue
         if target_hits[0]["type"] != src_type:
             failures.append(f"{name}: target statement changed during isolation")
     assert not failures, "structural validation failed:\n  " + "\n  ".join(failures)
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_disproof_declarations_certified(
+    manifest: list[SampleRow], iso_data: IsoData
+) -> None:
+    """Every spec declares exactly its target plus ``<target>.disproof``, and
+    the certifier's independent ``mkNot`` recomputation confirms the disproof's
+    elaborated type is the target statement's negation (plan §4)."""
+    failures: list[str] = []
+    for row in manifest:
+        v = iso_data.cert_verdicts.get(row.id)
+        if v is None:
+            failures.append(f"{row.id}: no certifier verdict")
+        elif not v["ok"]:
+            failures.append(f"{row.id}: {v['error']}")
+        elif v["target"] != row.decl_name or v["disproof"] != f"{row.decl_name}.disproof":
+            failures.append(
+                f"{row.id}: certified pair ({v['target']}, {v['disproof']}) does not "
+                f"match the manifest decl name {row.decl_name}"
+            )
+    assert not failures, "disproof certification failed:\n  " + "\n  ".join(failures)
 
 
 @pytest.mark.asyncio(loop_scope="module")

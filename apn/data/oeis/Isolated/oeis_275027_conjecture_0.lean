@@ -36,3 +36,5 @@ theorem oeis_275027_conjecture_0
     let den : ℚ := (p * n : ℚ) ^ 3
     let val_Q : ℚ := num / den
     (val_Q : Padic p) ∈ PadicInt.subring p := by sorry
+
+theorem oeis_275027_conjecture_0.disproof : ¬ (type_of% @oeis_275027_conjecture_0) := sorry

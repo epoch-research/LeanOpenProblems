@@ -47,3 +47,5 @@ theorem oeis_365416_conjecture_0 :
   ∀ k : ℕ,
     (IsCompositePrimePow (2 * k - 1) ∧ IsCompositePrimePow (2 * k + 1)) ↔ k = 13 :=
 by sorry
+
+theorem oeis_365416_conjecture_0.disproof : ¬ (type_of% @oeis_365416_conjecture_0) := sorry

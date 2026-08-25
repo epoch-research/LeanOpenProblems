@@ -31,3 +31,5 @@ theorem erdos_251 : Irrational (∑' n : ℕ, (Nat.nth Nat.Prime n) / (2 ^ n)) :
   sorry
 
 end Erdos251
+
+theorem Erdos251.erdos_251.disproof : ¬ (type_of% @Erdos251.erdos_251) := sorry

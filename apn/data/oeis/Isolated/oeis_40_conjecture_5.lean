@@ -33,3 +33,5 @@ A000040 Conjecture: log log a(n+1) - log log a(n) < 1/n. - _Thomas Ordowski_, Fe
 theorem oeis_40_conjecture_5 (n : ℕ) (hn : 0 < n) :
   Real.log (Real.log ((a (n + 1)).cast : ℝ)) - Real.log (Real.log ((a n).cast : ℝ)) < 1 / (n.cast : ℝ) :=
 by sorry
+
+theorem oeis_40_conjecture_5.disproof : ¬ (type_of% @oeis_40_conjecture_5) := sorry

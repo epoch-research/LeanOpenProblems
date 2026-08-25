@@ -48,3 +48,5 @@ theorem erdos_890.parts.b :
   sorry
 
 end Erdos890
+
+theorem Erdos890.erdos_890.parts.b.disproof : ¬ (type_of% @Erdos890.erdos_890.parts.b) := sorry

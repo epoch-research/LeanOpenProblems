@@ -50,3 +50,5 @@ theorem oeis_a383466_conjecture_2 (n : ℕ) :
   sorry
 
 end
+
+theorem oeis_a383466_conjecture_2.disproof : ¬ (type_of% @oeis_a383466_conjecture_2) := sorry

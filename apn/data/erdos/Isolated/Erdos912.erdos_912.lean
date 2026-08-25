@@ -42,3 +42,5 @@ theorem erdos_912 : ∃ c > 0,
   sorry
 
 end Erdos912
+
+theorem Erdos912.erdos_912.disproof : ¬ (type_of% @Erdos912.erdos_912) := sorry

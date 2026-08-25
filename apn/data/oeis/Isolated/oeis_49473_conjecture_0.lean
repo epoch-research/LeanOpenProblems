@@ -62,3 +62,5 @@ theorem oeis_49473_conjecture_0 :
     let diff : ℕ := a n - a (n - 1);
     (diff = 1 ↔ n ∈ A001954) ∧ (diff = 0 ↔ n ∈ A001953)) :=
 by sorry
+
+theorem oeis_49473_conjecture_0.disproof : ¬ (type_of% @oeis_49473_conjecture_0) := sorry

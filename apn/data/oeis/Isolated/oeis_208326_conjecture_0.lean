@@ -76,3 +76,5 @@ theorem oeis_208326_conjecture_0 :
   (Set.range (A207672 ∘ Nat.succ) ∩ Set.range (A208326 ∘ Nat.succ) = ∅) ∧
   (Set.range (A207673 ∘ Nat.succ) ∩ Set.range (A208326 ∘ Nat.succ) = ∅)
   := by sorry
+
+theorem oeis_208326_conjecture_0.disproof : ¬ (type_of% @oeis_208326_conjecture_0) := sorry

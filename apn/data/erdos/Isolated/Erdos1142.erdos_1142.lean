@@ -62,3 +62,5 @@ local macro "prove_erdos_1142_prop" bound:num : tactic =>
     interval_cases k <;> simp_all (config := { decide := true })))
 
 end Erdos1142
+
+theorem Erdos1142.erdos_1142.disproof : ¬ (type_of% @Erdos1142.erdos_1142) := sorry

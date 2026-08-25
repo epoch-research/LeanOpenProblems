@@ -49,3 +49,5 @@ theorem erdos_394.variants.factorial_gap_conjecture :
   sorry
 
 end Erdos394
+
+theorem Erdos394.erdos_394.variants.factorial_gap_conjecture.disproof : ¬ (type_of% @Erdos394.erdos_394.variants.factorial_gap_conjecture) := sorry

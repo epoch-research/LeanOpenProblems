@@ -48,3 +48,5 @@ Is $n!$ an example of an irrationality sequence?
 theorem erdos_264.parts.ii : IsIrrationalitySequence Nat.factorial := by sorry
 
 end Erdos264
+
+theorem Erdos264.erdos_264.parts.ii.disproof : ¬ (type_of% @Erdos264.erdos_264.parts.ii) := sorry

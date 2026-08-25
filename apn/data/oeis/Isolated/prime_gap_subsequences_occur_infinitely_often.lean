@@ -44,3 +44,5 @@ theorem prime_gap_subsequences_occur_infinitely_often :
     n ≥ 3 →
     Set.Infinite {k : ℕ | gap_subsequence k (m + 1) = gap_subsequence n (m + 1)} :=
 by sorry
+
+theorem prime_gap_subsequences_occur_infinitely_often.disproof : ¬ (type_of% @prime_gap_subsequences_occur_infinitely_often) := sorry

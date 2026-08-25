@@ -67,3 +67,5 @@ theorem erdos_92.variants.weak : ∃ o : ℕ → ℝ,
 -- TODO(firsching): formalize the rest of the remarks
 
 end Erdos92
+
+theorem Erdos92.erdos_92.variants.weak.disproof : ¬ (type_of% @Erdos92.erdos_92.variants.weak) := sorry

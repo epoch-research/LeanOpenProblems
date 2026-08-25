@@ -37,3 +37,5 @@ theorem erdos_454 : limsup (fun n => (f n - 2 * n.nth Prime : ℕ∞)) atTop = �
   sorry
 
 end Erdos454
+
+theorem Erdos454.erdos_454.disproof : ¬ (type_of% @Erdos454.erdos_454) := sorry

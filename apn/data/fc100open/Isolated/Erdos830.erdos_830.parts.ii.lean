@@ -44,3 +44,5 @@ theorem erdos_830.parts.ii : ∃ o : ℝ → ℝ, o =o[atTop] (1 : ℝ → ℝ) 
   sorry
 
 end Erdos830
+
+theorem Erdos830.erdos_830.parts.ii.disproof : ¬ (type_of% @Erdos830.erdos_830.parts.ii) := sorry

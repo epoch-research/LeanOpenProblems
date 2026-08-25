@@ -56,3 +56,5 @@ def a (n : ℕ) : ℕ :=
 theorem oeis_a160324_conjecture_1 (m : ℕ) (hm : m > 2) (n : ℕ) :
   ∃ (x : Fin m → ℕ), n = Finset.sum Finset.univ (fun i : Fin m => polygonal_number (m + (i : ℕ) + 1) (x i)) := by
   sorry
+
+theorem oeis_a160324_conjecture_1.disproof : ¬ (type_of% @oeis_a160324_conjecture_1) := sorry

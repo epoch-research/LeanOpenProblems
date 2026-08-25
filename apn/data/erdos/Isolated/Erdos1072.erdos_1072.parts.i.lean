@@ -35,3 +35,5 @@ theorem erdos_1072.parts.i : Set.Infinite {p | p.Prime ∧ f p = p - 1} := by
   sorry
 
 end Erdos1072
+
+theorem Erdos1072.erdos_1072.parts.i.disproof : ¬ (type_of% @Erdos1072.erdos_1072.parts.i) := sorry

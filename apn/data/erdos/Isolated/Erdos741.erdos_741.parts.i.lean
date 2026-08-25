@@ -42,3 +42,5 @@ theorem erdos_741.parts.i : ∀ A : Set ℕ, HasPosDensity (A + A) → ∃ A₁ 
   sorry
 
 end Erdos741
+
+theorem Erdos741.erdos_741.parts.i.disproof : ¬ (type_of% @Erdos741.erdos_741.parts.i) := sorry

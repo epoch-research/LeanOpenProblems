@@ -39,3 +39,5 @@ theorem erdos_1054.parts.i : (fun n ↦ (f n : ℝ)) =o[atTop] (fun n ↦ (n : �
   sorry
 
 end Erdos1054
+
+theorem Erdos1054.erdos_1054.parts.i.disproof : ¬ (type_of% @Erdos1054.erdos_1054.parts.i) := sorry

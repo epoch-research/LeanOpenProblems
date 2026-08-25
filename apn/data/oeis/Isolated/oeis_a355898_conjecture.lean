@@ -44,3 +44,5 @@ theorem oeis_a355898_conjecture (n : ℕ) (h : 3775 ≤ n) :
   ∧ (A355898 n = 2 * A355898 (n - 1) - A355898 (n - 3))
   ∧ (A355898 n = (A355898 3774 + 1) * Nat.fib (n - 3772) - (A355898 3772 + 1) * Nat.fib (n - 3774) - 1) :=
 by sorry
+
+theorem oeis_a355898_conjecture.disproof : ¬ (type_of% @oeis_a355898_conjecture) := sorry

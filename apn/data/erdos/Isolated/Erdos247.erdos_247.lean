@@ -43,3 +43,5 @@ theorem erdos_247 : ∀ (n : ℕ → ℕ), (StrictMono n) →
   sorry
 
 end Erdos247
+
+theorem Erdos247.erdos_247.disproof : ¬ (type_of% @Erdos247.erdos_247) := sorry

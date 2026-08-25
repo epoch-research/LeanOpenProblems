@@ -56,3 +56,5 @@ def consecutivePrimeArithmeticProgressions (k : ℕ) : Set (Set ℕ) :=
   {s | s.IsAPAndPrimeProgressionOfLength k}
 
 end Erdos141
+
+theorem Erdos141.erdos_141.variants.eleven.disproof : ¬ (type_of% @Erdos141.erdos_141.variants.eleven) := sorry

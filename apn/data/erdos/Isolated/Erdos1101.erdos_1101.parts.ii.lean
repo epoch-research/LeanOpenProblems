@@ -59,3 +59,5 @@ theorem erdos_1101.parts.ii :
   sorry
 
 end Erdos1101
+
+theorem Erdos1101.erdos_1101.parts.ii.disproof : ¬ (type_of% @Erdos1101.erdos_1101.parts.ii) := sorry

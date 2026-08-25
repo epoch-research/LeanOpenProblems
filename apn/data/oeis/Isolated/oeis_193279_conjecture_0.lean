@@ -35,3 +35,5 @@ def A193279 (n : ℕ) : ℕ :=
 theorem oeis_193279_conjecture_0 (n : ℕ) :
   (Nat.Perfect n ∧ Even n) → A193279 n = n := by
   sorry
+
+theorem oeis_193279_conjecture_0.disproof : ¬ (type_of% @oeis_193279_conjecture_0) := sorry

@@ -46,3 +46,5 @@ theorem erdos_418.variants.density :
   sorry
 
 end Erdos418
+
+theorem Erdos418.erdos_418.variants.density.disproof : ¬ (type_of% @Erdos418.erdos_418.variants.density) := sorry

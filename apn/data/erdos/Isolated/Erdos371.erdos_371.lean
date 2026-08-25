@@ -34,3 +34,5 @@ theorem erdos_371 :
 
 -- TODO: add the statements from the additional material
 end Erdos371
+
+theorem Erdos371.erdos_371.disproof : ¬ (type_of% @Erdos371.erdos_371) := sorry

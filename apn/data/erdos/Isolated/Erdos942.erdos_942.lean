@@ -41,3 +41,5 @@ theorem erdos_942 : ∃ c > 0, ∃ (o : ℕ → ℝ), o =o[atTop] (1 : ℕ → �
   sorry
 
 end Erdos942
+
+theorem Erdos942.erdos_942.disproof : ¬ (type_of% @Erdos942.erdos_942) := sorry

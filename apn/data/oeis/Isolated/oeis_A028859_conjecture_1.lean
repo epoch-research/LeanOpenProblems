@@ -53,3 +53,5 @@ theorem oeis_A028859_conjecture_1 (n : ℕ) :
   -- size to a natural number when the Fintype instance is not trivial.
   ∃ (F : Finset Sequence), F.toSet = S ∧ F.card = a n
 := by sorry
+
+theorem oeis_A028859_conjecture_1.disproof : ¬ (type_of% @oeis_A028859_conjecture_1) := sorry

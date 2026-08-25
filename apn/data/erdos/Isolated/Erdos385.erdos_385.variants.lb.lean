@@ -37,3 +37,5 @@ theorem erdos_385.variants.lb : ∃ (e : ℕ → ℝ) (he : e =o[atTop] (1 : ℕ
   sorry
 
 end Erdos385
+
+theorem Erdos385.erdos_385.variants.lb.disproof : ¬ (type_of% @Erdos385.erdos_385.variants.lb) := sorry

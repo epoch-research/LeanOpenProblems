@@ -52,3 +52,5 @@ theorem erdos_330_statement :
   sorry
 
 end Erdos330
+
+theorem Erdos330.erdos_330_statement.disproof : ¬ (type_of% @Erdos330.erdos_330_statement) := sorry

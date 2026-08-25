@@ -67,3 +67,5 @@ such that $a(n) \leq B$ for all $n$.
 -/
 theorem oeis_a374265_conjecture_1_boundedness : ∃ B : ℕ, ∀ n : ℕ, a n ≤ B := by
   sorry
+
+theorem oeis_a374265_conjecture_1_boundedness.disproof : ¬ (type_of% @oeis_a374265_conjecture_1_boundedness) := sorry

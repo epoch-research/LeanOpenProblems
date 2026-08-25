@@ -59,3 +59,5 @@ theorem f_asymptotic_general :
   sorry
 
 end Erdos1092
+
+theorem Erdos1092.f_asymptotic_general.disproof : ¬ (type_of% @Erdos1092.f_asymptotic_general) := sorry

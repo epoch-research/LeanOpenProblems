@@ -37,3 +37,5 @@ theorem erdos_9 : 0 < Erdos9A.upperDensity := by
   sorry
 
 end Erdos9
+
+theorem Erdos9.erdos_9.disproof : ¬ (type_of% @Erdos9.erdos_9) := sorry

@@ -43,3 +43,5 @@ theorem oeis_326746_conjecture_0 :
     ≥
     Filter.limsup (fun N : ℕ => (count_a_eq N m : ℝ) / N) atTop
     := by sorry
+
+theorem oeis_326746_conjecture_0.disproof : ¬ (type_of% @oeis_326746_conjecture_0) := sorry

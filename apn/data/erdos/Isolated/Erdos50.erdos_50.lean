@@ -58,3 +58,5 @@ theorem erdos_50 : ∀ᵉ (f : ℝ → ℝ) (hf : IsDistributionOfPhiRatio f),
   sorry
 
 end Erdos50
+
+theorem Erdos50.erdos_50.disproof : ¬ (type_of% @Erdos50.erdos_50) := sorry

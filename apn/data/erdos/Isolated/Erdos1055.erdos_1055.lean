@@ -61,3 +61,5 @@ theorem erdos_1055 (r) : {p | p.Prime ∧ IsOfClass r p}.Infinite := by
 -- TODO(Paul-Lez): formalize the rest of the problems on the page.
 
 end Erdos1055
+
+theorem Erdos1055.erdos_1055.disproof : ¬ (type_of% @Erdos1055.erdos_1055) := sorry

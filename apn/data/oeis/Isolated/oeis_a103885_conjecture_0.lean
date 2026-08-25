@@ -77,3 +77,5 @@ theorem oeis_a103885_conjecture_0 (m : ℕ) (hm : 1 ≤ m) :
       -- Q zero properties: The zeros of Q(x^2) are real and in [-1, 1].
       (∀ z : ℂ, (Q.map (algebraMap ℝ ℂ)).eval (z^2) = 0 → z.im = 0 ∧ z.re ∈ (Set.Icc (-1) 1)) :=
   by sorry
+
+theorem oeis_a103885_conjecture_0.disproof : ¬ (type_of% @oeis_a103885_conjecture_0) := sorry

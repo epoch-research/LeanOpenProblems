@@ -39,3 +39,5 @@ theorem erdos_142.variants.lower (k : ℕ) (hk : 1 < k) :
 -- TODO(firsching): at known upper bounds for small k
 
 end Erdos142
+
+theorem Erdos142.erdos_142.variants.lower.disproof : ¬ (type_of% @Erdos142.erdos_142.variants.lower) := sorry

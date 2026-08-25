@@ -67,3 +67,5 @@ A sequence $f : \mathbb{N} \to \mathbb{N}$ is multiplicative if $f(1) = 1$ and f
 theorem oeis_354766_conjecture_1_multiplicative :
   a 1 = 1 ∧ (∀ {m n : ℕ}, m.Coprime n → a (m * n) = a m * a n) :=
   by sorry
+
+theorem oeis_354766_conjecture_1_multiplicative.disproof : ¬ (type_of% @oeis_354766_conjecture_1_multiplicative) := sorry

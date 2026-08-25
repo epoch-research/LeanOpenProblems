@@ -45,3 +45,5 @@ theorem erdos_152.variants.square :
   sorry
 
 end Erdos152
+
+theorem Erdos152.erdos_152.variants.square.disproof : ¬ (type_of% @Erdos152.erdos_152.variants.square) := sorry

@@ -63,3 +63,5 @@ is among the following 49 quadruples: (1,2,1,1), (1,3,1,1), (1,6,1,1), (2,3,1,1)
 theorem oeis_a272979_conjecture_1 (a b c d : ℕ) :
   full_representability a b c d ↔ (a, b, c, d) ∈ a272979_magic_quadruples :=
 by sorry
+
+theorem oeis_a272979_conjecture_1.disproof : ¬ (type_of% @oeis_a272979_conjecture_1) := sorry

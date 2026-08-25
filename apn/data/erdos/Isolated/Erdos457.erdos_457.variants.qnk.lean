@@ -41,3 +41,5 @@ theorem erdos_457.variants.qnk : ∃ ε > (0 : ℝ),
   sorry
 
 end Erdos457
+
+theorem Erdos457.erdos_457.variants.qnk.disproof : ¬ (type_of% @Erdos457.erdos_457.variants.qnk) := sorry

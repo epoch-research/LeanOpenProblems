@@ -57,3 +57,5 @@ def Erdos945Constant : Prop :=
 -- interval contains a squarefree number.
 
 end Erdos945
+
+theorem Erdos945.erdos_945.disproof : ¬ (type_of% @Erdos945.erdos_945) := sorry

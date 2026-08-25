@@ -39,3 +39,5 @@ theorem erdos_208.parts.ii : ∃ (c : ℕ → ℝ), (c =o[atTop] (1 : ℕ → �
   sorry
 
 end Erdos208
+
+theorem Erdos208.erdos_208.parts.ii.disproof : ¬ (type_of% @Erdos208.erdos_208.parts.ii) := sorry

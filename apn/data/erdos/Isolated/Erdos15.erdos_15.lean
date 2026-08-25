@@ -40,3 +40,5 @@ theorem erdos_15 :
 -- TODO: add the other statements from the additional material
 
 end Erdos15
+
+theorem Erdos15.erdos_15.disproof : ¬ (type_of% @Erdos15.erdos_15) := sorry

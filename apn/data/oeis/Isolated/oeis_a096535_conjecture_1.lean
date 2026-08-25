@@ -30,3 +30,5 @@ A096535 Three conjectures: (1) All numbers appear infinitely often, i.e., for ev
 theorem oeis_a096535_conjecture_1 :
   ∀ (k : ℕ), ∀ (N : ℕ), ∃ (i : ℕ), i > N ∧ A096535 i = k := by
   sorry
+
+theorem oeis_a096535_conjecture_1.disproof : ¬ (type_of% @oeis_a096535_conjecture_1) := sorry

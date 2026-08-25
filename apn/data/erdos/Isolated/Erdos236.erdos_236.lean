@@ -39,3 +39,5 @@ theorem erdos_236: (fun n => (f n : ℝ)) =o[atTop] (fun n => Real.log (n : ℝ)
   sorry
 
 end Erdos236
+
+theorem Erdos236.erdos_236.disproof : ¬ (type_of% @Erdos236.erdos_236) := sorry

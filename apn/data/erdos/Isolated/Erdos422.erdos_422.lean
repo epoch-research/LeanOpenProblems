@@ -47,3 +47,5 @@ theorem erdos_422 : Set.Infinite {n | ∀ x, f x ≠ n} := by
   sorry
 
 end Erdos422
+
+theorem Erdos422.erdos_422.disproof : ¬ (type_of% @Erdos422.erdos_422) := sorry

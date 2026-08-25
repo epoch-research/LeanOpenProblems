@@ -59,3 +59,5 @@ $$
 -/
 
 end Erdos143
+
+theorem Erdos143.erdos_143.parts.ii.disproof : ¬ (type_of% @Erdos143.erdos_143.parts.ii) := sorry

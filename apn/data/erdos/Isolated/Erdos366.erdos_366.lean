@@ -31,3 +31,5 @@ theorem erdos_366 : ∃ n > 0, (2).Full n ∧ (3).Full (n + 1) := by
   sorry
 
 end Erdos366
+
+theorem Erdos366.erdos_366.disproof : ¬ (type_of% @Erdos366.erdos_366) := sorry

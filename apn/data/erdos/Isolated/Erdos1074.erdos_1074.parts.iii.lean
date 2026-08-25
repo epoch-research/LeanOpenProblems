@@ -45,3 +45,5 @@ theorem erdos_1074.parts.iii : ∃ c, PillaiPrimes.HasDensity c {p | p.Prime} :=
   sorry
 
 end Erdos1074
+
+theorem Erdos1074.erdos_1074.parts.iii.disproof : ¬ (type_of% @Erdos1074.erdos_1074.parts.iii) := sorry

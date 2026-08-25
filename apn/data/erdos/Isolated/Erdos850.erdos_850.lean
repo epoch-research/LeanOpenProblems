@@ -36,3 +36,5 @@ theorem erdos_850 :
 -- TODO(Paul-Lez): formalise remaining problems
 
 end Erdos850
+
+theorem Erdos850.erdos_850.disproof : ¬ (type_of% @Erdos850.erdos_850) := sorry

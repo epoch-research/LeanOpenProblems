@@ -38,3 +38,5 @@ theorem erdos_89 :
 -- TODO(firsching): formalize the rest of the remarks
 
 end Erdos89
+
+theorem Erdos89.erdos_89.disproof : ¬ (type_of% @Erdos89.erdos_89) := sorry

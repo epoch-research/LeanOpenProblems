@@ -33,3 +33,5 @@ def A349246 (n : ℕ) : ℕ :=
 /-- Conjecture: a(n) > 0 for all n = 0,1,2,.... -/
 theorem oeis_349246_conjecture_0 (n : ℕ) : A349246 n > 0 := by
   sorry
+
+theorem oeis_349246_conjecture_0.disproof : ¬ (type_of% @oeis_349246_conjecture_0) := sorry

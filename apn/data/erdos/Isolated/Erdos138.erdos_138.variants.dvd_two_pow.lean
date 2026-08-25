@@ -61,3 +61,7 @@ In [Er80] Erdős asks whether $W(k)/2^k\to \infty$.
 theorem erdos_138.variants.dvd_two_pow :
     atTop.Tendsto (fun k => ((W k : ℚ)/ (2 ^ k))) atTop := by
   sorry
+
+end Erdos138
+
+theorem Erdos138.erdos_138.variants.dvd_two_pow.disproof : ¬ (type_of% @Erdos138.erdos_138.variants.dvd_two_pow) := sorry

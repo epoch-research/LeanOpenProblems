@@ -36,3 +36,5 @@ theorem erdos_647.variants.infinite :
   sorry
 
 end Erdos647
+
+theorem Erdos647.erdos_647.variants.infinite.disproof : ¬ (type_of% @Erdos647.erdos_647.variants.infinite) := sorry

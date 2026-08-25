@@ -59,3 +59,5 @@ theorem oeis_230507_verified_up_to_10_pow_6 :
   (∀ n : ℕ, n > 8 ∧ n ≤ 10^6 → ∃ (x y z : ℕ), n = x + y + z ∧ P2_condition x ∧ P2_condition y ∧ Z_condition z) := by sorry
 
 end OeisA230507
+
+theorem OeisA230507.oeis_230507_verified_up_to_10_pow_6.disproof : ¬ (type_of% @OeisA230507.oeis_230507_verified_up_to_10_pow_6) := sorry

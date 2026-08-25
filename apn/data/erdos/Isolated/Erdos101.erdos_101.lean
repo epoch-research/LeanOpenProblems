@@ -51,3 +51,5 @@ theorem erdos_101 : (fun n => (numLinesWithFourPointMax n : ℝ)) =o[atTop] (fun
 -- TODO(firsching): formalize other results from the additional material
 
 end Erdos101
+
+theorem Erdos101.erdos_101.disproof : ¬ (type_of% @Erdos101.erdos_101) := sorry

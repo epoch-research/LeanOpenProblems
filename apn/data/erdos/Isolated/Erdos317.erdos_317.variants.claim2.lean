@@ -38,3 +38,5 @@ theorem erdos_317.variants.claim2 :
   sorry
 
 end Erdos317
+
+theorem Erdos317.erdos_317.variants.claim2.disproof : ¬ (type_of% @Erdos317.erdos_317.variants.claim2) := sorry

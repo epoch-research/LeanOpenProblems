@@ -67,3 +67,5 @@ theorem erdos_357.variants.monotone.parts.i : (fun n ↦ (h n : ℝ)) =o[atTop] 
 -- TODO(Paul-Lez): add results from last paragraph of the page.
 
 end Erdos357
+
+theorem Erdos357.erdos_357.variants.monotone.parts.i.disproof : ¬ (type_of% @Erdos357.erdos_357.variants.monotone.parts.i) := sorry

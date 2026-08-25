@@ -55,3 +55,5 @@ theorem A230507_conjecture_part_ii :
   ∀ n : ℕ, n > 8 → ∃ (x y z : ℕ), n = x + y + z ∧ P2_condition x ∧ P2_condition y ∧ Z_condition z := by sorry
 
 end OeisA230507
+
+theorem OeisA230507.A230507_conjecture_part_ii.disproof : ¬ (type_of% @OeisA230507.A230507_conjecture_part_ii) := sorry

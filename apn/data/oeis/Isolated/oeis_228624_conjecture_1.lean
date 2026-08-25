@@ -59,3 +59,5 @@ noncomputable def a_cube (n : ℕ) : ℤ :=
 according as i + j is a cube or not. Then A(n) is nonzero for any n > 176. -/
 theorem oeis_228624_conjecture_1 (n : ℕ) : n > 176 → a_cube n ≠ 0 := by
   sorry
+
+theorem oeis_228624_conjecture_1.disproof : ¬ (type_of% @oeis_228624_conjecture_1) := sorry

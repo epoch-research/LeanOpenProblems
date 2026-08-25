@@ -75,3 +75,5 @@ theorem erdos_123 : ∀ a > 1, ∀ b > 1, ∀ c > 1, PairwiseCoprime a b c →
     IsDComplete (↑(powers a) * ↑(powers b) * ↑(powers c)) := by sorry
 
 end Erdos123
+
+theorem Erdos123.erdos_123.disproof : ¬ (type_of% @Erdos123.erdos_123) := sorry

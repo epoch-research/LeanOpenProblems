@@ -43,3 +43,5 @@ theorem erdos_853.parts.ii :
   sorry
 
 end Erdos853
+
+theorem Erdos853.erdos_853.parts.ii.disproof : ¬ (type_of% @Erdos853.erdos_853.parts.ii) := sorry

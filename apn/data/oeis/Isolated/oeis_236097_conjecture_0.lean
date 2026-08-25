@@ -51,3 +51,5 @@ Conjecture: a(n) > 0 for all n > 31.
 -/
 theorem oeis_236097_conjecture_0 : ∀ (n : ℕ), n > 31 → A236097 n > 0 := by
   sorry
+
+theorem oeis_236097_conjecture_0.disproof : ¬ (type_of% @oeis_236097_conjecture_0) := sorry

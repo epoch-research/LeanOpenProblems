@@ -35,3 +35,5 @@ theorem erdos_982 (n : ℕ) (hn : 3 ≤ n) (p : Fin n → ℝ²) (hp : Function.
   sorry
 
 end Erdos982
+
+theorem Erdos982.erdos_982.disproof : ¬ (type_of% @Erdos982.erdos_982) := sorry

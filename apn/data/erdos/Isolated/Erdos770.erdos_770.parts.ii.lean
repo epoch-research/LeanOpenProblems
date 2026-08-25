@@ -41,3 +41,5 @@ theorem erdos_770.parts.ii : liminf h atTop = ⊤ := by
   sorry
 
 end Erdos770
+
+theorem Erdos770.erdos_770.parts.ii.disproof : ¬ (type_of% @Erdos770.erdos_770.parts.ii) := sorry

@@ -49,3 +49,5 @@ theorem erdos_774 : ∀ (A : Set ℕ), A.Infinite → A.IsProportionatelyDissoci
   sorry
 
 end Erdos774
+
+theorem Erdos774.erdos_774.disproof : ¬ (type_of% @Erdos774.erdos_774) := sorry

@@ -49,3 +49,5 @@ theorem erdos_516.variants.limsup_ratio_eq_one_of_hasFejerGaps :
   sorry
 
 end Erdos516
+
+theorem Erdos516.erdos_516.variants.limsup_ratio_eq_one_of_hasFejerGaps.disproof : ¬ (type_of% @Erdos516.erdos_516.variants.limsup_ratio_eq_one_of_hasFejerGaps) := sorry

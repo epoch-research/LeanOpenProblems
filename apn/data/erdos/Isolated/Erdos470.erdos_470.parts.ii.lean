@@ -41,3 +41,5 @@ theorem erdos_470.parts.ii : Set.Infinite PrimitiveWeird := by
   sorry
 
 end Erdos470
+
+theorem Erdos470.erdos_470.parts.ii.disproof : ¬ (type_of% @Erdos470.erdos_470.parts.ii) := sorry

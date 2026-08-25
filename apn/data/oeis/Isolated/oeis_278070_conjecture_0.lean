@@ -35,3 +35,5 @@ For example, modulo 7 the sequence becomes [1, 2, 4, 1, 1, 4, 2, 1, 2, 4, 1, 1, 
 -/
 theorem oeis_278070_conjecture_0 : ∀ (n k : ℕ), Nat.ModEq k (A278070 (n + k)) (A278070 n) := by
   sorry
+
+theorem oeis_278070_conjecture_0.disproof : ¬ (type_of% @oeis_278070_conjecture_0) := sorry

@@ -46,6 +46,10 @@ from apn.task import (
 )
 from scripts.isolation import BAKED_EXE, CONTAINER_PROJECT, COMPILE_SCRIPT, parse_extractor_output
 
+# The disproof-declaration certifier baked next to the extractor (the
+# Dockerfile `generate` stage builds both exes of apn/lean/extract_ranges).
+CERTIFY_EXE = "/opt/apn/extract_ranges/.lake/build/bin/certify_disproof"
+
 
 def generate_compose_file(fc_commit: str) -> str:
     """Path to a one-service compose that builds the Dockerfile's ``generate``
@@ -163,6 +167,27 @@ async def extract(
         assert fr["file"].startswith(prefix), fr["file"]
         fr["file"] = fr["file"][len(prefix):]
     return records
+
+
+async def certify(
+    env: DockerSandboxEnvironment, files: list[Path], arcnames: list[str] | None = None
+) -> list[dict[str, Any]]:
+    """Run the disproof-declaration certifier over ``files`` (under ``lake
+    env``) in the sandbox; see apn/lean/extract_ranges/CertifyDisproof.lean.
+
+    Each returned verdict's ``file`` is rewritten to its arcname, mirroring
+    :func:`extract`.
+    """
+    cpaths = await stage(env, files, arcnames)
+    res = await env.exec(["lake", "env", CERTIFY_EXE, *cpaths], cwd=CONTAINER_PROJECT)
+    if not res.success:
+        raise RuntimeError(f"certifier failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
+    verdicts: list[dict[str, Any]] = parse_extractor_output(res.stdout)
+    prefix = f"{_STAGE_DIR}/"
+    for v in verdicts:
+        assert v["file"].startswith(prefix), v["file"]
+        v["file"] = v["file"][len(prefix):]
+    return verdicts
 
 
 async def compile_all(env: DockerSandboxEnvironment, files: list[Path]) -> list[str]:

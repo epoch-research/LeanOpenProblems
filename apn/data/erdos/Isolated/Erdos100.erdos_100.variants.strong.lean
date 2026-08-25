@@ -45,3 +45,5 @@ theorem erdos_100.variants.strong :
   sorry
 
 end Erdos100
+
+theorem Erdos100.erdos_100.variants.strong.disproof : ¬ (type_of% @Erdos100.erdos_100.variants.strong) := sorry

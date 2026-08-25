@@ -60,3 +60,5 @@ def johnsonBound : ℕ → ℕ → ℕ → ℕ
   | n + 1, d, w + 1 => if 2 * (w + 1) < d then 1 else (n + 1) * johnsonBound n d w / (w + 1)
 
 end Erdos835
+
+theorem Erdos835.erdos_835.variants.johnson.disproof : ¬ (type_of% @Erdos835.erdos_835.variants.johnson) := sorry

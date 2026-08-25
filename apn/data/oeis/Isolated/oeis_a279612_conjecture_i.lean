@@ -58,3 +58,5 @@ theorem oeis_a279612_conjecture_i :
   (∀ n : ℕ, 0 < n → 0 < a n) ∧
   (∀ n : ℕ, 0 < n → (a n = 1 ↔ ∃ k q, q ∈ Q ∧ n = 16 ^ k * q))
 := by sorry
+
+theorem oeis_a279612_conjecture_i.disproof : ¬ (type_of% @oeis_a279612_conjecture_i) := sorry

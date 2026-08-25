@@ -84,3 +84,5 @@ Therefore, it is natural to conjecture that a(n) ~ e^(-2)*n!/(n-2)*(1 + Sum_{k>=
 theorem oeis_A258667_conjecture_0 :
   IsEquivalent atTop (fun n : ℕ => (A258667 n : ℝ)) A258667_asymptotic_term := by
   sorry
+
+theorem oeis_A258667_conjecture_0.disproof : ¬ (type_of% @oeis_A258667_conjecture_0) := sorry

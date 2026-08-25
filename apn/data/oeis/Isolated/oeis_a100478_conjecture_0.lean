@@ -57,3 +57,5 @@ theorem oeis_a100478_conjecture_0 :
   -- The sequence is ultimately periodic.
   ∃ N P : ℕ, P > 0 ∧ (∀ n, n ≥ N → a_general v (n + P) = a_general v n) := by
   sorry
+
+theorem oeis_a100478_conjecture_0.disproof : ¬ (type_of% @oeis_a100478_conjecture_0) := sorry

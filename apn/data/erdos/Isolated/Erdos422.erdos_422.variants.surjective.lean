@@ -47,3 +47,5 @@ theorem erdos_422.variants.surjective : f.Surjective := by
   sorry
 
 end Erdos422
+
+theorem Erdos422.erdos_422.variants.surjective.disproof : ¬ (type_of% @Erdos422.erdos_422.variants.surjective) := sorry

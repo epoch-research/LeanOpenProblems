@@ -33,3 +33,5 @@ theorem erdos_11.variants.not_four_dvd (n : ℕ) (hn : ¬ 4 ∣ n) (hn' : 1 < n)
   sorry
 
 end Erdos11
+
+theorem Erdos11.erdos_11.variants.not_four_dvd.disproof : ¬ (type_of% @Erdos11.erdos_11.variants.not_four_dvd) := sorry

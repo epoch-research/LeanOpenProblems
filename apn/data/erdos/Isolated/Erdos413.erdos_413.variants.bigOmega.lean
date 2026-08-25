@@ -49,3 +49,5 @@ theorem erdos_413.variants.bigOmega :
   sorry
 
 end Erdos413
+
+theorem Erdos413.erdos_413.variants.bigOmega.disproof : ¬ (type_of% @Erdos413.erdos_413.variants.bigOmega) := sorry

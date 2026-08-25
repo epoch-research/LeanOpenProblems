@@ -52,3 +52,5 @@ def A281977 (n : ℕ) : ℕ :=
 /-- We have verified the conjecture for all n = 0..10^6. -/
 theorem A281977_verified_up_to_1e6 (n : ℕ) (h : n ≤ 10^6) : A281977 n > 0 := by
   sorry
+
+theorem A281977_verified_up_to_1e6.disproof : ¬ (type_of% @A281977_verified_up_to_1e6) := sorry

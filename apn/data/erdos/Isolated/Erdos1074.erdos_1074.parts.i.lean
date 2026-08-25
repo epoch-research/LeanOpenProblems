@@ -45,3 +45,5 @@ theorem erdos_1074.parts.i : ∃ c, EHSNumbers.HasDensity c := by
   sorry
 
 end Erdos1074
+
+theorem Erdos1074.erdos_1074.parts.i.disproof : ¬ (type_of% @Erdos1074.erdos_1074.parts.i) := sorry

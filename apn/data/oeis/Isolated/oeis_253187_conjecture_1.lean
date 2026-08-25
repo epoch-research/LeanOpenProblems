@@ -53,3 +53,5 @@ def A253187 (n : ℕ) : ℕ :=
 See also the author's similar conjectures in A254574, A254631, A255916 and the two linked papers. -/
 theorem oeis_253187_conjecture_1 : ∀ (n : ℕ), A253187 n > 0 := by
   sorry
+
+theorem oeis_253187_conjecture_1.disproof : ¬ (type_of% @oeis_253187_conjecture_1) := sorry

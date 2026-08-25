@@ -50,3 +50,5 @@ theorem erdos_14.parts.i :
     ∀ A, ∀ ε > 0, nonUniqueSumCount A ≫ almostSquareRoot ε := by sorry
 
 end Erdos14
+
+theorem Erdos14.erdos_14.parts.i.disproof : ¬ (type_of% @Erdos14.erdos_14.parts.i) := sorry

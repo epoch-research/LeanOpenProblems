@@ -42,3 +42,5 @@ theorem erdos_939 : ∀ r ≥ 4, (Erdos939Sums r).Nonempty := by
   sorry
 
 end Erdos939
+
+theorem Erdos939.erdos_939.disproof : ¬ (type_of% @Erdos939.erdos_939) := sorry

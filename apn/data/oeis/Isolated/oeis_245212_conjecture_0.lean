@@ -38,3 +38,5 @@ def sigma (n : ℕ) : ℤ :=
 theorem oeis_245212_conjecture_0 (n : ℕ) (h : n > 0) :
     a n = sigma n ↔ n.isPowerOfTwo := by
   sorry
+
+theorem oeis_245212_conjecture_0.disproof : ¬ (type_of% @oeis_245212_conjecture_0) := sorry

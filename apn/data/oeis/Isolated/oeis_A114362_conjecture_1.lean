@@ -65,3 +65,5 @@ theorem oeis_A114362_conjecture_1 :
       (1 / (2:ℝ)^n + 1 / (3:ℝ)^n + 1 / (5:ℝ)^n + 1 / (7:ℝ)^n))
       =O[atTop] (fun n : ℕ => 1 / (11:ℝ)^n) := by
   sorry
+
+theorem oeis_A114362_conjecture_1.disproof : ¬ (type_of% @oeis_A114362_conjecture_1) := sorry

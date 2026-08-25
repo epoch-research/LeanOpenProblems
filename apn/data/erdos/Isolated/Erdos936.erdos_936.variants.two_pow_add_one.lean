@@ -36,3 +36,5 @@ theorem erdos_936.variants.two_pow_add_one :
   sorry
 
 end Erdos936
+
+theorem Erdos936.erdos_936.variants.two_pow_add_one.disproof : ¬ (type_of% @Erdos936.erdos_936.variants.two_pow_add_one) := sorry

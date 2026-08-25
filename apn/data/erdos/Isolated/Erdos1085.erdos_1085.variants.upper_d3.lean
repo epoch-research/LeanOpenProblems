@@ -43,3 +43,5 @@ theorem erdos_1085.variants.upper_d3 :
   sorry
 
 end Erdos1085
+
+theorem Erdos1085.erdos_1085.variants.upper_d3.disproof : ¬ (type_of% @Erdos1085.erdos_1085.variants.upper_d3) := sorry

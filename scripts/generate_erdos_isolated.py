@@ -69,6 +69,7 @@ from scripts.fc_statements import (
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     BAKED_EXE,
+    append_disproof,
     dependency_closure,
     host_to_container,
     isolate,
@@ -221,6 +222,9 @@ def main() -> None:
             text, counts = strip_fc_annotations(text)
             for kind, n in counts.items():
                 annotations[kind] += n
+            # Append the derived disproof declaration (plan §4); the erdos id
+            # IS the fully-qualified name, so no decl_name override can arise.
+            text, _ = append_disproof(text, decl["name"], decl["name"])
             n_seen = casefold_seen[decl["name"].casefold()] = (
                 casefold_seen.get(decl["name"].casefold(), 0) + 1
             )

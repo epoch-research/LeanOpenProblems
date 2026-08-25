@@ -54,3 +54,5 @@ theorem oeis_243512_conjecture_0 (n : ℕ) : a n ≠ 0 := by
   -- {i : ℕ | 0 < i ∧ A243473_val i = n} is non-empty.
   -- The provided OEIS conjecture is that no `a(n)` will ever be 0.
   sorry
+
+theorem oeis_243512_conjecture_0.disproof : ¬ (type_of% @oeis_243512_conjecture_0) := sorry

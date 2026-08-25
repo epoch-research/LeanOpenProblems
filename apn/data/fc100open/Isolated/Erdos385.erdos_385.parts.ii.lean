@@ -36,3 +36,5 @@ theorem erdos_385.parts.ii : atTop.Tendsto (fun n ↦ F n - n) atTop := by
   sorry
 
 end Erdos385
+
+theorem Erdos385.erdos_385.parts.ii.disproof : ¬ (type_of% @Erdos385.erdos_385.parts.ii) := sorry

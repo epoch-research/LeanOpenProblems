@@ -42,3 +42,5 @@ theorem erdos_323.variants.k_gt_2 :
   sorry
 
 end Erdos323
+
+theorem Erdos323.erdos_323.variants.k_gt_2.disproof : ¬ (type_of% @Erdos323.erdos_323.variants.k_gt_2) := sorry

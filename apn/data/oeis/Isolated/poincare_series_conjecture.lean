@@ -69,3 +69,5 @@ theorem poincare_series_conjecture :
 by sorry
 
 end noncomputable section
+
+theorem poincare_series_conjecture.disproof : ¬ (type_of% @poincare_series_conjecture) := sorry

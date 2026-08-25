@@ -50,3 +50,5 @@ We have verified Conjectures 1 and 2 for all n <= 10^5.
 theorem oeis_352259_conjecture_2 (n : ℕ) :
   ∃ (w x y z : ℕ), n = 2 * w^4 + 3 * x^2 + y^2 + z^2 + x * y * z :=
 by sorry
+
+theorem oeis_352259_conjecture_2.disproof : ¬ (type_of% @oeis_352259_conjecture_2) := sorry

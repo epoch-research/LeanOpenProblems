@@ -71,3 +71,5 @@ noncomputable def V_l (l n : ℕ) : ℕ∞ :=
   ⨆ k ≥ l, (V n k : ℕ∞)
 
 end Erdos889
+
+theorem Erdos889.erdos_889.disproof : ¬ (type_of% @Erdos889.erdos_889) := sorry

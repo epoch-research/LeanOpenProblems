@@ -41,3 +41,5 @@ theorem erdos_354.parts.ii : ∃ γ ∈ Set.Ioo (1 : ℝ) 2, ∀ᵉ (α > 0) (β
   sorry
 
 end Erdos354
+
+theorem Erdos354.erdos_354.parts.ii.disproof : ¬ (type_of% @Erdos354.erdos_354.parts.ii) := sorry

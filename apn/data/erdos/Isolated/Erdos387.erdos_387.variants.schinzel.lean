@@ -37,3 +37,5 @@ theorem erdos_387.variants.schinzel :
   sorry
 
 end Erdos387
+
+theorem Erdos387.erdos_387.variants.schinzel.disproof : ¬ (type_of% @Erdos387.erdos_387.variants.schinzel) := sorry

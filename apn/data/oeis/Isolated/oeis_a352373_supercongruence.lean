@@ -43,3 +43,5 @@ theorem oeis_a352373_supercongruence :
   ∀ (k : ℕ) (hk_pos : 0 < k),
   (a (n * p ^ k) : ℤ) ≡ a (n * p ^ (k - 1)) [ZMOD (p : ℤ) ^ (3 * k)] :=
 by sorry
+
+theorem oeis_a352373_supercongruence.disproof : ¬ (type_of% @oeis_a352373_supercongruence) := sorry

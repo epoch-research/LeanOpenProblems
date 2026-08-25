@@ -54,3 +54,5 @@ theorem erdos_283 : ∀ p : ℤ[X], Condition p := by
 -- TODO(firsching): formalize the rest of the additional material
 
 end Erdos283
+
+theorem Erdos283.erdos_283.disproof : ¬ (type_of% @Erdos283.erdos_283) := sorry

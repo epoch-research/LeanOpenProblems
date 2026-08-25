@@ -41,3 +41,5 @@ theorem erdos_410 : ∀ n > 1,
   sorry
 
 end Erdos410
+
+theorem Erdos410.erdos_410.disproof : ¬ (type_of% @Erdos410.erdos_410) := sorry

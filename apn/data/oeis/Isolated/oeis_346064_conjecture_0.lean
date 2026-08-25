@@ -59,3 +59,5 @@ noncomputable def A346064 (n : ℕ) : ℕ :=
 /-- By heuristic considerations it is conjectured that a(n) > 0 for all n >= 10. -/
 theorem oeis_346064_conjecture_0 : ∀ n, 10 ≤ n → A346064 n > 0 := by
   sorry
+
+theorem oeis_346064_conjecture_0.disproof : ¬ (type_of% @oeis_346064_conjecture_0) := sorry

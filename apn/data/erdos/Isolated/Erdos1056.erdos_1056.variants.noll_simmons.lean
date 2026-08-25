@@ -45,3 +45,5 @@ theorem erdos_1056.variants.noll_simmons :
   sorry
 
 end Erdos1056
+
+theorem Erdos1056.erdos_1056.variants.noll_simmons.disproof : ¬ (type_of% @Erdos1056.erdos_1056.variants.noll_simmons) := sorry

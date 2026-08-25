@@ -56,3 +56,5 @@ theorem general_supercongruence_conjecture (m n r p : ℕ) (hp : Nat.Prime p)
     (hp5 : p ≥ 5) (hm : m ≥ 1) (hn : n ≥ 1) (hr : r ≥ 1) :
     b_m_int m (n * p ^ r) ≡ b_m_int m (n * p ^ (r - 1)) [ZMOD (p ^ (3 * r) : ℤ)] :=
 by sorry
+
+theorem general_supercongruence_conjecture.disproof : ¬ (type_of% @general_supercongruence_conjecture) := sorry

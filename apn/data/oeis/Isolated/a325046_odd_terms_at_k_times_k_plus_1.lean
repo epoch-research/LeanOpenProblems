@@ -49,3 +49,5 @@ def a (N : ℕ) : ℕ :=
 theorem a325046_odd_terms_at_k_times_k_plus_1 (N : ℕ) :
   a N % 2 = 1 → ∃ k : ℕ, N = k * (k + 1) :=
 by sorry
+
+theorem a325046_odd_terms_at_k_times_k_plus_1.disproof : ¬ (type_of% @a325046_odd_terms_at_k_times_k_plus_1) := sorry

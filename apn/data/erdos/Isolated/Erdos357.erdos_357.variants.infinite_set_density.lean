@@ -69,3 +69,5 @@ noncomputable def h (n : ℕ) : ℕ :=
 -- TODO(Paul-Lez): add results from last paragraph of the page.
 
 end Erdos357
+
+theorem Erdos357.erdos_357.variants.infinite_set_density.disproof : ¬ (type_of% @Erdos357.erdos_357.variants.infinite_set_density) := sorry

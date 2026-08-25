@@ -37,3 +37,5 @@ theorem erdos_887.parts.ii : ∃ K, ∀ C > (0 : ℝ), ∀ᶠ n in atTop,
   sorry
 
 end Erdos887
+
+theorem Erdos887.erdos_887.parts.ii.disproof : ¬ (type_of% @Erdos887.erdos_887.parts.ii) := sorry

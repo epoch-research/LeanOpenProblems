@@ -62,3 +62,5 @@ theorem erdos_193 :
 -- TODO(jeangud): For $\mathbb{Z}^3$ the largest number of collinear points can be bounded [GeRa79].
 
 end Erdos193
+
+theorem Erdos193.erdos_193.disproof : ¬ (type_of% @Erdos193.erdos_193) := sorry

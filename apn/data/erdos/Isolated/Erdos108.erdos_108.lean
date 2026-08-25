@@ -43,3 +43,5 @@ theorem erdos_108 :
 -- TODO: Proof for the case r=4 and statement for the infinite case
 
 end Erdos108
+
+theorem Erdos108.erdos_108.disproof : ¬ (type_of% @Erdos108.erdos_108) := sorry

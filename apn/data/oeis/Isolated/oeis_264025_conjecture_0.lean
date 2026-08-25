@@ -40,3 +40,5 @@ theorem oeis_264025_conjecture_0 :
   (∀ n : ℕ, n > 0 → A264025 n > 0)
   ∧ (∀ n : ℕ, A264025 n = 1 ↔ n ∈ A264025_singletons) :=
 by sorry
+
+theorem oeis_264025_conjecture_0.disproof : ¬ (type_of% @oeis_264025_conjecture_0) := sorry

@@ -34,3 +34,5 @@ theorem erdos_495 : ∀ α β : ℝ, liminf (fun n : ℕ ↦ (n : ℝ) * distToN
   * distToNearestInt (n * β)) atTop = 0 := by sorry
 
 end Erdos495
+
+theorem Erdos495.erdos_495.disproof : ¬ (type_of% @Erdos495.erdos_495) := sorry

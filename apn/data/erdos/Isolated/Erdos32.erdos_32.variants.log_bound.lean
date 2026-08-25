@@ -50,3 +50,5 @@ theorem erdos_32.variants.log_bound : ∃ A : Set ℕ,
   sorry
 
 end Erdos32
+
+theorem Erdos32.erdos_32.variants.log_bound.disproof : ¬ (type_of% @Erdos32.erdos_32.variants.log_bound) := sorry

@@ -50,3 +50,5 @@ This formalizes the belief that the natural density (asymptotic mean) of the set
 theorem oeis_341996_conjecture_0 :
   ∃ c : ℝ, ({n : ℕ | A341996 n = 1} : Set ℕ).HasDensity c :=
 by sorry
+
+theorem oeis_341996_conjecture_0.disproof : ¬ (type_of% @oeis_341996_conjecture_0) := sorry

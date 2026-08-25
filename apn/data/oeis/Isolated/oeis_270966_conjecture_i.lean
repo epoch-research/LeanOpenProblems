@@ -61,3 +61,5 @@ theorem oeis_270966_conjecture_i :
   (∀ n : ℕ, n > 0 → A270966 n > 0) ∧
   (∀ n : ℕ, n > 0 → (A270966 n = 1 ↔ n = 1 ∨ n = 49 ∨ n = 608)) :=
 by sorry
+
+theorem oeis_270966_conjecture_i.disproof : ¬ (type_of% @oeis_270966_conjecture_i) := sorry

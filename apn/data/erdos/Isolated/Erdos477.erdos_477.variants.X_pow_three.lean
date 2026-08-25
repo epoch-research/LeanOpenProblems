@@ -37,3 +37,5 @@ theorem erdos_477.variants.X_pow_three :
   sorry
 
 end Erdos477
+
+theorem Erdos477.erdos_477.variants.X_pow_three.disproof : ¬ (type_of% @Erdos477.erdos_477.variants.X_pow_three) := sorry

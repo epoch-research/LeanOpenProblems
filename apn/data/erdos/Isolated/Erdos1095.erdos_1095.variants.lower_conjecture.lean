@@ -54,3 +54,5 @@ theorem erdos_1095.variants.lower_conjecture : ∃ c > 0, ∀ᶠ k in atTop, g k
   sorry
 
 end Erdos1095
+
+theorem Erdos1095.erdos_1095.variants.lower_conjecture.disproof : ¬ (type_of% @Erdos1095.erdos_1095.variants.lower_conjecture) := sorry

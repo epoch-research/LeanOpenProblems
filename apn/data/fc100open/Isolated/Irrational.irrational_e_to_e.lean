@@ -39,3 +39,5 @@ theorem irrational_e_to_e :
   sorry
 
 end Irrational
+
+theorem Irrational.irrational_e_to_e.disproof : ¬ (type_of% @Irrational.irrational_e_to_e) := sorry

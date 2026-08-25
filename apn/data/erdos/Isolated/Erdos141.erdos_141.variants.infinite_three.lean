@@ -56,3 +56,5 @@ theorem erdos_141.variants.infinite_three :
   sorry
 
 end Erdos141
+
+theorem Erdos141.erdos_141.variants.infinite_three.disproof : ¬ (type_of% @Erdos141.erdos_141.variants.infinite_three) := sorry

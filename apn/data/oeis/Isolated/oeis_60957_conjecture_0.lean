@@ -35,3 +35,5 @@ theorem oeis_60957_conjecture_0 (n : ℕ) :
     ∀ p, Nat.Prime p → p ≤ n →
     ∀ m a, m ∈ products n → (p ^ a * m) ∈ products n →
     ∀ k, 0 < k → k < a → (p ^ k * m) ∈ products n := by sorry
+
+theorem oeis_60957_conjecture_0.disproof : ¬ (type_of% @oeis_60957_conjecture_0) := sorry

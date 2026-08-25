@@ -48,3 +48,5 @@ theorem erdos_313.variants.primary_pseudoperfect_are_infinite :
   sorry
 
 end Erdos313
+
+theorem Erdos313.erdos_313.variants.primary_pseudoperfect_are_infinite.disproof : ¬ (type_of% @Erdos313.erdos_313.variants.primary_pseudoperfect_are_infinite) := sorry

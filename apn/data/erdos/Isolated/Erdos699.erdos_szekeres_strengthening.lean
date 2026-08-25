@@ -36,3 +36,5 @@ theorem erdos_szekeres_strengthening :
   sorry
 
 end Erdos699
+
+theorem Erdos699.erdos_szekeres_strengthening.disproof : ¬ (type_of% @Erdos699.erdos_szekeres_strengthening) := sorry

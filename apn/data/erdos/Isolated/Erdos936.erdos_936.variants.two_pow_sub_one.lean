@@ -36,3 +36,5 @@ theorem erdos_936.variants.two_pow_sub_one :
   sorry
 
 end Erdos936
+
+theorem Erdos936.erdos_936.variants.two_pow_sub_one.disproof : ¬ (type_of% @Erdos936.erdos_936.variants.two_pow_sub_one) := sorry

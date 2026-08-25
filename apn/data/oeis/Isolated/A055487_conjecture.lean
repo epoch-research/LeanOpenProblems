@@ -43,3 +43,5 @@ theorem A055487_conjecture (n : ℕ)
       let p := sInf (prime_candidates n)
       p * (N / (p - 1) + 1) :=
   by sorry
+
+theorem A055487_conjecture.disproof : ¬ (type_of% @A055487_conjecture) := sorry

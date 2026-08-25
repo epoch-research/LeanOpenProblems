@@ -60,3 +60,5 @@ theorem erdos_184.variants.covering :
   sorry
 
 end Erdos184
+
+theorem Erdos184.erdos_184.variants.covering.disproof : ¬ (type_of% @Erdos184.erdos_184.variants.covering) := sorry

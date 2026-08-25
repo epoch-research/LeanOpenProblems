@@ -49,3 +49,5 @@ theorem erdos_82 : Tendsto (fun n => F n / Real.log n) atTop atTop := by
   sorry
 
 end Erdos82
+
+theorem Erdos82.erdos_82.disproof : ¬ (type_of% @Erdos82.erdos_82) := sorry

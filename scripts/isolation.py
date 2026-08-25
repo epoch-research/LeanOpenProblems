@@ -269,6 +269,200 @@ def tidy(text: bytes) -> bytes:
 
 
 # --------------------------------------------------------------------------- #
+# The appended disproof declaration (comparator-migration-plan.md §4).         #
+#                                                                              #
+# Every isolated spec ends with one mechanically derived declaration           #
+#                                                                              #
+#   theorem <target>.disproof : ¬ (type_of% @<target>) := sorry               #
+#                                                                              #
+# so one committed file is simultaneously the agent's sketch, the proof        #
+# challenge and the disproof challenge. `type_of%` is a Lean-core term         #
+# elaborator returning the referenced constant's *elaborated* type, so the     #
+# declaration's type is exactly `Not <target's statement>` -- no source-level  #
+# negation of binders. The declaration is appended at top level under the      #
+# target's fully-qualified name; the few specs whose isolation cut dropped a   #
+# trailing `end` (the upstream file closes its namespaces after content the    #
+# cut removed) first get those `end` lines restored. Certification that the    #
+# appended declaration's type is BEq-identical to `mkNot` of the target's is   #
+# independent (apn/lean/extract_ranges/CertifyDisproof.lean, driven by the     #
+# isolation suites); the helpers here are deliberately *syntactic* and fail    #
+# loudly on anything they cannot account for.                                  #
+# --------------------------------------------------------------------------- #
+def strip_comments_and_strings(text: str) -> str:
+    """Blank out Lean comments and string literals (preserving newlines and
+    offsets) so line-anchored scans below never match commented-out or quoted
+    text. Handles nested ``/- -/`` blocks (doc comments included), ``--`` line
+    comments, and ``"..."`` strings with escapes."""
+    out = list(text)
+    i, n = 0, len(text)
+    block_depth = 0
+    while i < n:
+        ch = text[i]
+        pair = text[i : i + 2]
+        if block_depth > 0:
+            if pair == "/-":
+                block_depth += 1
+                out[i] = out[i + 1] = " "
+                i += 2
+            elif pair == "-/":
+                block_depth -= 1
+                out[i] = out[i + 1] = " "
+                i += 2
+            else:
+                if ch != "\n":
+                    out[i] = " "
+                i += 1
+        elif pair == "/-":
+            block_depth = 1
+            out[i] = out[i + 1] = " "
+            i += 2
+        elif pair == "--":
+            while i < n and text[i] != "\n":
+                out[i] = " "
+                i += 1
+        elif ch == '"':
+            out[i] = " "
+            i += 1
+            while i < n and text[i] != '"':
+                if text[i] == "\\" and i + 1 < n:
+                    out[i] = out[i + 1] = " "
+                    i += 2
+                    continue
+                if text[i] != "\n":
+                    out[i] = " "
+                i += 1
+            if i < n:
+                out[i] = " "
+                i += 1
+        else:
+            i += 1
+    return "".join(out)
+
+
+def split_name_components(ident: str) -> list[str]:
+    """Split a Lean hierarchical identifier on dots, respecting ``«...»``
+    segments (whose contents may themselves contain dots)."""
+    parts: list[str] = []
+    cur = ""
+    depth = 0
+    for ch in ident:
+        if ch == "«":
+            depth += 1
+            cur += ch
+        elif ch == "»":
+            depth -= 1
+            cur += ch
+        elif ch == "." and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    parts.append(cur)
+    if any(not p for p in parts) or depth != 0:
+        raise ValueError(f"malformed hierarchical identifier: {ident!r}")
+    return parts
+
+
+_NAMESPACE_RE = re.compile(r"^\s*namespace\s+(\S+)\s*$")
+_SECTION_RE = re.compile(r"^\s*(?:noncomputable\s+)?section(?:\s+(\S+))?\s*$")
+_END_RE = re.compile(r"^\s*end(?:\s+(\S+))?\s*$")
+_THEOREM_RE = re.compile(
+    r"^\s*(?:@\[[^\]]*\]\s*)?(?:(?:private|protected|nonrec)\s+)*(?:theorem|lemma)\s+([^\s:({\[⦃]+)"
+)
+
+# A scope-stack entry: ("namespace", component) or ("section", name-or-None).
+_Scope = tuple[str, "str | None"]
+
+
+def _pop_end(stack: list[_Scope], name: str | None, where: str) -> None:
+    if name is None:
+        if not stack:
+            raise ValueError(f"{where}: 'end' with no open scope")
+        kind, top = stack.pop()
+        if kind == "namespace":
+            raise ValueError(f"{where}: anonymous 'end' closing namespace {top}")
+        return
+    components = split_name_components(name)
+    # `end A.B` pops one entry per component; a single component may instead
+    # close the like-named section.
+    if len(components) == 1 and stack and stack[-1] == ("section", components[0]):
+        stack.pop()
+        return
+    for comp in reversed(components):
+        if not stack:
+            raise ValueError(f"{where}: 'end {name}' with no open scope")
+        kind, top = stack.pop()
+        if kind != "namespace" or top != comp:
+            raise ValueError(f"{where}: 'end {name}' does not match open scope {kind} {top}")
+
+
+def scan_scopes(text: str, target_id: str | None = None) -> tuple[list[str], str | None]:
+    """Statically scan a spec's scope structure.
+
+    Returns ``(open_namespaces, target_fq_name)``: the namespace components
+    still open at EOF (outermost first), and -- when ``target_id`` is given --
+    the fully-qualified name of the unique ``theorem``/``lemma`` whose
+    environment name is ``target_id`` or ends with ``.<target_id>``. Raises on
+    anything unaccounted for (ambiguous target, mismatched ``end``); the
+    container-side certification and compile gates back this scan up.
+    """
+    stack: list[_Scope] = []
+    hits: list[str] = []
+    for lineno, line in enumerate(strip_comments_and_strings(text).splitlines(), 1):
+        where = f"line {lineno}"
+        if m := _NAMESPACE_RE.match(line):
+            for comp in split_name_components(m.group(1)):
+                stack.append(("namespace", comp))
+        elif m := _SECTION_RE.match(line):
+            stack.append(("section", m.group(1)))
+        elif m := _END_RE.match(line):
+            _pop_end(stack, m.group(1), where)
+        elif target_id is not None and (m := _THEOREM_RE.match(line)):
+            prefix = [comp for kind, comp in stack if kind == "namespace" and comp]
+            fq = ".".join([*prefix, m.group(1)])
+            if fq == target_id or fq.endswith("." + target_id):
+                hits.append(fq)
+    open_namespaces = [comp for kind, comp in stack if kind == "namespace" and comp]
+    if target_id is None:
+        return open_namespaces, None
+    if len(hits) != 1:
+        raise ValueError(f"expected exactly one declaration matching {target_id!r}, found {hits}")
+    return open_namespaces, hits[0]
+
+
+def disproof_declaration(decl_name: str) -> str:
+    """The derived disproof declaration for a target's fully-qualified name."""
+    return f"theorem {decl_name}.disproof : ¬ (type_of% @{decl_name}) := sorry"
+
+
+def append_disproof(text: str, target_id: str, decl_name: str | None = None) -> tuple[str, str]:
+    """Append the derived disproof declaration to an isolated spec.
+
+    Restores any ``end`` lines the isolation cut dropped (specs that end inside
+    an open ``namespace``), then appends :func:`disproof_declaration` for the
+    target's fully-qualified name at top level. ``decl_name`` supplies that
+    name when the caller has it authoritatively (the generators take it from
+    the extractor); otherwise it is derived by :func:`scan_scopes` -- and when
+    both are available they must agree. Returns ``(new_text, decl_name)``.
+    """
+    open_namespaces, scanned = scan_scopes(text, target_id)
+    if decl_name is None:
+        assert scanned is not None
+        decl_name = scanned
+    elif scanned != decl_name:
+        raise ValueError(
+            f"static scan resolved target {target_id!r} to {scanned!r}, "
+            f"but the extractor says {decl_name!r}"
+        )
+    parts = [text.rstrip() + "\n"]
+    if open_namespaces:
+        closers = "".join(f"end {comp}\n" for comp in reversed(open_namespaces))
+        parts.append("\n" + closers)
+    parts.append("\n" + disproof_declaration(decl_name) + "\n")
+    return "".join(parts), decl_name
+
+
+# --------------------------------------------------------------------------- #
 # Docker orchestration: run the Lean extractor / compile gate in a container.  #
 # --------------------------------------------------------------------------- #
 def host_to_container(path: Path) -> str:

@@ -35,3 +35,5 @@ theorem erdos_694.variants.carmichael :
   sorry
 
 end Erdos694
+
+theorem Erdos694.erdos_694.variants.carmichael.disproof : ¬ (type_of% @Erdos694.erdos_694.variants.carmichael) := sorry

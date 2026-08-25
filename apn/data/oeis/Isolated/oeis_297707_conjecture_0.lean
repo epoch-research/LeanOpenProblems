@@ -50,3 +50,5 @@ If such a number n exists, it is greater than 250. -/
 theorem oeis_297707_conjecture_0 :
   ∀ n, 2 < n → IsComposite (a n - Nat.prevPrime (a n)) → 250 < n :=
 by sorry
+
+theorem oeis_297707_conjecture_0.disproof : ¬ (type_of% @oeis_297707_conjecture_0) := sorry

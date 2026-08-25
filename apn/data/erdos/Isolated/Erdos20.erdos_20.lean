@@ -41,3 +41,5 @@ theorem erdos_20 : ∃ (c : ℕ → ℕ), ∀ n k, n > 0 → f n k < (c k) ^ n :
 
 -- TODO(firsching): add the various known bounds as variants.
 end Erdos20
+
+theorem Erdos20.erdos_20.disproof : ¬ (type_of% @Erdos20.erdos_20) := sorry

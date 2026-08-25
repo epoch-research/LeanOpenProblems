@@ -59,3 +59,5 @@ theorem erdos_274 : ∃ (G : Type*) (h : Group G) (hG : 1 < ENat.card G)
   sorry
 
 end Erdos274
+
+theorem Erdos274.erdos_274.disproof : ¬ (type_of% @Erdos274.erdos_274) := sorry

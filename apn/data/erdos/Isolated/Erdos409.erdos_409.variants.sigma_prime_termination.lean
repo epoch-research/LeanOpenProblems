@@ -35,3 +35,5 @@ theorem erdos_409.variants.sigma_prime_termination :
   sorry
 
 end Erdos409
+
+theorem Erdos409.erdos_409.variants.sigma_prime_termination.disproof : ¬ (type_of% @Erdos409.erdos_409.variants.sigma_prime_termination) := sorry

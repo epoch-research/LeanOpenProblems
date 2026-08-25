@@ -40,3 +40,5 @@ theorem erdos_1054.parts.iii : ∃ (A : Set ℕ), A.HasDensity 1 ∧
   sorry
 
 end Erdos1054
+
+theorem Erdos1054.erdos_1054.parts.iii.disproof : ¬ (type_of% @Erdos1054.erdos_1054.parts.iii) := sorry

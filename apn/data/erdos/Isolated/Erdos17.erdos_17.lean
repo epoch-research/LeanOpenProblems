@@ -43,3 +43,5 @@ noncomputable def clusterPrimeCount (n : ℕ) : ℕ :=
   Nat.card {p : ℕ | p ≤ n ∧ IsClusterPrime p}
 
 end Erdos17
+
+theorem Erdos17.erdos_17.disproof : ¬ (type_of% @Erdos17.erdos_17) := sorry

@@ -37,3 +37,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 theorem oeis_341254_conjecture_0 (n : ℕ) (hn : 1 ≤ n) :
   (1/4 : ℝ) < (n : ℝ) * r_sq - (a n : ℝ) ∧ (n : ℝ) * r_sq - (a n : ℝ) < 3 :=
 by sorry
+
+theorem oeis_341254_conjecture_0.disproof : ¬ (type_of% @oeis_341254_conjecture_0) := sorry

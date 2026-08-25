@@ -39,3 +39,5 @@ theorem erdos_779 (n : ℕ) (hn : n ≥ 1): let P := ∏ i ∈ range (n + 1), nt
   sorry
 
 end Erdos779
+
+theorem Erdos779.erdos_779.disproof : ¬ (type_of% @Erdos779.erdos_779) := sorry

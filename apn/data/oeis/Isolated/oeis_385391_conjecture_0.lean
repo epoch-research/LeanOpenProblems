@@ -47,3 +47,5 @@ theorem oeis_385391_conjecture_0 :
   a 7 = A002110 4 ∧
   a 10 = A002110 5 := by
   sorry
+
+theorem oeis_385391_conjecture_0.disproof : ¬ (type_of% @oeis_385391_conjecture_0) := sorry

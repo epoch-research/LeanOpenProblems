@@ -28,3 +28,5 @@ def a (n : ℕ) : ℕ :=
 
 theorem oeis_219023_conjecture_1 (n : ℕ) (h : n > 2732) : a n > 0 := by
   sorry
+
+theorem oeis_219023_conjecture_1.disproof : ¬ (type_of% @oeis_219023_conjecture_1) := sorry

@@ -47,3 +47,5 @@ theorem erdos_865.variants.sos :
   sorry
 
 end Erdos865
+
+theorem Erdos865.erdos_865.variants.sos.disproof : ¬ (type_of% @Erdos865.erdos_865.variants.sos) := sorry

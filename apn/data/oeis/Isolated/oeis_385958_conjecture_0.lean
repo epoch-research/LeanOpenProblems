@@ -56,3 +56,5 @@ Formalization: For every odd prime $p$, there exists $n \in \mathbb{N}^+$ such t
 -/
 theorem oeis_385958_conjecture_0 : ∀ (p : ℕ), Nat.Prime p → p ≠ 2 → ∃ (n : ℕ+), a n = p := by
   sorry
+
+theorem oeis_385958_conjecture_0.disproof : ¬ (type_of% @oeis_385958_conjecture_0) := sorry

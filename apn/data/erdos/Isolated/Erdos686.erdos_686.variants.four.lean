@@ -37,3 +37,5 @@ theorem erdos_686.variants.four :
 -- “If $n$ and $k$ are fixed then can one say anything about the set of integers so represented?”
 
 end Erdos686
+
+theorem Erdos686.erdos_686.variants.four.disproof : ¬ (type_of% @Erdos686.erdos_686.variants.four) := sorry

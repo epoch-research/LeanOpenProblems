@@ -43,3 +43,5 @@ A309391 Conjecture: for n > 2, if a(n) = n, then n is a prime.
 -/
 theorem A309391_conjecture (n : ℕ) (h_n : n > 2) :
   A309391 n = n → Nat.Prime n := by sorry
+
+theorem A309391_conjecture.disproof : ¬ (type_of% @A309391_conjecture) := sorry

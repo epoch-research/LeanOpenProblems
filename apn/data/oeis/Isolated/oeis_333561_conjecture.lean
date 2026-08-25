@@ -37,3 +37,5 @@ theorem oeis_333561_conjecture :
     k ≥ 1 →
     a (n * p ^ k) ≡ a (n * p ^ (k - 1)) [MOD p ^ (3 * k)] :=
 by sorry
+
+theorem oeis_333561_conjecture.disproof : ¬ (type_of% @oeis_333561_conjecture) := sorry

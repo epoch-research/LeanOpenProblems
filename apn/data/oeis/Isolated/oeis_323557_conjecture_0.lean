@@ -44,3 +44,5 @@ def a (m : ℕ) : ℤ :=
 /-- oeis_323557_conjecture_0: Odd terms occur only at positions n*(n+1) for n >= 0 (conjecture; verified for initial 32600 terms). -/
 theorem oeis_323557_conjecture_0 (m : ℕ) : Odd (a m) → ∃ n : ℕ, m = n * (n + 1) := by
   sorry
+
+theorem oeis_323557_conjecture_0.disproof : ¬ (type_of% @oeis_323557_conjecture_0) := sorry

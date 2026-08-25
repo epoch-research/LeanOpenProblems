@@ -67,3 +67,5 @@ theorem erdos_789.variants.cube_root_linearithmic :
   sorry
 
 end Erdos789
+
+theorem Erdos789.erdos_789.variants.cube_root_linearithmic.disproof : ¬ (type_of% @Erdos789.erdos_789.variants.cube_root_linearithmic) := sorry

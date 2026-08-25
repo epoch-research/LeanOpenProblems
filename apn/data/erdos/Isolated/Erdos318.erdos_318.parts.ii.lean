@@ -52,3 +52,5 @@ theorem erdos_318.parts.ii : P₁ ({n | IsSquare n} \ {1}) := by
   sorry
 
 end Erdos318
+
+theorem Erdos318.erdos_318.parts.ii.disproof : ¬ (type_of% @Erdos318.erdos_318.parts.ii) := sorry
