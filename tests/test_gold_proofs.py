@@ -89,6 +89,22 @@ RESOURCE_BOUND_STEMS = {
     "oeis_271591_conjecture_0",
 }
 
+# Known module-sensitive closure drift (comparator-migration-plan.md §3.3),
+# confirmed empirically by this very sweep: this spec has a spec-local `private`
+# declaration in the target's closure, so the `A258667` definition mangles to
+# different names in the Challenge and Solution modules and Comparator rejects a
+# *faithful* gold proof with "Const does not match between challenge and target
+# 'A258667'". This is the documented fail-closed limitation (the id is in
+# scripts.comparator_drift.CANDIDATE_IDS), not a regression, and the plan
+# deliberately ships no source rewrite for it in v1 -- so the gold sweep skips
+# it. Removing it here requires an upstream Comparator fix for generated-name
+# drift; see §3.3.
+MODULE_DRIFT_STEMS = {
+    "oeis_A258667_conjecture_0",
+}
+
+SKIP_STEMS = RESOURCE_BOUND_STEMS | MODULE_DRIFT_STEMS
+
 
 def _tar_of(files: dict[str, str]) -> bytes:
     """Pack ``{relative path: contents}`` into the tar the checker consumes
@@ -178,15 +194,21 @@ def test_gold_proofs_present() -> None:
     assert len(GOLD_STEMS) == 38, f"expected 38 gold proofs, found {len(GOLD_STEMS)}: {GOLD_STEMS}"
 
 
+def _skip_reason(stem: str) -> str | None:
+    if stem in RESOURCE_BOUND_STEMS:
+        return "exceeds checker resource ceilings (pending §7 re-measurement)"
+    if stem in MODULE_DRIFT_STEMS:
+        return "known module-sensitive closure drift (§3.3); faithful proof rejected"
+    return None
+
+
 @pytest.mark.asyncio(loop_scope="module")
 @pytest.mark.parametrize(
     "stem",
     [
         pytest.param(
             stem,
-            marks=[pytest.mark.skip(reason="exceeds checker resource ceilings")]
-            if stem in RESOURCE_BOUND_STEMS
-            else [],
+            marks=[pytest.mark.skip(reason=reason)] if (reason := _skip_reason(stem)) else [],
         )
         for stem in GOLD_STEMS
     ],

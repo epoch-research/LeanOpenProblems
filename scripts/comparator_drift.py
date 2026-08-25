@@ -21,6 +21,12 @@ at the compare step) is a subset of these, determined by the §7.5 pre-cutover
 sweep -- not run here. ``tests/test_comparator_drift.py`` pins ``CANDIDATE_IDS``
 so a dataset / Lean / exporter / Comparator bump that introduces or removes a
 candidate fails CI loudly, prompting that sweep to be re-run.
+
+At least one candidate is already *confirmed* to false-reject a faithful proof:
+``oeis_A258667_conjecture_0`` -- the gold-proof sweep rejects its published
+proof with "Const does not match between challenge and target 'A258667'" (a
+spec-local ``private`` def in the target's closure mangles differently between
+the two modules). ``tests/test_gold_proofs.py`` skips it as ``MODULE_DRIFT_STEMS``.
 """
 
 from __future__ import annotations
