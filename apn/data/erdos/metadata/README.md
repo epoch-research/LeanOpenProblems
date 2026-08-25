@@ -7,6 +7,12 @@ Nothing here is read at runtime, and none of it reaches `Sample.metadata` --
 particular the scraped rows record each problem's open/solved status, which
 must never flow to the agent.
 
+`ERDOS_PROBLEM_STATEMENT_SELECTION.md` is the dataset's provenance document:
+Thomas Bloom's statement selection (the review behind `Sources/` membership
+and the `bloom_selection` subset; see `../NOTICE.md`). Exception to the
+number-keyed rule above; `scripts/erdos_statement_certificate.py` parses its
+table.
+
 ## `snapshots/` — captures of external sources (unreproducible; treat as read-only evidence)
 
 Scraped from erdosproblems.com (© Thomas Bloom and the site's contributors;

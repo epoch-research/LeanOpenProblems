@@ -13,29 +13,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -/
+
 import FormalConjecturesUtil
 
 /-!
-# Erdős Problem 972
+# Erdős Problem 128
 
-*Reference:* [erdosproblems.com/972](https://www.erdosproblems.com/972)
+*Reference:* [erdosproblems.com/128](https://www.erdosproblems.com/128)
 -/
 
-namespace Erdos972
+variable {V : Type*} {G : SimpleGraph V} [Fintype V]
+
+namespace Erdos128
 
 /--
-The set of primes `p` such that `Nat.floor (α * p)` is also prime.
+Let G be a graph with n vertices such that every induced subgraph on ≥ $n/2$
+vertices has more than $n^2/50$ edges. Must G contain a triangle?
 -/
-def primeSet (α : ℝ) : Set ℕ :=
-  {p : ℕ | Nat.Prime p ∧ Nat.Prime ⌊ (α * p) ⌋₊}
-
-/--
-**Erdős problem 972.**
-Let $\alpha > 1$ be irrational. Are there infinitely many primes $p$
-such that $\lfloor p\alpha \rfloor$ is also prime?
--/
-@[category research open, AMS 11]
-theorem erdos_972 : answer(sorry) ↔ ∀ α > 1, Irrational α → (primeSet α).Infinite := by
+@[category research open, AMS 5]
+theorem erdos_128 :
+    answer(sorry) ↔ ∀ (V : Type) [Fintype V] (G : SimpleGraph V),
+      (∀ V' : Set V, 2 * V'.ncard + 1 ≥ Fintype.card V →
+        50 * (G.induce V').edgeSet.ncard > Fintype.card V ^ 2) → ¬ G.CliqueFree 3 := by
   sorry
 
-end Erdos972
+end Erdos128
