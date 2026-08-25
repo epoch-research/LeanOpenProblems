@@ -221,13 +221,16 @@ verdict process (comparator), the challenge source, the binaries, and the
 already-computed challenge export are out of reach **within a check**, because
 the trusted build+export of Challenge complete before any agent code runs.
 
-Two gaps remain, and the plan closes both:
+Three gaps remain. The plan mitigates the first, records the second as an
+upstream lifecycle limitation, and relies on deployment validation for the
+third:
 
-1. **Cross-attempt poisoning via `.lake`.** Landrun *grants* writes to `.lake`,
-   including `.lake/packages` (Mathlib oleans). A malicious attempt N could
-   poison Mathlib so that attempt N+1's *challenge* elaborates to a trivial
-   statement (both sides then match — unsound). Within one check the ordering
-   protects us; across checks nothing does. Fix, kernel-enforced and cheap:
+1. **Cross-attempt filesystem poisoning via `.lake`.** Landrun *grants* writes
+   to `.lake`, including `.lake/packages` (Mathlib oleans). A malicious attempt
+   N could poison Mathlib so that attempt N+1's *challenge* elaborates to a
+   trivial statement (both sides then match — unsound). Within one check the
+   ordering protects us; across checks nothing does. Fix, kernel-enforced and
+   cheap:
    - run the comparator service with **`read_only: true` rootfs**;
    - `tmpfs` mounts at the only mutable spots: `/workspace/leanproject/.lake`,
      `/workspace/leanproject/run`, `/tmp`;
@@ -239,9 +242,34 @@ Two gaps remain, and the plan closes both:
      /opt/pristine/packages .lake/packages`, copy the FC build artifacts into
      `.lake/build`. Seconds per check; heavy packages are never copied and
      never writable.
-   With this, even a total landrun failure cannot make state persist across
-   checks, and packages can't be modified at all.
-2. **Silent landrun degradation — known problem, upstream fix of record.**
+   This removes stale writable filesystem contents between checks and keeps
+   packages immutable. It does **not** terminate processes left behind by the
+   preceding attempt, so it is not by itself a complete cross-attempt
+   boundary; see the next item.
+2. **Cross-attempt processes — known P0 Inspect lifecycle limitation.** Inspect
+   creates each `SandboxEnvironment` service once per sample, while APN's
+   gated submissions produce multiple checks inside that sample. The public
+   sandbox API has sample-level `sample_init`/`sample_cleanup`, but no way for
+   the checker to replace just `sandbox("comparator")`. A submission can
+   therefore leave a detached process in the comparator service after its
+   `exec` returns. `reset-workspace.sh` cannot reliably revoke that process;
+   it can continue running, race the next reset, or rewrite the newly created
+   tmpfs state.
+
+   The sound fix is a fresh comparator service instance for every check
+   (a new Compose service container locally and a replacement service Pod on
+   k8s), with readiness awaited before inputs are written. This lifecycle
+   primitive belongs in Inspect rather than in backend-specific APN code and
+   is tracked by the open
+   [Inspect issue #5034, "SandboxEnvironment: add a `restart` method?"](https://github.com/UKGovernmentBEIS/inspect_ai/issues/5034).
+   This plan deliberately does not reach into Docker/k8s provider-private
+   internals as a workaround. Until Inspect exposes the primitive and APN uses
+   it before each check, cross-attempt process isolation remains a known
+   limitation and the migration must not claim full cross-attempt soundness.
+   Once available, service replacement becomes the boundary; the pristine
+   workspace setup remains only initialization of the new instance and no
+   adversarial process-cleanup logic is needed.
+3. **Silent landrun degradation — known problem, upstream fix of record.**
    Comparator hardcodes landrun's `--best-effort`, whose documented behavior
    on kernels without (adequate) Landlock is "no restrictions (sandbox
    disabled)" — silently. On such a host the entire within-check boundary
@@ -265,7 +293,7 @@ fail-closed); abstract unix sockets pre-7.1 (nothing listens in the
 container); kernel exploits — on docker, the default seccomp profile stays ON
 (it allows the `landlock_*` syscalls, so we never need `seccomp=unconfined`);
 on Hawk/k8s at `standard` isolation, pods run seccomp-Unconfined because
-that's the cluster default the deployment ships (§7.5) — a wider node-side
+that's the cluster default the deployment ships (§7.6) — a wider node-side
 syscall surface that is Hawk's posture, not something this plan sets.
 Optional hardening: run the comparator container as a
 non-root user (comparator README assumption 6) — do it if it doesn't fight
@@ -289,7 +317,8 @@ Isolated file text), which serves both claims:
    Python `tarfile` (size-capped, single member — no `tar(1)` on untrusted
    input in the trusted container; the throwaway compile container used to
    absorb that risk). Missing member ⇒ stage `entry_missing`.
-3. `exec(["/opt/apn/reset-workspace.sh"])` (trusted reset, §3.1).
+3. `exec(["/opt/apn/reset-workspace.sh"])` (trusted filesystem reset, §3.1;
+   it does not terminate cross-attempt processes pending Inspect issue #5034).
 4. Write via sandbox API:
    - `run/Challenge.lean` = the sample's committed `Isolated/` file, verbatim
      — the same file for both claims; it states both the theorem and its
@@ -315,6 +344,49 @@ The theorem name comes from the sample id; add a vendor-time/CI assertion
 Isolated spec declares exactly `<id>` as its target plus the appended
 `<id>.disproof` (§4), for all three datasets (erdos/fc100 already document
 id = fully-qualified decl name).
+
+### 3.3 Module-sensitive declarations — known fail-closed limitation
+
+Comparator deliberately builds different `Challenge` and `Solution` modules
+and compares the configured target closure by exact exported names/terms. Lean
+bakes the source module name into `private` declaration names and some
+compiler-generated names, so byte-identical source can elaborate to different
+closures. This is not hypothetical: the exact pins in §2 reproduce a faithful
+private dependency failing at `statement` with `Const does not match`; the
+self-checking repro is in `repros/comparator-private-name/`.
+
+The same broader limitation is already open upstream:
+
+- [comparator#58](https://github.com/leanprover/comparator/issues/58) shows an
+  anonymous instance receiving different generated names in Challenge and
+  Solution;
+- [comparator#59](https://github.com/leanprover/comparator/issues/59) shows a
+  dependent statement changing when elaboration chooses a different proof,
+  despite proof irrelevance.
+
+Giving both inputs the same explicit module identity would address the
+particular module-derived anonymous-instance name in #58 (and the
+module-derived `private` names in our repro), but is not a general fix. As
+[noted upstream](https://github.com/leanprover/comparator/issues/58#issuecomment-5407090008),
+differences in the files' contents can make Lean generate different matcher
+and auxiliary declarations even under the same module name.
+
+Upstream recommends putting statement material in a shared `Statement.lean`
+module imported by both sides. We do **not** adopt that workaround in v1: it
+would turn APN's single editable file into a multi-file/wrapper contract and
+would touch dataset generation, prompts, checker staging, and historical proof
+replay. Removing `private` is not an acceptable shortcut either: it changes
+declaration identities and visibility, can introduce name/instance conflicts,
+and does not address #58's non-private generated names or #59's proof-term
+drift.
+
+This is fail-closed (faithful submissions can be rejected; invalid ones are not
+accepted). Before cutover, run the §7 corpus inventory and publish the affected
+sample ids. Keep the current single-file layout and no source rewriting. The
+eventual fix must be upstream and robust to generated-declaration drift in
+general; canonicalizing only the top-level module identity is insufficient.
+Advancing the pin can remove this limitation once Comparator implements such a
+fix, without changing APN's task format.
 
 ## 4. Disproofs: the one mechanism Comparator lacks
 
@@ -493,7 +565,8 @@ contract; (c) add accept/reject tests for the near-miss rewritten forms.
 - `apn/lean/comparator/` — likewise no vendoring (unmodified upstream, cloned
   at a pinned commit at build time, like FC/PyPantograph). If we ever patch
   either project, vendor then.
-- `apn/lean/reset-workspace.sh` — new, baked to `/opt/apn/`.
+- `apn/lean/reset-workspace.sh` — new, baked to `/opt/apn/`; filesystem reset
+  only, not process cleanup (§3.1 and Inspect issue #5034).
 - `apn/checker.py` — replace `SandboxSafeVerify` with `SandboxComparator`
   (`check()` per §3.2, protocol renamed `ProofChecker`); tarfile member
   extraction host-side; stages: `entry_missing`, `reset`, `comparator`,
@@ -538,7 +611,7 @@ contract; (c) add accept/reject tests for the near-miss rewritten forms.
     same two services — `securityContext: {readOnlyRootFilesystem: true}`,
     `emptyDir` volumes+mounts at `.lake`/`run`/`/tmp`, `networkIsolated: true`,
     `dnsRecord: true`, resources limits, and an explicit
-    `runtimeClassName: CLUSTER_DEFAULT` pin (§7.5);
+    `runtimeClassName: CLUSTER_DEFAULT` pin (§7.6);
   shared Python constants (image tags, memory, paths) feed both writers so
   they cannot drift semantically. Backend chosen by an explicit task arg
   (`sandbox_backend: "docker" | "k8s"`, set in the eval-set config's task
@@ -572,13 +645,27 @@ Re-derive expectations from Comparator's model — do not blind-port:
     rootfs the writes fail; assert the **verdict stays reject** — not that
     the build fails, since an attacker can catch the IO exception and let the
     build succeed. This doubles as the **landrun canary**.
-  - NEW `cross_attempt_poisoning`: check #1's submission plants a poisoned
-    artifact (e.g. tries to pre-bake `.lake/build/lib/lean/Challenge.olean`,
-    rewrite a package olean, or **replace the `.lake/packages` symlink with a
-    poisoned real directory** — `.lake` itself is writable, so the swap
-    succeeds within a check and must be undone by the reset), check #2
-    submits a proof that verifies iff the poison survived. Asserts the
-    reset + RO-rootfs story end to end.
+  - NEW `cross_attempt_filesystem_poisoning`: check #1's submission plants a
+    poisoned artifact (e.g. tries to pre-bake
+    `.lake/build/lib/lean/Challenge.olean`, rewrite a package olean, or
+    **replace the `.lake/packages` symlink with a poisoned real directory** —
+    `.lake` itself is writable, so the swap succeeds within a check and must be
+    undone by the reset), check #2
+    submits a proof that verifies iff the poison survived. This asserts only
+    the quiescent filesystem-reset + RO-rootfs story; it is intentionally not
+    evidence that hostile processes were removed.
+  - NEW `cross_attempt_process_survival`: check #1 starts a detached process
+    that waits until the next reset and then writes a marker into the fresh
+    tmpfs; check #2 observes it. Keep this as an explicit reproduction of the
+    known limitation while Inspect issue #5034 is open. When Inspect gains
+    per-service restart, invert the expectation (the marker and originating
+    process must be absent) and make that regression test a cutover gate for
+    claiming full cross-attempt isolation.
+  - NEW upstream limitation fixtures: reproduce comparator#58 (anonymous
+    instance names differ by module) and comparator#59 (an added simp theorem
+    changes a proof embedded in a dependent statement). Both remain documented
+    rejects until fixed upstream; they guard against accidentally claiming
+    that the identical-source inventory covers all elaboration drift.
   - NEW disproof-shape cases: exact `¬ (∀ …)` accepts; `(h : ∀ …) : False`
     form — pin whatever the empirical verdict is; binder-renamed variant —
     pin alpha-sensitivity. Add one- and two-universe-parameter fixtures that
@@ -597,6 +684,14 @@ Re-derive expectations from Comparator's model — do not blind-port:
 - New unit test: every `primitiveTargets`/`builtinTargets` name resolves in
   the dataset environment (buildable as part of the gold-proof container
   session; guards comparator bumps, §2.3).
+- New certification/inventory: for every committed Isolated spec, build and
+  export the same source as both Challenge and Solution and classify any
+  declaration/statement mismatch that occurs before the expected `sorryAx`
+  rejection. This detects module-derived private/generated-name drift, not
+  arbitrary solution-side elaboration changes such as comparator#59 (covered
+  by its fixture and historical-proof replay). Pin the affected-id list in CI
+  so false rejects cannot appear silently on dataset, Lean, exporter, or
+  Comparator bumps (§3.3).
 
 ## 7. Validation phase (before cutover)
 
@@ -636,7 +731,14 @@ Re-derive expectations from Comparator's model — do not blind-port:
    confirm it's acceptable under gated submission (agents re-submit many
    times). If it dominates, options: accept; or patch/fork comparator later
    to reuse a cached challenge export (not in v1).
-5. **k8s/Hawk: resolved from source 2026-08-21** (METR/hawk main 209cbff0,
+5. **Module-sensitive closure inventory** (§3.3): run the identical-source
+   Challenge/Solution certification over all 492 samples and report every
+   mismatch attributable to private/generated names. Combine it with the
+   historical accepted-submission replay in step 2 to expose solution-induced
+   elaboration drift such as comparator#59. This is an explicit cutover
+   artifact, not a source-rewrite step. Re-run it on every Lean, exporter,
+   Comparator, or dataset bump.
+6. **k8s/Hawk: resolved from source 2026-08-21** (METR/hawk main 209cbff0,
    `hawk/hawk/runner/run_eval_set.py`; agent-env chart in inspect_k8s_sandbox —
    re-confirm against METR's pinned fork rev c551ce98 at implementation):
    - Hawk's compose path silently drops only `build`/`init`/`secrets`; any
