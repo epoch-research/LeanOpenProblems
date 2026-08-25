@@ -4,11 +4,13 @@ plus the per-target isolated specs in ``apn/data/erdos/Isolated/``.
 
 Membership is *defined* by the vendored sources, so this script computes it:
 every ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
-attribute in ``Sources/`` (the full ``FormalConjectures/ErdosProblems``
-directory at the pinned FC commit) is a universe member, resolution status
+attribute in ``Sources/`` (the Bloom statement selection's 48
+``FormalConjectures/ErdosProblems`` files at the pinned FC commit; see
+``apn/data/erdos/NOTICE.md``) is a universe member, resolution status
 notwithstanding. Value-typed ``answer(sorry)`` members -- a ``sorryAx`` in the
-elaborated statement type, unscoreable by SafeVerify -- become ``excluded``
-manifest rows with no isolated spec. Each kept member's spec keeps its file's
+elaborated statement type, unscoreable by SafeVerify -- and members carrying a
+complete in-file proof become ``excluded`` manifest rows with no isolated
+spec. Each kept member's spec keeps its file's
 definitions + the single target theorem and cuts every other standalone
 ``theorem``/``lemma`` and FC's anonymous ``example`` sanity checks. All four
 ``answer(...) ↔`` statement forms are rewritten to plain ``P`` -- including

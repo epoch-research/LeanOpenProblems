@@ -148,23 +148,29 @@ def apn_fc100open(
 
 @task
 def apn_erdos(
-    subset: str | None = None,
+    subset: str | None = "bloom_selection",
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763).
+    """The Bloom statement selection of Erdős problems.
 
-    All 353 FC ErdosProblems statements the paper's agent attempted, of which
-    350 ship as samples (3 are unresolvable at the vendored FC commit; see
-    ``subsets/tsoukalas_attempted.json``'s description). Statement text is FC
-    at the dataset's pin (``apn/data/erdos/fc_commit``) -- the exact
-    commit the sandbox images bake -- and every
-    ``answer(...) ↔`` form is certified-rewritten to the attempt-time binary
-    task, plain ``P`` (recorded ``True``/``False`` verdicts un-filled, and
-    FC's recorded-verdict annotations stripped, so the answer key cannot
-    leak). Bare ``apn_erdos`` runs all 350; ``subset="tsoukalas_attempted"``
-    names the same set -- the canonical replication invocation.
+    Thomas Bloom selected 70 Erdős problem numbers for review; 48 have
+    formalized statements in formal-conjectures, and the review picked one
+    representative statement per problem (see
+    ``apn/data/erdos/metadata/ERDOS_PROBLEM_STATEMENT_SELECTION.md`` and
+    ``NOTICE.md``). Statement text is FC at the dataset's pin
+    (``apn/data/erdos/fc_commit``) -- the exact commit the sandbox images
+    bake, certified statement-identical to the review commit -- and every
+    ``answer(...) ↔`` form is certified-rewritten to the binary task, plain
+    ``P`` (recorded ``True``/``False`` verdicts un-filled, and FC's
+    recorded-verdict annotations stripped, so the answer key cannot leak).
+
+    Bare ``apn_erdos`` runs the default ``bloom_selection`` subset: the 47
+    scoreable selected statements (problem 508's ``HadwigerNelsonProblem`` is
+    value-typed and excluded). ``subset=None`` runs the whole census instead
+    -- every non-excluded research statement of the 48 vendored files,
+    research-category variants included.
     """
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
     pin = fc_commit(ERDOS_DIR)

@@ -15,15 +15,16 @@ The gates (all over the committed files, recomputing independently what
 * **Rewrite certificates** -- the target's *elaborated* statement must relate
   to the vendored source's exactly, per the source statement's ``answer(...)``
   form, which this test re-detects from the source span independently of
-  generation: equal for the 85 plain members, and the pinned per-form
-  ``Iff``-wrapper inserted at the conclusion boundary for the four rewritten
-  forms (see ``scripts.fc_statements.answer_certified``; binders before the
-  colon hoist over the iff). The per-form census (85/249/7/6/3) is asserted.
-  Both sides are compared after erasing elaboration-context display artifacts
-  (``normalize_hygiene`` -- α-equivalence). This certifies the text surgery
-  preserved elaborated meaning -- in particular that un-filling the 13
-  recorded ``answer(True/False)`` verdicts changed nothing but the answer-key
-  wrapper -- by Lean's own elaborator rather than by trusting the regex.
+  generation: equal for the plain members, and the pinned per-form
+  ``Iff``-wrapper inserted at the conclusion boundary for the rewritten forms
+  (see ``scripts.fc_statements.answer_certified``; binders before the colon
+  hoist over the iff). The per-form census itself is asserted in
+  ``tests/test_erdos.py``. Both sides are compared after erasing
+  elaboration-context display artifacts (``normalize_hygiene`` --
+  α-equivalence). This certifies the text surgery preserved elaborated
+  meaning -- in particular that un-filling recorded ``answer(True/False)``
+  verdicts changed nothing but the answer-key wrapper -- by Lean's own
+  elaborator rather than by trusting the regex.
 * **Compile** -- every isolated file compiles cleanly with the scorer's exact
   ``lake env lean -o`` command, in parallel in the container.
 

@@ -276,18 +276,19 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763)
-    as Samples.
+    """The Erdős universe (the Bloom statement selection's 48 files) as Samples.
 
-    One sample per manifest row (350; the paper's attempted statements
-    resolvable at the pinned FC commit); the sample id is the target's fully
-    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is
-    the target's *isolated* spec -- the source file's definitions plus the
-    single target theorem, siblings/test lemmas/``example`` commands removed,
-    and all four ``answer(...) ↔`` statement forms rewritten to plain ``P``
-    (recorded ``True``/``False`` verdicts un-filled and FC's recorded-verdict
-    annotations stripped -- the answer key must not leak; certified by
-    ``tests/test_erdos_isolation.py``). The ``tsoukalas_attempted`` subset
-    names the same 350 ids -- the canonical replication invocation.
+    One sample per non-excluded manifest row -- every research-category
+    statement of the 48 vendored source files, i.e. the selected statements
+    plus their research-category variants (see ``apn/data/erdos/NOTICE.md``);
+    the sample id is the target's fully qualified declaration name (e.g.
+    ``Erdos200.erdos_200``). The sketch is the target's *isolated* spec -- the
+    source file's definitions plus the single target theorem, siblings/test
+    lemmas/``example`` commands removed, and every ``answer(...) ↔`` statement
+    form rewritten to plain ``P`` (recorded ``True``/``False`` verdicts
+    un-filled and FC's recorded-verdict annotations stripped -- the answer key
+    must not leak; certified by ``tests/test_erdos_isolation.py``). The
+    ``bloom_selection`` subset -- ``apn_erdos``'s default -- names the 47
+    scoreable *selected* statements.
     """
     return build_dataset(ERDOS_DIR, "erdos", (), names)
