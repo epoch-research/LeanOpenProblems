@@ -1,0 +1,86 @@
+# Schema reference for eval-set config:
+# https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# THROWAWAY misformalization smoke run: the 18 Erdős problems autoformalized in
+# the 2026-08-25 autoformalization target run (epoch-research/autoformalization
+# results/2026-08-25-erdos-target-run; 20 statements -- 713 and 1206 have two
+# parts each), vendored into apn/data/erdos on the erdos-target-smoke branch
+# (stacked on PR #28). These are open problems: a solve at a modest $50/sample
+# budget is a red flag that the statement was misformalized (too easy), not a
+# mathematical breakthrough.
+#
+# COST (2 models x 20 statements x 1 epoch = 40 samples, $50/sample cap):
+#   Max: 40 x $50 = $2,000 hard ceiling; expected near max (open problems --
+#   most samples should burn the cap without a solve).
+retry_attempts: 0
+
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@erdos-target-smoke
+    name: apn
+    items:
+      - name: apn_erdos
+        args:
+          subset: target18
+
+name: erdos-target18-smoke
+epochs: 1
+models:
+  # Epoch model wrappers (bypass middleman): API keys come straight from the
+  # secrets below; max_tokens/context window come from the package's models.yaml.
+  - package: git+https://github.com/epoch-research/benchmarks@giles-hawkbench-newstuff
+    name: epoch
+    items:
+      - name: claude-fable-5
+        args:
+          config:
+            reasoning_effort: "high"
+            max_retries: 7
+            # max_sandboxes isn't user-settable; Hawk sizes it as
+            # 2 x sum(max_connections) across providers
+            max_connections: 40
+      - name: gpt-5.6-sol
+        args:
+          config:
+            # Defaults to 'none' in GPT 5.4
+            reasoning_effort: "high"
+            max_retries: 7
+            max_connections: 40
+
+# Per-sample spend cap -- the real budget.
+cost_limit: 50.0
+working_limit: 43_200  # 12h
+
+# Prices in dollars per 1M tokens (match the epoch package's models.yaml).
+# Keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  epoch/claude-fable-5:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+  epoch/gpt-5.6-sol:
+    input: 5.0
+    output: 30.0
+    input_cache_read: 0.5
+    input_cache_write: 6.25
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  - inspect-ai==0.3.245

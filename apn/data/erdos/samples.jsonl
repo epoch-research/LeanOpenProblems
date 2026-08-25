@@ -142,3 +142,23 @@
 {"id": "Erdos975.erdos_975.variants.n2_plus_1_strong", "source": "Sources/975.lean", "erdos_number": 975, "category_at_pin": "research solved", "answer_form": null}
 {"id": "Erdos975.erdos_975.variants.quadratic", "source": "Sources/975.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it", "erdos_number": 975, "category_at_pin": "research solved"}
 {"id": "Erdos975.erdos_975.variants.upper_bound", "source": "Sources/975.lean", "erdos_number": 975, "category_at_pin": "research solved", "answer_form": null}
+{"id": "Erdos86.erdos_86", "source": "Sources/86.lean", "erdos_number": 86, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos104.erdos_104", "source": "Sources/104.lean", "erdos_number": 104, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos181.erdos_181", "source": "Sources/181.lean", "erdos_number": 181, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos322.erdos_322", "source": "Sources/322.lean", "erdos_number": 322, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos431.erdos_431", "source": "Sources/431.lean", "erdos_number": 431, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos478.erdos_478", "source": "Sources/478.lean", "erdos_number": 478, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos548.erdos_548", "source": "Sources/548.lean", "erdos_number": 548, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos571.erdos_571", "source": "Sources/571.lean", "erdos_number": 571, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos583.erdos_583", "source": "Sources/583.lean", "erdos_number": 583, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos713.erdos_713.parts.i", "source": "Sources/713.lean", "erdos_number": 713, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos713.erdos_713.parts.ii", "source": "Sources/713.lean", "erdos_number": 713, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos714.erdos_714", "source": "Sources/714.lean", "erdos_number": 714, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos773.erdos_773", "source": "Sources/773.lean", "erdos_number": 773, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos970.erdos_970", "source": "Sources/970.lean", "erdos_number": 970, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos1020.erdos_1020", "source": "Sources/1020.lean", "erdos_number": 1020, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos1083.erdos_1083", "source": "Sources/1083.lean", "erdos_number": 1083, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos1159.erdos_1159", "source": "Sources/1159.lean", "erdos_number": 1159, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos1206.erdos_1206.parts.i", "source": "Sources/1206.lean", "erdos_number": 1206, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos1206.erdos_1206.parts.ii", "source": "Sources/1206.lean", "erdos_number": 1206, "category_at_pin": "research open", "answer_form": null}
+{"id": "Erdos1207.erdos_1207", "source": "Sources/1207.lean", "erdos_number": 1207, "category_at_pin": "research open", "answer_form": null}

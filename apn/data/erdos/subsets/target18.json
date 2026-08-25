@@ -1,0 +1,25 @@
+{
+  "description": "The 18 Erdős problems from the 2026-08-25 autoformalization target run (epoch-research/autoformalization results/2026-08-25-erdos-target-run): problems absent from google-deepmind/formal-conjectures, autoformalized and gate-passed at FC 9cbe1d3c (1020 from hold/, the rest from submit/). 20 statements: 713 and 1206 each have two parts. Throwaway smoke-run subset -- a solve at a modest budget is a misformalization red flag.",
+  "ids": [
+    "Erdos86.erdos_86",
+    "Erdos104.erdos_104",
+    "Erdos181.erdos_181",
+    "Erdos322.erdos_322",
+    "Erdos431.erdos_431",
+    "Erdos478.erdos_478",
+    "Erdos548.erdos_548",
+    "Erdos571.erdos_571",
+    "Erdos583.erdos_583",
+    "Erdos713.erdos_713.parts.i",
+    "Erdos713.erdos_713.parts.ii",
+    "Erdos714.erdos_714",
+    "Erdos773.erdos_773",
+    "Erdos970.erdos_970",
+    "Erdos1020.erdos_1020",
+    "Erdos1083.erdos_1083",
+    "Erdos1159.erdos_1159",
+    "Erdos1206.erdos_1206.parts.i",
+    "Erdos1206.erdos_1206.parts.ii",
+    "Erdos1207.erdos_1207"
+  ]
+}
