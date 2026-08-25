@@ -1,0 +1,10 @@
+{
+  "description": "Smoke-test subset for the SafeVerify->Comparator migration, DISPROOF path: 5 OEIS conjectures whose correct answer is a disproof -- each was disproved and accepted in every one of the 15 historical result runs (all models), so they are robustly false with the shortest published disproofs, giving a strong model a real chance to reproduce the disproof and exercise the Comparator accept path for claim=disproof end to end. Not a benchmark subset.",
+  "ids": [
+    "oeis_238281_conjecture_0",
+    "oeis_383327_conjecture_0",
+    "oeis_72780_conjecture",
+    "oeis_A067857_conjecture_0",
+    "oeis_A229969_conjecture"
+  ]
+}

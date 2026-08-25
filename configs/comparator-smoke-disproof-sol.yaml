@@ -1,0 +1,77 @@
+# Schema reference for eval-set config:
+# https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# DISPROOF-path SMOKE eval, GPT sol variant -- same 5 known-disprovable OEIS
+# conjectures (correct answer is a disproof) and generous budget as
+# comparator-smoke-disproof.yaml, a different model, for a side-by-side end-to-end check
+# of the full Hawk/k8s pipeline (agent image, comparator verifier image, k8s
+# sandbox_backend, claim-declaring submit tool, Comparator accept path).
+#
+# Preconditions (identical to comparator-smoke.yaml):
+#   1. The comparator branch's images are in ECR (build-docker-images workflow
+#      on the comparator ref).
+#   2. The apn package is pinned to @comparator (main still ships old SafeVerify).
+retry_attempts: 1  # smoke: surface real errors rather than masking them with retries
+
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@comparator
+    name: apn
+    items:
+      - name: apn_oeis
+        args:
+          subset: comparator_smoke_disproof
+          # Hawk runs on k8s: emit the chart-native values.yaml, not the docker
+          # compose (whose read_only/tmpfs keys Hawk's converter rejects).
+          sandbox_backend: k8s
+name: comparator-smoke-disproof-sol
+epochs: 1
+models:
+  # Epoch model wrappers (bypass middleman): API keys come straight from the
+  # secrets below; max_tokens/context window come from the package's models.yaml.
+  - package: git+https://github.com/epoch-research/benchmarks@giles-hawkbench-newstuff
+    name: epoch
+    items:
+      - name: gpt-5.6-sol
+        args:
+          config:
+            reasoning_effort: "high"
+            max_retries: 7
+            # max_sandboxes isn't user-settable; Hawk sizes it as
+            # 2 x sum(max_connections) across providers
+            max_connections: 40
+
+# Generous per-sample cap so budget is never the limiting factor on this smoke
+# (5 samples x $500 = $2,500 hard ceiling; a solve is cheap, a failure retries
+# until the cap).
+cost_limit: 500.0
+working_limit: 86_400  # 24h per sample
+
+# Prices in dollars per 1M tokens (from scripts/data/model_prices_and_context_window.json).
+# Keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  epoch/gpt-5.6-sol:
+    input: 5.0
+    output: 30.0
+    input_cache_read: 0.5
+    input_cache_write: 6.25
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  - inspect-ai==0.3.245
