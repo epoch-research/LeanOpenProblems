@@ -172,9 +172,9 @@ async def test_isolated_files_are_structurally_correct(
 async def test_no_example_commands_survive(
     kept_rows: list[SampleRow], iso_data: IsoData
 ) -> None:
-    """FC's anonymous ``example`` sanity checks (1141.lean, 387.lean) are cut:
-    keeping one would make the scorer re-run its proof inside the trusted
-    target compile on every score call."""
+    """FC's anonymous ``example`` sanity checks are cut: keeping one would
+    make the scorer re-run its proof inside the trusted target compile on
+    every score call."""
     offenders = []
     for row in kept_rows:
         src = (ERDOS_DIR / row.statement_path).read_bytes()

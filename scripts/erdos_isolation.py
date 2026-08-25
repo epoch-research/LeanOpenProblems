@@ -81,8 +81,9 @@ def universe_members(src: bytes, filerec: dict) -> list[tuple[dict, str]]:
     """The file's universe members: ``(theorem_decl, category)`` for every
     standalone theorem/lemma command carrying a research-category attribute.
 
-    Anonymous ``example`` commands may carry the attribute too (387.lean's
-    sanity check does); they introduce no declaration and are not members.
+    Anonymous ``example`` commands may carry the attribute too (the
+    Tsoukalas-era 387.lean's sanity check did; none of the current 48 files
+    do); they introduce no declaration and are not members.
     The caller cross-checks that no research attribute was silently skipped by
     comparing the file-total against the per-command sum.
     """

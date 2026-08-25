@@ -170,9 +170,9 @@ def main() -> None:
     n_excluded = 0
     problems: list[str] = []
     # Spec filenames must stay distinct on case-insensitive filesystems (the
-    # repo is developed on one): ids differing only in case (889's V1/v1
-    # variants) get a deterministic ordinal suffix, recorded in the row's
-    # `statement` field.
+    # repo is developed on one): ids differing only in case (the Tsoukalas-era
+    # 889 had V1/v1 variants; none currently do) get a deterministic ordinal
+    # suffix, recorded in the row's `statement` field.
     casefold_seen: dict[str, int] = {}
     for rel in sorted(by_rel, key=lambda r: int(r.removesuffix(".lean"))):
         filerec = by_rel[rel]
