@@ -138,6 +138,7 @@ RUN lake exe cache get \
        else \
            lake build FormalConjectures.Util.ProblemImports; \
        fi \
+    # Stub build: broken scratch-lib plumbing fails here, not at the first check.
     && lake build Challenge Solution
 
 # `COPY` can't branch on layout, so stage the proving-library SOURCE (the files
@@ -441,9 +442,10 @@ RUN chmod 755 /opt/apn/reset-dotlake.sh
 #   /opt/pristine/dot-lake  -- the project .lake minus packages/ (lake config
 #                              cache + the FC build artifacts, tens of MB;
 #                              copied into .lake on every reset). The builder's
-#                              Challenge/Solution stub artifacts are dropped --
-#                              real files land in run/ at scoring time and
-#                              must always rebuild.
+#                              Challenge/Solution stub artifacts ride along:
+#                              staged files hash differently, so lake rebuilds
+#                              them (and reuse on a byte-identical file is the
+#                              same compilation).
 #   /opt/pristine/packages  -- the heavy Mathlib/dependency artifacts; stay
 #                              root-owned outside .lake (and so outside the
 #                              landrun write grant) and are symlinked into the
@@ -453,8 +455,7 @@ RUN chmod 755 /opt/apn/reset-dotlake.sh
 # carry either.
 RUN mkdir -p /opt/pristine \
     && mv /workspace/leanproject/.lake/packages /opt/pristine/packages \
-    && mv /workspace/leanproject/.lake /opt/pristine/dot-lake \
-    && find /opt/pristine/dot-lake/build \( -name 'Challenge.*' -o -name 'Solution.*' \) -delete
+    && mv /workspace/leanproject/.lake /opt/pristine/dot-lake
 
 # The non-privileged runtime user (comparator README assumption 6). It owns
 # exactly the project dir, in which the reset script recreates .lake and the
