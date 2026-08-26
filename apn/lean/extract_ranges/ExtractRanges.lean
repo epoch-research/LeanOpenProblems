@@ -1,12 +1,14 @@
 /-
 Authoritative top-level-declaration range extractor.
 
-Given Lean source files (which `import FormalConjectures.Util.ProblemImports`),
-parse and elaborate each one through the Lean *frontend* one command at a time,
-and for every command emit its byte span in the original source together with
-the new, source-ranged declarations it introduced (their fully-qualified names
-and kinds). A downstream Python assembler uses this to delete the source spans
-of the non-target `theorem`/`lemma` commands and keep everything else verbatim.
+Given Lean source files (which all `import` the FC util module named by
+`--util-module` -- `FormalConjectures.Util.ProblemImports` on old-layout pins,
+`FormalConjecturesUtil` after upstream's rename), parse and elaborate each one
+through the Lean *frontend* one command at a time, and for every command emit
+its byte span in the original source together with the new, source-ranged
+declarations it introduced (their fully-qualified names and kinds). A
+downstream Python assembler uses this to delete the source spans of the
+non-target `theorem`/`lemma` commands and keep everything else verbatim.
 
 Why elaborate rather than pattern-match the text: Lean 4's surface syntax is
 environment-extensible (Mathlib notation, custom elaborators), so only Lean's
@@ -18,10 +20,13 @@ have a `findDeclarationRanges?` (this filters compiler auxiliaries such as
 `._eq`/`.match` while keeping the user's declarations).
 
 Usage:
-  extract_ranges FILE.lean [FILE.lean ...]
+  extract_ranges --util-module NAME FILE.lean [FILE.lean ...]
 Emits a JSON array to stdout: one object per input file
   { "file": "<path>", "commands": [ { "startByte", "endByte", "decls": [...] } ] }
-Run under `lake env` from the FC/Mathlib project so the import resolves.
+Run under `lake env` from the FC/Mathlib project so the import resolves. The
+flag is required, with no default: every caller must state which layout it is
+extracting against, so a caller that forgets fails immediately instead of
+silently elaborating against the wrong module.
 -/
 
 import Lean
@@ -190,6 +195,10 @@ def processFile (baseEnv : Environment) (path : String) : IO (Array CmdRec × Ar
   return (recs, errors)
 
 unsafe def main (args : List String) : IO UInt32 := do
+  let (utilModule, files) ← match args with
+    | "--util-module" :: name :: files => pure (name, files)
+    | _ =>
+      throw <| IO.userError "usage: extract_ranges --util-module NAME FILE.lean [FILE.lean ...]"
   initSearchPath (← findSysroot)
   -- We PARSE source (not just replay oleans), so the imported notation/parser
   -- extensions must be live: `enableInitializersExecution` runs module
@@ -200,10 +209,10 @@ unsafe def main (args : List String) : IO UInt32 := do
   enableInitializersExecution
   -- All target files share this single import; build the environment once and
   -- reuse it for every file.
-  let baseEnv ← importModules #[{ module := `FormalConjectures.Util.ProblemImports }]
+  let baseEnv ← importModules #[{ module := utilModule.toName }]
     (opts := {}) (trustLevel := 1) (loadExts := true)
   let mut fileRecs : Array FileRec := #[]
-  for path in args do
+  for path in files do
     let (commands, errors) ← processFile baseEnv path
     fileRecs := fileRecs.push { file := path, commands, errors }
   IO.println (toJson fileRecs).compress

@@ -54,7 +54,7 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 from apn.checker import CheckOutcome, SandboxSafeVerify
-from apn.dataset import OEIS_DIR, fc_commit
+from apn.dataset import ERDOS_DIR, OEIS_DIR, fc_commit, fc_profile
 from apn.task import get_compose_file
 
 
@@ -76,8 +76,11 @@ def _tar_of(files: dict[str, str]) -> bytes:
 
 
 @asynccontextmanager
-async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
-    """Bring up the production compose and yield the live sandbox-env dict.
+async def _sandbox_envs(
+    pin: str, task_name: str = "pytest_singlefile_scorer"
+) -> AsyncIterator[dict[str, SandboxEnvironment]]:
+    """Bring up the production compose at FC ``pin`` and yield the live
+    sandbox-env dict.
 
     Uses Inspect's sandbox lifecycle against ``apn.task.get_compose_file`` (which
     builds from ``apn/lean/Dockerfile``), so the image is current by construction.
@@ -86,9 +89,7 @@ async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     bring-up/tear-down -- simple and correct; the docker cache keeps repeat runs
     cheap (the same trade-off PortBench's test harness makes).
     """
-    # Dataset-agnostic suite: any dataset's image works, so use the oeis pin.
-    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
-    task_name = "pytest_singlefile_scorer"
+    compose = str(get_compose_file(pin, literature=False))
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:
         envs = await init_sandbox_environments_sample(
@@ -114,16 +115,21 @@ async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
 
 
 async def _check(
-    monkeypatch: pytest.MonkeyPatch, target: str, submission: dict[str, str]
+    monkeypatch: pytest.MonkeyPatch,
+    target: str,
+    submission: dict[str, str],
+    pin: str | None = None,
 ) -> CheckOutcome:
     """Run the real checker against freshly built compile + scorer sandboxes.
 
     ``submission`` is given as ``{relative path: contents}`` for readability and
     packed into the tar the checker actually consumes. ``checker_mod.sandbox`` is
     pointed at the live envs by name, so ``sandbox("compile")`` /
-    ``sandbox("scorer")`` resolve to the matching containers.
+    ``sandbox("scorer")`` resolve to the matching containers. The suite is
+    dataset-agnostic, so ``pin`` defaults to the oeis pin; pass another
+    dataset's to score in that dataset's images.
     """
-    async with _sandbox_envs() as envs:
+    async with _sandbox_envs(pin or fc_commit(OEIS_DIR)) as envs:
         monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: envs[name])
         return await SandboxSafeVerify(sandbox_name="scorer").check(
             target, _tar_of(submission)
@@ -153,6 +159,22 @@ TARGET_PATTERN_MATCH = (
 async def test_single_file_proof_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
     submission = {"Spec.lean": _IMPORT + "\ntheorem tgt : 1 + 1 = 2 := by norm_num\n"}
     outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
+    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail}"
+
+
+async def test_single_file_proof_is_accepted_at_erdos_pin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The erdos dataset pins a post-rename FC commit whose util lib
+    # (FormalConjecturesUtil) is built with the Lean module system; this
+    # institutionalizes the pin-move smoke test (Gate B of the migration):
+    # compile + kernel-replay work end to end in that pin's scorer image, with
+    # the module-built oleans in the import closure.
+    pin = fc_commit(ERDOS_DIR)
+    imp = f"import {fc_profile(pin).util_module}\n"
+    target = imp + "\ntheorem tgt : 1 + 1 = 2 := by sorry\n"
+    submission = {"Spec.lean": imp + "\ntheorem tgt : 1 + 1 = 2 := by norm_num\n"}
+    outcome = await _check(monkeypatch, target, submission, pin=pin)
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail}"
 
 

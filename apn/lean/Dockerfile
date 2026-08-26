@@ -3,9 +3,11 @@
 # management):
 #
 #   - base   -- Lean v4.27.0 + Mathlib (olean cache) + the FormalConjectures
-#               library, so that a problem file importing
-#               `FormalConjectures.Util.ProblemImports` compiles. Shared by the
-#               two service images; not a service itself.
+#               library, so that a problem file importing the FC util module
+#               (`FormalConjectures.Util.ProblemImports` on old-layout pins,
+#               `FormalConjecturesUtil` after upstream's rename -- the builder
+#               detects which from the checkout) compiles. Shared by the two
+#               service images; not a service itself.
 #   - agent  -- the agent's workspace: base + PyPantograph + numerical Python
 #               libs. Deliberately does NOT contain SafeVerify.
 #   - scorer -- the trusted checker: base + SafeVerify. Runs in a separate
@@ -56,11 +58,43 @@ RUN git clone --filter=blob:none \
 
 WORKDIR /workspace/leanproject
 
-# Fetch Mathlib's prebuilt oleans, then build only the ProblemImports closure
-# (the FC Util/* support modules + FormalConjecturesForMathlib). The hundreds of
-# problem files are NOT built.
+# Every dataset's FC pin must be on this track's Lean toolchain (see the header
+# comment); fail the build outright if the checkout disagrees, instead of
+# producing an image whose repl/safeverify/extract_ranges toolchains mismatch
+# the oleans.
+RUN test "$(cat lean-toolchain)" = "leanprover/lean4:${LEAN_VERSION}" \
+    || { echo "FC pin ${FC_COMMIT} uses $(cat lean-toolchain), not leanprover/lean4:${LEAN_VERSION}" >&2; exit 1; }
+
+# Fetch Mathlib's prebuilt oleans, then build only the util-module closure (the
+# FC support modules + FormalConjecturesForMathlib). The hundreds of problem
+# files are NOT built. The lib entry point depends on the checkout's layout --
+# `FormalConjecturesUtil` after upstream's rename, `FormalConjectures.Util.
+# ProblemImports` before it -- and the builder has the checkout, so it detects
+# which (both layouts are live requirements across the datasets' pins; the
+# host-side registry `apn.dataset._FC_PROFILES` states the same fact for the
+# code that has no checkout).
 RUN lake exe cache get \
-    && lake build FormalConjectures.Util.ProblemImports
+    && if [ -f FormalConjecturesUtil.lean ]; then \
+           lake build FormalConjecturesUtil; \
+       else \
+           lake build FormalConjectures.Util.ProblemImports; \
+       fi
+
+# `COPY` can't branch on layout, so stage the proving-library SOURCE (the files
+# the agent legitimately proves *with*, imported into every problem's scope
+# like Mathlib) into one directory for the base stage's single COPY. The
+# conjecture problem files and the library test suite are deliberately NOT
+# staged.
+RUN mkdir /staged \
+    && if [ -f FormalConjecturesUtil.lean ]; then \
+           cp FormalConjecturesUtil.lean /staged/ \
+           && cp -r FormalConjecturesUtil /staged/FormalConjecturesUtil; \
+       else \
+           mkdir /staged/FormalConjectures \
+           && cp -r FormalConjectures/Util /staged/FormalConjectures/Util; \
+       fi \
+    && cp FormalConjecturesForMathlib.lean /staged/ \
+    && cp -r FormalConjecturesForMathlib /staged/FormalConjecturesForMathlib
 
 # NOTE: `Submission/` is deliberately NOT registered as a lean_lib. The agent's
 # proof is a single file, `Submission/Spec.lean`, compiled standalone with
@@ -117,14 +151,10 @@ COPY --from=builder /workspace/leanproject/.lake ./.lake
 # not pre-exist in the image.
 
 # The proving-library SOURCE the agent legitimately proves *with* (imported into
-# every problem's scope, like Mathlib). The conjecture problem files and the
-# library test suite are deliberately NOT copied.
-COPY --from=builder /workspace/leanproject/FormalConjectures/Util \
-                    ./FormalConjectures/Util
-COPY --from=builder /workspace/leanproject/FormalConjecturesForMathlib \
-                    ./FormalConjecturesForMathlib
-COPY --from=builder /workspace/leanproject/FormalConjecturesForMathlib.lean \
-                    ./FormalConjecturesForMathlib.lean
+# every problem's scope, like Mathlib), staged by the builder per the checkout's
+# layout. The conjecture problem files and the library test suite are
+# deliberately NOT copied.
+COPY --from=builder /staged ./
 
 CMD ["sleep", "infinity"]
 

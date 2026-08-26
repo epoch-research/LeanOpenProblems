@@ -134,12 +134,16 @@ def lean_prover(
     agent_type: AgentType,
     gated: bool,
     literature: bool,
+    util_module: str,
 ) -> Solver:
     """
     Args:
         gated: Gated submission (retry until correct or token/time limit).
         literature: Run with the offline arXiv corpus.
         agent_type: Which agent loop to run.
+        util_module: The dataset pin's FC util module
+            (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
+            import-integrity rule.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
@@ -185,7 +189,7 @@ def lean_prover(
         )
         state.messages = [
             ChatMessageUser(
-                content=user_prompt(ENTRY_PATH, state.token_limit, literature),
+                content=user_prompt(ENTRY_PATH, state.token_limit, literature, util_module),
                 source="input",
             )
         ]

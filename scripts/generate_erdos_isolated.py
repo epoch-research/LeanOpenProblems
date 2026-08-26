@@ -4,11 +4,13 @@ plus the per-target isolated specs in ``apn/data/erdos/Isolated/``.
 
 Membership is *defined* by the vendored sources, so this script computes it:
 every ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
-attribute in ``Sources/`` (the full ``FormalConjectures/ErdosProblems``
-directory at the pinned FC commit) is a universe member, resolution status
+attribute in ``Sources/`` (the Bloom statement selection's 48
+``FormalConjectures/ErdosProblems`` files at the pinned FC commit; see
+``apn/data/erdos/NOTICE.md``) is a universe member, resolution status
 notwithstanding. Value-typed ``answer(sorry)`` members -- a ``sorryAx`` in the
-elaborated statement type, unscoreable by SafeVerify -- become ``excluded``
-manifest rows with no isolated spec. Each kept member's spec keeps its file's
+elaborated statement type, unscoreable by SafeVerify -- and members carrying a
+complete in-file proof become ``excluded`` manifest rows with no isolated
+spec. Each kept member's spec keeps its file's
 definitions + the single target theorem and cuts every other standalone
 ``theorem``/``lemma`` and FC's anonymous ``example`` sanity checks. All four
 ``answer(...) ↔`` statement forms are rewritten to plain ``P`` -- including
@@ -47,7 +49,7 @@ import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from apn.dataset import write_manifest
+from apn.dataset import fc_commit, fc_profile, write_manifest
 from scripts.erdos_isolation import (
     ERDOS_DIR,
     ISOLATED_DIR,
@@ -93,7 +95,7 @@ def proof_is_filled(src: bytes, filerec: dict, decl_name: str) -> bool:
     raise SystemExit(f"{decl_name}: command not found in its file record")
 
 
-def extract_sources(container: str, exe: str, jobs: int) -> dict[str, dict]:
+def extract_sources(container: str, exe: str, util_module: str, jobs: int) -> dict[str, dict]:
     """Extractor records for every vendored source file, keyed by *relative*
     path under ``Sources/`` (flat here, so relpath == basename). Extraction
     elaborates each file, so the sweep runs ``jobs`` extractor processes over
@@ -103,7 +105,9 @@ def extract_sources(container: str, exe: str, jobs: int) -> dict[str, dict]:
     chunks = [rels[i::jobs] for i in range(jobs)]
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = pool.map(
-            lambda chunk: run_extractor([SOURCES_DIR / r for r in chunk], container, exe),
+            lambda chunk: run_extractor(
+                [SOURCES_DIR / r for r in chunk], container, exe, util_module
+            ),
             [c for c in chunks if c],
         )
     prefix = host_to_container(SOURCES_DIR) + "/"
@@ -151,7 +155,9 @@ def main() -> None:
     ap.add_argument("--jobs", type=int, default=6, help="parallel extractor processes")
     args = ap.parse_args()
 
-    by_rel = extract_sources(args.container, args.exe, args.jobs)
+    by_rel = extract_sources(
+        args.container, args.exe, fc_profile(fc_commit(ERDOS_DIR)).util_module, args.jobs
+    )
 
     ISOLATED_DIR.mkdir(exist_ok=True)
     for old in ISOLATED_DIR.glob("*.lean"):
@@ -164,9 +170,9 @@ def main() -> None:
     n_excluded = 0
     problems: list[str] = []
     # Spec filenames must stay distinct on case-insensitive filesystems (the
-    # repo is developed on one): ids differing only in case (889's V1/v1
-    # variants) get a deterministic ordinal suffix, recorded in the row's
-    # `statement` field.
+    # repo is developed on one): ids differing only in case (the Tsoukalas-era
+    # 889 had V1/v1 variants; none currently do) get a deterministic ordinal
+    # suffix, recorded in the row's `statement` field.
     casefold_seen: dict[str, int] = {}
     for rel in sorted(by_rel, key=lambda r: int(r.removesuffix(".lean"))):
         filerec = by_rel[rel]

@@ -35,7 +35,7 @@ Advice about this task:
 """
 
 
-def user_prompt(path: str, token_limit: int | None, literature: bool) -> str:
+def user_prompt(path: str, token_limit: int | None, literature: bool, util_module: str) -> str:
     parts = []
 
     PYTHON_LIBS = ["sympy", "mpmath", "numpy", "pantograph"]
@@ -55,7 +55,7 @@ If disproving, write a `foo.disproof` theorem whose type is the negation (prepen
 
 Work inside the Lake project at `/workspace/leanproject`. Your final proof must be in the single file `{PROOF_PATH}`. You may use other files as you develop your proof.
 
-In your final submission file `{PROOF_PATH}`, do not add or remove `import` statements. The `FormalConjectures.Util.ProblemImports` import transitively pulls in all of Mathlib, and other utilities.
+In your final submission file `{PROOF_PATH}`, do not add or remove `import` statements. The `{util_module}` import transitively pulls in all of Mathlib, and other utilities.
 
 Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.  
 
