@@ -10,9 +10,11 @@ from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
 from apn.dataset import (
+    ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
     OEIS_DIR,
+    erdos_autoformalized_dataset,
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
@@ -158,6 +160,31 @@ def apn_erdos(
     pin = fc_commit(ERDOS_DIR)
     return Task(
         dataset=erdos_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", str(get_compose_file(pin, literature))),
+    )
+
+
+@task
+def apn_erdos_autoformalized(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+) -> Task:
+    """The Erdős problems our own autoformalization pipeline formalized."""
+    name_list = (
+        load_subset(ERDOS_AUTOFORMALIZED_DIR, subset) if subset is not None else None
+    )
+    pin = fc_commit(ERDOS_AUTOFORMALIZED_DIR)
+    return Task(
+        dataset=erdos_autoformalized_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,
