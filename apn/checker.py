@@ -23,8 +23,6 @@ SOLUTION_PATH = f"{RUN_DIR}/Solution.lean"
 CONFIG_PATH = f"{RUN_DIR}/config.json"
 
 COMPARATOR_BIN = "/opt/apn/comparator/bin/comparator"
-LEAN4EXPORT_BIN = "/opt/apn/lean4export/bin/lean4export"
-LANDRUN_BIN = "/usr/local/bin/landrun"
 RESET_SCRIPT = "/opt/apn/reset-dotlake.sh"
 
 # The axioms a solution's proof closure may use (comparator rejects everything
@@ -191,13 +189,11 @@ class SandboxComparator:
         await sb.write_file(CONFIG_PATH, comparator_config(decl, claim))
 
         try:
+            # lean4export and landrun sit on PATH in the image; comparator's
+            # default resolution finds them (its README's preferred setup).
             result = await sb.exec(
                 ["lake", "env", COMPARATOR_BIN, CONFIG_PATH],
                 cwd=PROJECT,
-                env={
-                    "COMPARATOR_LEAN4EXPORT": LEAN4EXPORT_BIN,
-                    "COMPARATOR_LANDRUN": LANDRUN_BIN,
-                },
                 timeout=self._timeout,
             )
         except TimeoutError as exc:

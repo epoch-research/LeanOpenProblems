@@ -57,7 +57,7 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
-from apn.checker import Claim, LEAN4EXPORT_BIN, SandboxComparator
+from apn.checker import Claim, SandboxComparator
 from apn.dataset import OEIS_DIR, fc_commit
 from apn.layout import SUBMISSION_DIR
 from apn.scorer import CLAIM_STORE_KEY, proof_scorer
@@ -86,12 +86,14 @@ INJECT = (
 )
 IMPORT_AUX = "import Submission.Helpers.Aux\n"
 
-# Root-code-execution attack on the verifier's TCB. The submission is *built*
-# (`lake build Solution`) inside the comparator container -- but under landrun,
-# with the rootfs read-only. A `#eval` of an IO action runs at elaboration time
-# and tries to overwrite the lean4export binary with a script that exits 0,
-# after which an export could be spoofed. The write must fail; and even if the
-# attacker catches the IO exception, the kept `sorry` is still caught -> reject.
+# Code-execution attack on the verifier's TCB. The submission is *built*
+# (`lake build Solution`) inside the comparator container -- but under landrun
+# (writes confined to .lake) and as the non-privileged user (the binary is
+# root-owned). A `#eval` of an IO action runs at elaboration time and tries to
+# overwrite the lean4export binary with a script that exits 0, after which an
+# export could be spoofed. The write must fail; and even if the attacker
+# catches the IO exception, the kept `sorry` is still caught -> reject.
+LEAN4EXPORT_BIN = "/usr/local/bin/lean4export"  # baked location (on PATH)
 TAMPER_EXPORTER = (
     f'#eval (IO.FS.writeFile "{LEAN4EXPORT_BIN}" "#!/bin/sh\\nexit 0\\n" : IO Unit)\n'
     f'#eval (do let _ <- IO.Process.output '

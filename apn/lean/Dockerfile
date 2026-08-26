@@ -424,16 +424,12 @@ COPY --from=comparator_build /opt/comparator/.lake/build/bin/comparator \
                              /opt/apn/comparator/bin/comparator
 COPY --from=comparator_build /root/.elan/toolchains /root/.elan/toolchains
 
-# The runtime exporter (project toolchain; RPATH resolves via base's install).
+# The runtime exporter (project toolchain; RPATH resolves via base's install)
+# and landrun, installed on PATH where comparator's default resolution finds
+# them (its README's preferred setup) -- no COMPARATOR_* env overrides needed.
 COPY --from=lean4export_build /opt/lean4export/.lake/build/bin/lean4export \
-                              /opt/apn/lean4export/bin/lean4export
-
+                              /usr/local/bin/lean4export
 COPY --from=landrun_build /out/landrun /usr/local/bin/landrun
-
-# Comparator resolves its helper binaries through these (see its README); the
-# checker also passes them explicitly on every exec.
-ENV COMPARATOR_LEAN4EXPORT=/opt/apn/lean4export/bin/lean4export \
-    COMPARATOR_LANDRUN=/usr/local/bin/landrun
 
 COPY reset-dotlake.sh /opt/apn/reset-dotlake.sh
 RUN chmod 755 /opt/apn/reset-dotlake.sh
