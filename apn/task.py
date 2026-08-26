@@ -10,10 +10,14 @@ from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxSafeVerify
 from apn.dataset import (
+    ARXIV_DIR,
     ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
     OEIS_DIR,
+    OEIS_OPEN_DIR,
+    WIKIPEDIA_DIR,
+    arxiv_dataset,
     erdos_autoformalized_dataset,
     erdos_dataset,
     fc100open_dataset,
@@ -21,6 +25,8 @@ from apn.dataset import (
     fc_profile,
     load_subset,
     oeis_dataset,
+    oeis_open_dataset,
+    wikipedia_dataset,
 )
 from apn.scorer import proof_scorer
 
@@ -160,6 +166,76 @@ def apn_erdos(
     pin = fc_commit(ERDOS_DIR)
     return Task(
         dataset=erdos_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", str(get_compose_file(pin, literature))),
+    )
+
+
+@task
+def apn_wikipedia(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+) -> Task:
+    """The FC ``Wikipedia`` conjectures tagged ``research open`` at the pin."""
+    name_list = load_subset(WIKIPEDIA_DIR, subset) if subset is not None else None
+    pin = fc_commit(WIKIPEDIA_DIR)
+    return Task(
+        dataset=wikipedia_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", str(get_compose_file(pin, literature))),
+    )
+
+
+@task
+def apn_arxiv(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+) -> Task:
+    """The FC ``Arxiv`` conjectures tagged ``research open`` at the pin."""
+    name_list = load_subset(ARXIV_DIR, subset) if subset is not None else None
+    pin = fc_commit(ARXIV_DIR)
+    return Task(
+        dataset=arxiv_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxSafeVerify(sandbox_name="scorer")),
+        sandbox=("docker", str(get_compose_file(pin, literature))),
+    )
+
+
+@task
+def apn_oeis_open(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+) -> Task:
+    """The FC ``OEIS`` conjectures tagged ``research open`` at the pin
+    (unrelated to ``apn_oeis``, the autoformalized Tsoukalas-paper corpus)."""
+    name_list = load_subset(OEIS_OPEN_DIR, subset) if subset is not None else None
+    pin = fc_commit(OEIS_OPEN_DIR)
+    return Task(
+        dataset=oeis_open_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,

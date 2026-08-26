@@ -12,6 +12,9 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
+WIKIPEDIA_DIR = Path(__file__).parent / "data" / "wikipedia"
+ARXIV_DIR = Path(__file__).parent / "data" / "arxiv"
+OEIS_OPEN_DIR = Path(__file__).parent / "data" / "oeis_open"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -289,3 +292,25 @@ def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDatase
     (18 problems absent from formal-conjectures at the run's pin; two two-part
     files, so 20 samples). See ``apn/data/erdos_autoformalized/NOTICE.md``."""
     return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
+
+
+def wikipedia_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The FC ``Wikipedia`` conjectures tagged ``research open`` at the pin
+    (one sample per non-excluded manifest row). See
+    ``apn/data/wikipedia/NOTICE.md``."""
+    return build_dataset(WIKIPEDIA_DIR, "wikipedia", (), names)
+
+
+def arxiv_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The FC ``Arxiv`` conjectures tagged ``research open`` at the pin
+    (one sample per non-excluded manifest row). See
+    ``apn/data/arxiv/NOTICE.md``."""
+    return build_dataset(ARXIV_DIR, "arxiv", (), names)
+
+
+def oeis_open_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The FC ``OEIS`` conjectures tagged ``research open`` at the pin (one
+    sample per non-excluded manifest row). Unrelated to :func:`oeis_dataset`,
+    which vendors the Tsoukalas-paper autoformalized OEIS corpus at an older
+    pin. See ``apn/data/oeis_open/NOTICE.md``."""
+    return build_dataset(OEIS_OPEN_DIR, "oeis_open", (), names)

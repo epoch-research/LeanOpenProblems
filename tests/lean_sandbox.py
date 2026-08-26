@@ -22,6 +22,7 @@ suites via ``scripts/isolation.py``.)
 from __future__ import annotations
 
 import io
+import os
 import tarfile
 import tempfile
 from collections.abc import AsyncIterator
@@ -169,9 +170,15 @@ async def extract(
 
 async def compile_all(env: DockerSandboxEnvironment, files: list[Path]) -> list[str]:
     """Compile every file with the scorer's ``lake env lean -o`` command in the
-    sandbox; return the stems that failed. Uses the shared ``COMPILE_SCRIPT``."""
+    sandbox; return the stems that failed. Uses the shared ``COMPILE_SCRIPT``
+    (host ``APN_COMPILE_JOBS`` forwards to its parallelism knob)."""
     cpaths = await stage(env, files)
-    res = await env.exec(["bash", "-s", "--", *cpaths], input=COMPILE_SCRIPT)
+    jobs = os.environ.get("APN_COMPILE_JOBS")
+    res = await env.exec(
+        ["bash", "-s", "--", *cpaths],
+        input=COMPILE_SCRIPT,
+        env={"APN_COMPILE_JOBS": jobs} if jobs else {},
+    )
     if not res.success:
         raise RuntimeError(f"compile driver failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
     return sorted(s for s in res.stdout.split() if s)

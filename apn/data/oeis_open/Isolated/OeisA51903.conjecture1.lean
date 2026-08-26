@@ -1,0 +1,39 @@
+/-
+Copyright 2026 The Formal Conjectures Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-/
+
+import FormalConjecturesUtil
+
+/-!
+# Maximum exponent in the prime factorization of $n$
+
+*References:*
+- [A051903](https://oeis.org/A051903)-/
+
+namespace OeisA51903
+
+/-- Maximum exponent in the prime factorization of $n$. -/
+def a (n : ℕ) : ℕ :=
+  (n.primeFactorsList.map (n.primeFactorsList.count ·)).foldr max 0
+
+/--
+Are there composite numbers $n > 4$ such that $n \equiv a(n) \pmod{\phi(n)}$?
+- Thomas Ordowski, Dec 02 2019
+-/
+theorem conjecture1 :
+    ∃ n : ℕ, 4 < n ∧ ¬ n.Prime ∧ n.totient ∣ (n - a n) := by
+  sorry
+
+end OeisA51903

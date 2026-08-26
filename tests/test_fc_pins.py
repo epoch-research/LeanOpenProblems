@@ -8,20 +8,26 @@ from pathlib import Path
 import pytest
 
 from apn.dataset import (
+    ARXIV_DIR,
     ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
     OEIS_DIR,
+    OEIS_OPEN_DIR,
+    WIKIPEDIA_DIR,
     fc_commit,
     fc_profile,
 )
 from apn.task import get_identifier_for_image
 
 DATASET_DIRS = {
+    "arxiv": ARXIV_DIR,
     "erdos": ERDOS_DIR,
     "erdos_autoformalized": ERDOS_AUTOFORMALIZED_DIR,
     "fc100open": FC100_DIR,
     "oeis": OEIS_DIR,
+    "oeis_open": OEIS_OPEN_DIR,
+    "wikipedia": WIKIPEDIA_DIR,
 }
 
 
