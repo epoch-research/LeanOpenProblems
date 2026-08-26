@@ -30,6 +30,7 @@ import io
 import tarfile
 from pathlib import Path
 
+import yaml
 from inspect_ai import Task, task
 from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.model import ChatMessageUser, CompactionSummary
@@ -130,6 +131,43 @@ def _apn_codebase_tar() -> bytes:
     return buf.getvalue()
 
 
+def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
+    """The standard sandbox config, but with the **agent** service (``default``)
+    given internet access -- red-team only.
+
+    Derived by post-processing the shared :func:`apn.task.get_sandbox_config`
+    output rather than changing it, so no non-red-team code is touched. Only the
+    agent's own workspace gets a network; the ``comparator`` verifier service
+    stays network-isolated, so soundness is still tested against the fully
+    hardened verifier -- the adversary simply gets to reach the internet from
+    the box it works in (fetch tools, references, payloads).
+
+    The modified config is written to a distinct, backend-appropriately named
+    sibling file so the base config other tasks read is never clobbered
+    (k8s_sandbox treats any file not named ``*compose.yaml`` as chart values;
+    the docker backend needs the ``compose.yaml`` suffix).
+    """
+    backend_type, path = get_sandbox_config(
+        fc_commit(OEIS_DIR), literature=False, backend=backend
+    )
+    config = yaml.safe_load(Path(path).read_text())
+    agent = config["services"]["default"]
+    if backend == "docker":
+        # Drop `network_mode: none` -> the compose project's default bridge
+        # network, which NATs to the host (internet).
+        agent.pop("network_mode", None)
+    else:  # k8s
+        agent["networkIsolated"] = False
+    src = Path(path)
+    out = src.with_name(
+        "redteam-internet.compose.yaml" if backend == "docker" else "redteam-internet-values.yaml"
+    )
+    content = yaml.safe_dump(config, sort_keys=False)
+    if not out.exists() or out.read_text() != content:
+        out.write_text(content)
+    return (backend_type, str(out))
+
+
 def _collatz_sample() -> Sample:
     return Sample(
         input=COLLATZ_SPEC,
@@ -188,5 +226,7 @@ def apn_redteam_collatz(
         dataset=MemoryDataset([_collatz_sample()], name="redteam_collatz"),
         solver=lean_redteam_prover(gated=gated),
         scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(fc_commit(OEIS_DIR), literature=False, backend=sandbox_backend),
+        # The agent's container gets internet (red-team only); the comparator
+        # verifier service stays network-isolated (see the helper).
+        sandbox=_sandbox_with_agent_internet(sandbox_backend),
     )
