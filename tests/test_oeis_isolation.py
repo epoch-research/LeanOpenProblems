@@ -34,6 +34,7 @@ Dockerfile; subsequent runs reuse the docker layer cache.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -57,6 +58,55 @@ from tests.lean_sandbox import certify, compile_all, extract, generate_env
 # clone, which is absent in CI) -- see tests/data/gold_proofs/README.md.
 REF_DIR = Path(__file__).resolve().parent / "data" / "gold_proofs"
 
+# The OEIS generator strips `private` from these samples' specs while their
+# vendored sources keep it (scripts.isolation.strip_private; comparator#58 /
+# plan §3.3 amendment). Privacy changes only how a referenced helper's name is
+# mangled (`_private.0.products` in the source vs `products` in the spec), so
+# for exactly these samples the raw-`Expr` statement comparisons below hold
+# modulo `unmangle_private_names`; every other sample must match byte-for-byte.
+# Pinned by test_stripped_private_ids_pinned against the committed files.
+STRIPPED_PRIVATE_IDS = frozenset({
+    "A253187.universal_sum_conjecture",
+    "A277223_conjecture",
+    "A381358_limit_exists",
+    "general_supercongruence_conjecture",
+    "oeis_145062_conjecture_0",
+    "oeis_253187_conjecture_1",
+    "oeis_354766_conjecture_1_multiplicative",
+    "oeis_60957_conjecture_0",
+    "oeis_A078590_conjecture",
+    "oeis_A258667_conjecture_0",
+    "oeis_A262781_conjecture",
+    "oeis_a103885_conjecture_0",
+    "oeis_a279612_conjecture_i",
+    "poincare_series_conjecture",
+})
+
+# A mangled `private` name inside a raw-`Expr` string: `_private.<module
+# components>.<idx>.<name>` -- under the extractor's anonymous main module just
+# `_private.<idx>.<name>` (e.g. `_private.0.products`).
+_PRIVATE_MANGLE_RE = re.compile(r"_private\.(?:[A-Za-z_«][\w'«»!?]*\.)*\d+\.")
+
+
+def unmangle_private_names(expr_str: str) -> str:
+    """Erase ``_private.<module>.<idx>.`` mangles from a raw-``Expr`` string,
+    leaving the user-facing name (``_private.0.products`` -> ``products``).
+    Privacy changes only the referenced constant's *name*, so for the stripped
+    samples "statement preserved" means equality modulo this mangle."""
+    return _PRIVATE_MANGLE_RE.sub("", expr_str)
+
+
+def test_unmangle_private_names() -> None:
+    # Anonymous-main-module shape (the extractor's) and module-named shape;
+    # no-op on strings without a mangle.
+    assert unmangle_private_names("(_private.0.products n)") == "(products n)"
+    assert (
+        unmangle_private_names("Not (_private.Challenge.0.Erdos101.linesWithPointsFor k S)")
+        == "Not (Erdos101.linesWithPointsFor k S)"
+    )
+    plain = "forall (n : Nat), Nat.Prime n"
+    assert unmangle_private_names(plain) == plain
+
 
 # --------------------------------------------------------------------------- #
 # Fixtures: extract + compile once, in one sandbox, share the results.         #
@@ -77,6 +127,28 @@ def manifest() -> list[SampleRow]:
     rows = load_manifest(OEIS_DIR)
     assert len(rows) == 492
     return rows
+
+
+def test_stripped_private_ids_pinned(manifest: list[SampleRow]) -> None:
+    """Pure-python guard (no container): the hardcoded exception set above is
+    exactly the samples whose vendored source declares `private` while the
+    committed spec does not -- i.e. the ones the generator's strip changed. A
+    regenerate or dataset bump that adds/removes a stripped sample must update
+    STRIPPED_PRIVATE_IDS consciously rather than silently widening the modulo-
+    mangle comparison."""
+    from scripts.comparator_drift import drift_reasons
+
+    derived = {
+        row.id
+        for row in manifest
+        if "private-decl" in drift_reasons((OEIS_DIR / row.source).read_text())
+        and "private-decl" not in drift_reasons((OEIS_DIR / row.statement_path).read_text())
+    }
+    assert derived == STRIPPED_PRIVATE_IDS, (
+        f"stripped-private sample set changed;\n"
+        f"  newly stripped: {sorted(derived - STRIPPED_PRIVATE_IDS)}\n"
+        f"  no longer stripped: {sorted(STRIPPED_PRIVATE_IDS - derived)}"
+    )
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
@@ -141,7 +213,11 @@ async def test_isolated_files_are_structurally_correct(
         if remaining != expected:
             failures.append(f"{name}: surviving theorems {remaining} != expected {expected}")
             continue
-        if target_hits[0]["type"] != src_type:
+        iso_type, want = target_hits[0]["type"], src_type
+        if name in STRIPPED_PRIVATE_IDS:
+            iso_type = unmangle_private_names(iso_type)
+            want = unmangle_private_names(want)
+        if iso_type != want:
             failures.append(f"{name}: target statement changed during isolation")
     assert not failures, "structural validation failed:\n  " + "\n  ".join(failures)
 
@@ -200,7 +276,12 @@ async def test_oracle_matches_published_challenge_files(iso_data: IsoData) -> No
         tgt = [d for d in theorem_decls(fr) if matches_name(d["name"], "target_theorem_0")]
         if len(tgt) != 1:
             continue
-        if tgt[0]["type"] == iso_types[name]:
+        ref_type, iso_type = cast(str, tgt[0]["type"]), iso_types[name]
+        if name in STRIPPED_PRIVATE_IDS:
+            # The published file keeps `private` helpers our spec has stripped.
+            ref_type = unmangle_private_names(ref_type)
+            iso_type = unmangle_private_names(iso_type)
+        if ref_type == iso_type:
             match += 1
         else:
             mismatch += 1
