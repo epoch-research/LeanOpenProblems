@@ -157,7 +157,16 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
         # network, which NATs to the host (internet).
         agent.pop("network_mode", None)
     else:  # k8s
+        # The agent-env chart's egress is a *namespace-wide* Cilium allow driven
+        # by the top-level allowDomains/allowEntities/allowCIDR (empty by default
+        # == offline, the k8s equal of `network_mode: none`). Granting the
+        # `world` entity opens the internet and enables `*` DNS resolution.
+        # Turning off the agent's own per-service isolation lets it inherit that
+        # allow; the comparator keeps `networkIsolated: True`, whose per-service
+        # egressDeny/ingressDeny wins over the namespace allow in Cilium, so the
+        # verifier stays fully offline.
         agent["networkIsolated"] = False
+        config["allowEntities"] = ["world"]
     src = Path(path)
     out = src.with_name(
         "redteam-internet.compose.yaml" if backend == "docker" else "redteam-internet-values.yaml"
