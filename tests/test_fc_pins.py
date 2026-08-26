@@ -7,10 +7,22 @@ from pathlib import Path
 
 import pytest
 
-from apn.dataset import ERDOS_DIR, FC100_DIR, OEIS_DIR, fc_commit, fc_profile
+from apn.dataset import (
+    ERDOS_AUTOFORMALIZED_DIR,
+    ERDOS_DIR,
+    FC100_DIR,
+    OEIS_DIR,
+    fc_commit,
+    fc_profile,
+)
 from apn.task import get_identifier_for_image
 
-DATASET_DIRS = {"erdos": ERDOS_DIR, "fc100open": FC100_DIR, "oeis": OEIS_DIR}
+DATASET_DIRS = {
+    "erdos": ERDOS_DIR,
+    "erdos_autoformalized": ERDOS_AUTOFORMALIZED_DIR,
+    "fc100open": FC100_DIR,
+    "oeis": OEIS_DIR,
+}
 
 
 @pytest.mark.parametrize("dataset_dir", DATASET_DIRS.values(), ids=DATASET_DIRS.keys())
