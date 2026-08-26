@@ -36,9 +36,16 @@ SandboxBackend = Literal["docker", "k8s"]
 
 # --------------------------------------------------------------------------- #
 # Shared sandbox constants. Both backend writers draw from these so the two    #
-# artifacts cannot drift semantically (each still states its backend's keys in #
-# that backend's native vocabulary -- there is deliberately no conversion       #
-# between them; see comparator-migration-plan.md §5).                          #
+# artifacts cannot drift semantically. Each config is written in its backend's #
+# native vocabulary -- deliberately no compose->values conversion, even though #
+# k8s_sandbox can auto-convert: the k8s `runtimeClassName` pin is the one line #
+# whose omission or mistranslation is *silently* unsound until                 #
+# https://github.com/leanprover/comparator/issues/83 lands upstream (gvisor    #
+# has no Landlock, and comparator invokes landrun with --best-effort, which    #
+# disables itself without error there), so it rides in the most direct         #
+# representation available. Once comparator#83 is fixed a missing runtime      #
+# fails loudly, and collapsing to a single compose file (with the              #
+# x-inspect_k8s_sandbox extensions) becomes a reasonable simplification.       #
 # --------------------------------------------------------------------------- #
 AGENT_MEMORY_GIB = 10
 # Comparator holds both text exports in memory and replays the solution's
@@ -107,8 +114,11 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
 def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
-    Written directly in the Helm chart's vocabulary (no compose conversion;
-    plan §5). Notes:
+    Written directly in the Helm chart's vocabulary. k8s_sandbox could
+    auto-convert the compose file, but the ``runtimeClassName`` pin must not
+    ride through a translation layer while comparator#83 is open: a dropped or
+    mistranslated pin lands pods on gvisor, where landrun silently disables
+    (first note below). Notes:
 
     - ``runtimeClassName: CLUSTER_DEFAULT`` is the chart's magic string for
       "do not set a runtime class": pods run under the node's default runtime
