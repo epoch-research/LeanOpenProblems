@@ -3,9 +3,10 @@
 The dataset-neutral cut logic and Docker plumbing live in
 ``scripts/isolation.py``, and the Formal-Conjectures statement conventions
 (the ``example``-command cut, the ``answer(...) ↔`` rewrite and its
-re-elaboration certificates) in ``scripts/fc_statements.py``; this module owns
-what is Erdős-specific -- the data locations under ``apn/data/erdos/`` and the
-universe census. Membership is *defined* by the vendored sources: every
+re-elaboration certificates, the research-category census) in
+``scripts/fc_statements.py``; this module owns what is Erdős-specific -- the
+data locations under ``apn/data/erdos/`` and the exclusion/allowlist
+constants. Membership is *defined* by the vendored sources: every
 ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
 attribute in ``Sources/`` (the Bloom statement selection's 48
 ``FormalConjectures/ErdosProblems`` files at the pinned FC commit -- see
@@ -23,10 +24,13 @@ committed files).
 
 from __future__ import annotations
 
-import re
-
-from scripts.fc_statements import strip_category_attrs
-from scripts.isolation import REPO, is_theorem_command
+from scripts.fc_statements import (  # noqa: F401  (re-exported for this dataset's callers)
+    RESEARCH_ATTR_RE,
+    research_categories,
+    strip_category_attrs,
+    universe_members,
+)
+from scripts.isolation import REPO
 
 ERDOS_DIR = REPO / "apn" / "data" / "erdos"
 SOURCES_DIR = ERDOS_DIR / "Sources"
@@ -57,45 +61,6 @@ PROVED_IN_FILE_REASON = (
 # theorem, which therefore survives the cut (such samples implicitly also
 # require proving the helper).
 SORRY_ALLOWLIST_FILES: set[str] = set()
-
-# A research-category classification attribute and its status field. Matched
-# against a *command's* source span (the extractor includes the attribute list
-# and doc comment in the span), so each hit attaches to a known declaration.
-# Anchored to line starts like ``strip_category_attrs``'s pattern -- prose may
-# quote the attribute mid-line and must not be counted.
-RESEARCH_ATTR_RE = re.compile(r"^@\[category research (open|solved)[^\]]*\]", re.MULTILINE)
-
-
-def research_categories(span: bytes) -> list[str]:
-    """The research-category statuses (``"research open"``/``"research
-    solved"``) declared in one command's source span, in order."""
-    text = span.decode("utf-8", "replace")
-    return [f"research {m.group(1)}" for m in RESEARCH_ATTR_RE.finditer(text)]
-
-
-def universe_members(src: bytes, filerec: dict) -> list[tuple[dict, str]]:
-    """The file's universe members: ``(theorem_decl, category)`` for every
-    standalone theorem/lemma command carrying a research-category attribute.
-
-    Anonymous ``example`` commands may carry the attribute too (the
-    Tsoukalas-era 387.lean's sanity check did; none of the current 48 files
-    do); they introduce no declaration and are not members.
-    The caller cross-checks that no research attribute was silently skipped by
-    comparing the file-total against the per-command sum.
-    """
-    members: list[tuple[dict, str]] = []
-    for cmd in filerec["commands"]:
-        cats = research_categories(src[cmd["declStart"] : cmd["declEnd"]])
-        if not cats or not cmd["decls"]:
-            continue
-        if not is_theorem_command(cmd) or len(cmd["decls"]) != 1 or len(cats) != 1:
-            raise SystemExit(
-                f"{filerec['file']}: research-category command with unexpected "
-                f"shape: decls={[d['name'] for d in cmd['decls']]}, cats={cats}"
-            )
-        members.append((cmd["decls"][0], cats[0]))
-    return members
-
 
 # All statements ship with recorded verdicts un-filled: FC records a
 # resolution as a `research solved` category flip, a `formal_proof` URL

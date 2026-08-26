@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import re
 
+from scripts.isolation import is_theorem_command
+
 
 def strip_comments(text: str) -> str:
     """Lean text with all comments removed: nested ``/- ... -/`` blocks
@@ -103,6 +105,46 @@ def strip_category_attrs(text: str) -> tuple[str, int]:
     never reach the statement's type -- and the certificate + compile gates
     re-check the result; the generation scripts assert the per-dataset count."""
     return CATEGORY_ATTR_RE.subn("", text)
+
+
+# A research-category classification attribute and its status field. Matched
+# against a *command's* source span (the extractor includes the attribute list
+# and doc comment in the span), so each hit attaches to a known declaration.
+# Anchored to line starts like ``strip_category_attrs``'s pattern -- prose may
+# quote the attribute mid-line and must not be counted.
+RESEARCH_ATTR_RE = re.compile(r"^@\[category research (open|solved)[^\]]*\]", re.MULTILINE)
+
+
+def research_categories(span: bytes) -> list[str]:
+    """The research-category statuses (``"research open"``/``"research
+    solved"``) declared in one command's source span, in order."""
+    text = span.decode("utf-8", "replace")
+    return [f"research {m.group(1)}" for m in RESEARCH_ATTR_RE.finditer(text)]
+
+
+def universe_members(src: bytes, filerec: dict) -> list[tuple[dict, str]]:
+    """The file's research-category statements: ``(theorem_decl, category)``
+    for every standalone theorem/lemma command carrying a research-category
+    attribute.
+
+    Anonymous ``example`` commands may carry the attribute too (the
+    Tsoukalas-era ErdosProblems/387.lean's sanity check did); they introduce no
+    declaration and are not statements. The caller cross-checks that no
+    research attribute was silently skipped by comparing the file-total
+    against the per-command sum.
+    """
+    members: list[tuple[dict, str]] = []
+    for cmd in filerec["commands"]:
+        cats = research_categories(src[cmd["declStart"] : cmd["declEnd"]])
+        if not cats or not cmd["decls"]:
+            continue
+        if not is_theorem_command(cmd) or len(cmd["decls"]) != 1 or len(cats) != 1:
+            raise SystemExit(
+                f"{filerec['file']}: research-category command with unexpected "
+                f"shape: decls={[d['name'] for d in cmd['decls']]}, cats={cats}"
+            )
+        members.append((cmd["decls"][0], cats[0]))
+    return members
 
 
 # The `answer(...) ↔` convention's surface forms. Either side may carry the
