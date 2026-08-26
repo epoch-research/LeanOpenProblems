@@ -19,6 +19,10 @@ What they cover (the soundness-relevant behaviour of the single-file model; the
 plumbing -- tar shaping, verdict mapping -- is unit-tested in ``test_checker.py``):
 
 * a single-file proof is accepted;
+* the same accept path in the *erdos* pin's comparator image -- the
+  institutionalized pin-move smoke test: that pin sits past upstream's
+  ``FormalConjecturesUtil`` rename, so the end-to-end build + kernel replay run
+  with the module-built util oleans in the import closure;
 * a single-file disproof is accepted under the ``disproof`` claim;
 * **a submission that ``import``s a helper module of its own is rejected** --
   the load-bearing single-file guard. Only ``Spec.lean`` becomes
@@ -53,7 +57,7 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 from apn.checker import Claim, CheckOutcome, SandboxComparator
-from apn.dataset import OEIS_DIR, fc_commit
+from apn.dataset import ERDOS_DIR, OEIS_DIR, fc_commit, fc_profile
 from apn.task import get_compose_file
 
 _IMPORT = "import FormalConjectures.Util.ProblemImports\n"
@@ -73,12 +77,13 @@ def _tar_of(files: dict[str, str]) -> bytes:
     return buf.getvalue()
 
 
-def _spec(theorem_body: str, *, defs: str = "") -> str:
-    """A challenge spec: the FC import, optional defs, the target theorem left
-    as ``sorry``, and the appended ``.disproof`` declaration (the shape every
-    committed Isolated spec has)."""
+def _spec(theorem_body: str, *, defs: str = "", imp: str = _IMPORT) -> str:
+    """A challenge spec: the FC import (the oeis pin's old-layout module unless
+    ``imp`` overrides it), optional defs, the target theorem left as ``sorry``,
+    and the appended ``.disproof`` declaration (the shape every committed
+    Isolated spec has)."""
     return (
-        _IMPORT
+        imp
         + (defs + "\n" if defs else "")
         + f"theorem tgt : {theorem_body} := by sorry\n"
         + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
@@ -86,16 +91,17 @@ def _spec(theorem_body: str, *, defs: str = "") -> str:
 
 
 @asynccontextmanager
-async def _comparator_env() -> AsyncIterator[SandboxEnvironment]:
-    """Bring up the production compose and yield the live ``comparator`` env.
+async def _comparator_env(
+    pin: str, task_name: str = "pytest_singlefile_comparator"
+) -> AsyncIterator[SandboxEnvironment]:
+    """Bring up the production compose at FC ``pin`` and yield the live
+    ``comparator`` env.
 
     Uses Inspect's sandbox lifecycle against ``apn.task.get_compose_file`` (which
     builds from ``apn/lean/Dockerfile``), so the image is current by
     construction.
     """
-    # Dataset-agnostic suite: any dataset's image works, so use the oeis pin.
-    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
-    task_name = "pytest_singlefile_comparator"
+    compose = str(get_compose_file(pin, literature=False))
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:
         envs = await init_sandbox_environments_sample(
@@ -132,7 +138,9 @@ async def comparator_env() -> AsyncIterator[SandboxEnvironment]:
     Inspect's sandbox lifecycle on pytest-asyncio's own loop is the only safe
     way (an ``asyncio.run`` in a plain fixture spins up a second loop its
     loop-bound globals deadlock against)."""
-    async with _comparator_env() as env:
+    # The suite is dataset-agnostic, so the shared env uses the oeis pin; the
+    # erdos-pin case below brings up its own env.
+    async with _comparator_env(fc_commit(OEIS_DIR)) as env:
         yield env
 
 
@@ -145,7 +153,7 @@ async def _check(
     decl: str = "tgt",
     claim: Claim = "proof",
 ) -> CheckOutcome:
-    """Run the real checker against the shared comparator sandbox."""
+    """Run the real checker against the given comparator sandbox."""
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
     return await SandboxComparator().check(spec, _tar_of(submission), decl=decl, claim=claim)
 
@@ -162,6 +170,26 @@ async def test_single_file_proof_is_accepted(
         "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
     )}
     outcome = await _check(comparator_env, monkeypatch, spec, submission)
+    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_single_file_proof_is_accepted_at_erdos_pin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The erdos dataset pins a post-rename FC commit whose util lib
+    # (FormalConjecturesUtil) is built with the Lean module system; this
+    # institutionalizes the pin-move smoke test (Gate B of the migration): the
+    # solution build + kernel replay work end to end in that pin's comparator
+    # image, with the module-built oleans in the import closure.
+    pin = fc_commit(ERDOS_DIR)
+    imp = f"import {fc_profile(pin).util_module}\n"
+    spec = _spec("1 + 1 = 2", imp=imp)
+    submission = {"Spec.lean": spec.replace(
+        "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
+    )}
+    async with _comparator_env(pin, task_name="pytest_singlefile_comparator_erdos") as env:
+        outcome = await _check(env, monkeypatch, spec, submission)
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 

@@ -45,8 +45,9 @@ were confirmed false-rejects -- ``oeis_A258667_conjecture_0``'s published gold
 proof was rejected live with "Const does not match between challenge and
 target 'A258667'". The OEIS-only strip fixed that dataset's 14 ``private``
 cases; that gold proof now passes and serves as the fix's regression guard
-(``tests/test_gold_proofs.py``). The 5 erdos/fc100open ``private`` rejects and
-the 1 OEIS instance-collision remain (see ``CONFIRMED_REJECT_IDS``).
+(``tests/test_gold_proofs.py``). Of the 5 erdos/fc100open ``private`` rejects,
+3 left the erdos corpus with the Bloom statement selection; the remaining 2
+and the 1 OEIS instance-collision persist (see ``CONFIRMED_REJECT_IDS``).
 """
 
 from __future__ import annotations
@@ -103,19 +104,16 @@ def drift_candidates() -> dict[str, list[str]]:
 
 
 # Pinned candidate set (static over-approximation; guarded by
-# tests/test_comparator_drift.py): 6 erdos/fc100open specs with a spec-local
-# `private` declaration (the OEIS ones are stripped at generation), 12 with an
-# anonymous `instance` (7 of those also `deriving`), and 1 `deriving`-only.
+# tests/test_comparator_drift.py): 2 erdos/fc100open specs with a spec-local
+# `private` declaration (the OEIS ones are stripped at generation; the Bloom
+# statement selection dropped the old erdos corpus's other `private` carriers),
+# 11 with an anonymous `instance` (7 of those also `deriving`), and 1
+# `deriving`-only.
 CANDIDATE_IDS: frozenset[str] = frozenset({
     "A379240_conjecture_equality",
     "EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic",
     "Erdos101.erdos_101",
-    "Erdos1141.erdos_1141",
-    "Erdos1148.erdos_1148",
-    "Erdos340.erdos_340",
-    "Erdos340.erdos_340.variants._33_mem_sub",
     "Erdos340.erdos_340.variants.co_density_zero_sub",
-    "Erdos340.erdos_340.variants.sub_hasPosDensity",
     "MonochromaticQuantumGraph.eqSystem10_no_solution_d3",
     "MonochromaticQuantumGraph.eqSystem10_no_solution_d3_trinary_int",
     "MonochromaticQuantumGraph.eqSystem10_no_solution_d4",
@@ -137,8 +135,10 @@ CANDIDATE_IDS: frozenset[str] = frozenset({
 # are unwinnable as shipped (fail-closed: invalid proofs are still never
 # accepted):
 #
-# * 5 erdos/fc100open specs with `private` defs in the target closure
-#   (deliberately left unstripped; the OEIS-only strip is the adopted scope);
+# * 2 erdos/fc100open specs with `private` defs in the target closure
+#   (deliberately left unstripped; the OEIS-only strip is the adopted scope --
+#   confirmed as 5 in the 2026-08-25 scan, of which 3 left the erdos corpus
+#   with the Bloom statement selection);
 # * oeis_341685_conjecture_0, an anonymous instance whose generated name
 #   collides (`Fact (Nat.Prime 3)` -> `instFactPrimeOfNatNat_challenge`)
 #   inside the statement itself; verified end-to-end by an identical-file
@@ -147,23 +147,21 @@ CANDIDATE_IDS: frozenset[str] = frozenset({
 #
 # The other candidates are clean: their generated instance names are
 # namespaced or collision-free, so both modules produce identical names --
-# except five specs that DO carry module-embedded names which sit outside the
+# except specs that DO carry module-embedded names which sit outside the
 # compared closure and are therefore benign, all verified end-to-end by
 # identical-file comparator probes that pass the compare step and reject only
 # at the sorryAx axiom check: oeis_a122589_conjecture_0
 # (`instCoeNatReal_challenge`), the EllipticCurveRank spec
-# (`inst..._challenge`), Erdos1148.erdos_1148 (a `private` instance the
-# statement never references), and A381358_limit_exists /
+# (`inst..._challenge`), and A381358_limit_exists /
 # general_supercongruence_conjecture (Lean auto-generates *private* match
 # equation lemmas -- `<def>.match_1.eq_N`/`.splitter`/`._arg_pusher` -- even
 # for the now-public defs; they are elaboration-time artifacts outside the
-# exported target closure).
+# exported target closure). Erdos1148.erdos_1148, benign in the 2026-08-25
+# scan (a `private` instance the statement never references), has since left
+# the erdos corpus.
 CONFIRMED_REJECT_IDS: frozenset[str] = frozenset({
     "Erdos101.erdos_101",
-    "Erdos340.erdos_340",
-    "Erdos340.erdos_340.variants._33_mem_sub",
     "Erdos340.erdos_340.variants.co_density_zero_sub",
-    "Erdos340.erdos_340.variants.sub_hasPosDensity",
     "oeis_341685_conjecture_0",
 })
 

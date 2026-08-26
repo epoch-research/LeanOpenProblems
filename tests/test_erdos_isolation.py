@@ -19,15 +19,16 @@ The gates (all over the committed files, recomputing independently what
 * **Rewrite certificates** -- the target's *elaborated* statement must relate
   to the vendored source's exactly, per the source statement's ``answer(...)``
   form, which this test re-detects from the source span independently of
-  generation: equal for the 85 plain members, and the pinned per-form
-  ``Iff``-wrapper inserted at the conclusion boundary for the four rewritten
-  forms (see ``scripts.fc_statements.answer_certified``; binders before the
-  colon hoist over the iff). The per-form census (85/249/7/6/3) is asserted.
-  Both sides are compared after erasing elaboration-context display artifacts
-  (``normalize_hygiene`` -- α-equivalence). This certifies the text surgery
-  preserved elaborated meaning -- in particular that un-filling the 13
-  recorded ``answer(True/False)`` verdicts changed nothing but the answer-key
-  wrapper -- by Lean's own elaborator rather than by trusting the regex.
+  generation: equal for the plain members, and the pinned per-form
+  ``Iff``-wrapper inserted at the conclusion boundary for the rewritten forms
+  (see ``scripts.fc_statements.answer_certified``; binders before the colon
+  hoist over the iff). The per-form census itself is asserted in
+  ``tests/test_erdos.py``. Both sides are compared after erasing
+  elaboration-context display artifacts (``normalize_hygiene`` --
+  α-equivalence). This certifies the text surgery preserved elaborated
+  meaning -- in particular that un-filling recorded ``answer(True/False)``
+  verdicts changed nothing but the answer-key wrapper -- by Lean's own
+  elaborator rather than by trusting the regex.
 * **Compile** -- every isolated file compiles cleanly with the scorer's exact
   ``lake env lean -o`` command, in parallel in the container.
 
@@ -44,7 +45,7 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
-from apn.dataset import ERDOS_DIR, SampleRow, fc_commit, load_manifest
+from apn.dataset import ERDOS_DIR, SampleRow, fc_commit, fc_profile, load_manifest
 from scripts.erdos_isolation import (
     ISOLATED_DIR,
     SOURCES_DIR,
@@ -94,12 +95,14 @@ async def iso_data(kept_rows: list[SampleRow]) -> IsoData:
     arrangement as ``tests/test_fc100_isolation.py::iso_data``, for the same
     reasons.
     """
-    async with generate_env("pytest_erdos_isolation", fc_commit(ERDOS_DIR)) as env:
+    pin = fc_commit(ERDOS_DIR)
+    util_module = fc_profile(pin).util_module
+    async with generate_env("pytest_erdos_isolation", pin) as env:
         rels = sorted({r.source.removeprefix("Sources/") for r in kept_rows})
-        src = await extract(env, [SOURCES_DIR / rel for rel in rels], arcnames=rels)
+        src = await extract(env, [SOURCES_DIR / rel for rel in rels], util_module, arcnames=rels)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
-        iso = await extract(env, iso_files)
-        cert = await certify(env, iso_files)
+        iso = await extract(env, iso_files, util_module)
+        cert = await certify(env, iso_files, util_module)
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},
@@ -179,9 +182,9 @@ async def test_isolated_files_are_structurally_correct(
 async def test_no_example_commands_survive(
     kept_rows: list[SampleRow], iso_data: IsoData
 ) -> None:
-    """FC's anonymous ``example`` sanity checks (1141.lean, 387.lean) are cut:
-    keeping one would make the scorer re-run its proof inside the trusted
-    target compile on every score call."""
+    """FC's anonymous ``example`` sanity checks are cut: keeping one would
+    make the scorer re-run its proof inside the trusted target compile on
+    every score call."""
     offenders = []
     for row in kept_rows:
         src = (ERDOS_DIR / row.statement_path).read_bytes()

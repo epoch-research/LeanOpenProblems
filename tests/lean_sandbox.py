@@ -149,16 +149,25 @@ async def stage(
 
 
 async def extract(
-    env: DockerSandboxEnvironment, files: list[Path], arcnames: list[str] | None = None
+    env: DockerSandboxEnvironment,
+    files: list[Path],
+    util_module: str,
+    arcnames: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Run ``extract_ranges`` over ``files`` (under ``lake env``) in the sandbox.
 
-    Each returned record's ``file`` is rewritten to its *arcname* (basename or
+    ``util_module`` is the dataset pin's FC util module
+    (``apn.dataset.fc_profile(...).util_module``) -- required, no default, so
+    every caller states which FC layout it is extracting against. Each returned
+    record's ``file`` is rewritten to its *arcname* (basename or
     caller-supplied relative path), so callers key records the same way they
     named the staged files.
     """
     cpaths = await stage(env, files, arcnames)
-    res = await env.exec(["lake", "env", BAKED_EXE, *cpaths], cwd=CONTAINER_PROJECT)
+    res = await env.exec(
+        ["lake", "env", BAKED_EXE, "--util-module", util_module, *cpaths],
+        cwd=CONTAINER_PROJECT,
+    )
     if not res.success:
         raise RuntimeError(f"extractor failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
     records: list[dict[str, Any]] = parse_extractor_output(res.stdout)
@@ -170,16 +179,23 @@ async def extract(
 
 
 async def certify(
-    env: DockerSandboxEnvironment, files: list[Path], arcnames: list[str] | None = None
+    env: DockerSandboxEnvironment,
+    files: list[Path],
+    util_module: str,
+    arcnames: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Run the disproof-declaration certifier over ``files`` (under ``lake
     env``) in the sandbox; see apn/lean/extract_ranges/CertifyDisproof.lean.
 
-    Each returned verdict's ``file`` is rewritten to its arcname, mirroring
-    :func:`extract`.
+    ``util_module`` is the dataset pin's FC util module, required with no
+    default -- same contract as :func:`extract`. Each returned verdict's
+    ``file`` is rewritten to its arcname, mirroring :func:`extract`.
     """
     cpaths = await stage(env, files, arcnames)
-    res = await env.exec(["lake", "env", CERTIFY_EXE, *cpaths], cwd=CONTAINER_PROJECT)
+    res = await env.exec(
+        ["lake", "env", CERTIFY_EXE, "--util-module", util_module, *cpaths],
+        cwd=CONTAINER_PROJECT,
+    )
     if not res.success:
         raise RuntimeError(f"certifier failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
     verdicts: list[dict[str, Any]] = parse_extractor_output(res.stdout)

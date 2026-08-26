@@ -523,10 +523,18 @@ def parse_extractor_output(stdout: str) -> list[dict]:
     raise RuntimeError(f"no JSON in extractor stdout:\n{stdout[-2000:]}")
 
 
-def run_extractor(files: list[Path], container: str, exe: str) -> list[dict]:
-    """Run ``extract_ranges`` over ``files`` (under ``lake env``) and parse JSON."""
+def run_extractor(files: list[Path], container: str, exe: str, util_module: str) -> list[dict]:
+    """Run ``extract_ranges`` over ``files`` (under ``lake env``) and parse JSON.
+
+    ``util_module`` is the dataset pin's FC util module
+    (``apn.dataset.fc_profile(...).util_module``) -- required, no default, so
+    every caller states which FC layout it is extracting against.
+    """
     cpaths = [host_to_container(p) for p in files]
-    cmd = ["docker", "exec", "-w", CONTAINER_PROJECT, container, "lake", "env", exe, *cpaths]
+    cmd = [
+        "docker", "exec", "-w", CONTAINER_PROJECT, container,
+        "lake", "env", exe, "--util-module", util_module, *cpaths,
+    ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError(

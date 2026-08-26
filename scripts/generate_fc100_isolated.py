@@ -43,7 +43,7 @@ import re
 import sys
 from pathlib import Path
 
-from apn.dataset import load_manifest
+from apn.dataset import fc_commit, fc_profile, load_manifest
 from scripts.fc100_isolation import (
     FC100_DIR,
     ISOLATED_DIR,
@@ -74,7 +74,7 @@ from scripts.isolation import (
 _SORRY_RE = re.compile(rb"\bsorry\b")
 
 
-def extract_sources(container: str, exe: str) -> dict[str, dict]:
+def extract_sources(container: str, exe: str, util_module: str) -> dict[str, dict]:
     """Extractor records for every vendored source file, keyed by *relative*
     path under ``Sources/``. Keying by relpath, not basename, matters: the FC
     tree has basename collisions (two ``23.lean``, two ``61.lean``)."""
@@ -82,7 +82,7 @@ def extract_sources(container: str, exe: str) -> dict[str, dict]:
         str(p.relative_to(SOURCES_DIR)) for p in SOURCES_DIR.rglob("*.lean")
     )
     print(f"Extracting decl ranges from {len(rels)} source files...", flush=True)
-    ranges = run_extractor([SOURCES_DIR / rel for rel in rels], container, exe)
+    ranges = run_extractor([SOURCES_DIR / rel for rel in rels], container, exe, util_module)
     prefix = host_to_container(SOURCES_DIR) + "/"
     by_rel: dict[str, dict] = {}
     for fr in ranges:
@@ -133,7 +133,9 @@ def main() -> None:
     args = ap.parse_args()
 
     rows = load_manifest(FC100_DIR)
-    by_rel = extract_sources(args.container, args.exe)
+    by_rel = extract_sources(
+        args.container, args.exe, fc_profile(fc_commit(FC100_DIR)).util_module
+    )
 
     unused = sorted(set(by_rel) - {r.source.removeprefix("Sources/") for r in rows})
     if unused:

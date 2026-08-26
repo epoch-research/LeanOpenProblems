@@ -28,6 +28,52 @@ def fc_commit(dataset_dir: str | Path) -> str:
 
 
 @dataclass(frozen=True)
+class FCProfile:
+    """Layout facts about one supported formal-conjectures commit.
+
+    The upstream repo renamed its proving-library entry point (the lake lib
+    ``FormalConjectures.Util`` became ``FormalConjecturesUtil``), and pins on
+    both sides of the rename are live simultaneously, so everything generic
+    (extractor invocation, prompts) is parameterized by the pin's profile.
+    """
+
+    util_module: str
+    """The import that pulls Mathlib + the FC utilities into a problem file's
+    scope (what every vendored source file ``import``\\ s)."""
+
+
+_FC_PROFILES = {
+    # Pre-rename layout: FormalConjectures/Util/*.
+    "67338a157bbb8d87e9a349d662f82a868bda6327": FCProfile(
+        util_module="FormalConjectures.Util.ProblemImports"
+    ),
+    # Post-rename layout: FormalConjecturesUtil.lean + FormalConjecturesUtil/*.
+    "488aade228ec37880b8fec178c173c07d279bb53": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+}
+
+
+def fc_profile(commit: str) -> FCProfile:
+    """The :class:`FCProfile` for a pinned FC commit.
+
+    An explicit registry, not layout sniffing: Python has no FC checkout at
+    runtime, and an unknown pin must fail loudly at task-construction time so
+    every pin move forces a conscious registry update (the Dockerfile detects
+    the layout from the checkout itself; the isolation test suites run this
+    registry's ``util_module`` against the built image, catching drift).
+    """
+    try:
+        return _FC_PROFILES[commit]
+    except KeyError:
+        raise KeyError(
+            f"No FC profile registered for commit {commit!r}; moving a dataset's "
+            f"fc_commit pin requires adding its layout facts to "
+            f"apn.dataset._FC_PROFILES (known pins: {sorted(_FC_PROFILES)})"
+        ) from None
+
+
+@dataclass(frozen=True)
 class SampleRow:
     """One universe member of a dataset's ``samples.jsonl`` manifest.
 
@@ -253,19 +299,9 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763)
-    as Samples.
+    """The Erdős universe (the Bloom statement selection's 48 files) as Samples.
 
-    One sample per manifest row (350; the paper's attempted statements
-    resolvable at the pinned FC commit); the sample id is the target's fully
-    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is
-    the target's *isolated* spec -- the source file's definitions plus the
-    single target theorem, siblings/test lemmas/``example`` commands removed,
-    and all four ``answer(...) ↔`` statement forms rewritten to plain ``P``
-    (recorded ``True``/``False`` verdicts un-filled and FC's recorded-verdict
-    annotations stripped -- the answer key must not leak; certified by
-    ``tests/test_erdos_isolation.py``) -- followed by the derived
-    ``<target>.disproof`` declaration. The ``tsoukalas_attempted`` subset
-    names the same 350 ids -- the canonical replication invocation.
+    Each sketch is the target's isolated spec followed by the derived
+    ``<target>.disproof`` declaration.
     """
     return build_dataset(ERDOS_DIR, "erdos", (), names)

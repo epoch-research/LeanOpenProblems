@@ -6,7 +6,6 @@ Nothing here is read at runtime, and none of it reaches `Sample.metadata` --
 `apn/dataset.py` builds sample metadata from an explicit whitelist. In
 particular the scraped rows record each problem's open/solved status, which
 must never flow to the agent.
-
 ## `snapshots/` — captures of external sources (unreproducible; treat as read-only evidence)
 
 Scraped from erdosproblems.com (© Thomas Bloom and the site's contributors;

@@ -29,13 +29,17 @@ terms; the in-process comparison here strips mdata recursively from both sides
 to certify exactly the comparison the verifier will make.
 
 Usage:
-  certify_disproof FILE.lean [FILE.lean ...]
+  certify_disproof --util-module NAME FILE.lean [FILE.lean ...]
 Emits a JSON array to stdout: one object per input file
   { "file", "target", "disproof", "ok", "error" }
 with `target`/`disproof` the fully-qualified names found (empty on discovery
 failure). Elaboration errors in the file itself are reported too (`ok = false`),
 so a certified file is in particular a compiling file. Run under `lake env`
-from the FC/Mathlib project so the import resolves.
+from the FC/Mathlib project so the import resolves. `--util-module` names the
+pin's FC util module (`FormalConjectures.Util.ProblemImports` on old-layout
+pins, `FormalConjecturesUtil` after upstream's rename), mirroring
+ExtractRanges: required, with no default, so a caller that forgets fails
+immediately instead of silently elaborating against the wrong module.
 -/
 
 import Lean
@@ -154,14 +158,18 @@ def verdictFor (baseEnv : Environment) (path : String) : IO FileVerdict := do
                disproof := disproofInfo.name.toString, ok := false, error := e }
 
 unsafe def main (args : List String) : IO UInt32 := do
+  let (utilModule, files) ← match args with
+    | "--util-module" :: name :: files => pure (name, files)
+    | _ =>
+      throw <| IO.userError "usage: certify_disproof --util-module NAME FILE.lean [FILE.lean ...]"
   initSearchPath (← findSysroot)
   -- Source is parsed (not olean-replayed), so imported notation/parser
   -- extensions must be live -- same setup as ExtractRanges.
   enableInitializersExecution
-  let baseEnv ← importModules #[{ module := `FormalConjectures.Util.ProblemImports }]
+  let baseEnv ← importModules #[{ module := utilModule.toName }]
     (opts := {}) (trustLevel := 1) (loadExts := true)
   let mut verdicts : Array FileVerdict := #[]
-  for path in args do
+  for path in files do
     verdicts := verdicts.push (← verdictFor baseEnv path)
   IO.println (toJson verdicts).compress
   return 0

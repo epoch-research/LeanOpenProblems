@@ -41,7 +41,7 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
-from apn.dataset import FC100_DIR, fc_commit, load_manifest
+from apn.dataset import FC100_DIR, fc_commit, fc_profile, load_manifest
 from scripts.fc100_isolation import (
     ISOLATED_DIR,
     SOURCES_DIR,
@@ -89,12 +89,14 @@ async def iso_data(mapping: list[tuple[str, str]]) -> IsoData:
     (fully qualified decl names) are unique. Same async/loop-scope arrangement
     as ``tests/test_oeis_isolation.py::iso_data``, for the same reasons.
     """
-    async with generate_env("pytest_fc100_isolation", fc_commit(FC100_DIR)) as env:
+    pin = fc_commit(FC100_DIR)
+    util_module = fc_profile(pin).util_module
+    async with generate_env("pytest_fc100_isolation", pin) as env:
         rels = sorted({rel for _, rel in mapping})
-        src = await extract(env, [SOURCES_DIR / rel for rel in rels], arcnames=rels)
+        src = await extract(env, [SOURCES_DIR / rel for rel in rels], util_module, arcnames=rels)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
-        iso = await extract(env, iso_files)
-        cert = await certify(env, iso_files)
+        iso = await extract(env, iso_files, util_module)
+        cert = await certify(env, iso_files, util_module)
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},

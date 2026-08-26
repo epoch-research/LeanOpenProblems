@@ -19,6 +19,7 @@ from apn.dataset import (
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
+    fc_profile,
     load_subset,
     oeis_dataset,
 )
@@ -234,6 +235,7 @@ def apn_oeis(
     (the AlphaProof Nexus paper's published outcomes).
     """
     name_list = load_subset(OEIS_DIR, subset) if subset is not None else None
+    pin = fc_commit(OEIS_DIR)
 
     return Task(
         dataset=oeis_dataset(names=name_list),
@@ -241,9 +243,10 @@ def apn_oeis(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(fc_commit(OEIS_DIR), literature, sandbox_backend),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )
 
 
@@ -256,47 +259,39 @@ def apn_fc100open(
     sandbox_backend: SandboxBackend = "docker",
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
+    pin = fc_commit(FC100_DIR)
     return Task(
         dataset=fc100open_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(fc_commit(FC100_DIR), literature, sandbox_backend),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )
 
 
 @task
 def apn_erdos(
-    subset: str | None = None,
+    subset: str | None = "bloom_selection",
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
 ) -> Task:
-    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763).
-
-    All 353 FC ErdosProblems statements the paper's agent attempted, of which
-    350 ship as samples (3 are unresolvable at the vendored FC commit; see
-    ``subsets/tsoukalas_attempted.json``'s description). Statement text is FC
-    at the dataset's pin (``apn/data/erdos/fc_commit``) -- the exact
-    commit the sandbox images bake -- and every
-    ``answer(...) ↔`` form is certified-rewritten to the attempt-time binary
-    task, plain ``P`` (recorded ``True``/``False`` verdicts un-filled, and
-    FC's recorded-verdict annotations stripped, so the answer key cannot
-    leak). Bare ``apn_erdos`` runs all 350; ``subset="tsoukalas_attempted"``
-    names the same set -- the canonical replication invocation.
-    """
+    """The Bloom statement selection of Erdős problems."""
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
+    pin = fc_commit(ERDOS_DIR)
     return Task(
         dataset=erdos_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(fc_commit(ERDOS_DIR), literature, sandbox_backend),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )

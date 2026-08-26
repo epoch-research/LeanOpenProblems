@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 20
@@ -22,6 +22,9 @@ import FormalConjectures.Util.ProblemImports
 *References:*
 * [erdosproblems.com/20](https://www.erdosproblems.com/20)
 * [Wikipedia](https://en.wikipedia.org/wiki/Sunflower_(mathematics))
+* [ErRa60] Erdős, Paul and Rado, Richard. Intersection theorems for systems of sets.
+  J. London Math. Soc. 35 (1960), 85--90.
+
 -/
 namespace Erdos20
 
@@ -40,6 +43,7 @@ theorem erdos_20 : ∃ (c : ℕ → ℕ), ∀ n k, n > 0 → f n k < (c k) ^ n :
   sorry
 
 -- TODO(firsching): add the various known bounds as variants.
+
 end Erdos20
 
 theorem Erdos20.erdos_20.disproof : ¬ (type_of% @Erdos20.erdos_20) := sorry
