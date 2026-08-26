@@ -1,0 +1,15 @@
+{
+  "description": "Smoke-test subset: 10 easy OEIS conjectures with known outcomes -- the 5 tsoukalas_proved_38 members with the shortest gold proofs (correct answer: proof) followed by 5 robustly false conjectures, disproved and accepted in every one of the 15 historical result runs with the shortest published disproofs (correct answer: disproof). A quick end-to-end shakeout of the eval pipeline on both answer paths. Not a benchmark subset.",
+  "ids": [
+    "oeis_113254_conjecture_0",
+    "oeis_278070_conjecture_0",
+    "oeis_282779_conjecture_0",
+    "oeis_341254_conjecture_0",
+    "oeis_a237271_conjecture_2",
+    "oeis_238281_conjecture_0",
+    "oeis_383327_conjecture_0",
+    "oeis_72780_conjecture",
+    "oeis_A067857_conjecture_0",
+    "oeis_A229969_conjecture"
+  ]
+}
