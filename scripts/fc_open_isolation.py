@@ -33,7 +33,7 @@ validation of the committed files).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from scripts.isolation import REPO
@@ -57,6 +57,11 @@ class FCOpenDataset:
     in a sorry'd helper theorem. Such samples implicitly also require proving
     the helper; generation reports them instead of failing."""
 
+    drop_members: dict[str, str] = field(default_factory=dict)
+    """Members (manifest ids) dropped by hand at vendor time, with the reason
+    (fails the compile gate, verdict leakage found in review, ...). They ship
+    as excluded rows; see DROPPED_REASON_PREFIX."""
+
     @property
     def dataset_dir(self) -> Path:
         return REPO / "apn" / "data" / self.name
@@ -70,6 +75,9 @@ class FCOpenDataset:
         return self.dataset_dir / "Isolated"
 
 
+# The drop reasons below come from the vendor-time review sweep (one agent
+# pass over every isolated spec) plus the vendor-time full compile sweep;
+# these wide-net sets drop problematic members rather than fixing them.
 DATASETS = {
     d.name: d
     for d in (
@@ -79,9 +87,79 @@ DATASETS = {
             # MovingSofa's kept `def`s depend on the sorry'd existsUnique
             # helper theorem, which therefore survives the cut.
             sorry_allowlist_files=frozenset({"MovingSofa.lean"}),
+            drop_members={
+                "MovingSofa.volume_eq_sofaConstant_iff_congruent_gerversSofa": (
+                    "module docs cite the solution paper (Baek 2024, Optimality of "
+                    "Gerver's Sofa) -- verdict leakage"
+                ),
+                "JacobianConjecture.jacobian_conjecture_two_variables": (
+                    "the file embeds named counterexample definitions disproving the "
+                    "general conjecture -- verdict leakage"
+                ),
+                "DiophantineTuple.hasUniqueExtension_of_forall": (
+                    "doc comment references a sibling lemma cut during isolation"
+                ),
+                "EllipticCurveRank.RatEllipticCurve.finite_twentyone_lt_finrank": (
+                    "doc comment refers to 'the previous conjecture', cut during isolation"
+                ),
+                "EllipticCurveRank.RatEllipticCurve.rank_height_count_asymptotic": (
+                    "docstring references sibling theorems cut during isolation"
+                ),
+                "Kaplansky.idempotent_conjecture": (
+                    "an orphaned 'Counterexamples' section (for the cut unit-conjecture "
+                    "siblings) misleadingly follows the target"
+                ),
+                "Kaplansky.zero_divisor_conjecture": (
+                    "an orphaned 'Counterexamples' section (for the cut unit-conjecture "
+                    "siblings) misleadingly follows the target"
+                ),
+            },
         ),
-        FCOpenDataset(name="arxiv", fc_directory="FormalConjectures/Arxiv"),
-        FCOpenDataset(name="oeis_open", fc_directory="FormalConjectures/OEIS"),
+        FCOpenDataset(
+            name="arxiv",
+            fc_directory="FormalConjectures/Arxiv",
+            drop_members={
+                "Arxiv.«2607.05349».microscopic_weighting_iff_finite_concentration": (
+                    "doc comment references the concentration_unique lemma cut during "
+                    "isolation"
+                ),
+                "Margulis.conjecture_1_1": (
+                    "a dangling comment announces a companion formalization cut during "
+                    "isolation"
+                ),
+            },
+        ),
+        FCOpenDataset(
+            name="oeis_open",
+            fc_directory="FormalConjectures/OEIS",
+            drop_members={
+                "OeisA100434.conjecture1": (
+                    "trivially false as stated (fails by direct computation at n = 0)"
+                ),
+                "OeisA103425.conjecture": (
+                    "trivially true as formalized (the constant sequence 4 with "
+                    "(a,b,c) = (1,0,0) satisfies it)"
+                ),
+                "OeisA211417.general_divisibility": (
+                    "trivially true as stated (no 0 < D hypothesis, so D = 0 "
+                    "discharges it)"
+                ),
+                "OeisA211417.supercongruence": (
+                    "module references cite an AI proof-search solution paper -- "
+                    "verdict signal"
+                ),
+                "OeisA2326.conjecture2": (
+                    "doc comment refers to 'the previous conjecture', cut during isolation"
+                ),
+                "OeisA114362.conjecture1": (
+                    "a leftover definition's doc refers to a sibling conjecture cut "
+                    "during isolation"
+                ),
+                "OeisA34693.a_unbounded": (
+                    "doc comment is a counter-conjecture to a sibling cut during isolation"
+                ),
+            },
+        ),
     )
 }
 

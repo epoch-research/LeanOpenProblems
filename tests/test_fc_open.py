@@ -36,9 +36,9 @@ LOADERS = {
 # (total manifest rows, kept rows) per dataset; drift means the vendored
 # sources or the generation pipeline changed.
 CENSUS = {
-    "wikipedia": (242, 230),
-    "arxiv": (32, 32),
-    "oeis_open": (222, 210),
+    "wikipedia": (241, 222),
+    "arxiv": (32, 30),
+    "oeis_open": (222, 203),
 }
 
 CASES = sorted(DATASETS)

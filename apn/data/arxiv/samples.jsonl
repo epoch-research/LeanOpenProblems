@@ -18,7 +18,7 @@
 {"id": "Arxiv.«2605.12342».conjecture_1", "source": "Sources/2605.12342/Conjecture1.lean", "answer_form": null}
 {"id": "Arxiv.«2606.03696».bondy_conjecture", "source": "Sources/2606.03696/BondyLongestCycles.lean", "answer_form": "lhs_sorry"}
 {"id": "Arxiv.«2607.03582».isParallelogramAtOrigin_of_volume_lpSum_eq", "source": "Sources/2607.03582/LpRogersShephard.lean", "answer_form": "lhs_sorry"}
-{"id": "Arxiv.«2607.05349».microscopic_weighting_iff_finite_concentration", "source": "Sources/2607.05349/MicroscopicWeighting.lean", "answer_form": "lhs_sorry"}
+{"id": "Arxiv.«2607.05349».microscopic_weighting_iff_finite_concentration", "source": "Sources/2607.05349/MicroscopicWeighting.lean", "excluded": "dropped at vendor time: doc comment references the concentration_unique lemma cut during isolation"}
 {"id": "Arxiv.«2607.05739».tan_arctan_sum_not_integer", "source": "Sources/2607.05739/TanArctanSum.lean", "answer_form": "lhs_sorry"}
 {"id": "Arxiv.«2607.06396».alon_tarsi_short_cycle_cover", "source": "Sources/2607.06396/AlonTarsi.lean", "answer_form": "lhs_sorry"}
 {"id": "Arxiv.«2607.08366».min_modulus", "source": "Sources/2607.08366/MinModulus.lean", "answer_form": "lhs_sorry"}
@@ -26,7 +26,7 @@
 {"id": "AtiyahSutcliffe.conjecture_one", "source": "Sources/1102.4662/AtiyahSutcliffe.lean", "answer_form": null}
 {"id": "CunninghamChain.infinitely_many_firstKind_chains", "source": "Sources/1104.1579/CunninghamChain.lean", "answer_form": null}
 {"id": "CunninghamChain.infinitely_many_secondKind_chains", "source": "Sources/1104.1579/CunninghamChain.lean", "answer_form": null}
-{"id": "Margulis.conjecture_1_1", "source": "Sources/2504.17644/Margulis.lean", "answer_form": null}
+{"id": "Margulis.conjecture_1_1", "source": "Sources/2504.17644/Margulis.lean", "excluded": "dropped at vendor time: a dangling comment announces a companion formalization cut during isolation"}
 {"id": "NowhereDenseSpectralSet.exists_nowhereDense_spectralSet", "source": "Sources/2209.04540/SpectralSetsAndWeakTiling.lean", "answer_form": "lhs_sorry"}
 {"id": "SpectralSetProduct.isSpectral_right_of_product_of_convexBody", "source": "Sources/2209.04540/SpectralSetsAndWeakTiling.lean", "answer_form": "lhs_sorry"}
 {"id": "SpectralSetProduct.isSpectral_right_of_product_three_dimensional", "source": "Sources/2209.04540/SpectralSetsAndWeakTiling.lean", "answer_form": "lhs_sorry"}

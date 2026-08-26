@@ -208,6 +208,9 @@ def generate(cfg: FCOpenDataset, container: str, exe: str, jobs: int) -> None:
                 rows.append(row)
 
             row: dict = {"id": decl["name"], "source": f"Sources/{rel}"}
+            if decl["name"] in cfg.drop_members:
+                drop(row, cfg.drop_members[decl["name"]])
+                continue
             if "sorryAx" in decl["type"]:
                 row["excluded"] = VALUE_TYPED_REASON
                 n_excluded += 1

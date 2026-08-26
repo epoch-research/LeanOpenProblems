@@ -46,13 +46,13 @@
 {"id": "Dickson.infinite_safe_primes", "source": "Sources/Dickson.lean", "answer_form": null}
 {"id": "Dickson.infinite_sexy_primes", "source": "Sources/Dickson.lean", "answer_form": null}
 {"id": "Dickson.polignac_conjecture", "source": "Sources/Dickson.lean", "answer_form": null}
-{"id": "DiophantineTuple.hasUniqueExtension_of_forall", "source": "Sources/DiophantineTuple.lean", "answer_form": null}
+{"id": "DiophantineTuple.hasUniqueExtension_of_forall", "source": "Sources/DiophantineTuple.lean", "excluded": "dropped at vendor time: doc comment references a sibling lemma cut during isolation"}
 {"id": "DiophantineTuple.rational_7_tuple", "source": "Sources/DiophantineTuple.lean", "answer_form": "lhs_sorry"}
 {"id": "ElliottHalberstamConjecture.elliott_halberstam", "source": "Sources/ElliottHalberstamConjecture.lean", "answer_form": null}
 {"id": "EllipticCurveRank.RatEllipticCurve.exists_rank_ge_thirtyone", "source": "Sources/EllipticCurveRank.lean", "answer_form": null}
-{"id": "EllipticCurveRank.RatEllipticCurve.finite_twentyone_lt_finrank", "source": "Sources/EllipticCurveRank.lean", "answer_form": null}
+{"id": "EllipticCurveRank.RatEllipticCurve.finite_twentyone_lt_finrank", "source": "Sources/EllipticCurveRank.lean", "excluded": "dropped at vendor time: doc comment refers to 'the previous conjecture', cut during isolation"}
 {"id": "EllipticCurveRank.RatEllipticCurve.half_rank_zero_and_half_rank_one", "source": "Sources/EllipticCurveRank.lean", "answer_form": null}
-{"id": "EllipticCurveRank.RatEllipticCurve.rank_height_count_asymptotic", "source": "Sources/EllipticCurveRank.lean", "answer_form": null}
+{"id": "EllipticCurveRank.RatEllipticCurve.rank_height_count_asymptotic", "source": "Sources/EllipticCurveRank.lean", "excluded": "dropped at vendor time: docstring references sibling theorems cut during isolation"}
 {"id": "EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic", "source": "Sources/EllipticCurveRank.lean", "answer_form": null}
 {"id": "EllipticCurveRank.RatEllipticCurve.unbounded_rank_conjecture", "source": "Sources/EllipticCurveRank.lean", "answer_form": null}
 {"id": "EllipticCurveRank.WeierstrassCurve.rank_elkies28", "source": "Sources/EllipticCurveRank.lean", "answer_form": null}
@@ -81,7 +81,6 @@
 {"id": "Firoozbakht.firoozbakht_conjecture", "source": "Sources/Firoozbakht.lean", "answer_form": null}
 {"id": "FlintCooksonHills.cookson_hills_series_converges", "source": "Sources/FlintCooksonHills.lean", "answer_form": "lhs_sorry"}
 {"id": "FlintCooksonHills.flint_hills_series_converges", "source": "Sources/FlintCooksonHills.lean", "answer_form": "lhs_sorry"}
-{"id": "FortuneConjecture.fortune_conjecture", "source": "Sources/FortuneConjecture.lean", "answer_form": "lhs_sorry"}
 {"id": "Fuglede.FugledeConjecture.variants.dim_1", "source": "Sources/Fuglede.lean", "answer_form": "lhs_sorry"}
 {"id": "Fuglede.FugledeConjecture.variants.dim_2", "source": "Sources/Fuglede.lean", "answer_form": "lhs_sorry"}
 {"id": "GapConjecture.gap_conjecture", "source": "Sources/GapConjecture.lean", "answer_form": null}
@@ -113,11 +112,11 @@
 {"id": "Irrational.irrational_ln_pi", "source": "Sources/Irrational.lean", "answer_form": "lhs_sorry"}
 {"id": "Irrational.irrational_pi_to_e", "source": "Sources/Irrational.lean", "answer_form": "lhs_sorry"}
 {"id": "Irrational.irrational_pi_to_pi", "source": "Sources/Irrational.lean", "answer_form": "lhs_sorry"}
-{"id": "JacobianConjecture.jacobian_conjecture_two_variables", "source": "Sources/JacobianConjecture.lean", "answer_form": "lhs_sorry"}
+{"id": "JacobianConjecture.jacobian_conjecture_two_variables", "source": "Sources/JacobianConjecture.lean", "excluded": "dropped at vendor time: the file embeds named counterexample definitions disproving the general conjecture -- verdict leakage"}
 {"id": "JugglerConjecture.juggler_conjecture", "source": "Sources/JugglerConjecture.lean", "answer_form": null}
 {"id": "Kakeya.kakeya_set_conjecture", "source": "Sources/Kakeya.lean", "answer_form": null}
-{"id": "Kaplansky.idempotent_conjecture", "source": "Sources/Kaplansky.lean", "answer_form": null}
-{"id": "Kaplansky.zero_divisor_conjecture", "source": "Sources/Kaplansky.lean", "answer_form": null}
+{"id": "Kaplansky.idempotent_conjecture", "source": "Sources/Kaplansky.lean", "excluded": "dropped at vendor time: an orphaned 'Counterexamples' section (for the cut unit-conjecture siblings) misleadingly follows the target"}
+{"id": "Kaplansky.zero_divisor_conjecture", "source": "Sources/Kaplansky.lean", "excluded": "dropped at vendor time: an orphaned 'Counterexamples' section (for the cut unit-conjecture siblings) misleadingly follows the target"}
 {"id": "Koethe.KotheConjecture", "source": "Sources/Koethe.lean", "answer_form": null}
 {"id": "Koethe.KotherConjecture.variants.general_matrix", "source": "Sources/Koethe.lean", "answer_form": null}
 {"id": "Koethe.KotherConjecture.variants.le_KotherRadical", "source": "Sources/Koethe.lean", "answer_form": null}
@@ -156,7 +155,7 @@
 {"id": "Mersenne.new_mersenne_conjecture.variants.prime", "source": "Sources/Mersenne.lean", "answer_form": null}
 {"id": "MoserWorm.convex_mosers_worm_problem", "source": "Sources/MoserWorm.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
 {"id": "MoserWorm.mosers_worm_problem", "source": "Sources/MoserWorm.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
-{"id": "MovingSofa.volume_eq_sofaConstant_iff_congruent_gerversSofa", "source": "Sources/MovingSofa.lean", "answer_form": null}
+{"id": "MovingSofa.volume_eq_sofaConstant_iff_congruent_gerversSofa", "source": "Sources/MovingSofa.lean", "excluded": "dropped at vendor time: module docs cite the solution paper (Baek 2024, Optimality of Gerver's Sofa) -- verdict leakage"}
 {"id": "NormalNumber.pi_normal_base_ten", "source": "Sources/NormalityOfPi.lean", "answer_form": null}
 {"id": "Oppermann.oppermann_conjecture", "source": "Sources/Oppermann.lean", "answer_form": null}
 {"id": "Oppermann.oppermann_conjecture.parts.i", "source": "Sources/Oppermann.lean", "answer_form": null}

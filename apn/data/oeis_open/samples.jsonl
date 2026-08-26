@@ -1,4 +1,4 @@
-{"id": "OeisA100434.conjecture1", "source": "Sources/100434.lean", "answer_form": null}
+{"id": "OeisA100434.conjecture1", "source": "Sources/100434.lean", "excluded": "dropped at vendor time: trivially false as stated (fails by direct computation at n = 0)"}
 {"id": "OeisA100434.conjecture2", "source": "Sources/100434.lean", "answer_form": null}
 {"id": "OeisA100434.conjecture3", "source": "Sources/100434.lean", "answer_form": null}
 {"id": "OeisA100474.conjecture", "source": "Sources/100474.lean", "answer_form": "lhs_sorry"}
@@ -7,7 +7,7 @@
 {"id": "OeisA101779.conjecture", "source": "Sources/101779.lean", "answer_form": null}
 {"id": "OeisA102847.conjecture", "source": "Sources/102847.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it"}
 {"id": "OeisA103151.conjecture", "source": "Sources/103151.lean", "answer_form": null}
-{"id": "OeisA103425.conjecture", "source": "Sources/103425.lean", "answer_form": "lhs_sorry"}
+{"id": "OeisA103425.conjecture", "source": "Sources/103425.lean", "excluded": "dropped at vendor time: trivially true as formalized (the constant sequence 4 with (a,b,c) = (1,0,0) satisfies it)"}
 {"id": "OeisA103662.conjecture", "source": "Sources/103662.lean", "answer_form": null}
 {"id": "OeisA103662.conjecture.variants.a_40", "source": "Sources/103662.lean", "answer_form": null}
 {"id": "OeisA103885.conjecture", "source": "Sources/103885.lean", "answer_form": null}
@@ -48,7 +48,7 @@
 {"id": "OeisA114137.conjecture1", "source": "Sources/114137.lean", "answer_form": "lhs_sorry"}
 {"id": "OeisA114137.conjecture2", "source": "Sources/114137.lean", "answer_form": "lhs_sorry"}
 {"id": "OeisA114216.conjecture", "source": "Sources/114216.lean", "answer_form": "lhs_sorry"}
-{"id": "OeisA114362.conjecture1", "source": "Sources/114362.lean", "answer_form": null}
+{"id": "OeisA114362.conjecture1", "source": "Sources/114362.lean", "excluded": "dropped at vendor time: a leftover definition's doc refers to a sibling conjecture cut during isolation"}
 {"id": "OeisA1146.conjecture", "source": "Sources/1146.lean", "answer_form": null}
 {"id": "OeisA115257.conjecture", "source": "Sources/115257.lean", "answer_form": null}
 {"id": "OeisA115366.conjecture", "source": "Sources/115366.lean", "answer_form": null}
@@ -114,15 +114,15 @@
 {"id": "OeisA185895.conjecture1", "source": "Sources/185895.lean", "answer_form": null}
 {"id": "OeisA185895.conjecture2", "source": "Sources/185895.lean", "answer_form": null}
 {"id": "OeisA185895.conjecture3", "source": "Sources/185895.lean", "answer_form": null}
-{"id": "OeisA211417.general_divisibility", "source": "Sources/211417.lean", "answer_form": null}
-{"id": "OeisA211417.supercongruence", "source": "Sources/211417.lean", "answer_form": null}
+{"id": "OeisA211417.general_divisibility", "source": "Sources/211417.lean", "excluded": "dropped at vendor time: trivially true as stated (no 0 < D hypothesis, so D = 0 discharges it)"}
+{"id": "OeisA211417.supercongruence", "source": "Sources/211417.lean", "excluded": "dropped at vendor time: module references cite an AI proof-search solution paper -- verdict signal"}
 {"id": "OeisA22030.conjecture", "source": "Sources/22030.lean", "answer_form": null}
 {"id": "OeisA224.conjecture", "source": "Sources/224.lean", "answer_form": null}
 {"id": "OeisA228828.conjecture", "source": "Sources/228828.lean", "answer_form": null}
 {"id": "OeisA231201.conjecture", "source": "Sources/231201.lean", "answer_form": null}
 {"id": "OeisA232174.conjecture", "source": "Sources/232174.lean", "answer_form": null}
 {"id": "OeisA2326.conjecture1", "source": "Sources/2326.lean", "answer_form": null}
-{"id": "OeisA2326.conjecture2", "source": "Sources/2326.lean", "answer_form": null}
+{"id": "OeisA2326.conjecture2", "source": "Sources/2326.lean", "excluded": "dropped at vendor time: doc comment refers to 'the previous conjecture', cut during isolation"}
 {"id": "OeisA237271.observation_carmichael", "source": "Sources/237271.lean", "answer_form": null}
 {"id": "OeisA239957.conjecture", "source": "Sources/239957.lean", "answer_form": null}
 {"id": "OeisA2407.conjecture", "source": "Sources/2407.lean", "answer_form": null}
@@ -138,7 +138,7 @@
 {"id": "OeisA3161.conjecture", "source": "Sources/3161.lean", "answer_form": null}
 {"id": "OeisA3162.conjecture", "source": "Sources/3162.lean", "answer_form": null}
 {"id": "OeisA34693.a_isBigO", "source": "Sources/34693.lean", "answer_form": null}
-{"id": "OeisA34693.a_unbounded", "source": "Sources/34693.lean", "answer_form": null}
+{"id": "OeisA34693.a_unbounded", "source": "Sources/34693.lean", "excluded": "dropped at vendor time: doc comment is a counter-conjecture to a sibling cut during isolation"}
 {"id": "OeisA34693.exists_k", "source": "Sources/34693.lean", "answer_form": null}
 {"id": "OeisA34693.exists_k_stronger", "source": "Sources/34693.lean", "answer_form": null}
 {"id": "OeisA34694.conjecture", "source": "Sources/34694.lean", "answer_form": null}

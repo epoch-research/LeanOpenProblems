@@ -4,7 +4,12 @@ directory-scoped research-open datasets (``wikipedia``, ``arxiv``,
 
 Same gates as ``tests/test_erdos_isolation.py`` (see its docstring), over all
 three datasets through one sandbox bring-up -- they share one FC pin by
-construction (asserted below):
+construction (asserted below). Unlike the curated datasets' suites, these
+wide-net sets are large (~470 kept members), so each run validates a fresh
+*random sample* of ``SAMPLE_SIZE`` members rather than the whole universe
+(the full sweep ran once at vendor time); the sampled ids are printed so a
+failure can be re-run by hand. Set ``APN_ISOLATION_SAMPLE=all`` for a full
+sweep, or to an integer to change the size.
 
 * **Structural** -- re-extract each isolated file and confirm the target
   theorem is present exactly once and the surviving theorem/lemma commands are
@@ -18,6 +23,8 @@ construction (asserted below):
 
 from __future__ import annotations
 
+import os
+import random
 from dataclasses import dataclass
 from typing import Any
 
@@ -49,17 +56,40 @@ class IsoData:
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
-def kept_rows(cfg: FCOpenDataset) -> list[SampleRow]:
+def _all_kept_rows(cfg: FCOpenDataset) -> list[SampleRow]:
     # The committed manifest's kept rows are the members with isolated specs;
     # excluded rows (value-typed / proved-in-file / dropped) have none.
     return [r for r in load_manifest(cfg.dataset_dir) if r.excluded is None]
 
 
+def _sampled_rows() -> dict[str, list[SampleRow]]:
+    """A fresh random sample of the kept rows, pooled across the datasets."""
+    knob = os.environ.get("APN_ISOLATION_SAMPLE", "50")
+    pool = [(name, r) for name, cfg in sorted(DATASETS.items()) for r in _all_kept_rows(cfg)]
+    if knob != "all" and int(knob) < len(pool):
+        pool = random.sample(pool, int(knob))
+    by_ds: dict[str, list[SampleRow]] = {}
+    for name, row in pool:
+        by_ds.setdefault(name, []).append(row)
+    print(
+        "validating sampled members: "
+        + "; ".join(f"{ds}: {sorted(r.id for r in rows)}" for ds, rows in sorted(by_ds.items()))
+    )
+    return by_ds
+
+
+SAMPLED_ROWS = _sampled_rows()
+
+
+def kept_rows(cfg: FCOpenDataset) -> list[SampleRow]:
+    return SAMPLED_ROWS.get(cfg.name, [])
+
+
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
 async def iso_data() -> dict[str, IsoData]:
     """Bring the sandbox up once (the datasets share one FC pin) and run every
-    Lean step inside it, per dataset: extract the vendored sources and the
-    Isolated files, then compile every Isolated file."""
+    Lean step inside it, per dataset: extract the sampled members' vendored
+    sources and Isolated files, then compile the sampled Isolated files."""
     pins = {fc_commit(cfg.dataset_dir) for cfg in DATASETS.values()}
     assert len(pins) == 1, f"fc_open datasets have diverging pins: {pins}"
     pin = pins.pop()
@@ -67,11 +97,14 @@ async def iso_data() -> dict[str, IsoData]:
     data: dict[str, IsoData] = {}
     async with generate_env("pytest_fc_open_isolation", pin) as env:
         for name, cfg in sorted(DATASETS.items()):
-            rels = sorted({r.source.removeprefix("Sources/") for r in kept_rows(cfg)})
+            rows = kept_rows(cfg)
+            if not rows:
+                continue
+            rels = sorted({r.source.removeprefix("Sources/") for r in rows})
             src = await extract(
                 env, [cfg.sources_dir / rel for rel in rels], util_module, arcnames=rels
             )
-            iso_files = sorted(cfg.isolated_dir.glob("*.lean"))
+            iso_files = sorted(cfg.dataset_dir / r.statement_path for r in rows)
             iso = await extract(env, iso_files, util_module)
             failures = await compile_all(env, iso_files)
             data[name] = IsoData(
