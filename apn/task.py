@@ -44,8 +44,8 @@ SandboxBackend = Literal["docker", "k8s"]
 # has no Landlock, and comparator invokes landrun with --best-effort, which    #
 # disables itself without error there), so it rides in the most direct         #
 # representation available. Once comparator#83 is fixed a missing runtime      #
-# fails loudly, and collapsing to a single compose file (with the              #
-# x-inspect_k8s_sandbox extensions) becomes a reasonable simplification.       #
+# fails loudly, and collapsing to a single compose file becomes a reasonable   #
+# simplification.                                                              #
 # --------------------------------------------------------------------------- #
 AGENT_MEMORY_GIB = 10
 # Comparator holds both text exports in memory and replays the solution's
@@ -132,11 +132,10 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     repository = os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
     agent_kind = _agent_image_kind(literature)
 
+    # Just a memory limit: k8s defaults the request to the limit (so
+    # scheduling still reserves it), and CPU is compressible, so no CPU knobs.
     def resources(memory_gib: int) -> dict[str, Any]:
-        return {
-            "requests": {"memory": f"{memory_gib}Gi", "cpu": "1"},
-            "limits": {"memory": f"{memory_gib}Gi", "cpu": "4"},
-        }
+        return {"limits": {"memory": f"{memory_gib}Gi"}}
 
     values: dict[str, Any] = {
         "services": {
