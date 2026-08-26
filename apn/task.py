@@ -178,9 +178,7 @@ def apn_erdos_autoformalized(
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    """The Erdős problems our own autoformalization pipeline formalized
-    (18 problems absent from formal-conjectures at the run's pin; 20 samples).
-    """
+    """The Erdős problems our own autoformalization pipeline formalized."""
     name_list = (
         load_subset(ERDOS_AUTOFORMALIZED_DIR, subset) if subset is not None else None
     )

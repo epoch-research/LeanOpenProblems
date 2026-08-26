@@ -52,8 +52,6 @@ _FC_PROFILES = {
     "488aade228ec37880b8fec178c173c07d279bb53": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
-    # Post-rename layout; the pin our autoformalization pipeline compiled the
-    # erdos_autoformalized statements against (an ancestor of 488aade2).
     "9cbe1d3c12998c786b7c2cd99ce28a21b6631f66": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
