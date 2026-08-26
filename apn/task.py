@@ -153,25 +153,7 @@ def apn_erdos(
     literature: bool = False,
     agent_type: AgentType = "react",
 ) -> Task:
-    """The Bloom statement selection of Erdős problems.
-
-    Thomas Bloom selected 70 Erdős problem numbers for review; 48 have
-    formalized statements in formal-conjectures, and the review picked one
-    representative statement per problem (see
-    ``apn/data/erdos/ERDOS_PROBLEM_STATEMENT_SELECTION.md`` and
-    ``NOTICE.md``). Statement text is FC at the dataset's pin
-    (``apn/data/erdos/fc_commit``) -- the exact commit the sandbox images
-    bake, certified statement-identical to the review commit -- and every
-    ``answer(...) ↔`` form is certified-rewritten to the binary task, plain
-    ``P`` (recorded ``True``/``False`` verdicts un-filled, and FC's
-    recorded-verdict annotations stripped, so the answer key cannot leak).
-
-    Bare ``apn_erdos`` runs the default ``bloom_selection`` subset: the 47
-    scoreable selected statements (problem 508's ``HadwigerNelsonProblem`` is
-    value-typed and excluded). ``subset=None`` runs the whole census instead
-    -- every non-excluded research statement of the 48 vendored files,
-    research-category variants included.
-    """
+    """The Bloom statement selection of Erdős problems."""
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
     pin = fc_commit(ERDOS_DIR)
     return Task(

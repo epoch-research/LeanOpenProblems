@@ -55,11 +55,7 @@ PROVED_IN_FILE_REASON = (
 # Files whose isolated specs may carry a `sorry` outside the target theorem:
 # a kept ``def``/``abbrev`` whose dependency closure pulls in a sorry'd helper
 # theorem, which therefore survives the cut (such samples implicitly also
-# require proving the helper). Each entry is a task-addition-time decision;
-# generation reports allowlisted extras instead of failing, and fails loudly
-# on any file not listed here. None of the Bloom-selection files needs one
-# (the Tsoukalas-era entries -- 295/633/697/961/1055 -- all left with that
-# set); re-add only what generation reports.
+# require proving the helper).
 SORRY_ALLOWLIST_FILES: set[str] = set()
 
 # A research-category classification attribute and its status field. Matched
