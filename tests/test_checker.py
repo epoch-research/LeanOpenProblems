@@ -36,6 +36,7 @@ from apn.checker import (
     CHALLENGE_PATH,
     CONFIG_PATH,
     RESET_SCRIPT,
+    RUN_DIR,
     SOLUTION_PATH,
     CheckOutcome,
     ProofChecker,
@@ -151,16 +152,23 @@ def test_extract_entry_oversize_member_is_none(monkeypatch: pytest.MonkeyPatch) 
 # --------------------------------------------------------------------------- #
 # SandboxComparator exec orchestration                                         #
 # --------------------------------------------------------------------------- #
+# The checker's trusted staging reset (recreate run/ before writing inputs).
+STAGING_RESET = ["sh", "-c", f"rm -rf {RUN_DIR} && mkdir {RUN_DIR}"]
+
+
 class ScriptedSandbox:
     """A stub for the comparator sandbox: records writes/execs and returns (or
-    raises) a scripted result for the reset exec then the comparator exec."""
+    raises) a scripted result for the .lake reset exec, the staging reset exec,
+    then the comparator exec."""
 
     def __init__(
         self,
         reset: ExecResult[str] | None = None,
+        staging: ExecResult[str] | None = None,
         comparator: ExecResult[str] | BaseException | None = None,
     ) -> None:
         self._reset = reset if reset is not None else ExecResult(True, 0, "", "")
+        self._staging = staging if staging is not None else ExecResult(True, 0, "", "")
         self._comparator = comparator
         self.written: dict[str, object] = {}
         self.writes: list[tuple[str, object]] = []
@@ -174,6 +182,8 @@ class ScriptedSandbox:
         self.commands.append(cmd)
         if cmd == [RESET_SCRIPT]:
             return self._reset
+        if cmd == STAGING_RESET:
+            return self._staging
         step = self._comparator
         if isinstance(step, BaseException):
             raise step
@@ -198,9 +208,10 @@ _ACCEPT_OUT = f"Building Challenge\n{_MARKER}\nYour solution is okay!"
 def _checker(
     monkeypatch: pytest.MonkeyPatch,
     reset: ExecResult[str] | None = None,
+    staging: ExecResult[str] | None = None,
     comparator: ExecResult[str] | BaseException | None = None,
 ) -> tuple[SandboxComparator, ScriptedSandbox]:
-    sb = ScriptedSandbox(reset=reset, comparator=comparator)
+    sb = ScriptedSandbox(reset=reset, staging=staging, comparator=comparator)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
     return SandboxComparator(), sb
 
@@ -210,9 +221,10 @@ async def test_check_accepts_on_exit_zero(monkeypatch: pytest.MonkeyPatch) -> No
     outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
     assert outcome.ok
     assert outcome.stage == "comparator"
-    # reset, then the comparator invocation.
+    # .lake reset, staging reset, then the comparator invocation.
     assert sb.commands[0] == [RESET_SCRIPT]
-    assert sb.commands[1][:3] == ["lake", "env", checker_mod.COMPARATOR_BIN]
+    assert sb.commands[1] == STAGING_RESET
+    assert sb.commands[2][:3] == ["lake", "env", checker_mod.COMPARATOR_BIN]
 
 
 async def test_check_stages_challenge_solution_config(
@@ -277,13 +289,26 @@ async def test_check_raises_when_challenge_phase_failed(
 
 
 async def test_check_raises_when_reset_fails(monkeypatch: pytest.MonkeyPatch) -> None:
-    # The workspace reset is a reference step; its failure is our infrastructure.
+    # The .lake reset is a reference step; its failure is our infrastructure.
     checker, sb = _checker(monkeypatch, reset=_fail(1, stderr="reset boom"),
                            comparator=_ok(_ACCEPT_OUT))
-    with pytest.raises(RuntimeError, match="workspace reset failed"):
+    with pytest.raises(RuntimeError, match=r"\.lake reset failed"):
         await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
     # Nothing ran past the failed reset.
     assert sb.commands == [[RESET_SCRIPT]]
+
+
+async def test_check_raises_when_staging_reset_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Recreating run/ is likewise a reference step.
+    checker, sb = _checker(monkeypatch, staging=_fail(1, stderr="mkdir boom"),
+                           comparator=_ok(_ACCEPT_OUT))
+    with pytest.raises(RuntimeError, match="staging reset failed"):
+        await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    # Nothing ran past the failed staging reset (and nothing was staged).
+    assert sb.commands == [[RESET_SCRIPT], STAGING_RESET]
+    assert sb.written == {}
 
 
 async def test_check_maps_resource_death_after_solution_phase(

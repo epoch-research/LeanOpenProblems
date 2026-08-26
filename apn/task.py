@@ -46,17 +46,6 @@ AGENT_MEMORY_GIB = 10
 # export removes SafeVerify's rebuildExpr blowup).
 COMPARATOR_MEMORY_GIB = 16
 
-# The comparator container runs a read-only rootfs; these are its only mutable
-# spots. Sizes are hard caps (docker tmpfs is RAM-backed and k8s emptyDirs are
-# evicted past sizeLimit), so an untrusted build filling them hits a bounded
-# ceiling instead of the node's disk/RAM.
-WRITABLE_MOUNTS: list[tuple[str, int]] = [
-    # (mount path, size cap in MiB)
-    ("/workspace/leanproject/.lake", 6144),  # solution/challenge build artifacts
-    ("/workspace/leanproject/run", 64),  # the staged Challenge/Solution pair
-    ("/tmp", 2048),
-]
-
 
 def _docker_tag_component(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]", "_", value)
@@ -85,10 +74,11 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     """The docker-backend sandbox config (local runs, CI tests).
 
     Two services: the agent's workspace, and the trusted `comparator` verifier.
-    The comparator service is hardened per comparator-migration-plan.md §3.1:
-    read-only rootfs with size-capped tmpfs mounts at its only mutable spots,
-    so nothing an untrusted build writes survives outside them and the
-    per-check reset-workspace.sh restores a pristine tree.
+    The comparator container needs no filesystem hardening of its own
+    (comparator-migration-plan.md §3.1): comparator's landrun (Landlock)
+    sandbox confines the untrusted solution build to writes in `.lake`, the
+    image runs as a non-privileged user, and the checker's per-check
+    reset-dotlake.sh restores a pristine `.lake`.
     """
     agent_kind = _agent_image_kind(literature)
     compose: dict[str, Any] = {
@@ -108,15 +98,6 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
                 "entrypoint": "tail -f /dev/null",
                 "mem_limit": f"{COMPARATOR_MEMORY_GIB}g",
                 "network_mode": "none",
-                "read_only": True,
-                "volumes": [
-                    {
-                        "type": "tmpfs",
-                        "target": path,
-                        "tmpfs": {"size": size_mib * 1024 * 1024},
-                    }
-                    for path, size_mib in WRITABLE_MOUNTS
-                ],
             },
         }
     }
@@ -126,9 +107,8 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
 def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
-    Written directly in the Helm chart's vocabulary (no compose conversion --
-    Hawk's compose path hard-fails on the hardening keys, so nothing
-    security-relevant may ride through a translation layer). Notes:
+    Written directly in the Helm chart's vocabulary (no compose conversion;
+    plan §5). Notes:
 
     - ``runtimeClassName: CLUSTER_DEFAULT`` is the chart's magic string for
       "do not set a runtime class": pods run under the node's default runtime
@@ -138,8 +118,6 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
       eval must not run under gvisor/`isolation: strict` (plan §7.6).
     - The image repository is resolved at write time (Helm does not
       interpolate environment variables).
-    - ``emptyDir`` volumes (node disk, evicted past sizeLimit) stand in for
-      the docker backend's tmpfs mounts.
     """
     repository = os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
     agent_kind = _agent_image_kind(literature)
@@ -165,18 +143,6 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
                 "networkIsolated": True,
                 "dnsRecord": True,
                 "resources": resources(COMPARATOR_MEMORY_GIB),
-                "securityContext": {"readOnlyRootFilesystem": True},
-                "volumes": [
-                    {
-                        "name": f"writable-{i}",
-                        "emptyDir": {"sizeLimit": f"{size_mib}Mi"},
-                    }
-                    for i, (_path, size_mib) in enumerate(WRITABLE_MOUNTS)
-                ],
-                "volumeMounts": [
-                    {"name": f"writable-{i}", "mountPath": path}
-                    for i, (path, _size_mib) in enumerate(WRITABLE_MOUNTS)
-                ],
             },
         }
     }

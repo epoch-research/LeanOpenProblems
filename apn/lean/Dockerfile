@@ -16,8 +16,8 @@
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
 #                   untrusted `lake build Solution` is confined by landrun
-#                   (Landlock) *inside* this container, and the container runs
-#                   with a read-only rootfs + tmpfs mounts (see apn/task.py).
+#                   (Landlock) *inside* this container, which runs as a
+#                   non-privileged user (comparator README assumption 6).
 #
 # Version story (comparator-migration-plan.md §2). Four version-bearing
 # artifacts, deliberately NOT all on one toolchain:
@@ -204,9 +204,8 @@ COPY --from=builder /workspace/leanproject/.lake ./.lake
 
 # Note: neither the `Submission/` nor the `run/` directory is copied in. They
 # carry no baked content -- the Python scaffold creates the agent's
-# `Submission/Spec.lean` at runtime, and the comparator checker stages
-# `run/Challenge.lean`/`run/Solution.lean` per check (in the comparator image
-# `run/` is a tmpfs mount over an empty mountpoint).
+# `Submission/Spec.lean` at runtime, and the comparator checker recreates
+# `run/` and stages `run/Challenge.lean`/`run/Solution.lean` per check.
 
 # The proving-library SOURCE the agent legitimately proves *with* (imported into
 # every problem's scope, like Mathlib), staged by the builder per the checkout's
@@ -403,16 +402,18 @@ RUN git clone https://github.com/leanprover/lean4export.git /opt/lean4export \
 # solely so that binary's shared-library RPATH resolves. No lake/lean          #
 # invocation ever dispatches to the second toolchain.                          #
 #                                                                              #
-# The image cooperates with a hardened runtime (apn/task.py): read-only        #
-# rootfs, tmpfs at .lake / run / /tmp, and /opt/apn/reset-workspace.sh         #
-# restoring the pristine workspace before every check.                         #
+# Runs as the non-privileged `comparator` user (comparator README assumption   #
+# 6): landrun (Landlock) confines the untrusted solution build to writes in    #
+# .lake, and /opt/apn/reset-dotlake.sh restores a pristine .lake before every  #
+# check (comparator-migration-plan.md §3.1).                                   #
 # --------------------------------------------------------------------------- #
 FROM base AS comparator
 
 # Resolve lake/lean straight from the project toolchain, bypassing the elan
-# shims: the rootfs is read-only at runtime and the shims may want to touch
-# elan state (e.g. gc bookkeeping) on dispatch. The elan-managed install is
-# still what ships the toolchain; only PATH resolution changes.
+# shims: the shims may want to touch elan state (e.g. gc bookkeeping) under
+# /root on dispatch, which the non-privileged runtime user cannot write. The
+# elan-managed install is still what ships the toolchain; only PATH resolution
+# changes.
 ARG LEAN_VERSION=v4.27.0
 ENV PATH=/root/.elan/toolchains/leanprover--lean4---${LEAN_VERSION}/bin:$PATH
 
@@ -433,25 +434,49 @@ COPY --from=landrun_build /out/landrun /usr/local/bin/landrun
 ENV COMPARATOR_LEAN4EXPORT=/opt/apn/lean4export/bin/lean4export \
     COMPARATOR_LANDRUN=/usr/local/bin/landrun
 
-COPY reset-workspace.sh /opt/apn/reset-workspace.sh
-RUN chmod 755 /opt/apn/reset-workspace.sh
+COPY reset-dotlake.sh /opt/apn/reset-dotlake.sh
+RUN chmod 755 /opt/apn/reset-dotlake.sh
 
 # Stage the pristine workspace tree the reset script restores from:
 #   /opt/pristine/dot-lake  -- the project .lake minus packages/ (lake config
 #                              cache + the FC build artifacts, tens of MB;
-#                              copied into the .lake tmpfs on every reset).
-#                              The builder's Challenge/Solution stub artifacts
-#                              are dropped -- real files land in run/ at
-#                              scoring time and must always rebuild.
-#   /opt/pristine/packages  -- the heavy Mathlib/dependency artifacts; stay on
-#                              the read-only rootfs and are symlinked into the
+#                              copied into .lake on every reset). The builder's
+#                              Challenge/Solution stub artifacts are dropped --
+#                              real files land in run/ at scoring time and
+#                              must always rebuild.
+#   /opt/pristine/packages  -- the heavy Mathlib/dependency artifacts; stay
+#                              root-owned outside .lake (and so outside the
+#                              landrun write grant) and are symlinked into the
 #                              fresh .lake (never copied, never writable).
-# The emptied .lake and run directories remain as tmpfs mountpoints.
+# Neither .lake nor run/ is recreated here: the reset script rebuilds .lake
+# and the checker rebuilds run/ before every check, so the image need not
+# carry either.
 RUN mkdir -p /opt/pristine \
     && mv /workspace/leanproject/.lake/packages /opt/pristine/packages \
     && mv /workspace/leanproject/.lake /opt/pristine/dot-lake \
-    && find /opt/pristine/dot-lake/build \( -name 'Challenge.*' -o -name 'Solution.*' \) -delete \
-    && mkdir /workspace/leanproject/.lake /workspace/leanproject/run
+    && find /opt/pristine/dot-lake/build \( -name 'Challenge.*' -o -name 'Solution.*' \) -delete
+
+# The non-privileged runtime user (comparator README assumption 6). It owns
+# exactly the project dir, in which the reset script recreates .lake and the
+# checker recreates run/ per check. Everything else -- binaries, toolchains,
+# /opt/pristine -- stays root-owned and unwritable. The baked toolchains live
+# under /root/.elan (the PATH pin above, and the comparator binary's RPATH),
+# so /root becomes traverse-only (711: x permits path resolution; no listing,
+# no writes).
+RUN useradd --create-home --shell /bin/bash comparator \
+    && chown comparator /workspace/leanproject \
+    && chmod 711 /root
+
+# Lake validates the manifest by reading each package's git remote; git
+# refuses repos owned by another uid (safe.directory, CVE-2022-24765), and
+# lake treats the failed read as "URL has changed" -- attempting to delete and
+# re-clone the root-owned pristine packages. The baked repos are trusted, so
+# mark everything safe for the runtime user. (The untrusted build gains
+# nothing: it already controls its own child processes' GIT_CONFIG_* env.)
+RUN git config --system --add safe.directory '*'
+
+USER comparator
+ENV HOME=/home/comparator
 
 CMD ["sleep", "infinity"]
 

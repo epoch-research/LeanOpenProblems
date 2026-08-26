@@ -9,8 +9,9 @@ the disproof-shape verdicts that changed when the match became syntactic BEq
 over export-parsed terms instead of SafeVerify's kernel defeq.
 
 The submissions here run real compile-time ``#eval`` inside the comparator
-container's landrun sandbox, against the read-only rootfs -- so this is also the
-end-to-end exercise of the §3.1 hardening.
+container's landrun sandbox -- so this is also the end-to-end exercise of the
+§3.1 story: landrun confines untrusted writes to ``.lake``, and the per-check
+reset makes ``.lake`` pristine again.
 
 Docker is part of the test environment, so these always run; the first run
 builds the image, later runs hit the layer cache.
@@ -101,11 +102,11 @@ async def _check(
 # Cross-attempt filesystem poisoning (§3.1 item 1; §6).                        #
 # --------------------------------------------------------------------------- #
 # A compile-time #eval that, during `lake build Solution`, replaces the
-# writable `.lake/packages` symlink (into the read-only pristine tree) with a
-# poisoned real directory. landrun grants writes to `.lake`, so the swap
-# succeeds *within* the check; the next check's reset-workspace.sh must undo it
-# before that check's trusted Challenge builds against Mathlib. Needs no import:
-# IO.FS is in core (Init).
+# writable `.lake/packages` symlink (into the pristine tree outside the write
+# grant) with a poisoned real directory. landrun grants writes to `.lake`, so
+# the swap succeeds *within* the check; the next check's reset-dotlake.sh must
+# undo it before that check's trusted Challenge builds against Mathlib. Needs
+# no import: IO.FS is in core (Init).
 _POISON_PACKAGES = (
     '#eval (do\n'
     '  let pkgs := "/workspace/leanproject/.lake/packages"\n'
@@ -122,9 +123,9 @@ async def test_cross_attempt_filesystem_poisoning_is_scrubbed(
     """Check #1's submission swaps the Mathlib packages symlink for a poisoned
     directory during its build; check #2's honest proof must still be ACCEPTED,
     proving the per-check reset restored the pristine Mathlib before check #2's
-    Challenge built. (This asserts the quiescent filesystem-reset + RO-rootfs
-    story only; it is deliberately not evidence that a hostile *process* was
-    removed -- see the process-survival test below.)"""
+    Challenge built. (This asserts the quiescent filesystem-reset story only;
+    it is deliberately not evidence that a hostile *process* was removed --
+    see the process-survival note below.)"""
     async with _comparator_env() as env:
         # Check #1: a wrong proof (sorry) that also tries to poison packages.
         # It is rejected either way; what matters is the side effect.
@@ -150,7 +151,7 @@ async def test_cross_attempt_filesystem_poisoning_is_scrubbed(
 
 
 # Note on cross-attempt *process* isolation (plan §3.1 item 2): Inspect exposes
-# no per-service restart (issue #5034), so reset-workspace.sh -- a filesystem
+# no per-service restart (issue #5034), so reset-dotlake.sh -- a filesystem
 # reset -- cannot by itself terminate a process a prior check left running. That
 # remains the documented known limitation. We deliberately ship no test
 # asserting a specific process-survival outcome: empirically, in the Docker

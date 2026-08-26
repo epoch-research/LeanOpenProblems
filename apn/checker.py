@@ -25,7 +25,7 @@ CONFIG_PATH = f"{RUN_DIR}/config.json"
 COMPARATOR_BIN = "/opt/apn/comparator/bin/comparator"
 LEAN4EXPORT_BIN = "/opt/apn/lean4export/bin/lean4export"
 LANDRUN_BIN = "/usr/local/bin/landrun"
-RESET_SCRIPT = "/opt/apn/reset-workspace.sh"
+RESET_SCRIPT = "/opt/apn/reset-dotlake.sh"
 
 # The axioms a solution's proof closure may use (comparator rejects everything
 # else, `sorryAx` and `Lean.ofReduceBool` included). Mirrored in the prompt.
@@ -118,9 +118,10 @@ class SandboxComparator:
     """Runs Lean FRO's Comparator against the trusted ``comparator`` sandbox.
 
     Per check (comparator-migration-plan.md §3.2): reset the sandbox's
-    workspace to the image's pristine tree, stage the sample's spec as
-    ``run/Challenge.lean`` and the agent's ``Spec.lean`` as
-    ``run/Solution.lean``, and invoke the comparator binary under ``lake env``.
+    ``.lake`` to the image's pristine tree, recreate the ``run/`` staging
+    directory, stage the sample's spec as ``run/Challenge.lean`` and the
+    agent's ``Spec.lean`` as ``run/Solution.lean``, and invoke the comparator
+    binary under ``lake env``.
     Comparator builds+exports the challenge first (trusted), then builds the
     solution inside a landrun (Landlock) sandbox, exports it, compares the
     statement closures, checks the axiom closure, and kernel-replays the whole
@@ -159,13 +160,28 @@ class SandboxComparator:
             )
 
         # Trusted filesystem reset (a reference step: failure raises). It
-        # restores the pristine workspace; it does not terminate processes a
+        # restores a pristine .lake -- the only path the untrusted build can
+        # write under its landrun sandbox; it does not terminate processes a
         # prior check left behind (Inspect issue #5034).
         reset = await sb.exec([RESET_SCRIPT], timeout=self._timeout)
         if reset.returncode != 0:
             raise RuntimeError(
-                f"workspace reset failed (exit {reset.returncode}):\n"
+                f".lake reset failed (exit {reset.returncode}):\n"
                 f"{(reset.stdout + reset.stderr)[-2000:]}"
+            )
+
+        # Recreate the staging directory (also trusted: failure raises). run/
+        # is outside the landrun write grant, so anything in it is our own
+        # prior staging; a fresh directory keeps each check's inputs exactly
+        # the three files written below.
+        clear = await sb.exec(
+            ["sh", "-c", f"rm -rf {RUN_DIR} && mkdir {RUN_DIR}"],
+            timeout=self._timeout,
+        )
+        if clear.returncode != 0:
+            raise RuntimeError(
+                f"staging reset failed (exit {clear.returncode}):\n"
+                f"{(clear.stdout + clear.stderr)[-2000:]}"
             )
 
         # Stage the check's inputs. The challenge is the committed spec
