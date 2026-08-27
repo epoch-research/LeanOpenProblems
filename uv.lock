@@ -182,7 +182,7 @@ wheels = [
 
 [[package]]
 name = "apn"
-version = "0.1.7rc2"
+version = "0.1.7"
 source = { editable = "." }
 
 [package.dev-dependencies]
