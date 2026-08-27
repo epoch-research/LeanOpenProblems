@@ -29,13 +29,6 @@ RESET_SCRIPT = "/opt/apn/reset-dotlake.sh"
 # else, `sorryAx` and `Lean.ofReduceBool` included). Mirrored in the prompt.
 PERMITTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 
-# Comparator's own phase marker: `safeLakeBuild` prints "Building Solution"
-# before the first byte of agent code runs. Output containing it means the
-# trusted challenge build+export completed, so any later failure is
-# attributable to the submission; a failure *without* it is ours (the
-# challenge spec, the config, or the image) and raises instead of scoring.
-_SOLUTION_PHASE_MARKER = "Building Solution"
-
 # Cap on the extracted Spec.lean member. The submission tar itself is already
 # capped by the sandbox read (MAX_READ_FILE_SIZE, 100 MiB) and tar is
 # uncompressed, so only a sparse member can claim more than the tar's size --
@@ -125,14 +118,14 @@ class SandboxComparator:
     statement closures, checks the axiom closure, and kernel-replays the whole
     solution export. Exit 0 is the only accept.
 
-    Error attribution keeps SafeVerify's reference/submission split: failures
-    before comparator prints "Building Solution" happened while only *our*
-    inputs were in play (workspace reset, challenge build/export, config) and
-    raise -- erroring the sample; failures after it are a verdict on the
-    agent's submission and score INCORRECT. A timeout of the whole exec cannot
-    be phase-attributed (the provider raises without output) and is charged to
-    the submission: the challenge phase re-elaborates one committed spec
-    against prebuilt oleans, minutes at most against a much larger budget.
+    Reset and staging are separate trusted operations, so their failures raise
+    and error the sample. Once Comparator starts, its challenge build, solution
+    build, export, comparison, and replay are treated as one opaque phase:
+    captured output is bounded and submission-controlled, so it cannot provide
+    a trustworthy phase boundary. Exit 0 is the only accept; every nonzero exit
+    and timeout is a verdict on the submission and scores INCORRECT. Committed
+    challenge validity is established before evaluation, not inferred from a
+    Comparator transcript at scoring time.
     """
 
     def __init__(
@@ -207,14 +200,6 @@ class SandboxComparator:
         if result.returncode == 0:
             return CheckOutcome(ok=True, stage="comparator", detail=output)
 
-        submission_phase = _SOLUTION_PHASE_MARKER in output
-        if not submission_phase:
-            # The challenge build/export (or the reset workspace/config) failed
-            # before any agent code ran: our infrastructure, not a verdict.
-            raise RuntimeError(
-                f"comparator failed before the solution phase "
-                f"(exit {result.returncode}):\n{output[-4000:]}"
-            )
         if result.returncode >= 128:
             return CheckOutcome(
                 ok=False,

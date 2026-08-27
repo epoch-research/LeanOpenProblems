@@ -5,9 +5,9 @@ resets the workspace (a reference step), writes ``run/Challenge.lean`` (the
 sample spec verbatim), ``run/Solution.lean`` (the agent's Spec.lean, extracted
 host-side from the tar), and ``run/config.json``, then runs the comparator
 binary under ``lake env``. Exit 0 accepts. Attribution keys off comparator's
-own ``Building Solution`` phase marker: a nonzero exit whose output lacks the
-marker means the trusted challenge phase (or the reset/config) failed and is
-raised; one that has it is a verdict on the agent's submission.
+exit code rather than its bounded, submission-controlled output: once the
+comparator starts, every nonzero exit is a verdict on the submission. Failures
+in the separate trusted reset and staging operations still raise.
 
 A fake sandbox scripts the exec/write sequence to verify that mapping. The
 scorer tests use a stub checker and a fake workspace sandbox to verify the
@@ -199,10 +199,7 @@ def _fail(returncode: int, stdout: str = "", stderr: str = "") -> ExecResult[str
     return ExecResult(success=False, returncode=returncode, stdout=stdout, stderr=stderr)
 
 
-# comparator prints this once the trusted challenge phase is done and the
-# untrusted solution build begins.
-_MARKER = "Building Solution"
-_ACCEPT_OUT = f"Building Challenge\n{_MARKER}\nYour solution is okay!"
+_ACCEPT_OUT = "Building Challenge\nBuilding Solution\nYour solution is okay!"
 
 
 def _checker(
@@ -265,27 +262,30 @@ async def test_check_rejects_missing_entry_before_touching_sandbox(
     assert sb.commands == []
 
 
-async def test_check_rejects_when_solution_phase_failed(
+async def test_check_rejects_when_comparator_failed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A nonzero exit whose output shows the solution phase began (illegal axiom,
-    # statement mismatch, kernel rejection) is a verdict on the submission.
-    out = f"Building Challenge\n{_MARKER}\nuncaught exception: Illegal axiom detected: 'sorryAx'"
+    # Any nonzero comparator exit is a verdict on the submission.
+    out = (
+        "Building Challenge\nBuilding Solution\n"
+        "uncaught exception: Illegal axiom detected: 'sorryAx'"
+    )
     checker, _ = _checker(monkeypatch, comparator=_fail(1, out))
     outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
     assert not outcome.ok
     assert outcome.stage == "comparator"
 
 
-async def test_check_raises_when_challenge_phase_failed(
+async def test_check_rejects_without_relying_on_phase_marker(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # A nonzero exit BEFORE the solution phase marker means our trusted inputs
-    # (challenge build/export, config) failed -> raise, erroring the sample.
+    # Output is bounded and submission-controlled, so even a failure with no
+    # solution marker is classified solely by the comparator's nonzero exit.
     out = "Building Challenge\nerror: challenge spec failed to build"
     checker, _ = _checker(monkeypatch, comparator=_fail(1, out))
-    with pytest.raises(RuntimeError, match="before the solution phase"):
-        await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert not outcome.ok
+    assert outcome.stage == "comparator"
 
 
 async def test_check_raises_when_reset_fails(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -311,13 +311,12 @@ async def test_check_raises_when_staging_reset_fails(
     assert sb.written == {}
 
 
-async def test_check_maps_resource_death_after_solution_phase(
+async def test_check_maps_resource_death(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # An OOM (exit >= 128) once the solution phase began is agent-attributable
-    # and deterministic -> a resource-stage rejection, not a raise.
-    out = f"{_MARKER}\n"
-    checker, _ = _checker(monkeypatch, comparator=_fail(137, out))
+    # A signal-style exit is a resource-stage rejection even when the bounded
+    # output provides no indication of Comparator's internal phase.
+    checker, _ = _checker(monkeypatch, comparator=_fail(137))
     outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
     assert not outcome.ok
     assert outcome.stage == "comparator_resource"

@@ -216,9 +216,8 @@ async def test_helper_import_is_rejected(
 ) -> None:
     # The single-file guard. Even an *honest* helper is unusable: only Spec.lean
     # becomes run/Solution.lean, `Submission` is not a registered Lake library,
-    # so `import Submission.Helpers.Aux` does not resolve and the solution build
-    # fails -- a verdict in the solution phase (comparator has printed
-    # "Building Solution" by then).
+    # so `import Submission.Helpers.Aux` does not resolve and Comparator returns
+    # a rejecting verdict.
     spec = _spec("1 + 1 = 2")
     submission = {
         "Spec.lean": (
