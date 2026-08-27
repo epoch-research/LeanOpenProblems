@@ -13,9 +13,11 @@ from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxComparator
 from apn.dataset import (
+    ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
     OEIS_DIR,
+    erdos_autoformalized_dataset,
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
@@ -183,7 +185,9 @@ def get_sandbox_config(
         path = directory / "values.yaml"
         content = get_values_file_content(fc_commit, literature)
     else:
-        raise ValueError(f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'.")
+        raise ValueError(
+            f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'."
+        )
     if not path.exists() or path.read_text() != content:
         path.write_text(content)
     return (backend, str(path))
@@ -261,6 +265,32 @@ def apn_erdos(
     pin = fc_commit(ERDOS_DIR)
     return Task(
         dataset=erdos_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+    )
+
+
+@task
+def apn_erdos_autoformalized(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+    sandbox_backend: SandboxBackend = "docker",
+) -> Task:
+    """The Erdős problems our own autoformalization pipeline formalized."""
+    name_list = (
+        load_subset(ERDOS_AUTOFORMALIZED_DIR, subset) if subset is not None else None
+    )
+    pin = fc_commit(ERDOS_AUTOFORMALIZED_DIR)
+    return Task(
+        dataset=erdos_autoformalized_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,

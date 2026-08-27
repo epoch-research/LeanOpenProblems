@@ -60,6 +60,7 @@ jobs:
               --ignore=tests/test_gold_proofs.py
               --ignore=tests/test_oeis_isolation.py
               --ignore=tests/test_erdos_isolation.py
+              --ignore=tests/test_erdos_autoformalized_isolation.py
               --ignore=tests/test_fc100_isolation.py
               --ignore=tests/test_singlefile_proof.py
               --ignore=tests/test_lean_vuln_e2e.py
@@ -75,6 +76,7 @@ jobs:
             args: >-
               tests/test_oeis_isolation.py
               tests/test_erdos_isolation.py
+              tests/test_erdos_autoformalized_isolation.py
               tests/test_fc100_isolation.py
           - suite: gold-proofs
             args: tests/test_gold_proofs.py

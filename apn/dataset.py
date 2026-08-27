@@ -11,13 +11,16 @@ from inspect_ai.dataset import MemoryDataset, Sample
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
+ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
     """The dataset's pinned formal-conjectures commit (``fc_commit``).
 
     The pin is what the dataset's sandbox images bake (compose build arg,
-    image tag component) and what its vendored ``Sources/`` were extracted at.
+    image tag component). For FC-vendored datasets it is also the commit their
+    ``Sources/`` were extracted at; non-FC sources use it only as the proving
+    environment pin.
     """
     commit = (Path(dataset_dir) / "fc_commit").read_text().strip()
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
@@ -49,6 +52,9 @@ _FC_PROFILES = {
     ),
     # Post-rename layout: FormalConjecturesUtil.lean + FormalConjecturesUtil/*.
     "488aade228ec37880b8fec178c173c07d279bb53": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+    "9cbe1d3c12998c786b7c2cd99ce28a21b6631f66": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
 }
@@ -188,7 +194,9 @@ def write_subset(path: str | Path, description: str, ids: list[str]) -> Path:
     path = Path(path)
     path.parent.mkdir(exist_ok=True)
     path.write_text(
-        json.dumps({"description": description, "ids": ids}, indent=2, ensure_ascii=False)
+        json.dumps(
+            {"description": description, "ids": ids}, indent=2, ensure_ascii=False
+        )
         + "\n"
     )
     return path
@@ -305,3 +313,12 @@ def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
     ``<target>.disproof`` declaration.
     """
     return build_dataset(ERDOS_DIR, "erdos", (), names)
+
+
+def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The Erdős problems our own autoformalization pipeline formalized
+    (18 problems absent from formal-conjectures at the run's pin; two two-part
+    files, so 20 samples). Each sketch ends with the derived
+    ``<target>.disproof`` declaration. See
+    ``apn/data/erdos_autoformalized/NOTICE.md``."""
+    return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)

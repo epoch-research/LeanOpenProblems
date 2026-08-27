@@ -7,7 +7,13 @@ from inspect_ai._util import registry as util_registry
 
 @pytest.mark.parametrize(
     "task_name",
-    ["apn/apn_oeis", "apn/apn_fc100open", "apn/apn_erdos", "apn/apn_redteam_collatz"],
+    [
+        "apn/apn_oeis",
+        "apn/apn_fc100open",
+        "apn/apn_erdos",
+        "apn/apn_erdos_autoformalized",
+        "apn/apn_redteam_collatz",
+    ],
 )
 def test_hawk_task_registry_name(task_name: str) -> None:
     ensure_entry_points: Any = getattr(util_registry, "ensure_entry_points")
