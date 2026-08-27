@@ -65,8 +65,8 @@ def get_identifier_for_image(image_kind: str, fc_commit: str) -> str:
     return f"LeanOpenProblems_{image_kind}_{image_version}_fc_{fc_commit[:12]}"
 
 
-def _agent_image_kind(literature: bool) -> str:
-    return "agent_corpus" if literature else "agent"
+def _agent_image_kind(literature: bool, override: str | None = None) -> str:
+    return override if override is not None else ("agent_corpus" if literature else "agent")
 
 
 def _build_section(target: str, fc_commit: str) -> dict[str, Any]:
@@ -77,7 +77,11 @@ def _build_section(target: str, fc_commit: str) -> dict[str, Any]:
     }
 
 
-def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
+def get_compose_file_content(
+    fc_commit: str,
+    literature: bool = False,
+    agent_image_kind: str | None = None,
+) -> str:
     """The docker-backend sandbox config (local runs, CI tests).
 
     Two services: the agent's workspace, and the trusted `comparator` verifier.
@@ -87,7 +91,7 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     image runs as a non-privileged user, and the checker's per-check
     reset-dotlake.sh restores a pristine `.lake`.
     """
-    agent_kind = _agent_image_kind(literature)
+    agent_kind = _agent_image_kind(literature, agent_image_kind)
     compose: dict[str, Any] = {
         "services": {
             "default": {
@@ -111,7 +115,11 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     return yaml.safe_dump(compose, sort_keys=False)
 
 
-def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
+def get_values_file_content(
+    fc_commit: str,
+    literature: bool = False,
+    agent_image_kind: str | None = None,
+) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
     Written directly in the Helm chart's vocabulary. k8s_sandbox could
@@ -130,7 +138,7 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
       interpolate environment variables).
     """
     repository = os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
-    agent_kind = _agent_image_kind(literature)
+    agent_kind = _agent_image_kind(literature, agent_image_kind)
 
     # Just a memory limit: k8s defaults the request to the limit (so
     # scheduling still reserves it), and CPU is compressible, so no CPU knobs.
@@ -159,7 +167,10 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
 
 
 def get_sandbox_config(
-    fc_commit: str, literature: bool, backend: SandboxBackend
+    fc_commit: str,
+    literature: bool,
+    backend: SandboxBackend,
+    agent_image_kind: str | None = None,
 ) -> tuple[str, str]:
     """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend.
 
@@ -168,7 +179,11 @@ def get_sandbox_config(
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
     per-(version, FC pin, variant) subdirs so they don't clobber each other.
     """
-    variant = "corpus" if literature else "closed-book"
+    variant = (
+        _docker_tag_component(agent_image_kind)
+        if agent_image_kind is not None
+        else ("corpus" if literature else "closed-book")
+    )
     directory = (
         SANDBOX_FILES_DIR
         / _docker_tag_component(__version__)
@@ -178,10 +193,10 @@ def get_sandbox_config(
     directory.mkdir(parents=True, exist_ok=True)
     if backend == "docker":
         path = directory / "compose.yaml"
-        content = get_compose_file_content(fc_commit, literature)
+        content = get_compose_file_content(fc_commit, literature, agent_image_kind)
     elif backend == "k8s":
         path = directory / "values.yaml"
-        content = get_values_file_content(fc_commit, literature)
+        content = get_values_file_content(fc_commit, literature, agent_image_kind)
     else:
         raise ValueError(f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'.")
     if not path.exists() or path.read_text() != content:
