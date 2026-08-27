@@ -12,6 +12,9 @@
 #   - agent      -- the agent's workspace: base + PyPantograph + numerical
 #                   Python libs. Deliberately contains NO verifier tooling (no
 #                   comparator, no lean4export, no landrun).
+#   - redteam    -- agent + shallow source checkouts for Comparator, both Lean
+#                   toolchains, lean4export, and landrun at the exact revisions
+#                   used by the verifier. Network remains disabled at runtime.
 #   - comparator -- the trusted verifier: base + the Comparator binary + the
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
@@ -326,6 +329,51 @@ COPY --from=corpus_build /corpus /corpus
 FROM agent AS agent_corpus
 
 COPY --from=corpus /corpus /corpus
+
+CMD ["sleep", "infinity"]
+
+# --------------------------------------------------------------------------- #
+# redteam: the offline adversary workspace plus exact verifier source trees.   #
+# Runtime networking stays disabled by apn/task.py. Sources are fetched only   #
+# while this image is built, then exposed under /workspace/redteam-sources.    #
+#                                                                              #
+# Every checkout is a depth-1 fetch by immutable object ID. A normal clone     #
+# would include later history, which could reveal post-pin Lean soundness fixes #
+# and defeat the point of keeping the red-team agent offline.                  #
+# --------------------------------------------------------------------------- #
+FROM agent AS redteam
+
+# These match the scored comparator image below. The project uses Lean v4.27.0
+# to build Challenge/Solution and lean4export; Comparator links the kernel from
+# its own v4.34.0-rc2 toolchain.
+ARG COMPARATOR_COMMIT=19e111e2141cf333c7daff0f64c5f24acc91dd2e
+ARG LEAN4_PROJECT_COMMIT=db93fe1608548721853390a10cd40580fe7d22ae
+ARG LEAN4_COMPARATOR_COMMIT=6a10ac8c22beadecabdbb0919c2b50214762f91d
+ARG LEAN4EXPORT_COMMIT=cacf989bd75f608700820f6afc595f32e7a99a4d
+ARG LANDRUN_COMMIT=811cfff51ceaf3d9843708aa6d22e9b84ccac8b4
+
+RUN set -eux; \
+    fetch_source() { \
+        destination="$1"; \
+        repository="$2"; \
+        revision="$3"; \
+        git init --quiet "${destination}"; \
+        git -C "${destination}" remote add origin "${repository}"; \
+        git -C "${destination}" fetch --quiet --depth 1 --filter=blob:none origin "${revision}"; \
+        git -C "${destination}" checkout --quiet --detach FETCH_HEAD; \
+        test "$(git -C "${destination}" rev-parse HEAD)" = "${revision}"; \
+    }; \
+    mkdir -p /workspace/redteam-sources; \
+    fetch_source /workspace/redteam-sources/comparator \
+        https://github.com/leanprover/comparator.git "${COMPARATOR_COMMIT}"; \
+    fetch_source /workspace/redteam-sources/lean4-project \
+        https://github.com/leanprover/lean4.git "${LEAN4_PROJECT_COMMIT}"; \
+    fetch_source /workspace/redteam-sources/lean4-comparator \
+        https://github.com/leanprover/lean4.git "${LEAN4_COMPARATOR_COMMIT}"; \
+    fetch_source /workspace/redteam-sources/lean4export \
+        https://github.com/leanprover/lean4export.git "${LEAN4EXPORT_COMMIT}"; \
+    fetch_source /workspace/redteam-sources/landrun \
+        https://github.com/Zouuup/landrun.git "${LANDRUN_COMMIT}"
 
 CMD ["sleep", "infinity"]
 
