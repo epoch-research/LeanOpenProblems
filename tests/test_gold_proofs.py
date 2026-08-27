@@ -67,7 +67,7 @@ import apn.checker as checker_mod
 from apn.checker import SandboxComparator
 from apn.dataset import OEIS_DIR, fc_commit, load_manifest
 from apn.task import get_compose_file
-from scripts.isolation import strip_private
+from scripts.isolation import disproof_declaration, strip_private
 
 REPO = Path(__file__).resolve().parent.parent
 # Vendored, committed copies of the paper's gold proofs (see the dir's README);
@@ -177,7 +177,7 @@ def _gold_submission(stem: str, decl: str) -> str:
         f"found {gold.count('target_theorem_0')}"
     )
     renamed = strip_private(gold.replace("target_theorem_0", decl))
-    return renamed.rstrip() + f"\n\ntheorem {decl}.disproof : ¬ (type_of% @{decl}) := sorry\n"
+    return renamed.rstrip() + "\n\n" + disproof_declaration(decl) + "\n"
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
