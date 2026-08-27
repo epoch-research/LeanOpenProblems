@@ -358,8 +358,8 @@ def strip_private(text: str) -> str:
     submissions are falsely rejected (comparator-migration-plan.md §3.3,
     comparator#58; census in ``scripts/comparator_drift.py``). Privacy has no
     semantic effect beyond name visibility/mangling, so isolated specs drop the
-    modifier. Currently applied by the OEIS generator only (the erdos/fc100open
-    private cases remain documented fail-closed limitations). Comment/string-
+    modifier. Applied by the OEIS and erdos generators (the fc100open private
+    case remains a documented fail-closed limitation). Comment/string-
     aware; fails loudly if any ``private`` survives in code (a shape this
     helper does not account for, e.g. ``open private``).
     """

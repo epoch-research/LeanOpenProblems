@@ -104,15 +104,14 @@ def drift_candidates() -> dict[str, list[str]]:
 
 
 # Pinned candidate set (static over-approximation; guarded by
-# tests/test_comparator_drift.py): 2 erdos/fc100open specs with a spec-local
-# `private` declaration (the OEIS ones are stripped at generation; the Bloom
-# statement selection dropped the old erdos corpus's other `private` carriers),
-# 11 with an anonymous `instance` (7 of those also `deriving`), and 1
-# `deriving`-only.
+# tests/test_comparator_drift.py): 1 fc100open spec with a spec-local
+# `private` declaration (the OEIS and erdos ones are stripped at generation;
+# the Bloom statement selection dropped the old erdos corpus's other `private`
+# carriers), 11 with an anonymous `instance` (7 of those also `deriving`), and
+# 1 `deriving`-only.
 CANDIDATE_IDS: frozenset[str] = frozenset({
     "A379240_conjecture_equality",
     "EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic",
-    "Erdos101.erdos_101",
     "Erdos340.erdos_340.variants.co_density_zero_sub",
     "MonochromaticQuantumGraph.eqSystem10_no_solution_d3",
     "MonochromaticQuantumGraph.eqSystem10_no_solution_d3_trinary_int",
@@ -135,9 +134,10 @@ CANDIDATE_IDS: frozenset[str] = frozenset({
 # are unwinnable as shipped (fail-closed: invalid proofs are still never
 # accepted):
 #
-# * 2 erdos/fc100open specs with `private` defs in the target closure
-#   (deliberately left unstripped; the OEIS-only strip is the adopted scope --
-#   confirmed as 5 in the 2026-08-25 scan, of which 3 left the erdos corpus
+# * 1 fc100open spec with a `private` def in the target closure (deliberately
+#   left unstripped; the OEIS and erdos generators strip at generation --
+#   Erdos101.erdos_101 left this set when the erdos strip was adopted.
+#   Confirmed as 5 in the 2026-08-25 scan, of which 3 left the erdos corpus
 #   with the Bloom statement selection);
 # * oeis_341685_conjecture_0, an anonymous instance whose generated name
 #   collides (`Fact (Nat.Prime 3)` -> `instFactPrimeOfNatNat_challenge`)
@@ -160,7 +160,6 @@ CANDIDATE_IDS: frozenset[str] = frozenset({
 # scan (a `private` instance the statement never references), has since left
 # the erdos corpus.
 CONFIRMED_REJECT_IDS: frozenset[str] = frozenset({
-    "Erdos101.erdos_101",
     "Erdos340.erdos_340.variants.co_density_zero_sub",
     "oeis_341685_conjecture_0",
 })

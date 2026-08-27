@@ -78,6 +78,7 @@ from scripts.isolation import (
     kept_flags,
     matches_name,
     run_extractor,
+    strip_private,
     tidy,
 )
 
@@ -209,6 +210,10 @@ def main() -> None:
             flags = fc_kept_flags(src, filerec, kept_flags(filerec, closure))
             problems.extend(check_sorries(decl["name"], rel, src, filerec, flags))
             text = tidy(isolate(src, filerec, flags)).decode("utf-8")
+            # Drop `private` modifiers: their module-mangled names falsely
+            # reject faithful submissions under Comparator (plan §3.3,
+            # comparator#58).
+            text = strip_private(text)
             # Census `answer(` in *code* only -- kept docs may mention it in prose.
             n_answers = strip_comments(text).count("answer(")
             if n_answers > 1:
