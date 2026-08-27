@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Literal, Protocol, runtime_checkable
 
-from inspect_ai.util import sandbox
+from inspect_ai.util import OutputLimitExceededError, sandbox
 
 from apn.layout import ENTRY_REL, PROJECT
 
@@ -195,6 +195,14 @@ class SandboxComparator:
             # Non-UTF-8 bytes in the output stream come from the submission's
             # build (comparator's own output is clean text).
             return CheckOutcome(ok=False, stage="comparator", detail=str(exc))
+        except OutputLimitExceededError as exc:
+            # Output volume is submission-controlled too (the trusted phases
+            # print a handful of progress lines), so a stream past Inspect's
+            # exec cap is a verdict, not an infra raise -- an elaboration-time
+            # print loop must not error the sample and dodge the INCORRECT.
+            return CheckOutcome(
+                ok=False, stage="comparator_output_limit", detail=str(exc)
+            )
 
         output = (result.stdout + "\n" + result.stderr).strip()
         if result.returncode == 0:

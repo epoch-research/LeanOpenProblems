@@ -337,6 +337,17 @@ async def test_check_maps_decode_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert outcome.stage == "comparator"
 
 
+async def test_check_maps_output_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A stream past Inspect's exec output cap is submission-controlled (the
+    # trusted phases print a handful of lines), so it scores INCORRECT rather
+    # than raising -- printing 10 MiB must not error the sample.
+    exc = OutputLimitExceededError(limit_str="10 MiB", truncated_output=None)
+    checker, _ = _checker(monkeypatch, comparator=exc)
+    outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert not outcome.ok
+    assert outcome.stage == "comparator_output_limit"
+
+
 # --------------------------------------------------------------------------- #
 # Scorer wiring                                                                #
 # --------------------------------------------------------------------------- #
