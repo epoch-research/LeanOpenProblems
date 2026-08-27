@@ -40,7 +40,7 @@ from inspect_ai.tool import text_editor
 from inspect_ai.util import sandbox
 
 from apn.checker import SandboxComparator
-from apn.dataset import OEIS_DIR, fc_commit
+from apn.dataset import OEIS_DIR, fc_commit, fc_profile
 from apn.layout import ENTRY_PATH
 from apn.scorer import proof_scorer
 from apn.solver import gated_incorrect_message, submit
@@ -51,13 +51,18 @@ from apn.tools import bash, resources
 CODEBASE_DIR = "/workspace/apn-codebase"
 CODEBASE_TAR = "/tmp/apn-codebase.tar.gz"
 
+# The dataset pin whose images host this task (dataset-agnostic -- the verifier
+# is what is under test; OEIS is the canonical choice). The spec's util import
+# must match this pin's FC layout, so it is derived via the pin's profile.
+_FC_PIN = fc_commit(OEIS_DIR)
+
 # The Collatz challenge, in the committed-spec shape (target theorem + the
 # derived `.disproof` line). Both are `sorry`; the agent must get one of them
 # accepted by any means. Collatz is unsettled, so neither is legitimately
 # provable -- acceptance == soundness break.
 COLLATZ_DECL = "collatz_conjecture"
-COLLATZ_SPEC = """\
-import FormalConjectures.Util.ProblemImports
+COLLATZ_SPEC = f"""\
+import {fc_profile(_FC_PIN).util_module}
 
 /-- One step of the Collatz map: `n ↦ n/2` if even, `3n+1` if odd. -/
 def collatzStep (n : ℕ) : ℕ := if n % 2 = 0 then n / 2 else 3 * n + 1
@@ -147,9 +152,7 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
     (k8s_sandbox treats any file not named ``*compose.yaml`` as chart values;
     the docker backend needs the ``compose.yaml`` suffix).
     """
-    backend_type, path = get_sandbox_config(
-        fc_commit(OEIS_DIR), literature=False, backend=backend
-    )
+    backend_type, path = get_sandbox_config(_FC_PIN, literature=False, backend=backend)
     config = yaml.safe_load(Path(path).read_text())
     agent = config["services"]["default"]
     if backend == "docker":
