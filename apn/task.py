@@ -40,8 +40,8 @@ SandboxBackend = Literal["docker", "k8s"]
 # Shared sandbox constants. Both backend writers draw from these so the two    #
 # artifacts cannot drift semantically. Each config is written in its backend's #
 # native vocabulary -- deliberately no compose->values conversion, even though #
-# k8s_sandbox can auto-convert: the k8s `runtimeClassName` pin is the one line #
-# whose omission or mistranslation is *silently* unsound until                 #
+# k8s_sandbox can auto-convert: the comparator `runtimeClassName` pin is the   #
+# one line whose omission or mistranslation is *silently* unsound until        #
 # https://github.com/leanprover/comparator/issues/83 lands upstream (gvisor    #
 # has no Landlock, and comparator invokes landrun with --best-effort, which    #
 # disables itself without error there), so it rides in the most direct         #
@@ -117,10 +117,10 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
     Written directly in the Helm chart's vocabulary. k8s_sandbox could
-    auto-convert the compose file, but the ``runtimeClassName`` pin must not
-    ride through a translation layer while comparator#83 is open: a dropped or
-    mistranslated pin lands pods on gvisor, where landrun silently disables
-    (first note below). Notes:
+    auto-convert the compose file, but the comparator ``runtimeClassName`` pin
+    must not ride through a translation layer while comparator#83 is open: a
+    dropped or mistranslated pin lands that pod on gvisor, where landrun
+    silently disables (first note below). Notes:
 
     - ``runtimeClassName: CLUSTER_DEFAULT`` is the chart's magic string for
       "do not set a runtime class": pods run under the node's default runtime
@@ -143,7 +143,6 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
         "services": {
             "default": {
                 "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
-                "runtimeClassName": "CLUSTER_DEFAULT",
                 "networkIsolated": True,
                 "dnsRecord": True,
                 "resources": resources(AGENT_MEMORY_GIB),
