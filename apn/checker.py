@@ -26,7 +26,8 @@ COMPARATOR_BIN = "/opt/apn/comparator/bin/comparator"
 RESET_SCRIPT = "/opt/apn/reset-dotlake.sh"
 
 # The axioms a solution's proof closure may use (comparator rejects everything
-# else, `sorryAx` and `Lean.ofReduceBool` included). Mirrored in the prompt.
+# else, `sorryAx` and `Lean.ofReduceBool` included). The agent prompt renders
+# its axiom list from this tuple (apn.prompts), so the two cannot drift.
 PERMITTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 
 # Cap on the extracted Spec.lean member. The submission tar itself is already

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from apn.checker import PERMITTED_AXIOMS
+
 
 def literature_prompt() -> str:
     N_PAPERS = 475_000
@@ -31,8 +33,6 @@ def user_prompt(path: str, token_limit: int | None, literature: bool, util_modul
 
     PYTHON_LIBS = ["sympy", "mpmath", "numpy", "pantograph"]
 
-    AXIOMS = ["propext", "Classical.choice", "Quot.sound"]
-
     PROOF_PATH = "/workspace/leanproject/Submission/Spec.lean"
 
     parts.append(f"""\
@@ -47,7 +47,7 @@ Work inside the Lake project at `/workspace/leanproject`. Your final proof must 
 
 In your final submission file `{PROOF_PATH}`, do not add or remove `import` statements. The `{util_module}` import transitively pulls in all of Mathlib, and other utilities.
 
-Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.
+Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in PERMITTED_AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib
