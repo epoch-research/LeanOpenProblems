@@ -38,3 +38,5 @@ def a089026 (n : ℕ) : ℕ :=
 theorem a007406_conjecture_0 (n : ℕ) (hn : n > 3) :
     Nat.gcd n (a (n - 1)) = a089026 n :=
   by sorry
+
+theorem a007406_conjecture_0.disproof : ¬ (type_of% @a007406_conjecture_0) := sorry

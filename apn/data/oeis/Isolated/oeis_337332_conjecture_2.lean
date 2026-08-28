@@ -48,3 +48,5 @@ This means:
 theorem oeis_337332_conjecture_2 (n : ℕ) (hn : n > 0) :
     ∃ q : ℤ, (n : ℤ) * q = conjecture_sum n ∧ q > 0 := by
   sorry
+
+theorem oeis_337332_conjecture_2.disproof : ¬ (type_of% @oeis_337332_conjecture_2) := sorry

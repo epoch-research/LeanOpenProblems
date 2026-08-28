@@ -38,3 +38,5 @@ A108866 Conjecture: for n > 3, numerator(-2/n + Sum_{k=1..n} 2^k/k) == 0 (mod n^
 theorem oeis_a108866_conjecture {n : ℕ} (hn : n > 3) :
     (rat_expression n).num ≡ 0 [ZMOD (n^2 : ℤ)] ↔ Nat.Prime n := by
   sorry
+
+theorem oeis_a108866_conjecture.disproof : ¬ (type_of% @oeis_a108866_conjecture) := sorry

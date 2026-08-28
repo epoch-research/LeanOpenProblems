@@ -42,3 +42,5 @@ OEIS A309132 Conjecture: composite numbers n such that a(n) is squarefree are on
 theorem A309132_conjecture_carmichael : ∀ (n : ℕ),
   (is_composite n ∧ Squarefree (a n)) ↔ is_carmichael_number n :=
 by sorry
+
+theorem A309132_conjecture_carmichael.disproof : ¬ (type_of% @A309132_conjecture_carmichael) := sorry

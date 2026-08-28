@@ -19,7 +19,7 @@ import FormalConjectures.Util.ProblemImports
 open Nat Set
 
 /-- The sum of the decimal digits of a natural number $m$. -/
-private def sum_digits_10 (m : ℕ) : ℕ := (Nat.digits 10 m).sum
+def sum_digits_10 (m : ℕ) : ℕ := (Nat.digits 10 m).sum
 
 /--
 A277223: $a(n)$ is the largest multiplier $k$ such that $m = k \cdot n$ is $n$ times the sum of its decimal digits.
@@ -39,3 +39,5 @@ A277223 a(n) is never 1, 2, 3, 4, 5 or 6. Conjecture: if a(n) < 12 then a(n) = 0
 -/
 theorem A277223_conjecture (n : ℕ) :
   n > 0 → (A277223 n < 12 → A277223 n = 0 ∨ A277223 n = 9) := by sorry
+
+theorem A277223_conjecture.disproof : ¬ (type_of% @A277223_conjecture) := sorry

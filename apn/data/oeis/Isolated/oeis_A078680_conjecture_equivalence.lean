@@ -44,3 +44,5 @@ theorem oeis_A078680_conjecture_equivalence :
   ↔
   (∀ k : ℕ, 4 < k → ¬ Nat.Prime (fermatNumber k)) := by
   sorry
+
+theorem oeis_A078680_conjecture_equivalence.disproof : ¬ (type_of% @oeis_A078680_conjecture_equivalence) := sorry

@@ -29,3 +29,5 @@ oeis_265710_conjecture_0: Are there numbers n > 1 such that Sum_{d|n} 1/sigma(d)
 This statement is equivalent to $\exists n > 1, a(n) = 1$.
 -/
 theorem oeis_265710_conjecture_0 : ∃ n : ℕ, 1 < n ∧ a n = 1 := by sorry
+
+theorem oeis_265710_conjecture_0.disproof : ¬ (type_of% @oeis_265710_conjecture_0) := sorry

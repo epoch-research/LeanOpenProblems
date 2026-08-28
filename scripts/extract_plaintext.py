@@ -10,9 +10,9 @@ this repo runs. Two things differ from a vanilla extractor:
   materialize it back to disk under ``Submission/`` (the entry module is
   ``Submission/Spec.lean``).
 
-* **The transcript lives in events, not ``sample.messages``.** ``apn.agent``
-  runs the proving agent via ``inspect_ai.agent.run`` in its own ``AgentState``,
-  so the top-level ``TaskState.messages`` only ever holds the initial prompt.
+* **The transcript lives in events, not ``sample.messages``.** ``apn.solver``
+  runs an Inspect agent loop in its own ``AgentState``, so the top-level
+  ``TaskState.messages`` only ever holds the initial prompt.
   The real conversation is reconstructed from the sample's ``model`` events
   (each carries its turn's input messages plus the assistant output), deduped by
   message id in event order.
@@ -93,9 +93,10 @@ def format_tool_call(tc: ToolCall) -> str:
     The proving agent's tools are Inspect's built-in ``text_editor`` and this
     repo's ``bash`` (whose argument is ``command``; see ``apn.tools``), plus the
     ``deepagent`` extras -- ``todo_write``, the ``agent`` subagent-spawn call,
-    and the file helpers (``read_file``/``list_files``/``grep``). ``submit_proof``
-    takes no arguments (the edited file is the submission; see ``apn.agent``).
-    Anything unrecognised falls back to a compact JSON dump.
+    and the file helpers (``read_file``/``list_files``/``grep``). The
+    ``submit_proof`` call declares whether the edited file proves or disproves
+    the conjecture (see :func:`apn.solver.submit`). Anything unrecognised falls
+    back to a compact JSON dump.
     """
     fn = tc.function
     args = tc.arguments
@@ -127,7 +128,13 @@ def format_tool_call(tc: ToolCall) -> str:
         return "\n".join(parts)
 
     if fn == "submit_proof":
-        return ">>> submit_proof()"
+        claim = args.get("claim")
+        if set(args) != {"claim"} or claim not in ("proof", "disproof"):
+            raise ValueError(
+                "submit_proof must have exactly one claim argument equal to "
+                f"'proof' or 'disproof', got {args!r}"
+            )
+        return f">>> submit_proof(claim={json.dumps(claim)})"
 
     if fn == "agent":
         # deepagent spawning a subagent: surface who and the task, dump the rest.
@@ -143,6 +150,17 @@ def format_tool_call(tc: ToolCall) -> str:
         return f">>> todo_write\n{json.dumps(args.get('todos', args), ensure_ascii=False, indent=2)}"
 
     return f">>> {fn}({json.dumps(args, ensure_ascii=False)})"
+
+
+def _validate_submit_proof_calls(messages: list[ChatMessage]) -> None:
+    """Reject pre-claim APN transcripts in every extraction mode."""
+    for message in messages:
+        if not isinstance(message, ChatMessageAssistant):
+            continue
+        for tool_call in message.tool_calls or []:
+            if tool_call.function == "submit_proof":
+                # The specialized formatter owns the exact current call schema.
+                format_tool_call(tool_call)
 
 
 def get_primary_model(messages: list[ChatMessage]) -> str | None:
@@ -455,6 +473,7 @@ def _extract_sample(
     write("info.json", lambda f: _write_info(sample, f))
 
     messages = main_loop_messages(sample) if (write_messages or write_compactions) else []
+    _validate_submit_proof_calls(messages)
 
     if write_compactions:
         write("compactions.txt", lambda f: _write_compactions(messages, f))

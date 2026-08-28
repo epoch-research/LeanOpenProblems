@@ -51,3 +51,5 @@ theorem oeis_2454_conjecture_0 (n : ℕ) :
         (1 + ζ ^ pow) / (1 - ζ ^ pow)
     M.permanent = (a n : ℂ) / (K : ℂ)
   ) := by sorry
+
+theorem oeis_2454_conjecture_0.disproof : ¬ (type_of% @oeis_2454_conjecture_0) := sorry

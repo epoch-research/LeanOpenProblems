@@ -37,3 +37,5 @@ This is the most direct mathematical interpretation of the data provided for $a(
 -/
 theorem oeis_145355_conjecture_0 : ∃ C : ℕ, ∀ n : ℕ, 2 ≤ n → a n ≤ C := by
   sorry
+
+theorem oeis_145355_conjecture_0.disproof : ¬ (type_of% @oeis_145355_conjecture_0) := sorry

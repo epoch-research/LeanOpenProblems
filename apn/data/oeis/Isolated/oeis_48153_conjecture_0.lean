@@ -32,3 +32,5 @@ The division `/ 2` is natural number (integer) division.
 -/
 theorem oeis_48153_conjecture_0 (n : ℕ) (h : 1 ≤ n) : A048153 n ≤ (n ^ 2 - 1) / 2 :=
 by sorry
+
+theorem oeis_48153_conjecture_0.disproof : ¬ (type_of% @oeis_48153_conjecture_0) := sorry

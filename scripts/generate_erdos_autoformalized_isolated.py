@@ -10,7 +10,7 @@ attribute in ``Sources/`` (the 18 files of our own autoformalization run; see
 member's spec keeps its file's definitions + the single target theorem and
 cuts every other standalone ``theorem``/``lemma``, then drops the target's
 ``@[category ...]`` classification list (catalogue metadata, not part of the
-statement).
+statement) and appends the mechanically derived ``<target>.disproof``.
 
 Unlike ``scripts/generate_erdos_isolated.py`` there is no un-recording surgery
 and no exclusion machinery: the sources were vendored already in shipping form
@@ -66,6 +66,7 @@ from scripts.fc_statements import (
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     BAKED_EXE,
+    append_disproof,
     dependency_closure,
     host_to_container,
     isolate,
@@ -84,18 +85,25 @@ def proof_is_bare_sorry(src: bytes, filerec: dict, decl_name: str) -> bool:
     placeholder in this dataset to mask out first)."""
     for cmd in filerec["commands"]:
         if any(d["name"] == decl_name for d in cmd["decls"]):
-            code = strip_comments(src[cmd["declStart"] : cmd["declEnd"]].decode("utf-8"))
+            code = strip_comments(
+                src[cmd["declStart"] : cmd["declEnd"]].decode("utf-8")
+            )
             return bool(re.search(r"\bsorry\b", code))
     raise SystemExit(f"{decl_name}: command not found in its file record")
 
 
-def extract_sources(container: str, exe: str, util_module: str, jobs: int) -> dict[str, dict]:
+def extract_sources(
+    container: str, exe: str, util_module: str, jobs: int
+) -> dict[str, dict]:
     """Extractor records for every vendored source file, keyed by *relative*
     path under ``Sources/`` (flat here, so relpath == basename). Extraction
     elaborates each file, so the sweep runs ``jobs`` extractor processes over
     chunks of the list."""
     rels = sorted(str(p.relative_to(SOURCES_DIR)) for p in SOURCES_DIR.rglob("*.lean"))
-    print(f"Extracting decl ranges from {len(rels)} source files ({jobs} jobs)...", flush=True)
+    print(
+        f"Extracting decl ranges from {len(rels)} source files ({jobs} jobs)...",
+        flush=True,
+    )
     chunks = [rels[i::jobs] for i in range(jobs)]
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = pool.map(
@@ -110,7 +118,9 @@ def extract_sources(container: str, exe: str, util_module: str, jobs: int) -> di
         for fr in ranges:
             assert fr["file"].startswith(prefix), fr["file"]
             if fr["errors"]:
-                raise SystemExit(f"{fr['file']}: source failed to elaborate:\n{fr['errors']}")
+                raise SystemExit(
+                    f"{fr['file']}: source failed to elaborate:\n{fr['errors']}"
+                )
             by_rel[fr["file"][len(prefix) :]] = fr
     assert sorted(by_rel) == rels
     return by_rel
@@ -140,8 +150,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("--container", default=DEFAULT_CONTAINER, help="Lean container name")
-    ap.add_argument("--exe", default=BAKED_EXE, help="extractor path in container (default: baked)")
+    ap.add_argument(
+        "--container", default=DEFAULT_CONTAINER, help="Lean container name"
+    )
+    ap.add_argument(
+        "--exe", default=BAKED_EXE, help="extractor path in container (default: baked)"
+    )
     ap.add_argument("--jobs", type=int, default=6, help="parallel extractor processes")
     args = ap.parse_args()
 
@@ -182,7 +196,9 @@ def main() -> None:
             # The shipping-form invariants (see module docstring): a hit means
             # the vendored sources changed shape and needs a curation decision.
             if "sorryAx" in decl["type"]:
-                raise SystemExit(f"{decl['name']}: value-typed statement (sorryAx in type)")
+                raise SystemExit(
+                    f"{decl['name']}: value-typed statement (sorryAx in type)"
+                )
             if not proof_is_bare_sorry(src, filerec, decl["name"]):
                 raise SystemExit(f"{decl['name']}: proof is not a bare sorry")
 
@@ -195,9 +211,14 @@ def main() -> None:
                 continue
             text, n = strip_category_attrs(text)
             if n != 1:
-                problems.append(f"{decl['name']}: {n} @[category ...] lists stripped, not 1")
+                problems.append(
+                    f"{decl['name']}: {n} @[category ...] lists stripped, not 1"
+                )
                 continue
             n_category_stripped += n
+            # Comparator scores either the target or this mechanically derived
+            # negation, selected by the agent's declared claim.
+            text, _ = append_disproof(text, decl["name"], decl["name"])
             filename = f"{decl['name']}.lean"
             if filename.casefold() in filenames_casefolded:
                 # The repo is developed on a case-insensitive filesystem; a

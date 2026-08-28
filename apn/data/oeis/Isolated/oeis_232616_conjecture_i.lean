@@ -49,3 +49,5 @@ where $\text{prime}(n)$ is the $n$-th prime number (1-indexed).
 theorem oeis_232616_conjecture_i (n : ℕ) (hn : 0 < n) :
     A232616 n < 2 * (Nat.nth Nat.Prime (n - 1) - 1) := by
   sorry
+
+theorem oeis_232616_conjecture_i.disproof : ¬ (type_of% @oeis_232616_conjecture_i) := sorry

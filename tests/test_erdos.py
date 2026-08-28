@@ -32,6 +32,7 @@ from scripts.erdos_isolation import (
 from scripts.isolation import matches_name
 
 from scripts.fc_statements import strip_comments
+from scripts.isolation import disproof_declaration
 
 _SORRY_RE = re.compile(r"\bsorry\b")
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
@@ -182,7 +183,7 @@ def test_verdict_material_never_reaches_sample_metadata() -> None:
     # agent-facing sample.
     for sample in erdos_dataset():
         assert sample.metadata is not None
-        assert set(sample.metadata) == {"sketch", "source"}
+        assert set(sample.metadata) == {"sketch", "source", "decl_name"}
 
 
 def test_erdos_dataset_names_filter_unknown_raises() -> None:
@@ -233,16 +234,18 @@ def test_sketches_have_no_example_commands() -> None:
 
 
 def test_sketches_sorry_count() -> None:
-    # Exactly one `sorry` per sketch -- the target's proof. The allowlist (a
-    # kept definition depending on a sorry'd helper theorem) is currently
-    # empty; if a future pin re-adds entries, those files may carry two.
+    # Exactly two `sorry`s per sketch -- the target's proof and the appended
+    # `.disproof` declaration's. The allowlist (a kept definition depending on
+    # a sorry'd helper theorem, which those samples implicitly require proving
+    # too) is currently empty; if a future pin re-adds entries, those files
+    # may carry three.
     for sample in erdos_dataset():
         assert sample.metadata is not None
         n = len(_SORRY_RE.findall(strip_comments(sample.metadata["sketch"])))
         if sample.metadata["source"].removeprefix("Sources/") in SORRY_ALLOWLIST_FILES:
-            assert n in (1, 2), f"{sample.id}: {n} sorries"
+            assert n in (2, 3), f"{sample.id}: {n} sorries"
         else:
-            assert n == 1, f"{sample.id}: {n} sorries"
+            assert n == 2, f"{sample.id}: {n} sorries"
 
 
 # Universe members that legitimately survive in *sibling* specs because kept
@@ -256,6 +259,18 @@ def _declares(member_id: str, text_name: str) -> bool:
     text name omits enclosing ``namespace`` components (matches_name
     semantics)."""
     return member_id == text_name or member_id.endswith("." + text_name)
+
+
+def test_sketches_end_with_disproof_declaration() -> None:
+    # Every spec's final declaration is the derived `.disproof` line for its
+    # target's fully-qualified name (comparator-migration-plan.md §4); the
+    # container-side certifier in tests/test_erdos_isolation.py proves its
+    # elaborated type is the negation.
+    for row in load_manifest(ERDOS_DIR):
+        if row.excluded is not None:
+            continue
+        text = (ERDOS_DIR / row.statement_path).read_text()
+        assert text.rstrip().endswith(disproof_declaration(row.decl_name)), row.id
 
 
 def test_no_sibling_member_survives_in_any_spec() -> None:

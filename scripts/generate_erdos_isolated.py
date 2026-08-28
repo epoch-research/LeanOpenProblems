@@ -71,12 +71,14 @@ from scripts.fc_statements import (
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     BAKED_EXE,
+    append_disproof,
     dependency_closure,
     host_to_container,
     isolate,
     kept_flags,
     matches_name,
     run_extractor,
+    strip_private,
     tidy,
 )
 
@@ -208,6 +210,10 @@ def main() -> None:
             flags = fc_kept_flags(src, filerec, kept_flags(filerec, closure))
             problems.extend(check_sorries(decl["name"], rel, src, filerec, flags))
             text = tidy(isolate(src, filerec, flags)).decode("utf-8")
+            # Drop `private` modifiers: their module-mangled names falsely
+            # reject faithful submissions under Comparator (plan §3.3,
+            # comparator#58).
+            text = strip_private(text)
             # Census `answer(` in *code* only -- kept docs may mention it in prose.
             n_answers = strip_comments(text).count("answer(")
             if n_answers > 1:
@@ -227,6 +233,9 @@ def main() -> None:
             text, counts = strip_fc_annotations(text)
             for kind, n in counts.items():
                 annotations[kind] += n
+            # Append the derived disproof declaration (plan §4); the erdos id
+            # IS the fully-qualified name, so no decl_name override can arise.
+            text, _ = append_disproof(text, decl["name"], decl["name"])
             n_seen = casefold_seen[decl["name"].casefold()] = (
                 casefold_seen.get(decl["name"].casefold(), 0) + 1
             )

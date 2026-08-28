@@ -60,3 +60,5 @@ Conjectures from OEIS A217703:
 theorem oeis_217703_conjecture_i :
   ∀ (n : ℕ), 1 ≤ n → Irreducible (Polynomial.map (Int.castRingHom ℚ) (Sn n)) := by
   sorry
+
+theorem oeis_217703_conjecture_i.disproof : ¬ (type_of% @oeis_217703_conjecture_i) := sorry

@@ -42,3 +42,5 @@ This is formalized as the claim that $a_{114} = 22564$ and for all $m > 22564$, 
 theorem A335226_conjecture :
   A335226 114 = 22564 ∧ (∀ m : ℕ, m > 22564 → ¬ A335226_condition m) := by
   sorry
+
+theorem A335226_conjecture.disproof : ¬ (type_of% @A335226_conjecture) := sorry

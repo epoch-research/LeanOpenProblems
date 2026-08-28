@@ -34,3 +34,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 theorem oeis_364178_conjecture_0 (p n r : ℕ) (hp : Nat.Prime p) (h5 : 5 ≤ p) (hn : 1 ≤ n) (hr : 1 ≤ r) :
   a (n * p ^ r) ≡ a (n * p ^ (r - 1)) [MOD p ^ (3 * r)] :=
 by sorry
+
+theorem oeis_364178_conjecture_0.disproof : ¬ (type_of% @oeis_364178_conjecture_0) := sorry

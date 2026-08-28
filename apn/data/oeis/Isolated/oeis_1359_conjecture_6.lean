@@ -53,3 +53,5 @@ theorem oeis_1359_conjecture_6 :
     (Pk_succ - Pk > 2 ∧ Wk_prod ≡ 1 [MOD Pk_succ])
   )
 := by sorry
+
+theorem oeis_1359_conjecture_6.disproof : ¬ (type_of% @oeis_1359_conjecture_6) := sorry

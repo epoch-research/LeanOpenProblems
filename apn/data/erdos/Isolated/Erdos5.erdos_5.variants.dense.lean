@@ -79,3 +79,5 @@ theorem erdos_5.variants.dense : Ici (0 : ℝ) ⊆ closure limitPointSet := by
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.dense.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.dense) := sorry

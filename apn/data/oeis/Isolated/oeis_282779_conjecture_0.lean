@@ -44,3 +44,5 @@ then a_p(n) = n/p if n == 0 (mod p^2) else a_p(n) = n.
 theorem oeis_282779_conjecture_0 (p n : ℕ) (hp : Nat.Prime p) (hn : n > 0) :
     period_of_power_mod p n = if p ^ 2 ∣ n then n / p else n := by
   sorry
+
+theorem oeis_282779_conjecture_0.disproof : ¬ (type_of% @oeis_282779_conjecture_0) := sorry

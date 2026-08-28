@@ -77,3 +77,5 @@ theorem oeis_334916_conjecture_0 :
     (∃! A, A > 1 ∧ is_baseless 6 A) ∧ (∃! A, A > 1 ∧ is_baseless 10 A) ∧
     -- Formalizing the open question part: "Are there number bases n, other than 6 and 10, that have a unique example?"
     (∃ n > 1, n ≠ 6 ∧ n ≠ 10 ∧ (∃! A, A > 1 ∧ is_baseless n A)) := by sorry
+
+theorem oeis_334916_conjecture_0.disproof : ¬ (type_of% @oeis_334916_conjecture_0) := sorry

@@ -35,3 +35,5 @@ theorem oeis_259667_conjecture_0 :
     (∀ k : ℕ, A259667 (2^k - 1) = 5 ↔ k = 2 ∨ k = 8) ∧
     (∀ k : ℕ, k > 8 → A259667 (2^k - 1) = 3) := by
   sorry
+
+theorem oeis_259667_conjecture_0.disproof : ¬ (type_of% @oeis_259667_conjecture_0) := sorry

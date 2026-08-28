@@ -37,3 +37,5 @@ theorem oeis_60841_conjecture_0 (n : ℕ) (hn : 1 ≤ n) :
   (A060841_val_rat n).den.isPowerOfTwo ∧
   ((A060841_val_rat n).isInt ↔ n ∈ Icc 1 34 ∨ n = 36 ∨ n = 38) :=
 by sorry
+
+theorem oeis_60841_conjecture_0.disproof : ¬ (type_of% @oeis_60841_conjecture_0) := sorry

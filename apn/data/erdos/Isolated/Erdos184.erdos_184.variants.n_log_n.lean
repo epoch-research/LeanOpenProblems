@@ -62,3 +62,5 @@ theorem erdos_184.variants.n_log_n :
   sorry
 
 end Erdos184
+
+theorem Erdos184.erdos_184.variants.n_log_n.disproof : ¬ (type_of% @Erdos184.erdos_184.variants.n_log_n) := sorry

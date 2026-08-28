@@ -45,3 +45,5 @@ theorem erdos_41 (A : Set ℕ) (h_triple : NtupleCondition A 3) (h_infinite : A.
   sorry
 
 end Erdos41
+
+theorem Erdos41.erdos_41.disproof : ¬ (type_of% @Erdos41.erdos_41) := sorry

@@ -45,3 +45,5 @@ theorem mordell : limsup (fun n : ℕ => (sumRep cubes n : ℕ∞)) atTop = (⊤
 end variants
 
 end Erdos829
+
+theorem Erdos829.variants.mordell.disproof : ¬ (type_of% @Erdos829.variants.mordell) := sorry

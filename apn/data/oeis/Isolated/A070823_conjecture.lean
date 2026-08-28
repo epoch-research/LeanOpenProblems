@@ -54,3 +54,5 @@ Conjecture: $a(n) \equiv 0 \pmod 3$ if $n>2$. Also, $a(n)$ is always of the form
 theorem A070823_conjecture : ∀ n : ℕ, 2 < n →
     (A070823 n ≡ 0 [MOD 3]) ∧
     (∃ a b b' : ℕ, A070823 n = 2^a * 3^b * b' ∧ Squarefree b') := by sorry
+
+theorem A070823_conjecture.disproof : ¬ (type_of% @A070823_conjecture) := sorry

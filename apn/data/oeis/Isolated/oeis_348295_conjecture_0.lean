@@ -34,3 +34,5 @@ and A001333(m) for odd m (this has been confirmed for m <= 32 by Chai Wah Wu,
 Oct 21 2021). See A084068 for the conjectured indices of records.
 -/
 theorem oeis_348295_conjecture_0 : ∀ (M : ℤ), ∃ (n : ℕ), a n > M := by sorry
+
+theorem oeis_348295_conjecture_0.disproof : ¬ (type_of% @oeis_348295_conjecture_0) := sorry

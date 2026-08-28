@@ -36,3 +36,5 @@ Checked up to 10^7; largest term in that range is a(9972987) = 4178506411.
 -/
 theorem oeis_a234642_conjecture_0 : ∀ (n : ℕ), a n > 0 := by
   sorry
+
+theorem oeis_a234642_conjecture_0.disproof : ¬ (type_of% @oeis_a234642_conjecture_0) := sorry

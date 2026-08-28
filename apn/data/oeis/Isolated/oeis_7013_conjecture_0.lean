@@ -29,3 +29,5 @@ This is the most common interpretation of the OEIS comment:
 -/
 theorem oeis_7013_conjecture_0 : ∀ (n : ℕ), Nat.Prime (a n) := by
   sorry
+
+theorem oeis_7013_conjecture_0.disproof : ¬ (type_of% @oeis_7013_conjecture_0) := sorry

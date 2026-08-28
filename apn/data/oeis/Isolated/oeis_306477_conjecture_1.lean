@@ -41,3 +41,5 @@ This is also known as "the 2-4-6-8 conjecture".
 -/
 theorem oeis_306477_conjecture_1 : ∀ n : ℕ, 0 < n → 0 < A306477 n := by
   sorry
+
+theorem oeis_306477_conjecture_1.disproof : ¬ (type_of% @oeis_306477_conjecture_1) := sorry

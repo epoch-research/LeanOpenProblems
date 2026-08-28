@@ -50,3 +50,5 @@ theorem erdos_61.variants.bnss23 :
   sorry
 
 end Erdos61
+
+theorem Erdos61.erdos_61.variants.bnss23.disproof : ¬ (type_of% @Erdos61.erdos_61.variants.bnss23) := sorry

@@ -58,3 +58,5 @@ This conjecture states that the set of natural numbers $n$ for which the strict 
 theorem oeis_355228_conjecture_0 (n : ℕ) :
   (a n > a081512 n) ↔ (n = 4 ∨ n = 5) := by
   sorry
+
+theorem oeis_355228_conjecture_0.disproof : ¬ (type_of% @oeis_355228_conjecture_0) := sorry

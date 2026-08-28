@@ -83,3 +83,5 @@ theorem erdos_5.variants.merikoski (β : Fin 4 → ℝ) (hβmono : Monotone β) 
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.merikoski.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.merikoski) := sorry

@@ -38,3 +38,5 @@ theorem A211420_general_divisibility_conjecture :
   ∀ (k : ℕ) (r : ℕ), (k = 1 ∨ k = 2 ∨ k = 3) → (r ≥ 1) → ∃ C : ℕ, ∀ n : ℕ,
     Nat.ascFactorial (k * n + 1) r ∣ C * (A211420 n) :=
 by sorry
+
+theorem A211420_general_divisibility_conjecture.disproof : ¬ (type_of% @A211420_general_divisibility_conjecture) := sorry

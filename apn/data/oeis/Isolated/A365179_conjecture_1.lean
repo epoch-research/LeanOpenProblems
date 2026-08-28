@@ -51,3 +51,5 @@ theorem A365179_conjecture_1 (n : ℕ) (hn : 2 ≤ n) :
   is_possible_aut_order_power p (A365179 n) ∧
   ∀ m' : ℕ, (is_possible_aut_order_power p m') → (A365179 n) ≤ m' :=
   by sorry
+
+theorem A365179_conjecture_1.disproof : ¬ (type_of% @A365179_conjecture_1) := sorry

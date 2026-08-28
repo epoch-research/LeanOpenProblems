@@ -39,3 +39,5 @@ If so, there are no such pseudoprimes.
 -/
 theorem oeis_331343_conjecture_0 : ∀ n : ℕ, n > 3 → n ^ 3 ∣ (a n) → Nat.Prime n := by
   sorry
+
+theorem oeis_331343_conjecture_0.disproof : ¬ (type_of% @oeis_331343_conjecture_0) := sorry

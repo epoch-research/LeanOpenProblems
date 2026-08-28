@@ -50,3 +50,5 @@ for all n. See also A050972. - _Jaycob Coleman_, Sep 27 2014
 -/
 theorem oeis_17666_conjecture_0 (n : ℕ) : is_A005153 (A017666 n) → is_A005153 n := by
   sorry
+
+theorem oeis_17666_conjecture_0.disproof : ¬ (type_of% @oeis_17666_conjecture_0) := sorry

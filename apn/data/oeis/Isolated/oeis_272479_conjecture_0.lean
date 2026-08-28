@@ -39,3 +39,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 /-- A272479 Conjecture: the sequence contains no zeros. -/
 theorem oeis_272479_conjecture_0 : ∀ n : ℕ, n > 0 → a n ≠ 0 := by
   sorry
+
+theorem oeis_272479_conjecture_0.disproof : ¬ (type_of% @oeis_272479_conjecture_0) := sorry

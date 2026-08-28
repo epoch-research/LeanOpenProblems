@@ -58,3 +58,5 @@ theorem oeis_191004_sun_refinement_conjecture :
   (∀ m : ℕ, 64 < m ∧ Odd m ∧ m ∉ ({105, 247, 255, 1105} : Finset ℕ) → odd_refinement_exists m) ∧
   (∀ m : ℕ, 8 < m ∧ Even m ∧ m ∉ ({32, 152} : Finset ℕ) → even_refinement_exists m) := by
   sorry
+
+theorem oeis_191004_sun_refinement_conjecture.disproof : ¬ (type_of% @oeis_191004_sun_refinement_conjecture) := sorry

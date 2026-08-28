@@ -43,3 +43,5 @@ Conjecture 1 from OEIS A323359: This sequence consists only of 1's and primes.
 theorem oeis_323359_conjecture_1 :
   ∀ (n : ℕ), 0 < n → (a n = 1 ∨ Nat.Prime (a n)) := by
   sorry
+
+theorem oeis_323359_conjecture_1.disproof : ¬ (type_of% @oeis_323359_conjecture_1) := sorry

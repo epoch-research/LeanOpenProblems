@@ -58,3 +58,5 @@ noncomputable def a_mod_k (k : ℕ) (n : ℕ) : ZMod k :=
 theorem oeis_370092_conjecture_0 (k : ℕ) (hk : 2 < k) :
     ∃ P : ℕ, P ∣ totient k ∧ eventually_periodic (a_mod_k k) P := by
   sorry
+
+theorem oeis_370092_conjecture_0.disproof : ¬ (type_of% @oeis_370092_conjecture_0) := sorry

@@ -34,3 +34,5 @@ theorem erdos_647 : ∃ n > 24, ⨆ m : Fin n, m + σ 0 m ≤ n + 2 := by
   sorry
 
 end Erdos647
+
+theorem Erdos647.erdos_647.disproof : ¬ (type_of% @Erdos647.erdos_647) := sorry

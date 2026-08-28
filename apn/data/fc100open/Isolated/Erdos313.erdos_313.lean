@@ -49,3 +49,5 @@ solution `(m, P)` to the Erdős 313 problem.
 def IsPrimaryPseudoperfect (n : ℕ) : Prop := ∃ P, (n, P) ∈ erdos313Solutions
 
 end Erdos313
+
+theorem Erdos313.erdos_313.disproof : ¬ (type_of% @Erdos313.erdos_313) := sorry

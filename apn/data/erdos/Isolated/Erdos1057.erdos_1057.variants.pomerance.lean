@@ -55,3 +55,5 @@ theorem erdos_1057.variants.pomerance :
   sorry
 
 end Erdos1057
+
+theorem Erdos1057.erdos_1057.variants.pomerance.disproof : ¬ (type_of% @Erdos1057.erdos_1057.variants.pomerance) := sorry

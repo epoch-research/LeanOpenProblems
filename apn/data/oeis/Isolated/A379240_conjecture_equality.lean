@@ -96,3 +96,5 @@ differ from each other.
 -/
 theorem A379240_conjecture_equality (n : ℕ) : A379240 n = A379240_conjecture n := by
   sorry
+
+theorem A379240_conjecture_equality.disproof : ¬ (type_of% @A379240_conjecture_equality) := sorry

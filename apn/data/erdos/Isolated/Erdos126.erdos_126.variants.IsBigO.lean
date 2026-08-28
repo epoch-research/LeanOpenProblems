@@ -48,3 +48,5 @@ theorem erdos_126.variants.IsBigO
   sorry
 
 end Erdos126
+
+theorem Erdos126.erdos_126.variants.IsBigO.disproof : ¬ (type_of% @Erdos126.erdos_126.variants.IsBigO) := sorry

@@ -40,3 +40,5 @@ theorem oeis_248802_conjecture_4 (n : ℕ) :
    ¬ covered_by_C2 (58 * n + 26) ∧
    ¬ covered_by_C3 (58 * n + 26)) →
   a (58 * n + 26) = 1399 := by sorry
+
+theorem oeis_248802_conjecture_4.disproof : ¬ (type_of% @oeis_248802_conjecture_4) := sorry

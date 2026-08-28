@@ -44,3 +44,5 @@ A001221(n) is $\Omega(n)$, the total number of prime factors of $n$ (counted wit
 theorem oeis_A067857_conjecture_0 (n : ℕ) (hn : n > 0) :
   a n < 0 ↔ Odd (cardFactors n) ∧ cardFactors n ≥ 3 :=
 by sorry
+
+theorem oeis_A067857_conjecture_0.disproof : ¬ (type_of% @oeis_A067857_conjecture_0) := sorry

@@ -36,7 +36,7 @@ from inspect_ai.util import sandbox, store
 import apn
 from apn.dataset import OEIS_DIR, fc_commit, load_subset, oeis_dataset
 from apn.layout import ENTRY_PATH
-from apn.task import COMPOSE_FILES_DIR, IMAGE_REPOSITORY, get_identifier_for_image
+from apn.task import SANDBOX_FILES_DIR, IMAGE_REPOSITORY, get_identifier_for_image
 from apn.tools import bash
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -65,7 +65,7 @@ services:
     mem_limit: 10g
     network_mode: none
 """
-    path = COMPOSE_FILES_DIR / "summarize" / "compose.yaml"
+    path = SANDBOX_FILES_DIR / "summarize" / "compose.yaml"
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists() or path.read_text() != content:
         path.write_text(content)
@@ -192,7 +192,11 @@ def plaintext_dir(run_dir: Path) -> Path:
 
 
 def solved_samples(run_dir: Path) -> list[Solve]:
-    """Read accepted proofs, skipping incomplete or malformed sample data."""
+    """Read accepted proofs under the current claim-bearing scorer schema.
+
+    Incomplete peripheral artifacts are skipped, but an accepted score without
+    an explicit proof/disproof claim is schema drift and fails loudly.
+    """
     solves: list[Solve] = []
     for sample_dir in sorted(plaintext_dir(run_dir).iterdir()):
         if not sample_dir.is_dir():
@@ -205,6 +209,21 @@ def solved_samples(run_dir: Path) -> list[Solve]:
             continue
         if score.get("value") != "C":
             continue
+
+        score_metadata = score.get("metadata")
+        if not isinstance(score_metadata, dict):
+            raise ValueError(
+                f"accepted proof {sample_dir.name} has no proof_scorer metadata"
+            )
+        claim = score_metadata.get("claim")
+        if claim == "proof":
+            settlement: Literal["proved", "disproved"] = "proved"
+        elif claim == "disproof":
+            settlement = "disproved"
+        else:
+            raise ValueError(
+                f"accepted proof {sample_dir.name} has invalid proof_scorer claim {claim!r}"
+            )
 
         info = _read_json_object(sample_dir / "info.json")
         oeis_id = (info or {}).get("oeis_id")
@@ -224,7 +243,7 @@ def solved_samples(run_dir: Path) -> list[Solve]:
                 id=sample_dir.name,
                 oeis_id=str(oeis_id),
                 proof=proof,
-                settlement="disproved" if ".disproof" in proof else "proved",
+                settlement=settlement,
                 directory=sample_dir,
             )
         )

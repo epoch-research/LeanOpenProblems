@@ -31,3 +31,5 @@ a(p^2-1) == 1 (mod p^5) holds for all primes p >= 3. - Peter Bala, Mar 22 2023
 theorem oeis_277060_conjecture_0 :
   (∀ p : ℕ, Nat.Prime p → 5 ≤ p → A277060 (p - 1) ≡ 1 [MOD p ^ 4]) ∧
   (∀ p : ℕ, Nat.Prime p → 3 ≤ p → A277060 (p ^ 2 - 1) ≡ 1 [MOD p ^ 5]) := by sorry
+
+theorem oeis_277060_conjecture_0.disproof : ¬ (type_of% @oeis_277060_conjecture_0) := sorry

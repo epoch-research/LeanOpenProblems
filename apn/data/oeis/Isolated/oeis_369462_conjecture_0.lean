@@ -46,3 +46,5 @@ Conjecture A369462: Is there only a finite number of 0's in this sequence?
 -/
 theorem oeis_369462_conjecture_0 : {n : ℕ | A369462 n = 0}.Finite := by
   sorry
+
+theorem oeis_369462_conjecture_0.disproof : ¬ (type_of% @oeis_369462_conjecture_0) := sorry

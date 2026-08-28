@@ -62,3 +62,5 @@ theorem oeis_53175_conjecture_0 (n : ℕ) :
   -- The quotient is a positive odd integer.
   ((det_P_n / power_of_2) > 0 ∧ ((det_P_n / power_of_2) % 2 = 1)) :=
 by sorry
+
+theorem oeis_53175_conjecture_0.disproof : ¬ (type_of% @oeis_53175_conjecture_0) := sorry

@@ -41,3 +41,5 @@ theorem oeis_a038771_conjecture_1 :
   let seq (n : ℕ) : ℝ := ((a n) : ℝ) / (p_next_sq n)
   (liminf seq atTop = 1) ∧ (limsup seq atTop = 2) := by
   sorry
+
+theorem oeis_a038771_conjecture_1.disproof : ¬ (type_of% @oeis_a038771_conjecture_1) := sorry

@@ -38,3 +38,5 @@ Conjecture 1: a(n) is also twice the number of odd divisors of n greater than sq
 theorem oeis_281009_conjecture_0 (n : ℕ) (hn : n ≠ 0) :
     (A281009 n : ℤ) = 2 * (↑(((divisors n).filter (fun d => d % 2 = 1 ∧ 2 * n < d ^ 2)).card) : ℤ) :=
 by sorry
+
+theorem oeis_281009_conjecture_0.disproof : ¬ (type_of% @oeis_281009_conjecture_0) := sorry

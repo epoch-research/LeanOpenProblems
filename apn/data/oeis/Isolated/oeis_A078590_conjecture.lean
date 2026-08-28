@@ -25,7 +25,7 @@ a_val 1 corresponds to A078590(2).
 a_val (n+2) corresponds to A078590(n+3).
 The definition uses standard natural number division, relying on the conjecture that the division is exact.
 -/
-private noncomputable def a_val : ℕ → ℕ
+noncomputable def a_val : ℕ → ℕ
 | 0 => 1
 | 1 => 1
 | n + 2 =>
@@ -56,3 +56,5 @@ This is framed as a divisibility conjecture, ensuring that the division in the d
 Specifically, for $n \ge 3$, $a(n-2)$ divides $2^{a(n-1)} + 1$.
 -/
 theorem oeis_A078590_conjecture : ∀ (n : ℕ), 3 ≤ n → A078590 (n-2) ∣ (2 ^ A078590 (n-1) + 1) := by sorry
+
+theorem oeis_A078590_conjecture.disproof : ¬ (type_of% @oeis_A078590_conjecture) := sorry

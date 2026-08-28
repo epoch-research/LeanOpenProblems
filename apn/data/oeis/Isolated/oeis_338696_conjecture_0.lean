@@ -38,3 +38,5 @@ noncomputable def A338696 (n : ℕ) : ℕ :=
 /-- Conjecture: a(n) > 0 except for n = 19. -/
 theorem oeis_338696_conjecture_0 (n : ℕ) : A338696 n > 0 ↔ n ≠ 19 := by
   sorry
+
+theorem oeis_338696_conjecture_0.disproof : ¬ (type_of% @oeis_338696_conjecture_0) := sorry

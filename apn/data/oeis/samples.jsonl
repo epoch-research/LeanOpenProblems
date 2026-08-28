@@ -4,7 +4,7 @@
 {"id": "A211420_general_divisibility_conjecture", "source": "Sources/211420_f16fb562.lean", "oeis_id": "A211420"}
 {"id": "A224515_conjecture_existence", "source": "Sources/224515_1dafa96a.lean", "oeis_id": "A224515"}
 {"id": "A230241_conjecture", "source": "Sources/230241_a4de9e9f.lean", "oeis_id": "A230241", "other_sources": ["Sources/230241_f18255a1.lean"]}
-{"id": "A230507_conjecture_part_ii", "source": "Sources/230507_0bd39734.lean", "oeis_id": "A230507"}
+{"id": "A230507_conjecture_part_ii", "source": "Sources/230507_0bd39734.lean", "oeis_id": "A230507", "decl_name": "OeisA230507.A230507_conjecture_part_ii"}
 {"id": "A233544_conjecture_i", "source": "Sources/233544_f491f46c.lean", "oeis_id": "A233544"}
 {"id": "A233864_conjecture_i", "source": "Sources/233864_2a11609b.lean", "oeis_id": "A233864"}
 {"id": "A253187.universal_sum_conjecture", "source": "Sources/253187_09d5a22f.lean", "oeis_id": "A253187"}
@@ -119,7 +119,7 @@
 {"id": "oeis_228591_conjecture_0", "source": "Sources/228591_057000ec.lean", "oeis_id": "A228591"}
 {"id": "oeis_228623_conjecture_1_implies_goldbach", "source": "Sources/228623_a9d0761f.lean", "oeis_id": "A228623"}
 {"id": "oeis_228624_conjecture_1", "source": "Sources/228624_821c8bbb.lean", "oeis_id": "A228624"}
-{"id": "oeis_230507_verified_up_to_10_pow_6", "source": "Sources/230507_0bd39734.lean", "oeis_id": "A230507"}
+{"id": "oeis_230507_verified_up_to_10_pow_6", "source": "Sources/230507_0bd39734.lean", "oeis_id": "A230507", "decl_name": "OeisA230507.oeis_230507_verified_up_to_10_pow_6"}
 {"id": "oeis_230718_conjecture_1", "source": "Sources/230718_d93fc2a9.lean", "oeis_id": "A230718"}
 {"id": "oeis_231577_conjecture_0", "source": "Sources/231577_0ceba5ee.lean", "oeis_id": "A231577"}
 {"id": "oeis_231830_conjecture_0", "source": "Sources/231830_56935516.lean", "oeis_id": "A231830"}
@@ -183,7 +183,7 @@
 {"id": "oeis_270966_conjecture_i", "source": "Sources/270966_4778c44e.lean", "oeis_id": "A270966"}
 {"id": "oeis_270994_conjecture_0", "source": "Sources/270994_4210de88.lean", "oeis_id": "A270994"}
 {"id": "oeis_271026_conjecture_0", "source": "Sources/271026_a5dfc857.lean", "oeis_id": "A271026"}
-{"id": "oeis_271099_conjecture", "source": "Sources/271099_dfd28216.lean", "oeis_id": "A271099"}
+{"id": "oeis_271099_conjecture", "source": "Sources/271099_dfd28216.lean", "oeis_id": "A271099", "decl_name": "A271099.oeis_271099_conjecture"}
 {"id": "oeis_271513_conjecture_3", "source": "Sources/271513_a79f9d8f.lean", "oeis_id": "A271513"}
 {"id": "oeis_271591_conjecture_0", "source": "Sources/271591_8c6e47f3.lean", "oeis_id": "A271591"}
 {"id": "oeis_271714_conjecture_0", "source": "Sources/271714_a366ae7d.lean", "oeis_id": "A271714"}

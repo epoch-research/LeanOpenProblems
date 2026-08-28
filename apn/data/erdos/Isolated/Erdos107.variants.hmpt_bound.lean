@@ -56,3 +56,5 @@ theorem hmpt_bound :
   sorry
 
 end Erdos107.variants
+
+theorem Erdos107.variants.hmpt_bound.disproof : ¬ (type_of% @Erdos107.variants.hmpt_bound) := sorry

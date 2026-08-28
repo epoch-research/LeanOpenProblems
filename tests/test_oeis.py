@@ -14,6 +14,7 @@ from apn.dataset import (
     oeis_dataset,
     strip_license_header,
 )
+from scripts.isolation import disproof_declaration
 
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
 _DECL_RE = re.compile(r"(?m)^(?:theorem|lemma)\b")
@@ -82,6 +83,25 @@ def test_manifest_census() -> None:
         assert (OEIS_DIR / row.statement_path).is_file(), row.id
 
 
+# The only rows whose target's fully-qualified declaration name differs from the
+# sample id: their target theorem lives inside a `namespace`, so the env name
+# carries a prefix (the checker configures Comparator with decl_name, not id).
+_DECL_NAME_OVERRIDES = {
+    "A230507_conjecture_part_ii": "OeisA230507.A230507_conjecture_part_ii",
+    "oeis_230507_verified_up_to_10_pow_6": "OeisA230507.oeis_230507_verified_up_to_10_pow_6",
+    "oeis_271099_conjecture": "A271099.oeis_271099_conjecture",
+}
+
+
+def test_decl_name_overrides_are_pinned() -> None:
+    # Pin exactly which rows carry a decl_name != id (§3.2). A dataset bump that
+    # changes namespace structure -- silently breaking target resolution -- flips
+    # this; the isolation suite's certifier confirms each decl_name against the
+    # actually-declared target in-container.
+    overrides = {r.id: r.decl_name for r in load_manifest(OEIS_DIR) if r.decl_name != r.id}
+    assert overrides == _DECL_NAME_OVERRIDES
+
+
 def test_manifest_multi_file_conjectures() -> None:
     # 3 conjectures map to more than one upstream formalization file; the
     # manifest records the unused ones so the solver can warn at run time.
@@ -111,10 +131,13 @@ def test_oeis_dataset_sample_shape() -> None:
     sketch = sample.metadata["sketch"]
     assert "import FormalConjectures.Util.ProblemImports" in sketch
     assert sample.input == sketch
-    # It contains exactly the one target theorem -- no sibling conjectures or
-    # test lemmas (those were removed during isolation).
+    # It contains exactly the target theorem and its appended `.disproof`
+    # declaration -- no sibling conjectures or test lemmas (those were removed
+    # during isolation).
     assert "theorem oeis_268597_conjecture_0" in sketch
-    assert len(_DECL_RE.findall(sketch)) == 1
+    assert sample.metadata["decl_name"] == "oeis_268597_conjecture_0"
+    assert sketch.rstrip().endswith(disproof_declaration("oeis_268597_conjecture_0"))
+    assert len(_DECL_RE.findall(sketch)) == 2
 
 
 def test_oeis_dataset_names_filter_unknown_raises() -> None:
@@ -168,17 +191,20 @@ def test_every_conjecture_has_isolated_single_theorem_spec() -> None:
     # Pure-Python structural guard over the committed, Lean-authored Isolated/
     # files (CI has no Lean toolchain). Every manifest row must have an
     # isolated spec that imports the FC library, declares its own target
-    # theorem, and -- save for the few dependency-lemma specs above -- has exactly
-    # one top-level theorem/lemma (one conjecture per spec, siblings and test
+    # theorem, ends with the derived `.disproof` declaration, and -- save for
+    # the few dependency-lemma specs above -- has exactly those two top-level
+    # theorem/lemma commands (one conjecture per spec, siblings and test
     # lemmas removed). The deeper Lean guarantees (clean elaboration, statement
-    # preserved, only the target + its dependency lemmas survive) are enforced
-    # authoritatively, in a container, by tests/test_oeis_isolation.py.
+    # preserved, only the target + its dependency lemmas survive, the disproof
+    # type certified as the negation) are enforced authoritatively, in a
+    # container, by tests/test_oeis_isolation.py.
     multi_theorem: set[str] = set()
     for row in load_manifest(OEIS_DIR):
         text = (OEIS_DIR / row.statement_path).read_text()
         assert "import FormalConjectures.Util.ProblemImports" in text, row.id
         assert re.search(rf"\b(?:theorem|lemma)\s+{re.escape(row.id)}\b", text), row.id
-        if len(_DECL_RE.findall(text)) != 1:
+        assert text.rstrip().endswith(disproof_declaration(row.decl_name)), row.id
+        if len(_DECL_RE.findall(text)) != 2:
             multi_theorem.add(row.id)
     # Only the documented dependency-lemma specs may carry extra theorems; a new
     # entry here means a regenerate left a sibling/test lemma behind (or added a

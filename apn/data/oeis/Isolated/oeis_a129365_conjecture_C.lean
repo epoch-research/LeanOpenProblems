@@ -43,3 +43,5 @@ ordp(a(n*p),p) = ordp(a(n*p+1),p) = ordp(a(n*p+2),p) = ... = ordp(a(n*p+p-1),p).
 theorem oeis_a129365_conjecture_C (n p k : ℕ) (hn : 0 < n) (hp : Nat.Prime p) (hk : k < p) :
   (a (n * p)).factorization p = (a (n * p + k)).factorization p := by
   sorry
+
+theorem oeis_a129365_conjecture_C.disproof : ¬ (type_of% @oeis_a129365_conjecture_C) := sorry

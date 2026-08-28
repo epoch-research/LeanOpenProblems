@@ -45,3 +45,5 @@ Conjecture 1: $a(p) \equiv a(1) \pmod{p^5}$ for all primes $p \ge 3$.
 theorem A357674_conjecture_1 (p : ℕ) (hp : p.Prime) (hp3 : p ≥ 3) :
     A357674 p ≡ A357674 1 [MOD p ^ 5] := by
   sorry
+
+theorem A357674_conjecture_1.disproof : ¬ (type_of% @A357674_conjecture_1) := sorry

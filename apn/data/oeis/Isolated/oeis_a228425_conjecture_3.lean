@@ -45,3 +45,5 @@ with p_k(x) + p_{k+1}(y) prime, if and only if k is among 3, 39, 99.
 theorem oeis_a228425_conjecture_3 (k : ℕ) :
   PolygonalPrimeSumCondition k ↔ k = 3 ∨ k = 39 ∨ k = 99 :=
   by sorry
+
+theorem oeis_a228425_conjecture_3.disproof : ¬ (type_of% @oeis_a228425_conjecture_3) := sorry

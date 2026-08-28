@@ -38,3 +38,5 @@ theorem oeis_289411_conjecture_0 (k : ℕ) (hk : 0 < k) :
   let m_k : ℕ := (10 ^ k) / 2 - 1
   ∀ i : ℕ, i ≤ m_k → A289411 (m_k - i) = A289411 (m_k + i) :=
 by sorry
+
+theorem oeis_289411_conjecture_0.disproof : ¬ (type_of% @oeis_289411_conjecture_0) := sorry

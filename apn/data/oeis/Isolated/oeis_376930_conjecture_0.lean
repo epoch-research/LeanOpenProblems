@@ -39,3 +39,5 @@ Formalization: Since the sequence is defined in $\mathbb{N}$, all terms are non-
 -/
 theorem oeis_376930_conjecture_0 :
   ∀ n : ℕ, (Nat.Prime (a (n + 1)) ∧ a (n + 1) > 2) → a (n + 1) ≥ a n := by sorry
+
+theorem oeis_376930_conjecture_0.disproof : ¬ (type_of% @oeis_376930_conjecture_0) := sorry

@@ -2,25 +2,50 @@
 # pattern: docker compose builds the stages on demand, no manual image
 # management):
 #
-#   - base   -- Lean v4.27.0 + Mathlib (olean cache) + the FormalConjectures
-#               library, so that a problem file importing the FC util module
-#               (`FormalConjectures.Util.ProblemImports` on old-layout pins,
-#               `FormalConjecturesUtil` after upstream's rename -- the builder
-#               detects which from the checkout) compiles. Shared by the two
-#               service images; not a service itself.
-#   - agent  -- the agent's workspace: base + PyPantograph + numerical Python
-#               libs. Deliberately does NOT contain SafeVerify.
-#   - scorer -- the trusted checker: base + SafeVerify. Runs in a separate
-#               sandbox the agent never writes to.
+#   - base       -- Lean + Mathlib (olean cache) + the FormalConjectures
+#                   library, so that a problem file importing the FC util
+#                   module (`FormalConjectures.Util.ProblemImports` on
+#                   old-layout pins, `FormalConjecturesUtil` after upstream's
+#                   rename -- the builder detects which from the checkout)
+#                   compiles. Shared by the two service images; not a service
+#                   itself.
+#   - agent      -- the agent's workspace: base + PyPantograph + numerical
+#                   Python libs. Deliberately contains NO verifier tooling (no
+#                   comparator, no lean4export, no landrun).
+#   - comparator -- the trusted verifier: base + the Comparator binary + the
+#                   lean4export binary + landrun + the pristine workspace tree.
+#                   Replaces the former `compile` + `scorer` pair: the
+#                   untrusted `lake build Solution` is confined by landrun
+#                   (Landlock) *inside* this container, whose scoring execs
+#                   run as a non-privileged user (comparator README
+#                   assumption 6; the image itself stays root for Inspect).
 #
-# Lean v4.27.0 matches the Formal Conjectures Erdős/OEIS datasets (oleans are
-# version-specific, so the repl and SafeVerify are all built at this version).
-# Every dataset's FC pin must have lean-toolchain = v4.27.0: the FC checkout's
-# own lean-toolchain drives the library build, but PyPantograph's repl (the
-# pinned commit below targets v4.27.0) and the vendored safeverify/ and
-# extract_ranges/ lean-toolchain files must match the oleans they load/replay.
-# Moving past an FC toolchain bump is therefore a coordinated change to all of
-# those pins together.
+# Version story (comparator-migration-plan.md §2). Four version-bearing
+# artifacts, deliberately NOT all on one toolchain:
+#
+#   - The FC project (statements, Mathlib, oleans) is pinned by the dataset's
+#     FC_COMMIT and builds with its own lean-toolchain (v4.27.0 today). This is
+#     dataset identity; PyPantograph's repl must match it (oleans load only
+#     under the toolchain that built them).
+#   - The lean4export *binary* (the runtime exporter) `importModules`-loads the
+#     project's oleans in-process, so it MUST be built at the project
+#     toolchain. Upstream's rev at that toolchain emits an export format the
+#     comparator cannot read, so we clone the exact rev comparator's own
+#     manifest pins (LEAN4EXPORT_COMMIT) and overwrite its lean-toolchain with
+#     the project's before building -- an unmodified source tree, only the
+#     toolchain file changes (plan §2.2). Emitter and parser then agree on the
+#     format by construction.
+#   - The Comparator binary never loads project oleans (it parses lean4export's
+#     *text* output and replays it through its embedded kernel), so it is built
+#     at its own pinned toolchain (v4.34.0-rc2 today) and merely needs that
+#     toolchain's shared libraries present at runtime. Soundness fixes land at
+#     comparator tip only, so its pin tracks the newest tag, not the project
+#     toolchain (plan §2.1).
+#
+# On an FC-pin bump: PyPantograph and the exporter's toolchain move with it.
+# On a comparator bump: move LEAN4EXPORT_COMMIT to the rev in comparator's
+# lake-manifest.json, re-verify the toolchain-override build, and re-run the
+# primitive-constants check (plan §2.3; the gold-proof suite exercises it).
 #
 # The builder stage clones the whole formal-conjectures repo and builds the
 # library; base copies in ONLY the toolchain, the lake build artifacts
@@ -60,25 +85,62 @@ WORKDIR /workspace/leanproject
 
 # Every dataset's FC pin must be on this track's Lean toolchain (see the header
 # comment); fail the build outright if the checkout disagrees, instead of
-# producing an image whose repl/safeverify/extract_ranges toolchains mismatch
+# producing an image whose repl/lean4export/extract_ranges toolchains mismatch
 # the oleans.
 RUN test "$(cat lean-toolchain)" = "leanprover/lean4:${LEAN_VERSION}" \
     || { echo "FC pin ${FC_COMMIT} uses $(cat lean-toolchain), not leanprover/lean4:${LEAN_VERSION}" >&2; exit 1; }
 
+# Register the comparator's Challenge/Solution scratch libraries BEFORE any
+# lake invocation, so lake's workspace configuration (which hashes the
+# lakefile) is settled exactly once at image build and never re-resolved at
+# scoring time. The stubs import the pin's util module (layout-detected below)
+# so the warm build settles the libs' traces too; at scoring time the checker
+# overwrites run/*.lean with the real challenge/solution and content hashes
+# force the rebuild. FC's style linters (package-level [leanOptions]) are
+# switched off for these libs only: they would spam every check's verifier
+# output with copyright/namespace warnings about files that are not FC
+# contributions.
+RUN printf '%s\n' \
+        '' \
+        '[[lean_lib]]' \
+        'name = "Challenge"' \
+        'srcDir = "run"' \
+        '[lean_lib.leanOptions]' \
+        'weak.linter.style.copyright.formalConjectures = false' \
+        'weak.linter.style.namespace = false' \
+        '' \
+        '[[lean_lib]]' \
+        'name = "Solution"' \
+        'srcDir = "run"' \
+        '[lean_lib.leanOptions]' \
+        'weak.linter.style.copyright.formalConjectures = false' \
+        'weak.linter.style.namespace = false' \
+        >> lakefile.toml \
+    && mkdir -p run \
+    && if [ -f FormalConjecturesUtil.lean ]; then \
+           UTIL_MODULE=FormalConjecturesUtil; \
+       else \
+           UTIL_MODULE=FormalConjectures.Util.ProblemImports; \
+       fi \
+    && echo "import ${UTIL_MODULE}" > run/Challenge.lean \
+    && echo "import ${UTIL_MODULE}" > run/Solution.lean
+
 # Fetch Mathlib's prebuilt oleans, then build only the util-module closure (the
-# FC support modules + FormalConjecturesForMathlib). The hundreds of problem
-# files are NOT built. The lib entry point depends on the checkout's layout --
-# `FormalConjecturesUtil` after upstream's rename, `FormalConjectures.Util.
-# ProblemImports` before it -- and the builder has the checkout, so it detects
-# which (both layouts are live requirements across the datasets' pins; the
-# host-side registry `apn.dataset._FC_PROFILES` states the same fact for the
-# code that has no checkout).
+# FC support modules + FormalConjecturesForMathlib) and the two scratch-lib
+# stubs. The hundreds of problem files are NOT built. The lib entry point
+# depends on the checkout's layout -- `FormalConjecturesUtil` after upstream's
+# rename, `FormalConjectures.Util.ProblemImports` before it -- and the builder
+# has the checkout, so it detects which (both layouts are live requirements
+# across the datasets' pins; the host-side registry `apn.dataset._FC_PROFILES`
+# states the same fact for the code that has no checkout).
 RUN lake exe cache get \
     && if [ -f FormalConjecturesUtil.lean ]; then \
            lake build FormalConjecturesUtil; \
        else \
            lake build FormalConjectures.Util.ProblemImports; \
-       fi
+       fi \
+    # Stub build: broken scratch-lib plumbing fails here, not at the first check.
+    && lake build Challenge Solution
 
 # `COPY` can't branch on layout, so stage the proving-library SOURCE (the files
 # the agent legitimately proves *with*, imported into every problem's scope
@@ -97,17 +159,15 @@ RUN mkdir /staged \
     && cp -r FormalConjecturesForMathlib /staged/FormalConjecturesForMathlib
 
 # NOTE: `Submission/` is deliberately NOT registered as a lean_lib. The agent's
-# proof is a single file, `Submission/Spec.lean`, compiled standalone with
-# `lake env lean -o` (which derives the module name `Submission.Spec` from the
-# path -- no lib registration needed). Registering a lib and building it
-# graph-aware with `lake build` would let the agent split its proof across
-# imported helper modules, whose constants safe_verify *trusts* rather than
-# kernel-replays (it replays only the file it is handed) -- a soundness hole.
-# Keep proofs single-file; do not add a `[[lean_lib]] name = "Submission"` here.
-# The `Submission/` directory and its `Spec.lean` are created at *runtime* by the
-# Python scaffold -- the solver writes the entry module before the agent runs,
-# and the checker clears and recreates it on every call (see apn.solver /
-# apn.checker).
+# proof is a single file, `Submission/Spec.lean`; the comparator checker copies
+# exactly that file to `run/Solution.lean` and scores it. An
+# `import Submission.…` of an agent helper module therefore fails to resolve
+# (no such lib is registered) -- with Comparator this single-file layout is a
+# *policy* choice rather than a soundness requirement (the full solution
+# closure is kernel-replayed either way), but do not relax it here; see
+# comparator-migration-plan.md §3.2. The `Submission/` directory and its
+# `Spec.lean` are created at *runtime* by the Python scaffold in the agent
+# sandbox (see apn.solver).
 
 # --------------------------------------------------------------------------- #
 # base: copy in only what runtime needs.                                       #
@@ -120,15 +180,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APN_LEAN_PROJECT=/workspace/leanproject
 
 # Runtime libs for the Lean toolchain, plus the build tools the derived images
-# need (the agent builds PyPantograph; the scorer builds SafeVerify) and python3
-# (the agent uses it to drive PyPantograph and as a numerical scratchpad; the
-# scorer runs SafeVerify through it).
+# need (the agent builds PyPantograph; the comparator image builds lean4export)
+# and python3 (the agent uses it to drive PyPantograph and as a numerical
+# scratchpad).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
         python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# The Lean/lake toolchain (binaries + the v4.27.0 toolchain). The image ENV PATH
+# The Lean/lake toolchain (binaries + the project toolchain). The image ENV PATH
 # above covers non-login execs (how ``sandbox().exec`` and the agent's PyPantograph
 # subprocess run); add a profile snippet so *login* shells (e.g. ``bash -lc``)
 # also find lake/lean.
@@ -144,11 +204,10 @@ COPY --from=builder /workspace/leanproject/lakefile.toml \
                     /workspace/leanproject/lake-manifest.json ./
 COPY --from=builder /workspace/leanproject/.lake ./.lake
 
-# Note: the `Submission/` directory is NOT copied in. It carries no baked
-# content -- the Python scaffold creates it and the entry module at runtime (the
-# solver writes Spec.lean before the agent runs; the checker clears and recreates
-# it on every call). Both runtime writers `mkdir -p` the directory, so it need
-# not pre-exist in the image.
+# Note: neither the `Submission/` nor the `run/` directory is copied in. They
+# carry no baked content -- the Python scaffold creates the agent's
+# `Submission/Spec.lean` at runtime, and the comparator checker recreates
+# `run/` and stages `run/Challenge.lean`/`run/Solution.lean` per check.
 
 # The proving-library SOURCE the agent legitimately proves *with* (imported into
 # every problem's scope, like Mathlib), staged by the builder per the checkout's
@@ -272,36 +331,185 @@ COPY --from=corpus /corpus /corpus
 CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
-# scorer: SafeVerify, built with the v4.27.0 toolchain so it can replay/verify  #
-# v4.27.0 oleans. No Pantograph here.                                          #
+# landrun_build: the Landlock sandboxing launcher Comparator confines the      #
+# untrusted solution build/export with. Upstream's README requires building    #
+# from the main branch's source; we pin a commit (tags are not cut). Built     #
+# static (CGO off) so the binary drops into the bookworm-slim runtime image.   #
 # --------------------------------------------------------------------------- #
-FROM base AS scorer
+FROM golang:1.24-bookworm AS landrun_build
 
-# The host-side checker (apn/checker.py) drives the build product directly:
-# it compiles target/submission with `lake env lean -o` and runs safe_verify
-# on the oleans, one sandbox exec per step.
-COPY safeverify /opt/apn/safeverify
-# No manifest is vendored; resolve Cli (v4.27.0) and build.
-RUN cd /opt/apn/safeverify && lake update && lake build safe_verify
+ARG LANDRUN_COMMIT=811cfff51ceaf3d9843708aa6d22e9b84ccac8b4
+RUN git clone https://github.com/Zouuup/landrun.git /src/landrun \
+    && git -C /src/landrun checkout --detach "${LANDRUN_COMMIT}" \
+    && cd /src/landrun \
+    && CGO_ENABLED=0 go build -trimpath -o /out/landrun ./cmd/landrun
+
+# --------------------------------------------------------------------------- #
+# comparator_build: build the Comparator binary at ITS OWN pinned toolchain    #
+# (v4.34.0-rc2 today; see the header's version story). `lake build` resolves   #
+# `Export.Parse` from comparator's lake-manifest.json -- the same              #
+# LEAN4EXPORT_COMMIT rev the runtime exporter below is built from (the         #
+# coupled-pin invariant, plan §2.3). The build runs under /root/.elan so the   #
+# binary's RPATH points where the runtime image installs the toolchain.        #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS comparator_build
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH=/root/.elan/bin:$PATH \
+    ELAN_HOME=/root/.elan
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl git ca-certificates build-essential libgmp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG ELAN_VERSION=v4.2.3
+RUN curl -sSfL "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-$(uname -m)-unknown-linux-gnu.tar.gz" \
+        | tar xz -C /tmp \
+    && /tmp/elan-init -y --default-toolchain none \
+    && rm /tmp/elan-init
+
+# Pin the commit, not the tag (tags are mutable): 19e111e = tag v4.34.0-rc2.
+ARG COMPARATOR_COMMIT=19e111e2141cf333c7daff0f64c5f24acc91dd2e
+RUN git clone https://github.com/leanprover/comparator.git /opt/comparator \
+    && git -C /opt/comparator checkout --detach "${COMPARATOR_COMMIT}" \
+    && elan toolchain install "$(cat /opt/comparator/lean-toolchain)" \
+    && cd /opt/comparator \
+    && lake build comparator
+
+# --------------------------------------------------------------------------- #
+# lean4export_build: the runtime exporter. It importModules-loads the          #
+# project's oleans in-process, so it is built at the PROJECT toolchain -- an   #
+# unmodified upstream clone at the rev comparator's manifest pins, with only   #
+# the lean-toolchain file overwritten (plan §2.2: no upstream rev has the new  #
+# export format *and* the project toolchain, and the exe's compile surface is  #
+# old-API enough to build cleanly). FROM base so the project toolchain and     #
+# build tools are already present and the toolchain file is copied from the    #
+# project itself (byte-exact match by construction).                           #
+# --------------------------------------------------------------------------- #
+FROM base AS lean4export_build
+
+# Must equal the lean4export rev in the pinned comparator's lake-manifest.json.
+ARG LEAN4EXPORT_COMMIT=cacf989bd75f608700820f6afc595f32e7a99a4d
+RUN git clone https://github.com/leanprover/lean4export.git /opt/lean4export \
+    && git -C /opt/lean4export checkout --detach "${LEAN4EXPORT_COMMIT}" \
+    && cp /workspace/leanproject/lean-toolchain /opt/lean4export/lean-toolchain \
+    && cd /opt/lean4export \
+    && lake build lean4export
+
+# --------------------------------------------------------------------------- #
+# comparator: the trusted verifier image (compose service `comparator`).       #
+# Carries TWO toolchains by design (plan §2.3): the project toolchain (from    #
+# base) runs everything at scoring time -- `lake env`, the challenge/solution  #
+# builds, lean4export -- while the comparator binary's own toolchain exists    #
+# solely so that binary's shared-library RPATH resolves. No lake/lean          #
+# invocation ever dispatches to the second toolchain.                          #
+#                                                                              #
+# Scoring runs as the non-privileged `comparator` user (comparator README      #
+# assumption 6) -- not via a USER directive (the image stays root for          #
+# Inspect; see the note at the end of this stage) but per exec: the checker    #
+# passes user=COMPARATOR_USER on every command except the root .lake reset.    #
+# landrun (Landlock) confines the untrusted solution build to writes in        #
+# .lake, and /opt/apn/reset-dotlake.sh restores a pristine .lake before every  #
+# check (comparator-migration-plan.md §3.1).                                   #
+# --------------------------------------------------------------------------- #
+FROM base AS comparator
+
+# Resolve lake/lean straight from the project toolchain, bypassing the elan
+# shims: the shims may want to touch elan state (e.g. gc bookkeeping) under
+# /root on dispatch, which the non-privileged runtime user cannot write. The
+# elan-managed install is still what ships the toolchain; only PATH resolution
+# changes.
+ARG LEAN_VERSION=v4.27.0
+ENV PATH=/root/.elan/toolchains/leanprover--lean4---${LEAN_VERSION}/bin:$PATH
+
+# The comparator binary + its own toolchain (merged into /root/.elan alongside
+# the project's -- the binary's RPATH points into this path).
+COPY --from=comparator_build /opt/comparator/.lake/build/bin/comparator \
+                             /opt/apn/comparator/bin/comparator
+COPY --from=comparator_build /root/.elan/toolchains /root/.elan/toolchains
+
+# The runtime exporter (project toolchain; RPATH resolves via base's install)
+# and landrun, installed on PATH where comparator's default resolution finds
+# them (its README's preferred setup) -- no COMPARATOR_* env overrides needed.
+COPY --from=lean4export_build /opt/lean4export/.lake/build/bin/lean4export \
+                              /usr/local/bin/lean4export
+COPY --from=landrun_build /out/landrun /usr/local/bin/landrun
+
+COPY reset-dotlake.sh /opt/apn/reset-dotlake.sh
+RUN chmod 755 /opt/apn/reset-dotlake.sh
+
+# Stage the pristine workspace tree the reset script restores from:
+#   /opt/pristine/dot-lake  -- the project .lake minus packages/ (lake config
+#                              cache + the FC build artifacts, tens of MB;
+#                              copied into .lake on every reset). The builder's
+#                              Challenge/Solution stub artifacts ride along:
+#                              staged files hash differently, so lake rebuilds
+#                              them (and reuse on a byte-identical file is the
+#                              same compilation).
+#   /opt/pristine/packages  -- the heavy Mathlib/dependency artifacts; stay
+#                              root-owned outside .lake (and so outside the
+#                              landrun write grant) and are symlinked into the
+#                              fresh .lake (never copied, never writable).
+# Neither .lake nor run/ is recreated here: the reset script rebuilds .lake
+# and the checker rebuilds run/ before every check, so the image need not
+# carry either.
+RUN mkdir -p /opt/pristine \
+    && mv /workspace/leanproject/.lake/packages /opt/pristine/packages \
+    && mv /workspace/leanproject/.lake /opt/pristine/dot-lake
+
+# The non-privileged runtime user (comparator README assumption 6). It owns
+# exactly the project dir, in which the reset script recreates .lake and the
+# checker recreates run/ per check. Everything else -- binaries, toolchains,
+# /opt/pristine -- stays root-owned and unwritable. The baked toolchains live
+# under /root/.elan (the PATH pin above, and the comparator binary's RPATH),
+# so /root becomes traverse-only (711: x permits path resolution; no listing,
+# no writes).
+RUN useradd --create-home --shell /bin/bash comparator \
+    && chown comparator /workspace/leanproject \
+    && chmod 711 /root
+
+# Lake validates the manifest by reading each package's git remote; git
+# refuses repos owned by another uid (safe.directory, CVE-2022-24765), and
+# lake treats the failed read as "URL has changed" -- attempting to delete and
+# re-clone the root-owned pristine packages. The baked repos are trusted, so
+# mark everything safe for the runtime user. (The untrusted build gains
+# nothing: it already controls its own child processes' GIT_CONFIG_* env.)
+RUN git config --system --add safe.directory '*'
+
+# The image deliberately stays root (no USER directive): Inspect's sandbox
+# plumbing assumes the container's default user can write anywhere
+# (write_file's tee/mkdir run as that user), and k8s_sandbox implements the
+# per-exec `user=` switch with runuser(1), which only root may invoke. The
+# privilege drop happens per command instead: the checker passes
+# user=COMPARATOR_USER (apn/checker.py) on every exec against this sandbox
+# except the .lake reset, which stays root so its rm can clear permission
+# traps the untrusted build may leave in .lake (see reset-dotlake.sh). All
+# other scoring work runs as `comparator` -- both backends resolve its HOME
+# from the passwd entry (docker exec --user and runuser alike). Staged inputs
+# written as root land 0644, readable by the comparator user; run/ and .lake
+# are (re)created as the comparator user (the reset drops to it for the
+# copy), so it owns everything it must write.
 
 CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
 # generate: vendor-time stage holding the declaration-range extractor that      #
-# scripts/generate_oeis_isolated.py drives to rebuild apn/data/oeis/Isolated/. Not  #
-# a runtime service and kept separate from `scorer` so the scored image stays    #
-# minimal. Source-only COPY (no host .lake); imports only Lean core, so it        #
-# builds offline with no `lake update`. Run via:                                 #
-#   docker build --target generate -t apn-generate \                             #
-#     --build-arg FC_COMMIT="$(cat apn/data/<dataset>/fc_commit)" apn/lean    #
-#   docker run --rm -v "$PWD":/repo apn-generate \                               #
-#     python3 /repo/scripts/generate_oeis_isolated.py --container '' ...         #
-# (in practice: build the extractor into a container with the repo mounted).     #
+# scripts/generate_*_isolated.py drives to rebuild apn/data/*/Isolated/, plus   #
+# the disproof-declaration certifier the isolation suites run over the          #
+# committed files. Not a runtime service and kept separate from `comparator`    #
+# so the scored image stays minimal. Source-only COPY (no host .lake); imports  #
+# only Lean core, so it builds offline with no `lake update`. Run via:          #
+#   docker build --target generate -t apn-generate \                            #
+#     --build-arg FC_COMMIT="$(cat apn/data/<dataset>/fc_commit)" apn/lean       #
+#   docker run --rm -v "$PWD":/repo apn-generate \                              #
+#     python3 /repo/scripts/generate_oeis_isolated.py --container '' ...        #
+# (in practice: build the extractor into a container with the repo mounted).    #
 # --------------------------------------------------------------------------- #
 FROM base AS generate
 
 COPY extract_ranges/lakefile.lean extract_ranges/lean-toolchain \
-     extract_ranges/ExtractRanges.lean /opt/apn/extract_ranges/
-RUN cd /opt/apn/extract_ranges && lake build extract_ranges
+     extract_ranges/ExtractRanges.lean extract_ranges/CertifyDisproof.lean \
+     /opt/apn/extract_ranges/
+RUN cd /opt/apn/extract_ranges && lake build extract_ranges certify_disproof
 
 CMD ["sleep", "infinity"]

@@ -32,3 +32,5 @@ theorem oeis_233566_conjecture_0 :
   (∀ n, 3 < n → a n > 0) ∧
   (∀ n, 2 < n → ∃ p, p < n ∧ Nat.Prime p ∧ Nat.Prime (p ^ 2 * Nat.totient (n - p) - 1)) := by
   sorry
+
+theorem oeis_233566_conjecture_0.disproof : ¬ (type_of% @oeis_233566_conjecture_0) := sorry

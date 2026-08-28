@@ -83,3 +83,5 @@ theorem erdos_5.variants.banks_freiberg_maynard_measure : ∀ ε > (0 : ℝ), �
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.banks_freiberg_maynard_measure.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.banks_freiberg_maynard_measure) := sorry

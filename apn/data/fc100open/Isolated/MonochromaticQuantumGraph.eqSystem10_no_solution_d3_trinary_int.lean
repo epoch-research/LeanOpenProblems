@@ -293,3 +293,5 @@ theorem eqSystem10_no_solution_d3_trinary_int :
   sorry
 
 end MonochromaticQuantumGraph
+
+theorem MonochromaticQuantumGraph.eqSystem10_no_solution_d3_trinary_int.disproof : ¬ (type_of% @MonochromaticQuantumGraph.eqSystem10_no_solution_d3_trinary_int) := sorry

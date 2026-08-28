@@ -39,3 +39,5 @@ Conjecture: a(n) > 0 for all n > 0. In other words, any positive integer n can b
 -/
 theorem oeis_306477_conjecture_0 : ∀ n : ℕ, n > 0 → A306477 n > 0 := by
   sorry
+
+theorem oeis_306477_conjecture_0.disproof : ¬ (type_of% @oeis_306477_conjecture_0) := sorry

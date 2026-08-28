@@ -12,11 +12,14 @@ The gates (all over the committed files, recomputing independently what
 * **Structural** -- re-extract each isolated file and confirm the target theorem
   is present exactly once and the surviving theorem/lemma commands are exactly
   the ones the cut predicts (target + its definitional-dependency lemmas,
-  nothing else), with the target's *elaborated* statement equal to the vendored
-  source's (up to the ``normalize_hygiene`` display-artifact erasure --
-  α-equivalence). There is no ``answer(...) ↔`` rewrite in this dataset, so the
-  certificate is plain equality; the test re-detects the source form
-  independently and asserts it is ``None`` for every member.
+  plus the derived ``.disproof``, nothing else), with the target's *elaborated*
+  statement equal to the vendored source's (up to the ``normalize_hygiene``
+  display-artifact erasure -- α-equivalence). There is no ``answer(...) ↔``
+  rewrite in this dataset, so the certificate is plain equality; the test
+  re-detects the source form independently and asserts it is ``None`` for every
+  member.
+* **Disproof** -- independently recompute each target's negation in Lean and
+  certify that it is exactly the committed ``<target>.disproof`` type.
 * **Compile** -- every isolated file compiles cleanly with the scorer's exact
   ``lake env lean -o`` command, in parallel in the container.
 
@@ -52,7 +55,7 @@ from scripts.isolation import (
     planned_survivors,
     theorem_command_decls,
 )
-from tests.lean_sandbox import compile_all, extract, generate_env
+from tests.lean_sandbox import certify, compile_all, extract, generate_env
 
 
 # --------------------------------------------------------------------------- #
@@ -63,7 +66,10 @@ class IsoData:
     """Everything the gates need, gathered from a single sandbox bring-up."""
 
     src_ranges: dict[str, dict[str, Any]]  # extractor records for Sources/, by relpath
-    iso_ranges: dict[str, dict[str, Any]]  # extractor records for Isolated/, by stem (= name)
+    iso_ranges: dict[
+        str, dict[str, Any]
+    ]  # extractor records for Isolated/, by stem (= name)
+    cert_verdicts: dict[str, dict[str, Any]]  # disproof certifier verdicts, by stem
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
@@ -90,13 +96,17 @@ async def iso_data(rows: list[SampleRow]) -> IsoData:
     util_module = fc_profile(pin).util_module
     async with generate_env("pytest_erdos_autoformalized_isolation", pin) as env:
         rels = sorted({r.source.removeprefix("Sources/") for r in rows})
-        src = await extract(env, [SOURCES_DIR / rel for rel in rels], util_module, arcnames=rels)
+        src = await extract(
+            env, [SOURCES_DIR / rel for rel in rels], util_module, arcnames=rels
+        )
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
         iso = await extract(env, iso_files, util_module)
+        certs = await certify(env, iso_files, util_module)
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},
         iso_ranges={fr["file"][: -len(".lean")]: fr for fr in iso},
+        cert_verdicts={v["file"][: -len(".lean")]: v for v in certs},
         compile_failures=failures,
     )
 
@@ -125,9 +135,9 @@ async def test_isolated_files_are_structurally_correct(
     rows: list[SampleRow], iso_data: IsoData
 ) -> None:
     """Each isolated file carries exactly the target + its dependency lemmas
-    (the cut's prediction), with the target's elaborated statement equal to
-    the source's up to hygiene normalization -- no member may carry an
-    ``answer(...)`` form in this dataset."""
+    (the cut's prediction) + the derived disproof, with the target's elaborated
+    statement equal to the source's up to hygiene normalization -- no member
+    may carry an ``answer(...)`` form in this dataset."""
     failures: list[str] = []
     for row in rows:
         name, rel = row.id, row.source.removeprefix("Sources/")
@@ -146,12 +156,17 @@ async def test_isolated_files_are_structurally_correct(
             )
             continue
         remaining = sorted(d["name"] for d in thms)
-        if remaining != planned:
-            failures.append(f"{name}: surviving theorems {remaining} != planned {planned}")
+        expected = sorted(planned + [f"{row.decl_name}.disproof"])
+        if remaining != expected:
+            failures.append(
+                f"{name}: surviving theorems {remaining} != expected {expected}"
+            )
             continue
         form = _source_form(name, rel, iso_data.src_ranges[rel])
         if form is not None:
-            failures.append(f"{name}: source statement carries an answer(...) form ({form})")
+            failures.append(
+                f"{name}: source statement carries an answer(...) form ({form})"
+            )
             continue
         iso_type = normalize_hygiene(target_hits[0]["type"])
         if not answer_certified(None, src_type, iso_type):
@@ -160,7 +175,9 @@ async def test_isolated_files_are_structurally_correct(
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_no_example_commands_survive(rows: list[SampleRow], iso_data: IsoData) -> None:
+async def test_no_example_commands_survive(
+    rows: list[SampleRow], iso_data: IsoData
+) -> None:
     """Anonymous ``example`` sanity checks are cut: keeping one would make the
     scorer re-run its proof inside the trusted target compile on every score
     call. The vendored sources ship none; the isolated files must not either."""
@@ -172,6 +189,29 @@ async def test_no_example_commands_survive(rows: list[SampleRow], iso_data: IsoD
         if any(is_example_command(src, c) for c in fr["commands"]):
             offenders.append(row.id)
     assert not offenders, f"example commands survived isolation in: {offenders}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_disproof_declarations_certified(
+    rows: list[SampleRow], iso_data: IsoData
+) -> None:
+    failures: list[str] = []
+    for row in rows:
+        stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
+        verdict = iso_data.cert_verdicts.get(stem)
+        if verdict is None:
+            failures.append(f"{row.id}: no certifier verdict")
+        elif not verdict["ok"]:
+            failures.append(f"{row.id}: {verdict['error']}")
+        elif (
+            verdict["target"] != row.decl_name
+            or verdict["disproof"] != f"{row.decl_name}.disproof"
+        ):
+            failures.append(
+                f"{row.id}: certified pair ({verdict['target']}, {verdict['disproof']}) "
+                f"does not match manifest declaration {row.decl_name}"
+            )
+    assert not failures, "disproof certification failed:\n  " + "\n  ".join(failures)
 
 
 @pytest.mark.asyncio(loop_scope="module")

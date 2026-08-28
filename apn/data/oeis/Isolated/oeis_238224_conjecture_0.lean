@@ -38,3 +38,5 @@ noncomputable def A238224 (n : ℕ) : ℕ :=
 -/
 theorem oeis_238224_conjecture_0 : ∀ n : ℕ, 1 < n → A238224 n > 0 := by
   sorry
+
+theorem oeis_238224_conjecture_0.disproof : ¬ (type_of% @oeis_238224_conjecture_0) := sorry

@@ -58,3 +58,5 @@ theorem ersz_bounds :
   sorry
 
 end Erdos107.variants
+
+theorem Erdos107.variants.ersz_bounds.disproof : ¬ (type_of% @Erdos107.variants.ersz_bounds) := sorry

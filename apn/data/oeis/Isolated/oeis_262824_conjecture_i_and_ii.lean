@@ -52,3 +52,5 @@ theorem oeis_262824_conjecture_i_and_ii :
     -- P_4: 2*w^2 + x^3 + 4*y^3 + z^4
     (∀ n : Nat, ∃ w x y z : Nat, n = 2 * w ^ 2 + x ^ 3 + 4 * y ^ 3 + z ^ 4)
   ) := by sorry
+
+theorem oeis_262824_conjecture_i_and_ii.disproof : ¬ (type_of% @oeis_262824_conjecture_i_and_ii) := sorry

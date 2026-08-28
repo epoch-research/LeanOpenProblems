@@ -43,3 +43,5 @@ for all $n = 1..2 \cdot 10^{12}$ with no counterexample found.
 -/
 theorem A306477_conjecture (n : ℕ) (hn : n > 0) : A306477 n > 0 := by
   sorry
+
+theorem A306477_conjecture.disproof : ¬ (type_of% @A306477_conjecture) := sorry

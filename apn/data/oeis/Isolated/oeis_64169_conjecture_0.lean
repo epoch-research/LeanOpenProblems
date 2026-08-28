@@ -30,3 +30,5 @@ def A064169 (n : ℕ) : ℕ :=
 theorem oeis_64169_conjecture_0 (n : ℕ) (hn : n > 2) :
   (n ∣ A064169 (n - 2)) ↔ n.Prime :=
 by sorry
+
+theorem oeis_64169_conjecture_0.disproof : ¬ (type_of% @oeis_64169_conjecture_0) := sorry

@@ -41,3 +41,5 @@ theorem oeis_262813_conjecture :
   -- The conjecture is formally stated as a conjunction of two properties for all n > 0.
   ∀ n : ℕ, n > 0 → (a n > 0 ∧ (a n = 1 ↔ n ∈ S)) := by
   sorry
+
+theorem oeis_262813_conjecture.disproof : ¬ (type_of% @oeis_262813_conjecture) := sorry

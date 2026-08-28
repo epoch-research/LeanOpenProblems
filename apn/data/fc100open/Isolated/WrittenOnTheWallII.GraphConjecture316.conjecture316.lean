@@ -43,3 +43,5 @@ theorem conjecture316 (G : SimpleGraph α) [DecidableRel G.Adj] (hG : G.Connecte
 -- Sanity checks
 
 end WrittenOnTheWallII.GraphConjecture316
+
+theorem WrittenOnTheWallII.GraphConjecture316.conjecture316.disproof : ¬ (type_of% @WrittenOnTheWallII.GraphConjecture316.conjecture316) := sorry

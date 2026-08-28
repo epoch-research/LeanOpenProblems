@@ -55,3 +55,5 @@ theorem oeis_185895_conjecture_1 :
   ∀ (n : ℕ), 0 < n →
     ((A185895 n) * (A185895 (n - 1)) < 0 ↔ is_triangular n) := by
   sorry
+
+theorem oeis_185895_conjecture_1.disproof : ¬ (type_of% @oeis_185895_conjecture_1) := sorry

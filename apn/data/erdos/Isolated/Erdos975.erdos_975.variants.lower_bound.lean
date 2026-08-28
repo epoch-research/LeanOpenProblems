@@ -50,3 +50,5 @@ theorem erdos_975.variants.lower_bound (f : ℤ[X]) (hf : Irreducible f) (hfdeg 
   sorry
 
 end Erdos975
+
+theorem Erdos975.erdos_975.variants.lower_bound.disproof : ¬ (type_of% @Erdos975.erdos_975.variants.lower_bound) := sorry

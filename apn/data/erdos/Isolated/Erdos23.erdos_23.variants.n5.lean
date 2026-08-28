@@ -55,3 +55,5 @@ def blowupC5 (n : ℕ) : SimpleGraph (ZMod 5 × Fin n) :=
 -- TODO: add the remaining variants/statements/comments
 
 end Erdos23
+
+theorem Erdos23.erdos_23.variants.n5.disproof : ¬ (type_of% @Erdos23.erdos_23.variants.n5) := sorry

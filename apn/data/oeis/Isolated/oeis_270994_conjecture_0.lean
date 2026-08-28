@@ -37,3 +37,5 @@ theorem oeis_270994_conjecture_0 : ∀ n : ℕ,
   is_sierpinski_number (a n + 28) ∧
   (∀ k : ℕ, is_sierpinski_number k → a n < k → k < a n + 28 → False) := by
   sorry
+
+theorem oeis_270994_conjecture_0.disproof : ¬ (type_of% @oeis_270994_conjecture_0) := sorry

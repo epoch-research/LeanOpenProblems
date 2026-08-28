@@ -42,3 +42,5 @@ This is equivalent to the statement that the set $\{ m : ℕ \mid \text{is\_n\_d
 -/
 theorem oeis_a358340_conjecture_k4 : Set.Infinite { m : ℕ | is_zeroless (m ^ 4) } := by
   sorry
+
+theorem oeis_a358340_conjecture_k4.disproof : ¬ (type_of% @oeis_a358340_conjecture_k4) := sorry

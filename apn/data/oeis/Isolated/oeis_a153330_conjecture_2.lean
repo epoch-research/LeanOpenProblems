@@ -55,3 +55,5 @@ theorem oeis_a153330_conjecture_2 :
     A153330_indices 16 = {8} ∧
     A153330_indices 3 = {4, 5} :=
 by sorry
+
+theorem oeis_a153330_conjecture_2.disproof : ¬ (type_of% @oeis_a153330_conjecture_2) := sorry

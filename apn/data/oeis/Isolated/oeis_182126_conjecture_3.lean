@@ -31,3 +31,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 theorem oeis_182126_conjecture_3 :
   ∀ n : ℕ, n > 0 → (Nat.Prime (a n) ↔ a n ∈ ([2, 7, 11, 13, 29] : List ℕ)) :=
 by sorry
+
+theorem oeis_182126_conjecture_3.disproof : ¬ (type_of% @oeis_182126_conjecture_3) := sorry

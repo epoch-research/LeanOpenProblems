@@ -33,3 +33,5 @@ def a (n : ℕ) : ℕ :=
 theorem oeis_A275786_conjecture :
   ∀ n m : ℕ, n > 0 → m > 0 → (a n = a m → n = m) :=
   by sorry
+
+theorem oeis_A275786_conjecture.disproof : ¬ (type_of% @oeis_A275786_conjecture) := sorry

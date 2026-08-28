@@ -50,3 +50,5 @@ theorem erdos_61.variants.erha89 :
   sorry
 
 end Erdos61
+
+theorem Erdos61.erdos_61.variants.erha89.disproof : ¬ (type_of% @Erdos61.erdos_61.variants.erha89) := sorry

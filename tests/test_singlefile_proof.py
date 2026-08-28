@@ -1,36 +1,41 @@
-"""Integration tests for single-file submissions against the real scorer image.
+"""Integration tests for single-file submissions against the real comparator image.
 
-These exercise the *actual* :class:`apn.checker.SandboxSafeVerify` against the
-real ``scorer`` sandbox (Lean + Mathlib + FormalConjectures + the vendored
-``safe_verify``), built from ``apn/lean/Dockerfile`` via the production compose
-file. Nothing is reimplemented and no image is referenced by a fixed tag: the
-compose carries ``build:`` sections, so docker (re)builds the version-tagged
-image from the current Dockerfile, cache-backed -- a stale prebuilt image can
-never silently satisfy the test. The sandbox is brought up through Inspect's own
-lifecycle (``task_init`` / ``init_sandbox_environments_sample`` / ``cleanup``),
-the same path a real eval uses, mirroring ``PortBench/test/test_sandboxes.py``.
+These exercise the *actual* :class:`apn.checker.SandboxComparator` against the
+real ``comparator`` sandbox (Lean + Mathlib + FormalConjectures + the Comparator
+binary + lean4export + landrun), built from ``apn/lean/Dockerfile`` via the
+production compose file. Nothing is reimplemented and no image is referenced by
+a fixed tag: the compose carries ``build:`` sections, so docker (re)builds the
+version-tagged image from the current Dockerfile, cache-backed -- a stale
+prebuilt image can never silently satisfy the test. The sandbox is brought up
+through Inspect's own lifecycle (``task_init`` /
+``init_sandbox_environments_sample`` / ``cleanup``), the same path a real eval
+uses, so the checker's non-privileged-user execs and landrun sandboxing are
+exercised too.
 
-We then call ``SandboxSafeVerify(sandbox_name="scorer").check(target, submission)``
-with ``apn.checker.sandbox`` pointed at the live scorer env, so the verdict here
+We call ``SandboxComparator().check(spec, submission, decl, claim)`` with
+``apn.checker.sandbox`` pointed at the live comparator env, so the verdict here
 is exactly the one the scorer would return for that submission.
 
 What they cover (the soundness-relevant behaviour of the single-file model; the
 plumbing -- tar shaping, verdict mapping -- is unit-tested in ``test_checker.py``):
 
 * a single-file proof is accepted;
-* **a submission that ``import``s a helper module of its own is rejected at
-  ``compile_submission``** -- the load-bearing single-file guard. The submission
-  is compiled standalone, ``Submission`` is not a registered Lake library, and no
-  helper olean is ever built, so ``import Submission.…`` does not resolve. This is
-  what closes the trusted-helper hole: ``safe_verify`` kernel-replays only the
-  file it is handed, trusting an *imported* module's constants rather than
-  re-checking them, so there must be no way to introduce one;
+* a theorem whose fully qualified name contains a dotted guillemet-quoted
+  component is accepted (the shape of three live FC100 targets);
+* the same accept path in the *erdos* pin's comparator image -- the
+  institutionalized pin-move smoke test: that pin sits past upstream's
+  ``FormalConjecturesUtil`` rename, so the end-to-end build + kernel replay run
+  with the module-built util oleans in the import closure;
+* a single-file disproof is accepted under the ``disproof`` claim;
+* **a submission that ``import``s a helper module of its own is rejected** --
+  the load-bearing single-file guard. Only ``Spec.lean`` becomes
+  ``run/Solution.lean``; ``Submission`` is not a registered Lake library, so
+  ``import Submission.…`` does not resolve and the solution build fails;
 * a pattern-matching ``def`` in the entry module + a real proof is accepted --
-  the regression guard that compiling both sides at the same path preserves the
-  mangled private (equational-lemma) names ``safe_verify`` matches by exact name;
+  the module-name story (Challenge and Solution are different modules by design,
+  so this confirms a faithful private/generated-name closure still matches);
 * a missing/renamed entry module, and an empty submission, are rejected as a
-  verdict (``compile_submission``; never raised, and without falling through to
-  verifying the trusted target text).
+  verdict (``entry_missing``), host-side, without touching the sandbox.
 
 Docker is part of the test environment, so these always run -- they are not
 gated or skipped. The first run builds the images (Lean + Mathlib) from the
@@ -45,6 +50,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import pytest
+import pytest_asyncio
 from inspect_ai.util import SandboxEnvironment
 from inspect_ai.util._sandbox.context import (
     cleanup_sandbox_environments_sample,
@@ -53,18 +59,17 @@ from inspect_ai.util._sandbox.context import (
 from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
-from apn.checker import CheckOutcome, SandboxSafeVerify
+from apn.checker import Claim, CheckOutcome, SandboxComparator
 from apn.dataset import ERDOS_DIR, OEIS_DIR, fc_commit, fc_profile
 from apn.task import get_compose_file
 
+_IMPORT = "import FormalConjectures.Util.ProblemImports\n"
+
 
 def _tar_of(files: dict[str, str]) -> bytes:
-    """Pack ``{relative path: contents}`` into a tar, as the checker expects.
-
-    Members are relative to ``Submission/`` (``Spec.lean``); the checker unpacks
-    with ``tar -xf -C Submission``. Stands in for what ``read_submission_tar``
-    produces from the agent's live sandbox.
-    """
+    """Pack ``{relative path: contents}`` into a tar, as the checker expects
+    (members relative to ``Submission/``). Stands in for what
+    ``read_submission_tar`` produces from the agent's live sandbox."""
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as tf:
         for name, content in files.items():
@@ -75,19 +80,29 @@ def _tar_of(files: dict[str, str]) -> bytes:
     return buf.getvalue()
 
 
+def _spec(theorem_body: str, *, defs: str = "", imp: str = _IMPORT) -> str:
+    """A challenge spec: the FC import (the oeis pin's old-layout module unless
+    ``imp`` overrides it), optional defs, the target theorem left as ``sorry``,
+    and the appended ``.disproof`` declaration (the shape every committed
+    Isolated spec has)."""
+    return (
+        imp
+        + (defs + "\n" if defs else "")
+        + f"theorem tgt : {theorem_body} := by sorry\n"
+        + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+    )
+
+
 @asynccontextmanager
-async def _sandbox_envs(
-    pin: str, task_name: str = "pytest_singlefile_scorer"
-) -> AsyncIterator[dict[str, SandboxEnvironment]]:
+async def _comparator_env(
+    pin: str, task_name: str = "pytest_singlefile_comparator"
+) -> AsyncIterator[SandboxEnvironment]:
     """Bring up the production compose at FC ``pin`` and yield the live
-    sandbox-env dict.
+    ``comparator`` env.
 
     Uses Inspect's sandbox lifecycle against ``apn.task.get_compose_file`` (which
-    builds from ``apn/lean/Dockerfile``), so the image is current by construction.
-    The checker needs both the untrusted ``compile`` sandbox and the trusted
-    ``scorer`` sandbox, so we expose the whole ``{name: env}`` dict. Per-test
-    bring-up/tear-down -- simple and correct; the docker cache keeps repeat runs
-    cheap (the same trade-off PortBench's test harness makes).
+    builds from ``apn/lean/Dockerfile``), so the image is current by
+    construction.
     """
     compose = str(get_compose_file(pin, literature=False))
     await DockerSandboxEnvironment.task_init(task_name, compose)
@@ -101,7 +116,7 @@ async def _sandbox_envs(
             metadata={},
         )
         try:
-            yield envs
+            yield envs["comparator"]
         finally:
             await cleanup_sandbox_environments_sample(
                 type="docker",
@@ -114,122 +129,179 @@ async def _sandbox_envs(
         await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
 
 
+@pytest_asyncio.fixture(loop_scope="module", scope="module")
+async def comparator_env() -> AsyncIterator[SandboxEnvironment]:
+    """The live ``comparator`` env, brought up **once** for the whole module.
+
+    Every case here is honest, and ``SandboxComparator.check`` resets the
+    workspace before each check, so a shared sandbox is safe -- and it builds
+    the image once instead of per test, shrinking the buildkit flake surface
+    (mirrors ``tests/test_gold_proofs.py``). The fixture and the cases share one
+    module-scoped event loop (pytest-asyncio ``loop_scope="module"``); driving
+    Inspect's sandbox lifecycle on pytest-asyncio's own loop is the only safe
+    way (an ``asyncio.run`` in a plain fixture spins up a second loop its
+    loop-bound globals deadlock against)."""
+    # The suite is dataset-agnostic, so the shared env uses the oeis pin; the
+    # erdos-pin case below brings up its own env.
+    async with _comparator_env(fc_commit(OEIS_DIR)) as env:
+        yield env
+
+
 async def _check(
+    env: SandboxEnvironment,
     monkeypatch: pytest.MonkeyPatch,
-    target: str,
+    spec: str,
     submission: dict[str, str],
-    pin: str | None = None,
+    *,
+    decl: str = "tgt",
+    claim: Claim = "proof",
 ) -> CheckOutcome:
-    """Run the real checker against freshly built compile + scorer sandboxes.
-
-    ``submission`` is given as ``{relative path: contents}`` for readability and
-    packed into the tar the checker actually consumes. ``checker_mod.sandbox`` is
-    pointed at the live envs by name, so ``sandbox("compile")`` /
-    ``sandbox("scorer")`` resolve to the matching containers. The suite is
-    dataset-agnostic, so ``pin`` defaults to the oeis pin; pass another
-    dataset's to score in that dataset's images.
-    """
-    async with _sandbox_envs(pin or fc_commit(OEIS_DIR)) as envs:
-        monkeypatch.setattr(checker_mod, "sandbox", lambda name=None, *a, **k: envs[name])
-        return await SandboxSafeVerify(sandbox_name="scorer").check(
-            target, _tar_of(submission)
-        )
-
-
-# --------------------------------------------------------------------------- #
-# Minimal Lean specs/proofs (compile against ProblemImports).                  #
-# --------------------------------------------------------------------------- #
-_IMPORT = "import FormalConjectures.Util.ProblemImports\n"
-
-# A trivial trusted target with no definitions, proof left as sorry.
-TARGET_SIMPLE = _IMPORT + "\ntheorem tgt : 1 + 1 = 2 := by sorry\n"
-
-# A target whose statement is about a pattern-matching def -- isolates the
-# private equational-lemma names the same-path compile must preserve.
-TARGET_PATTERN_MATCH = (
-    _IMPORT
-    + "\ndef parity : Nat → Bool\n  | 0 => true\n  | (n + 1) => !parity n\n"
-    + "\ntheorem tgt : parity 0 = true := by sorry\n"
-)
+    """Run the real checker against the given comparator sandbox."""
+    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
+    return await SandboxComparator().check(spec, _tar_of(submission), decl=decl, claim=claim)
 
 
 # --------------------------------------------------------------------------- #
 # Tests.                                                                        #
 # --------------------------------------------------------------------------- #
-async def test_single_file_proof_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
-    submission = {"Spec.lean": _IMPORT + "\ntheorem tgt : 1 + 1 = 2 := by norm_num\n"}
-    outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
-    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail}"
+@pytest.mark.asyncio(loop_scope="module")
+async def test_single_file_proof_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec = _spec("1 + 1 = 2")
+    submission = {"Spec.lean": _spec("1 + 1 = 2").replace(
+        "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
+    )}
+    outcome = await _check(comparator_env, monkeypatch, spec, submission)
+    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
+@pytest.mark.asyncio(loop_scope="module")
+async def test_quoted_decl_name_component_containing_dot_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A source-spelled declaration name must round-trip through Comparator's config.
+
+    FC100 contains three live targets under Arxiv namespaces whose quoted
+    component is an arXiv identifier such as ``«0912.2382»``. This pins the
+    end-to-end contract that Comparator's config decoding preserves that single
+    name component.
+    """
+    decl = "Arxiv.«0912.2382».curling_number_conjecture"
+    spec = (
+        _IMPORT
+        + "namespace Arxiv.«0912.2382»\n"
+        + "theorem curling_number_conjecture : 1 + 1 = 2 := by sorry\n"
+        + "end Arxiv.«0912.2382»\n"
+        + f"theorem {decl}.disproof : ¬ (type_of% @{decl}) := sorry\n"
+    )
+    submission = {
+        "Spec.lean": spec.replace(
+            "theorem curling_number_conjecture : 1 + 1 = 2 := by sorry",
+            "theorem curling_number_conjecture : 1 + 1 = 2 := by norm_num",
+        )
+    }
+    outcome = await _check(comparator_env, monkeypatch, spec, submission, decl=decl)
+    assert outcome.ok, (
+        "a valid proof under a quoted dotted name should be accepted, got "
+        f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+    )
+
+
+@pytest.mark.asyncio(loop_scope="module")
 async def test_single_file_proof_is_accepted_at_erdos_pin(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The erdos dataset pins a post-rename FC commit whose util lib
     # (FormalConjecturesUtil) is built with the Lean module system; this
-    # institutionalizes the pin-move smoke test (Gate B of the migration):
-    # compile + kernel-replay work end to end in that pin's scorer image, with
-    # the module-built oleans in the import closure.
+    # institutionalizes the pin-move smoke test (Gate B of the migration): the
+    # solution build + kernel replay work end to end in that pin's comparator
+    # image, with the module-built oleans in the import closure.
     pin = fc_commit(ERDOS_DIR)
     imp = f"import {fc_profile(pin).util_module}\n"
-    target = imp + "\ntheorem tgt : 1 + 1 = 2 := by sorry\n"
-    submission = {"Spec.lean": imp + "\ntheorem tgt : 1 + 1 = 2 := by norm_num\n"}
-    outcome = await _check(monkeypatch, target, submission, pin=pin)
-    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail}"
+    spec = _spec("1 + 1 = 2", imp=imp)
+    submission = {"Spec.lean": spec.replace(
+        "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
+    )}
+    async with _comparator_env(pin, task_name="pytest_singlefile_comparator_erdos") as env:
+        outcome = await _check(env, monkeypatch, spec, submission)
+    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
-async def test_helper_import_is_rejected_at_compile(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.asyncio(loop_scope="module")
+async def test_single_file_disproof_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # The single-file guard. Even an *honest* helper is unusable: the submission
-    # is compiled standalone and `Submission` is not a registered Lake library,
-    # so `import Submission.Helpers.Aux` does not resolve and the whole
-    # submission fails to compile -- never reaching safe_verify. This is what
-    # prevents an agent from smuggling a kernel-invalid constant into an
-    # imported (and therefore *trusted*, not replayed) helper module.
-    submission = {
-        "Spec.lean": (
-            _IMPORT + "import Submission.Helpers.Aux\n\ntheorem tgt : 1 + 1 = 2 := aux_eq\n"
-        ),
-        "Helpers/Aux.lean": _IMPORT + "\ntheorem aux_eq : 1 + 1 = 2 := by norm_num\n",
-    }
-    outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
-    assert not outcome.ok, f"a helper import must be rejected:\n{outcome.detail}"
-    assert outcome.stage == "compile_submission"
+    # A false conjecture: the agent fills the .disproof sorry and declares the
+    # disproof claim. The kept `tgt := sorry` is inert (not a config target and
+    # not in tgt.disproof's closure).
+    spec = _spec("1 + 1 = 3")
+    submission = {"Spec.lean": _spec("1 + 1 = 3").replace(
+        "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry",
+        "theorem tgt.disproof : ¬ (type_of% @tgt) := by norm_num",
+    )}
+    outcome = await _check(comparator_env, monkeypatch, spec, submission, claim="disproof")
+    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
-async def test_pattern_matching_def_in_entry_is_accepted(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.asyncio(loop_scope="module")
+async def test_helper_import_is_rejected(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # Regression guard: the submission reproduces the pattern-matching def
-    # verbatim and proves the theorem. Its compiler-generated private equational
-    # lemmas mangle with the module name Submission.Spec -- the same name the
-    # target got by compiling at the same path -- so safe_verify's exact-name
-    # match succeeds.
+    # The single-file guard. Even an *honest* helper is unusable: only Spec.lean
+    # becomes run/Solution.lean, `Submission` is not a registered Lake library,
+    # so `import Submission.Helpers.Aux` does not resolve and Comparator returns
+    # a rejecting verdict.
+    spec = _spec("1 + 1 = 2")
     submission = {
         "Spec.lean": (
             _IMPORT
-            + "\ndef parity : Nat → Bool\n  | 0 => true\n  | (n + 1) => !parity n\n"
-            + "\ntheorem tgt : parity 0 = true := by decide\n"
+            + "import Submission.Helpers.Aux\n"
+            + "theorem tgt : 1 + 1 = 2 := aux_eq\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         ),
+        "Helpers/Aux.lean": _IMPORT + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
     }
-    outcome = await _check(monkeypatch, TARGET_PATTERN_MATCH, submission)
+    outcome = await _check(comparator_env, monkeypatch, spec, submission)
+    assert not outcome.ok, f"a helper import must be rejected:\n{outcome.detail[-1500:]}"
+    assert outcome.stage == "comparator"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_pattern_matching_def_in_entry_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The submission reproduces a pattern-matching def verbatim and proves the
+    # theorem. Comparator builds Challenge and Solution as different modules by
+    # design; this confirms a faithful proof whose closure includes
+    # compiler-generated equational lemmas still matches.
+    defs = "def parity : Nat → Bool\n  | 0 => true\n  | (n + 1) => !parity n"
+    spec = _spec("parity 0 = true", defs=defs)
+    submission = {"Spec.lean": _spec("parity 0 = true", defs=defs).replace(
+        "theorem tgt : parity 0 = true := by sorry",
+        "theorem tgt : parity 0 = true := by decide",
+    )}
+    outcome = await _check(comparator_env, monkeypatch, spec, submission)
     assert outcome.ok, (
-        f"pattern-matching def proof should match private names, got "
-        f"stage={outcome.stage}:\n{outcome.detail}"
+        f"pattern-matching def proof should match, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
     )
 
 
-async def test_missing_entry_module_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    # A submission whose tar omits Spec.lean: rejected as a verdict, never
-    # raised, and without falling through to verifying the trusted target text.
-    submission = {"Other.lean": _IMPORT + "\ntheorem aux_eq : True := trivial\n"}
-    outcome = await _check(monkeypatch, TARGET_SIMPLE, submission)
+@pytest.mark.asyncio(loop_scope="module")
+async def test_missing_entry_module_is_rejected(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A submission whose tar omits Spec.lean: rejected host-side as a verdict.
+    outcome = await _check(comparator_env, monkeypatch, _spec("1 + 1 = 2"),
+                           {"Other.lean": _IMPORT + "theorem aux : True := trivial\n"})
     assert not outcome.ok
-    assert outcome.stage == "compile_submission"
+    assert outcome.stage == "entry_missing"
 
 
-async def test_empty_submission_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    outcome = await _check(monkeypatch, TARGET_SIMPLE, {})
+@pytest.mark.asyncio(loop_scope="module")
+async def test_empty_submission_is_rejected(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    outcome = await _check(comparator_env, monkeypatch, _spec("1 + 1 = 2"), {})
     assert not outcome.ok
-    assert outcome.stage == "compile_submission"
+    assert outcome.stage == "entry_missing"

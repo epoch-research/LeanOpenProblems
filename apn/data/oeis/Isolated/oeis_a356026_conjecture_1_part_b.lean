@@ -53,3 +53,5 @@ i.e., every positive natural number appears in the sequence $a(n)$ for some $n \
 -/
 theorem oeis_a356026_conjecture_1_part_b : ∀ k : ℕ, 0 < k → ∃ n : ℕ, 0 < n ∧ a n = k :=
 by sorry
+
+theorem oeis_a356026_conjecture_1_part_b.disproof : ¬ (type_of% @oeis_a356026_conjecture_1_part_b) := sorry

@@ -30,3 +30,5 @@ noncomputable def A234809 (n : ℕ) : ℕ :=
 /-- Conjecture: a(n) > 0 for all n > 2. -/
 theorem oeis_234809_conjecture_0 (n : ℕ) (hn : n > 2) : A234809 n > 0 :=
   by sorry
+
+theorem oeis_234809_conjecture_0.disproof : ¬ (type_of% @oeis_234809_conjecture_0) := sorry

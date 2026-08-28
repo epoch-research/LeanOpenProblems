@@ -32,3 +32,5 @@ Note: We use `¬ Nat.Prime n ∧ 4 < n` to formally express $n$ is a composite n
 theorem oeis_51903_conjecture_0 :
   ¬ ∃ n, (¬ Nat.Prime n) ∧ 4 < n ∧ Nat.totient n ∣ (n - a n) := by
   sorry
+
+theorem oeis_51903_conjecture_0.disproof : ¬ (type_of% @oeis_51903_conjecture_0) := sorry

@@ -52,3 +52,5 @@ theorem oeis_320146_conjecture_0 :
     Filter.atTop
     (nhds L) :=
 by sorry
+
+theorem oeis_320146_conjecture_0.disproof : ¬ (type_of% @oeis_320146_conjecture_0) := sorry

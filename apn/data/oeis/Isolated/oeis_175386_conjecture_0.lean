@@ -41,3 +41,5 @@ A175386 We conjecture that sum((1/i)*C(2n-i-1,i-1),i=1..n) is not an integer for
 -/
 theorem oeis_175386_conjecture_0 (n : ℕ) (hn : 1 < n) : a n ≠ 1 := by
   sorry
+
+theorem oeis_175386_conjecture_0.disproof : ¬ (type_of% @oeis_175386_conjecture_0) := sorry

@@ -48,3 +48,5 @@ by
   -- and R is the actual question. We can't prove P and Q without a lot of work,
   -- so we treat the whole statement as a conjecture.
   sorry
+
+theorem oeis_a004290_conjecture_radcliffe.disproof : ¬ (type_of% @oeis_a004290_conjecture_radcliffe) := sorry

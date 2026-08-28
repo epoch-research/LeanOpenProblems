@@ -30,3 +30,5 @@ A265710 a(n) = 2 for n = 14, 244, 494, 45994. Are there any others? - Robert Isr
 theorem oeis_A265710_conjecture :
   ∀ n : ℕ, n > 1 → (a n = 2 ↔ n = 14 ∨ n = 244 ∨ n = 494 ∨ n = 45994) := by
   sorry
+
+theorem oeis_A265710_conjecture.disproof : ¬ (type_of% @oeis_A265710_conjecture) := sorry

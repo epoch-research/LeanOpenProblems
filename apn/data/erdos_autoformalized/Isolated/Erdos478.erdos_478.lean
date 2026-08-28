@@ -21,3 +21,5 @@ theorem erdos_478 :
   sorry
 
 end Erdos478
+
+theorem Erdos478.erdos_478.disproof : ¬ (type_of% @Erdos478.erdos_478) := sorry

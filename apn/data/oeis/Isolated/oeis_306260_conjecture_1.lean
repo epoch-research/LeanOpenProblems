@@ -45,3 +45,5 @@ theorem oeis_306260_conjecture_1 :
   (∀ (n : ℕ), A306260 n = 1 ↔ n ∈ ({0, 1, 2, 4, 7, 9, 11, 14, 23, 25, 28, 37} : Finset ℕ)) :=
 by
   sorry
+
+theorem oeis_306260_conjecture_1.disproof : ¬ (type_of% @oeis_306260_conjecture_1) := sorry

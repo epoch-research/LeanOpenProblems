@@ -63,3 +63,5 @@ Lemoine's conjecture and the conjecture that there are infinitely many primes p 
 theorem oeis_219055_conjecture_1 :
     a219055_core_conjecture → goldbach_conjecture ∧ lemoine_conjecture ∧ six_prime_gap_conjecture :=
   by sorry
+
+theorem oeis_219055_conjecture_1.disproof : ¬ (type_of% @oeis_219055_conjecture_1) := sorry

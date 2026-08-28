@@ -54,3 +54,5 @@ theorem erdos_1.variants.least_N_5 :
   sorry
 
 end Erdos1
+
+theorem Erdos1.erdos_1.variants.least_N_5.disproof : ¬ (type_of% @Erdos1.erdos_1.variants.least_N_5) := sorry

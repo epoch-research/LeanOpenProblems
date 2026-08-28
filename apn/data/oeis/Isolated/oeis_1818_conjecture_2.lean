@@ -53,3 +53,5 @@ theorem oeis_1818_conjecture_2 {p : ℕ} (hp : p.Prime) (h_odd : p ≠ 2) :
   let M : Matrix Idx Idx R := fun i j =>
     f_entry (i.val + 1) (j.val + 1)
   (M.permanent : R) = (a ((p - 1) / 2) : R) := by sorry
+
+theorem oeis_1818_conjecture_2.disproof : ¬ (type_of% @oeis_1818_conjecture_2) := sorry

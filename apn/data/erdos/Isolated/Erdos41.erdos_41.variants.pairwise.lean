@@ -46,3 +46,5 @@ theorem erdos_41.variants.pairwise (A : Set ℕ) (hA₂ : NtupleCondition A 2) (
   sorry
 
 end Erdos41
+
+theorem Erdos41.erdos_41.variants.pairwise.disproof : ¬ (type_of% @Erdos41.erdos_41.variants.pairwise) := sorry

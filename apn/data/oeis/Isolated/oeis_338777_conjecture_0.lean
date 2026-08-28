@@ -82,3 +82,5 @@ theorem oeis_338777_conjecture_0 :
       Nat.Prime (m2n - m)
       ) := by
   sorry
+
+theorem oeis_338777_conjecture_0.disproof : ¬ (type_of% @oeis_338777_conjecture_0) := sorry

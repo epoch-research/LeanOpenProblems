@@ -53,3 +53,5 @@ theorem oeis_376462_conjecture_0 :
       let m_r_minus_1 := n * p ^ (r - 1) - 1
       (A376462 m_r : ℤ) ≡ (A376462 m_r_minus_1 : ℤ) [ZMOD (p ^ (3 * r) : ℕ).cast]
     ) := by sorry
+
+theorem oeis_376462_conjecture_0.disproof : ¬ (type_of% @oeis_376462_conjecture_0) := sorry

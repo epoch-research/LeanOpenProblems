@@ -41,3 +41,5 @@ The conjecture formalized here is that the trajectory of 103 under this operatio
 -/
 theorem oeis_77408_conjecture_0 : ∀ n : ℕ, ¬ (is_base_palindrome 3 (A077408 n)) := by
   sorry
+
+theorem oeis_77408_conjecture_0.disproof : ¬ (type_of% @oeis_77408_conjecture_0) := sorry

@@ -52,3 +52,5 @@ theorem poincare_conjecture.variants.smooth_dimension_four : SmoothConjectureFor
   sorry
 
 end PoincareConjecture
+
+theorem PoincareConjecture.poincare_conjecture.variants.smooth_dimension_four.disproof : ¬ (type_of% @PoincareConjecture.poincare_conjecture.variants.smooth_dimension_four) := sorry

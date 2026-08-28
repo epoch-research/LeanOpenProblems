@@ -200,3 +200,5 @@ theorem hasSICPOVM_60 : HasSICPOVM 60 := by sorry
 /- ## Full conjecture -/
 
 end OpenQuantumProblem23
+
+theorem OpenQuantumProblem23.hasSICPOVM_60.disproof : ¬ (type_of% @OpenQuantumProblem23.hasSICPOVM_60) := sorry

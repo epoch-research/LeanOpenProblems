@@ -40,3 +40,5 @@ theorem oeis_a182510_conjecture_density :
     ({n : ℕ | a n < 0}).HasDensity d_neg ∧
     d_pos > d_neg :=
 by sorry
+
+theorem oeis_a182510_conjecture_density.disproof : ¬ (type_of% @oeis_a182510_conjecture_density) := sorry

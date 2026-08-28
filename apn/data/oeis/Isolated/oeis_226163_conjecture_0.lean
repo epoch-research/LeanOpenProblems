@@ -57,3 +57,5 @@ Conjecture: a(n) = 0 if and only if p_n ≡ 3 (mod 4).
 theorem oeis_226163_conjecture_0 (n : ℕ) (h_n : 2 ≤ n) :
     A226163 n = 0 ↔ Nat.nth Nat.Prime (n - 1) % 4 = 3 := by
   sorry
+
+theorem oeis_226163_conjecture_0.disproof : ¬ (type_of% @oeis_226163_conjecture_0) := sorry

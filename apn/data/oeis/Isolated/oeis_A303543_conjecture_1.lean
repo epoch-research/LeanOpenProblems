@@ -53,3 +53,5 @@ def A303543 (n : ℕ) : ℕ :=
 /-- Conjecture: a(n) > 0 for all n > 1. In other words, any integer n > 1 can be written as the sum of two squares and two Catalan numbers. -/
 theorem oeis_A303543_conjecture_1 : ∀ (n : ℕ), n > 1 → A303543 n > 0 := by
   sorry
+
+theorem oeis_A303543_conjecture_1.disproof : ¬ (type_of% @oeis_A303543_conjecture_1) := sorry

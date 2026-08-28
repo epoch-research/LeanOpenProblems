@@ -35,3 +35,5 @@ Conjecture: a(n) = 0 for no n > 28. - Zhi-Wei Sun, Aug 26 2013
 -/
 theorem oeis_71524_conjecture_0 : ∀ n : ℕ, n > 28 → a n ≠ 0 := by
   sorry
+
+theorem oeis_71524_conjecture_0.disproof : ¬ (type_of% @oeis_71524_conjecture_0) := sorry

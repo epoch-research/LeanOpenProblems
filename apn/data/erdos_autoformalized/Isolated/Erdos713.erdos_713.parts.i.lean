@@ -27,3 +27,5 @@ theorem erdos_713.parts.i :
   sorry
 
 end Erdos713
+
+theorem Erdos713.erdos_713.parts.i.disproof : ¬ (type_of% @Erdos713.erdos_713.parts.i) := sorry

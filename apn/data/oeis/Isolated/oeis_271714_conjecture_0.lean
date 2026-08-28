@@ -43,3 +43,5 @@ theorem oeis_271714_conjecture_0 (n : ℕ) :
     (∃ k : ℕ, ∃ q : ℕ, q ∈ ({14, 67, 71, 199} : Set ℕ) ∧ n = 4^k * q) -- 4^k * q
   )) := by
   sorry
+
+theorem oeis_271714_conjecture_0.disproof : ¬ (type_of% @oeis_271714_conjecture_0) := sorry

@@ -57,3 +57,5 @@ theorem mod_216_of_a {n : ℕ} (h : a n) : n % 216 = 108 := by
   sorry
 
 end OeisA63880
+
+theorem OeisA63880.mod_216_of_a.disproof : ¬ (type_of% @OeisA63880.mod_216_of_a) := sorry

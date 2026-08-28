@@ -55,3 +55,5 @@ A236566: Conjecture: Part (ii) implies both Lemoine's conjecture (cf. A046927) a
 theorem oeis_236566_conjecture_2 :
   a236566_conjecture_part_ii → lemoine_conjecture ∧ twin_prime_conjecture := by
   sorry
+
+theorem oeis_236566_conjecture_2.disproof : ¬ (type_of% @oeis_236566_conjecture_2) := sorry

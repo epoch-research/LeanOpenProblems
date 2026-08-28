@@ -63,3 +63,5 @@ def A308934 (n : ℕ) : ℕ :=
 /-- A308934 Conjecture 1: a(n) > 0 for all n > 1. -/
 theorem oeis_308934_conjecture_0 (n : ℕ) (hn : n > 1) : A308934 n > 0 := by
   sorry
+
+theorem oeis_308934_conjecture_0.disproof : ¬ (type_of% @oeis_308934_conjecture_0) := sorry

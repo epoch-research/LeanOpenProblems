@@ -39,3 +39,5 @@ theorem oeis_243106_conjecture_0 (b n : ℕ) (hb : b ≥ 5) :
     ∀ d ∈ (b.digits x.natAbs),
       d = 0 ∨ d = 1 ∨ d = b - 2 ∨ d = b - 1 :=
 by sorry
+
+theorem oeis_243106_conjecture_0.disproof : ¬ (type_of% @oeis_243106_conjecture_0) := sorry

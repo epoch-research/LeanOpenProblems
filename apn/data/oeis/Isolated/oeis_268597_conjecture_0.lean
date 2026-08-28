@@ -28,3 +28,5 @@ noncomputable def A268597 (n : ℕ) : ℕ :=
 A268597 Conjecture: a(n) > 0 for all n.
 -/
 theorem oeis_268597_conjecture_0 (n : ℕ) : A268597 n > 0 := by sorry
+
+theorem oeis_268597_conjecture_0.disproof : ¬ (type_of% @oeis_268597_conjecture_0) := sorry

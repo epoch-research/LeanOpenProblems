@@ -34,3 +34,5 @@ Note: $500000 = 10^6/2$. If $2n+1 \le 10^6$, then $2n \le 999999$, so $n \le 499
 -/
 theorem oeis_A218656_verified_range (n : ℕ) (hval : n ≤ 499999) (hn : 0 < n) : a n > 0 :=
   sorry
+
+theorem oeis_A218656_verified_range.disproof : ¬ (type_of% @oeis_A218656_verified_range) := sorry

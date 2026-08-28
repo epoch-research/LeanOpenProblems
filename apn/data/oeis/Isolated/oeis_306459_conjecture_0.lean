@@ -44,3 +44,5 @@ can be written as the sum of a nonnegative cube and three tetrahedral numbers.
 -/
 theorem oeis_306459_conjecture_0 (n : ℕ) : A306459 n > 0 := by
   sorry
+
+theorem oeis_306459_conjecture_0.disproof : ¬ (type_of% @oeis_306459_conjecture_0) := sorry

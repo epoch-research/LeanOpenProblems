@@ -34,3 +34,5 @@ Formalization: There exist arbitrarily long runs of consecutive natural numbers 
 -/
 theorem oeis_340976_conjecture_4 :
   ∀ L : ℕ, L ≥ 2 → ∃ N : ℕ, ∀ i : ℕ, i < L → a (N + i) % 2 = 1 := by sorry
+
+theorem oeis_340976_conjecture_4.disproof : ¬ (type_of% @oeis_340976_conjecture_4) := sorry

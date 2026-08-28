@@ -38,3 +38,5 @@ a(2*n+1) is a perfect square for all n.
 -/
 theorem oeis_113254_conjecture_0 : ∀ n : ℕ, IsSquare (a (2 * n + 1)) := by
   sorry
+
+theorem oeis_113254_conjecture_0.disproof : ¬ (type_of% @oeis_113254_conjecture_0) := sorry

@@ -56,3 +56,5 @@ OEIS A076141 Conjecture: The number of times $n$ occurs as a binary sub-pattern 
 A claim to Formalize: is a(n)<=1 for all n?
 -/
 theorem oeis_a076141_conjecture : ∀ n : ℕ, a n ≤ 1 := by sorry
+
+theorem oeis_a076141_conjecture.disproof : ¬ (type_of% @oeis_a076141_conjecture) := sorry

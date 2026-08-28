@@ -34,3 +34,5 @@ Granville (via Goldfeld) showed that ABC conjecture $\iff$ $\forall \epsilon > 0
 theorem oeis_a010846_granville_conjecture :
   ∀ ε : ℝ, 0 < ε → ∃ N : ℕ, ∀ n : ℕ, N ≤ n → (Real.log n) ^ (1 - ε) ≤ a n :=
 by sorry
+
+theorem oeis_a010846_granville_conjecture.disproof : ¬ (type_of% @oeis_a010846_granville_conjecture) := sorry

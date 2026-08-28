@@ -60,3 +60,7 @@ Gowers [Go01] has proved $$W(k) \leq 2^{2^{2^{2^{2^{k+9}}}}.$$
 -/
 theorem erdos_138.variants.upper (k : ℕ) : W k ≤ 2 ^ (2 ^ (2 ^ 2 ^ 2 ^ (k + 9))) := by
   sorry
+
+end Erdos138
+
+theorem Erdos138.erdos_138.variants.upper.disproof : ¬ (type_of% @Erdos138.erdos_138.variants.upper) := sorry

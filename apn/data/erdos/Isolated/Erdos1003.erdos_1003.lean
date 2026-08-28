@@ -35,3 +35,5 @@ theorem erdos_1003 : Set.Infinite {n | φ n = φ (n + 1)} := by
   sorry
 
 end Erdos1003
+
+theorem Erdos1003.erdos_1003.disproof : ¬ (type_of% @Erdos1003.erdos_1003) := sorry

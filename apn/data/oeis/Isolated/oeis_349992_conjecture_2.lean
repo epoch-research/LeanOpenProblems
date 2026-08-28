@@ -96,3 +96,5 @@ theorem oeis_349992_conjecture_2 :
     let m := t.2.2.2
     generalized_A349992 a b c m n > 0
   := by sorry
+
+theorem oeis_349992_conjecture_2.disproof : ¬ (type_of% @oeis_349992_conjecture_2) := sorry

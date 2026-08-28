@@ -41,3 +41,5 @@ theorem oeis_a069004_conjecture_2 :
   (Nat.primeCounting 10 = a 10) ∧
   (5 * a 12 = Nat.primeCounting 12) := by
   sorry
+
+theorem oeis_a069004_conjecture_2.disproof : ¬ (type_of% @oeis_a069004_conjecture_2) := sorry

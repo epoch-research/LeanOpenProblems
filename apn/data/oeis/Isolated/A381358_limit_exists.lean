@@ -18,7 +18,7 @@ import FormalConjectures.Util.ProblemImports
 open List Nat
 
 /-- Computes the run lengths of a list of natural numbers. -/
-private def run_lengths_nat : List ℕ → List ℕ
+def run_lengths_nat : List ℕ → List ℕ
   | [] => []
   | l@(h :: _) =>
     let run_prefix := l.takeWhile (fun x => x = h)
@@ -31,7 +31,7 @@ A381587 $T_n$: The $n$-th row of the irregular triangle, following the recurrenc
 $T_1=[1], T_2=[1], T_3=[2]$. For $n \ge 4$, $T_n = \text{Runs}(\text{Reverse}(T_{n-1})) \frown T_{n-1}$.
 $n$ is 1-indexed here.
 -/
-private def A381587_T : ℕ → List ℕ
+def A381587_T : ℕ → List ℕ
   | 0 => []
   | 1 => [1]
   | 2 => [1]
@@ -54,3 +54,5 @@ The conjecture is that this limit exists.
 theorem A381358_limit_exists :
   ∃ L : ℝ, Filter.Tendsto (fun n : ℕ => (A381358 n : ℝ) ^ ((n : ℝ) ⁻¹)) Filter.atTop (nhds L) :=
 by sorry
+
+theorem A381358_limit_exists.disproof : ¬ (type_of% @A381358_limit_exists) := sorry

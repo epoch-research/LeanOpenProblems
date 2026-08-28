@@ -34,3 +34,5 @@ This theorem formalizes the claim about the verified range:
 -/
 theorem oeis_236977_conjecture_1 (n : ℕ) (h_n : 9 ≤ n ∧ n ≤ 2 * 10^6) : a n > 0 := by
   sorry
+
+theorem oeis_236977_conjecture_1.disproof : ¬ (type_of% @oeis_236977_conjecture_1) := sorry

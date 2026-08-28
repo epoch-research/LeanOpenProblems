@@ -60,3 +60,5 @@ theorem erdos_539.variants.isBigO_sq :
   sorry
 
 end Erdos539
+
+theorem Erdos539.erdos_539.variants.isBigO_sq.disproof : ¬ (type_of% @Erdos539.erdos_539.variants.isBigO_sq) := sorry

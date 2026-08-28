@@ -42,3 +42,5 @@ theorem mathoverflow_1973 :
   sorry
 
 end Mathoverflow1973
+
+theorem Mathoverflow1973.mathoverflow_1973.disproof : ¬ (type_of% @Mathoverflow1973.mathoverflow_1973) := sorry

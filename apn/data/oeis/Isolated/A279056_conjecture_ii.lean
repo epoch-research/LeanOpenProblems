@@ -84,3 +84,5 @@ such that $x^3 + 8yz(2y-z)$ is a square.
 This is equivalent to $B\_A279056(n) > 0$ for all $n > 0$.
 -/
 theorem A279056_conjecture_ii (n : ℕ) (hn : n > 0) : 0 < B_A279056 n := by sorry
+
+theorem A279056_conjecture_ii.disproof : ¬ (type_of% @A279056_conjecture_ii) := sorry

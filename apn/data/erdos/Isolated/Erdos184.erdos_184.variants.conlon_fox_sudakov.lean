@@ -64,3 +64,5 @@ theorem erdos_184.variants.conlon_fox_sudakov :
   sorry
 
 end Erdos184
+
+theorem Erdos184.erdos_184.variants.conlon_fox_sudakov.disproof : ¬ (type_of% @Erdos184.erdos_184.variants.conlon_fox_sudakov) := sorry

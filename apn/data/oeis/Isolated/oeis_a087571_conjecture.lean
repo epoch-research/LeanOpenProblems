@@ -54,3 +54,5 @@ theorem oeis_a087571_conjecture :
   -- The set of N such that N > 1 and N is composite and a(N) != 0 is infinite.
   ∀ M : ℕ, ∃ n : ℕ, n > M ∧ (n > 1 ∧ ¬ Nat.Prime n) ∧ a n ≠ 0 := by
   sorry
+
+theorem oeis_a087571_conjecture.disproof : ¬ (type_of% @oeis_a087571_conjecture) := sorry

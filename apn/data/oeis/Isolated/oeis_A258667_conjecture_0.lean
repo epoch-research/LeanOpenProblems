@@ -22,7 +22,7 @@ open BigOperators Nat Int Real Asymptotics Filter
 The inner sum of the formula used in A258667:
 $$\sum_{\max(k-n+5, 0) \le j \le \min(k,4)} \binom{8-j}{j}\binom{2n-k+j-10}{k-j}$$
 -/
-private def A258667_inner_sum (n k : ℕ) : ℤ :=
+def A258667_inner_sum (n k : ℕ) : ℤ :=
   let L : ℕ := max 0 (k + 5 - n)
   let U : ℕ := min k 4
   Finset.sum (Finset.Icc L U) fun j =>
@@ -84,3 +84,5 @@ Therefore, it is natural to conjecture that a(n) ~ e^(-2)*n!/(n-2)*(1 + Sum_{k>=
 theorem oeis_A258667_conjecture_0 :
   IsEquivalent atTop (fun n : ℕ => (A258667 n : ℝ)) A258667_asymptotic_term := by
   sorry
+
+theorem oeis_A258667_conjecture_0.disproof : ¬ (type_of% @oeis_A258667_conjecture_0) := sorry

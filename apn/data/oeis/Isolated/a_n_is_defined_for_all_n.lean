@@ -32,3 +32,5 @@ That is, for every $n \in \mathbb{N}$, does there exist a $k \in \mathbb{N}$ suc
 -/
 theorem a_n_is_defined_for_all_n :
   ∀ n : ℕ, ∃ k : ℕ, 0 < k ∧ (Polynomial.eval (n : ℤ) (Polynomial.cyclotomic k ℤ)).natAbs.Prime := by sorry
+
+theorem a_n_is_defined_for_all_n.disproof : ¬ (type_of% @a_n_is_defined_for_all_n) := sorry

@@ -56,3 +56,5 @@ theorem oeis_a275150_conjecture_2_sun :
   (let S : Set ℕ := {n | ∃ x y z : ℕ, n = a * x^i + b * y^j + c * z^k}
    -- The set of positive integers not in S is infinite
    Set.Infinite {n : ℕ+ | (n : ℕ) ∉ S}) := by sorry
+
+theorem oeis_a275150_conjecture_2_sun.disproof : ¬ (type_of% @oeis_a275150_conjecture_2_sun) := sorry

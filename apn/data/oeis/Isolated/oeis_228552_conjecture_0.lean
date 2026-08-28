@@ -30,3 +30,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 /-- oeis_228552_conjecture_0: We conjecture that a(n) > 0 for all n > 15. -/
 theorem oeis_228552_conjecture_0 : ∀ n : ℕ, 15 < n → a n > 0 :=
   by sorry
+
+theorem oeis_228552_conjecture_0.disproof : ¬ (type_of% @oeis_228552_conjecture_0) := sorry

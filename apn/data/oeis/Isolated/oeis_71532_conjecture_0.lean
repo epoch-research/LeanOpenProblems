@@ -37,3 +37,5 @@ Verbatim OEIS comment: "Is a(n)>0? For n large enough does a(n)>sqrt(n) always h
 -/
 theorem oeis_71532_conjecture_0 : ∃ N : ℕ, ∀ n : ℕ, n ≥ N → (a n : ℝ) > sqrt (n : ℝ) := by
   sorry
+
+theorem oeis_71532_conjecture_0.disproof : ¬ (type_of% @oeis_71532_conjecture_0) := sorry

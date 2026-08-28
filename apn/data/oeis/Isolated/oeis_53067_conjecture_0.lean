@@ -49,3 +49,5 @@ Formalized as the strongest natural conjecture: $a(n)$ is prime if and only if $
 -/
 theorem oeis_53067_conjecture_0 : ∀ n : ℕ, Nat.Prime (a n) ↔ n = 2 := by
   sorry
+
+theorem oeis_53067_conjecture_0.disproof : ¬ (type_of% @oeis_53067_conjecture_0) := sorry

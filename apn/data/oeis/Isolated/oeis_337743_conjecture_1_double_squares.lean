@@ -54,3 +54,5 @@ def A337743 (n : ℕ) : ℕ :=
 theorem oeis_337743_conjecture_1_double_squares (n : ℕ) (hn : n > 0) :
   A337743 (2 * n ^ 2) > 0 := by
   sorry
+
+theorem oeis_337743_conjecture_1_double_squares.disproof : ¬ (type_of% @oeis_337743_conjecture_1_double_squares) := sorry

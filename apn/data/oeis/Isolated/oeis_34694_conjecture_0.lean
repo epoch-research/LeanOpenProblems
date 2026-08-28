@@ -29,3 +29,5 @@ noncomputable def A034694 (n : ℕ) : ℕ :=
 /-- OEIS A034694 Conjecture: a(n) < n^2 for n > 1. - Thomas Ordowski, Dec 19 2016 -/
 theorem oeis_34694_conjecture_0 (n : ℕ) (h : 1 < n) :
   A034694 n < n ^ 2 := by sorry
+
+theorem oeis_34694_conjecture_0.disproof : ¬ (type_of% @oeis_34694_conjecture_0) := sorry

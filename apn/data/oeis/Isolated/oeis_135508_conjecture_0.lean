@@ -52,3 +52,5 @@ A prime $p$ such that $p-2$ is not a prime means $p$ is not the larger element o
 theorem oeis_135508_conjecture_0 :
   ∀ p : ℕ, Nat.Prime p → ¬ (Nat.Prime (p - 2)) → A135508 (p - 1) = p := by
   sorry
+
+theorem oeis_135508_conjecture_0.disproof : ¬ (type_of% @oeis_135508_conjecture_0) := sorry

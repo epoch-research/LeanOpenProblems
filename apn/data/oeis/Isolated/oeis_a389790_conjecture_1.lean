@@ -43,3 +43,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 This is an analog of Goldbach's conjecture. It has been verified for n <= 2*10^5. -/
 theorem oeis_a389790_conjecture_1 : ∀ n : ℕ, 474 ≤ n → 0 < a n := by
   sorry
+
+theorem oeis_a389790_conjecture_1.disproof : ¬ (type_of% @oeis_a389790_conjecture_1) := sorry

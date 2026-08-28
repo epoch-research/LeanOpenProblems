@@ -44,3 +44,5 @@ noncomputable def A321475 (n : ℕ) : ℕ :=
 %C A321475 Is this sequence bounded?
 -/
 theorem oeis_321475_conjecture_0 : ∃ M : ℕ, ∀ n : ℕ, A321475 n ≤ M := by sorry
+
+theorem oeis_321475_conjecture_0.disproof : ¬ (type_of% @oeis_321475_conjecture_0) := sorry

@@ -78,3 +78,5 @@ theorem oeis_282091_conjecture_0 :
       x ≤ y ∧ y ≤ z ∧
       is_perfect_cube ((x : ℤ) + (y : ℤ) - (z : ℤ))) :=
 by sorry
+
+theorem oeis_282091_conjecture_0.disproof : ¬ (type_of% @oeis_282091_conjecture_0) := sorry

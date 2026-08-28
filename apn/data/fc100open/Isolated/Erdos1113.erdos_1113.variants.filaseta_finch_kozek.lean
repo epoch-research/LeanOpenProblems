@@ -66,3 +66,5 @@ theorem erdos_1113.variants.filaseta_finch_kozek :
   sorry
 
 end Erdos1113
+
+theorem Erdos1113.erdos_1113.variants.filaseta_finch_kozek.disproof : ¬ (type_of% @Erdos1113.erdos_1113.variants.filaseta_finch_kozek) := sorry

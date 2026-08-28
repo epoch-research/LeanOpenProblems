@@ -43,3 +43,5 @@ theorem oeis_333096_conjecture_0 (p k n : ℕ) :
   (p.Prime ∧ p ≥ 5 ∧ n > 0 ∧ k > 0) →
   (a (n * p ^ k) : ℤ) ≡ a (n * p ^ (k - 1)) [ZMOD (p ^ (3 * k) : ℤ)] := by
   sorry
+
+theorem oeis_333096_conjecture_0.disproof : ¬ (type_of% @oeis_333096_conjecture_0) := sorry

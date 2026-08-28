@@ -81,3 +81,5 @@ Denote (4290k+367)/3136^k*C(2k,k)*T_k(14,1)*T_k(17,16) by t(k).
 theorem oeis_a336981_conjecture_2_i :
   (∑' (k : ℕ), t k) = 5390 / Real.pi := by
   sorry
+
+theorem oeis_a336981_conjecture_2_i.disproof : ¬ (type_of% @oeis_a336981_conjecture_2_i) := sorry

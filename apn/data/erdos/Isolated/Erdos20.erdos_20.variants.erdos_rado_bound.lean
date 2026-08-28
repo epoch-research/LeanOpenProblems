@@ -48,3 +48,5 @@ theorem erdos_20.variants.erdos_rado_bound :
   sorry
 
 end Erdos20
+
+theorem Erdos20.erdos_20.variants.erdos_rado_bound.disproof : ¬ (type_of% @Erdos20.erdos_20.variants.erdos_rado_bound) := sorry

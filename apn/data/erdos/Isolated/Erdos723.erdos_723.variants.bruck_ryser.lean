@@ -36,3 +36,5 @@ theorem erdos_723.variants.bruck_ryser {P L : Type} [Membership P L] [Fintype P]
   sorry
 
 end Erdos723
+
+theorem Erdos723.erdos_723.variants.bruck_ryser.disproof : ¬ (type_of% @Erdos723.erdos_723.variants.bruck_ryser) := sorry

@@ -42,3 +42,5 @@ theorem erdos_583 {V : Type*} [Fintype V] (G : SimpleGraph V) (hG : G.Connected)
   sorry
 
 end Erdos583
+
+theorem Erdos583.erdos_583.disproof : ¬ (type_of% @Erdos583.erdos_583) := sorry

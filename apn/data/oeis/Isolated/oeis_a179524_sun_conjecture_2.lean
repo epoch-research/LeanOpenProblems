@@ -45,3 +45,5 @@ theorem oeis_a179524_sun_conjecture_2 :
     let L : ℤ := legendreSym p (-1)
     S ≡ (p : ℤ) * (10 * L + 7) [ZMOD (p : ℤ) ^ 2]
   ) := by sorry
+
+theorem oeis_a179524_sun_conjecture_2.disproof : ¬ (type_of% @oeis_a179524_sun_conjecture_2) := sorry

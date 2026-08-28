@@ -33,3 +33,5 @@ This is OEIS A215926 Conjecture 1.
 Note: The sequence is listed for n >= 2.
 -/
 theorem oeis_215926_conjecture_0 (n : ℕ) (hn : 2 ≤ n) : a n = 1 ∨ a n = 3 ∨ (a n).isPowerOfTwo := by sorry
+
+theorem oeis_215926_conjecture_0.disproof : ¬ (type_of% @oeis_215926_conjecture_0) := sorry

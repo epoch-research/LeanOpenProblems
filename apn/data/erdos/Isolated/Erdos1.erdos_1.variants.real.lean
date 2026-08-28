@@ -56,3 +56,5 @@ theorem erdos_1.variants.real : ∃ C > (0 : ℝ), ∀ (N : ℕ) (A : Finset ℝ
   sorry
 
 end Erdos1
+
+theorem Erdos1.erdos_1.variants.real.disproof : ¬ (type_of% @Erdos1.erdos_1.variants.real) := sorry

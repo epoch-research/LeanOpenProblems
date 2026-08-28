@@ -48,3 +48,5 @@ noncomputable def a067599 (n : ℕ) : ℕ :=
 /-- Is there any solution to a(n) = n? - _Franklin T. Adams-Watters_, Dec 18 2006 -/
 theorem oeis_67599_conjecture_0 : ∃ n, 2 ≤ n ∧ a067599 n = n := by
   sorry
+
+theorem oeis_67599_conjecture_0.disproof : ¬ (type_of% @oeis_67599_conjecture_0) := sorry

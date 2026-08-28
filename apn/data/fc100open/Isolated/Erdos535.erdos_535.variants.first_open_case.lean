@@ -70,3 +70,5 @@ theorem erdos_535.variants.first_open_case : ∃ c > (0 : ℝ),
   sorry
 
 end Erdos535
+
+theorem Erdos535.erdos_535.variants.first_open_case.disproof : ¬ (type_of% @Erdos535.erdos_535.variants.first_open_case) := sorry

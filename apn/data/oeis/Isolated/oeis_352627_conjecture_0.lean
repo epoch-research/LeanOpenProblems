@@ -43,3 +43,5 @@ A352627 Conjecture: a(n) > 0 for all n = 0,1,2,.... In other words, each nonnega
 -/
 theorem oeis_352627_conjecture_0 : ∀ (n : ℕ), a n > 0 := by
   sorry
+
+theorem oeis_352627_conjecture_0.disproof : ¬ (type_of% @oeis_352627_conjecture_0) := sorry

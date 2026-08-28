@@ -40,3 +40,5 @@ Conjecture: For each n=1,2,3,... the polynomial a_n(x) = Sum_{k=0..n} C(n,k)^2*C
 -/
 theorem apery_poly_irreducible (n : ℕ) (hn : 1 ≤ n) : Irreducible (apery_poly n) := by
   sorry
+
+theorem apery_poly_irreducible.disproof : ¬ (type_of% @apery_poly_irreducible) := sorry

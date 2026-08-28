@@ -57,3 +57,5 @@ This is formalized as the non-existence of a 4-term AP.
 -/
 theorem A341092_conjecture_2 : ∀ (n : ℕ), ¬row_contains_ap_length_four n :=
   by sorry
+
+theorem A341092_conjecture_2.disproof : ¬ (type_of% @A341092_conjecture_2) := sorry

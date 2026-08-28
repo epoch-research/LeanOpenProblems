@@ -52,3 +52,5 @@ theorem erdos_1057.variants.lichtman_lower_bound :
   sorry
 
 end Erdos1057
+
+theorem Erdos1057.erdos_1057.variants.lichtman_lower_bound.disproof : ¬ (type_of% @Erdos1057.erdos_1057.variants.lichtman_lower_bound) := sorry

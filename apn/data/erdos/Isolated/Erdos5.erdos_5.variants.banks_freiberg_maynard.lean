@@ -84,3 +84,5 @@ theorem erdos_5.variants.banks_freiberg_maynard (β : Fin 9 → ℝ) (hβ : ∀ 
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.banks_freiberg_maynard.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.banks_freiberg_maynard) := sorry

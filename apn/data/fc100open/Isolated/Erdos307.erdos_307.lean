@@ -43,3 +43,5 @@ theorem erdos_307 : ∃ P Q : Finset ℕ, (∀ p ∈ P, p.Prime) ∧ (∀ q ∈ 
   sorry
 
 end Erdos307
+
+theorem Erdos307.erdos_307.disproof : ¬ (type_of% @Erdos307.erdos_307) := sorry

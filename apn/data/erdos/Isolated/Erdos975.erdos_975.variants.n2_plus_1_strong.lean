@@ -52,3 +52,5 @@ theorem erdos_975.variants.n2_plus_1_strong :
   sorry
 
 end Erdos975
+
+theorem Erdos975.erdos_975.variants.n2_plus_1_strong.disproof : ¬ (type_of% @Erdos975.erdos_975.variants.n2_plus_1_strong) := sorry

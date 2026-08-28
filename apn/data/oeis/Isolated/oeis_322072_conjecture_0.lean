@@ -35,3 +35,5 @@ OEIS A322072 Conjecture: The difference $a(n + 1) - a(n)$ between two consecutiv
 theorem oeis_322072_conjecture_0 {n : ℕ} (hn : 1 ≤ n) :
   (∃ m : ℕ, a (n + 1) - a n = m ^ 2) ↔ n = 1 ∨ n = 5 ∨ n = 6 :=
 by sorry
+
+theorem oeis_322072_conjecture_0.disproof : ¬ (type_of% @oeis_322072_conjecture_0) := sorry

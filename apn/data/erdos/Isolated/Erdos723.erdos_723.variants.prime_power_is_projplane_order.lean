@@ -35,3 +35,5 @@ theorem erdos_723.variants.prime_power_is_projplane_order :
   sorry
 
 end Erdos723
+
+theorem Erdos723.erdos_723.variants.prime_power_is_projplane_order.disproof : ¬ (type_of% @Erdos723.erdos_723.variants.prime_power_is_projplane_order) := sorry

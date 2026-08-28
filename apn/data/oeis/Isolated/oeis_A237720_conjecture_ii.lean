@@ -33,3 +33,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 theorem oeis_A237720_conjecture_ii (n : ℕ) (hn : n > 2) :
     ∃ p, p.Prime ∧ p < n ∧ (Nat.sqrt (n + p)).Prime := by
   sorry
+
+theorem oeis_A237720_conjecture_ii.disproof : ¬ (type_of% @oeis_A237720_conjecture_ii) := sorry

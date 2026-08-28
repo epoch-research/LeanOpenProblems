@@ -51,3 +51,5 @@ theorem erdos_821 :
   sorry
 
 end Erdos821
+
+theorem Erdos821.erdos_821.disproof : ¬ (type_of% @Erdos821.erdos_821) := sorry

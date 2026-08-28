@@ -37,3 +37,5 @@ theorem erdos_52 : ∀ (ε : ℝ), 0 < ε → ε < 1 → ∃ (C : ℝ), 0 < C �
 -- TODO(firsching): Add additional material.
 
 end Erdos52
+
+theorem Erdos52.erdos_52.disproof : ¬ (type_of% @Erdos52.erdos_52) := sorry

@@ -51,3 +51,5 @@ Conjecture 3: At the first appearance of each prime of the form $\lfloor \sqrt{2
 -/
 theorem oeis_a323386_conjecture_1 : ∀ (n : ℕ), 1 ≤ n → (A323386 n = 1 ∨ Nat.Prime (A323386 n)) := by
   sorry
+
+theorem oeis_a323386_conjecture_1.disproof : ¬ (type_of% @oeis_a323386_conjecture_1) := sorry

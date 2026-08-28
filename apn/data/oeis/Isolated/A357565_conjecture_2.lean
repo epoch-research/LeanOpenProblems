@@ -42,3 +42,5 @@ Conjecture 2 for A357565: $a(p^r) \equiv a(p^{r-1}) \pmod{p^{3r+3}}$ for $r \ge 
 theorem A357565_conjecture_2 (p r : ℕ) (hp : Nat.Prime p) (h_pge3 : p ≥ 3) (hr : r ≥ 2) :
     (A357565 (p ^ r)) ≡ (A357565 (p ^ (r - 1))) [MOD (p ^ (3 * r + 3))] := by
   sorry
+
+theorem A357565_conjecture_2.disproof : ¬ (type_of% @A357565_conjecture_2) := sorry

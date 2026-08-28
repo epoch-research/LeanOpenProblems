@@ -30,3 +30,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 /-- A245211 Conjecture: 21 is only number such that a(n) = n. -/
 theorem oeis_245211_conjecture_0 : ∀ n : ℕ, 0 < n → (a n = n ↔ n = 21) := by
   sorry
+
+theorem oeis_245211_conjecture_0.disproof : ¬ (type_of% @oeis_245211_conjecture_0) := sorry

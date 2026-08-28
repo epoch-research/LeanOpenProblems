@@ -38,3 +38,5 @@ Conjecture 1: a(n) = 0 if and only if $n \in \{106, 744, 5469, 331269\}$.
 theorem oeis_352286_conjecture_1 :
   ∀ n : ℕ, (A352286 n = 0 ↔ n ∈ A352286_exceptions) := by
   sorry
+
+theorem oeis_352286_conjecture_1.disproof : ¬ (type_of% @oeis_352286_conjecture_1) := sorry

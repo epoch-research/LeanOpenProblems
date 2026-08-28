@@ -58,3 +58,5 @@ of a prime congruent to $5 \bmod 6$, a positive power of $2$ and seven times a p
 theorem oeis_157225_conjecture_0 :
     ∀ (n : ℕ), A157225 n = 0 ↔ n < 11 ∨ n = 13 ∨ n = 16 ∨ n = 992 := by
   sorry
+
+theorem oeis_157225_conjecture_0.disproof : ¬ (type_of% @oeis_157225_conjecture_0) := sorry

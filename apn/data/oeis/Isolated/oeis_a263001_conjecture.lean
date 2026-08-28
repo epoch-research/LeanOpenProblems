@@ -41,3 +41,5 @@ theorem oeis_a263001_conjecture :
   (∀ (n : ℕ), 2 < n → A263001 n > 0) ∧
   (∀ (n : ℕ), A263001 n = 1 ↔ n = 1 ∨ n = 4 ∨ n = 6) :=
 by sorry
+
+theorem oeis_a263001_conjecture.disproof : ¬ (type_of% @oeis_a263001_conjecture) := sorry

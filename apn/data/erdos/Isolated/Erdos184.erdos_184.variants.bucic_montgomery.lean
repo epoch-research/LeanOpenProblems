@@ -63,3 +63,5 @@ theorem erdos_184.variants.bucic_montgomery :
   sorry
 
 end Erdos184
+
+theorem Erdos184.erdos_184.variants.bucic_montgomery.disproof : ¬ (type_of% @Erdos184.erdos_184.variants.bucic_montgomery) := sorry

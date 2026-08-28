@@ -35,3 +35,5 @@ Are 1 and 12 the only solutions to a(n)=1?
 theorem oeis_296075_conjecture_0 : ∀ n : ℕ,
   a n = 1 ↔ n = 1 ∨ n = 12 := by
   sorry
+
+theorem oeis_296075_conjecture_0.disproof : ¬ (type_of% @oeis_296075_conjecture_0) := sorry
