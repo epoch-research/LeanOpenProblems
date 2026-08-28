@@ -25,6 +25,14 @@ CONFIG_PATH = f"{RUN_DIR}/config.json"
 COMPARATOR_BIN = "/opt/apn/comparator/bin/comparator"
 RESET_SCRIPT = "/opt/apn/reset-dotlake.sh"
 
+# The non-privileged user every exec in the comparator sandbox runs as
+# (comparator README assumption 6). The image itself stays root -- Inspect's
+# sandbox plumbing assumes the default user can write anywhere, and
+# k8s_sandbox implements per-exec `user=` with runuser(1), root-only -- so the
+# privilege drop rides on each exec call instead of a Dockerfile USER
+# directive (see the comparator stage of apn/lean/Dockerfile).
+COMPARATOR_USER = "comparator"
+
 # The axioms a solution's proof closure may use (comparator rejects everything
 # else, `sorryAx` and `Lean.ofReduceBool` included). The agent prompt renders
 # its axiom list from this tuple (apn.prompts), so the two cannot drift.
@@ -155,7 +163,9 @@ class SandboxComparator:
         # restores a pristine .lake -- the only path the untrusted build can
         # write under its landrun sandbox; it does not terminate processes a
         # prior check left behind (Inspect issue #5034).
-        reset = await sb.exec([RESET_SCRIPT], timeout=self._timeout)
+        reset = await sb.exec(
+            [RESET_SCRIPT], user=COMPARATOR_USER, timeout=self._timeout
+        )
         if reset.returncode != 0:
             raise RuntimeError(
                 f".lake reset failed (exit {reset.returncode}):\n"
@@ -168,6 +178,7 @@ class SandboxComparator:
         # the three files written below.
         clear = await sb.exec(
             ["sh", "-c", f"rm -rf {RUN_DIR} && mkdir {RUN_DIR}"],
+            user=COMPARATOR_USER,
             timeout=self._timeout,
         )
         if clear.returncode != 0:
@@ -177,7 +188,9 @@ class SandboxComparator:
             )
 
         # Stage the check's inputs. The challenge is the committed spec
-        # verbatim -- nothing is composed at scoring time.
+        # verbatim -- nothing is composed at scoring time. write_file has no
+        # user switch, so these land as the container's root user (0644,
+        # readable by COMPARATOR_USER) inside the comparator-owned run/.
         await sb.write_file(CHALLENGE_PATH, spec)
         await sb.write_file(SOLUTION_PATH, solution)
         await sb.write_file(CONFIG_PATH, comparator_config(decl, claim))
@@ -188,6 +201,7 @@ class SandboxComparator:
             result = await sb.exec(
                 ["lake", "env", COMPARATOR_BIN, CONFIG_PATH],
                 cwd=PROJECT,
+                user=COMPARATOR_USER,
                 timeout=self._timeout,
             )
         except TimeoutError as exc:

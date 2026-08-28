@@ -34,6 +34,7 @@ import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import (
     CHALLENGE_PATH,
+    COMPARATOR_USER,
     CONFIG_PATH,
     RESET_SCRIPT,
     RUN_DIR,
@@ -173,6 +174,7 @@ class ScriptedSandbox:
         self.written: dict[str, object] = {}
         self.writes: list[tuple[str, object]] = []
         self.commands: list[list[str]] = []
+        self.exec_kwargs: list[dict[str, object]] = []
 
     async def write_file(self, file: str, contents: object) -> None:
         self.written[file] = contents
@@ -180,6 +182,7 @@ class ScriptedSandbox:
 
     async def exec(self, cmd: list[str], **kwargs: object) -> ExecResult[str]:
         self.commands.append(cmd)
+        self.exec_kwargs.append(kwargs)
         if cmd == [RESET_SCRIPT]:
             return self._reset
         if cmd == STAGING_RESET:
@@ -239,6 +242,19 @@ async def test_check_stages_challenge_solution_config(
     assert config["challenge_module"] == "Challenge"
     assert config["solution_module"] == "Solution"
     assert config["permitted_axioms"] == ["propext", "Classical.choice", "Quot.sound"]
+
+
+async def test_check_execs_drop_to_comparator_user(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The comparator image stays root for Inspect's benefit, so the privilege
+    # drop lives on the exec calls: every command the checker runs in the
+    # comparator sandbox must carry user=COMPARATOR_USER.
+    checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
+    await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert sb.commands == [[RESET_SCRIPT], STAGING_RESET,
+                           ["lake", "env", checker_mod.COMPARATOR_BIN, CONFIG_PATH]]
+    assert [kw.get("user") for kw in sb.exec_kwargs] == [COMPARATOR_USER] * 3
 
 
 async def test_check_proof_claim_targets_bare_decl(

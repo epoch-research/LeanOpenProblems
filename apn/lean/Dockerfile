@@ -16,8 +16,9 @@
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
 #                   untrusted `lake build Solution` is confined by landrun
-#                   (Landlock) *inside* this container, which runs as a
-#                   non-privileged user (comparator README assumption 6).
+#                   (Landlock) *inside* this container, whose scoring execs
+#                   run as a non-privileged user (comparator README
+#                   assumption 6; the image itself stays root for Inspect).
 #
 # Version story (comparator-migration-plan.md §2). Four version-bearing
 # artifacts, deliberately NOT all on one toolchain:
@@ -403,10 +404,13 @@ RUN git clone https://github.com/leanprover/lean4export.git /opt/lean4export \
 # solely so that binary's shared-library RPATH resolves. No lake/lean          #
 # invocation ever dispatches to the second toolchain.                          #
 #                                                                              #
-# Runs as the non-privileged `comparator` user (comparator README assumption   #
-# 6): landrun (Landlock) confines the untrusted solution build to writes in    #
-# .lake, and /opt/apn/reset-dotlake.sh restores a pristine .lake before every  #
-# check (comparator-migration-plan.md §3.1).                                   #
+# Scoring runs as the non-privileged `comparator` user (comparator README      #
+# assumption 6) -- not via a USER directive (the image stays root for          #
+# Inspect; see the note at the end of this stage) but per exec: the checker    #
+# passes user=COMPARATOR_USER on every command. landrun (Landlock) confines    #
+# the untrusted solution build to writes in .lake, and                         #
+# /opt/apn/reset-dotlake.sh restores a pristine .lake before every check       #
+# (comparator-migration-plan.md §3.1).                                         #
 # --------------------------------------------------------------------------- #
 FROM base AS comparator
 
@@ -472,8 +476,17 @@ RUN useradd --create-home --shell /bin/bash comparator \
 # nothing: it already controls its own child processes' GIT_CONFIG_* env.)
 RUN git config --system --add safe.directory '*'
 
-USER comparator
-ENV HOME=/home/comparator
+# The image deliberately stays root (no USER directive): Inspect's sandbox
+# plumbing assumes the container's default user can write anywhere
+# (write_file's tee/mkdir run as that user), and k8s_sandbox implements the
+# per-exec `user=` switch with runuser(1), which only root may invoke. The
+# privilege drop happens per command instead: the checker passes
+# user=COMPARATOR_USER (apn/checker.py) on every exec against this sandbox,
+# so all scoring work still runs as `comparator` -- both backends resolve its
+# HOME from the passwd entry (docker exec --user and runuser alike). Staged
+# inputs written as root land 0644, readable by the comparator user; run/ and
+# .lake are (re)created by comparator-user execs, so it owns everything it
+# must delete.
 
 CMD ["sleep", "infinity"]
 

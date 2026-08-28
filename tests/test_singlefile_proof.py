@@ -9,8 +9,8 @@ version-tagged image from the current Dockerfile, cache-backed -- a stale
 prebuilt image can never silently satisfy the test. The sandbox is brought up
 through Inspect's own lifecycle (``task_init`` /
 ``init_sandbox_environments_sample`` / ``cleanup``), the same path a real eval
-uses, so the image's non-privileged user and landrun sandboxing are exercised
-too.
+uses, so the checker's non-privileged-user execs and landrun sandboxing are
+exercised too.
 
 We call ``SandboxComparator().check(spec, submission, decl, claim)`` with
 ``apn.checker.sandbox`` pointed at the live comparator env, so the verdict here

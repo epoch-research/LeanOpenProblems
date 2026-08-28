@@ -85,8 +85,9 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     Two services: the agent's workspace, and the trusted `comparator` verifier.
     The comparator container needs no filesystem hardening of its own
     (comparator-migration-plan.md §3.1): comparator's landrun (Landlock)
-    sandbox confines the untrusted solution build to writes in `.lake`, the
-    image runs as a non-privileged user, and the checker's per-check
+    sandbox confines the untrusted solution build to writes in `.lake`, every
+    checker exec runs as the non-privileged user (`user=COMPARATOR_USER`; the
+    image itself stays root for Inspect), and the checker's per-check
     reset-dotlake.sh restores a pristine `.lake`.
     """
     agent_kind = _agent_image_kind(literature)
