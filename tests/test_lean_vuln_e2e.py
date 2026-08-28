@@ -93,11 +93,13 @@ IMPORT_AUX = "import Submission.Helpers.Aux\n"
 # overwrite the lean4export binary with a script that exits 0, after which an
 # export could be spoofed. The write must fail; and even if the attacker
 # catches the IO exception, the kept `sorry` is still caught -> reject.
+# Both steps are in-process (core IO.FS): the build is landrun-confined, where
+# spawning `chmod` is blocked -- IO.setAccessRights sets the +x bit directly.
 LEAN4EXPORT_BIN = "/usr/local/bin/lean4export"  # baked location (on PATH)
 TAMPER_EXPORTER = (
     f'#eval (IO.FS.writeFile "{LEAN4EXPORT_BIN}" "#!/bin/sh\\nexit 0\\n" : IO Unit)\n'
-    f'#eval (do let _ <- IO.Process.output '
-    f'{{ cmd := "chmod", args := #["755", "{LEAN4EXPORT_BIN}"] }}; pure () : IO Unit)\n'
+    f'#eval (IO.setAccessRights "{LEAN4EXPORT_BIN}" '
+    f'{{ user := {{ read := true, write := true, execution := true }} }} : IO Unit)\n'
 )
 
 

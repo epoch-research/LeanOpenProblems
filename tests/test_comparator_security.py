@@ -105,13 +105,14 @@ async def _check(
 # writable `.lake/packages` symlink (into the pristine tree outside the write
 # grant) with a poisoned real directory. landrun grants writes to `.lake`, so
 # the swap succeeds *within* the check; the next check's reset-dotlake.sh must
-# undo it before that check's trusted Challenge builds against Mathlib. Needs
-# no import: IO.FS is in core (Init).
+# undo it before that check's trusted Challenge builds against Mathlib.
+# All in-process IO.FS (core, no import): the build is landrun-confined, and
+# spawning a subprocess (e.g. `rm`) is blocked there -- removeFile unlinks the
+# symlink itself, which is all the swap needs.
 _POISON_PACKAGES = (
     '#eval (do\n'
     '  let pkgs := "/workspace/leanproject/.lake/packages"\n'
     '  try IO.FS.removeFile pkgs catch _ => pure ()\n'
-    '  try (IO.Process.output { cmd := "rm", args := #["-rf", pkgs] } *> pure ()) catch _ => pure ()\n'
     '  try IO.FS.createDirAll (pkgs ++ "/mathlib") catch _ => pure ()\n'
     '  : IO Unit)\n'
 )
