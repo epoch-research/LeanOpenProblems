@@ -265,16 +265,25 @@ RUN micromamba create -y -p /opt/env -f /tmp/compute-env.yaml \
 # topology), not the compression lib. ore_algebra (D-finite guessing over
 # Sage) has no PyPI release, so it is pinned by commit; its setup.py imports
 # sage.env, so it must build WITHOUT pip's build isolation, against the env's
-# own sage/cython/flint (hence --no-build-isolation and the env's setuptools).
+# own sage/cython (hence --no-build-isolation and the env's setuptools). Its
+# optional compiled arb extensions do not build under Cython >= 3.2 (which
+# sage 10.9 requires env-wide), so the setup is patched onto its own
+# no-extensions branch -- the pure-python install it already uses for older
+# sage; the guessing/annihilator API is pure python, only numerical
+# evaluation loses its fast path.
 ARG ORE_ALGEBRA_COMMIT=18680180c884fac869a064db99f29a221aad9dfe
 RUN /opt/env/bin/pip install --no-cache-dir \
         python-sat==1.9.dev15 \
         cvc5==1.3.4 \
         ortools==9.15.6755 \
         snappy==3.3.2 \
-    && PKG_CONFIG_PATH=/opt/env/lib/pkgconfig \
-        /opt/env/bin/pip install --no-cache-dir --no-build-isolation \
-        "ore_algebra @ git+https://github.com/mkauers/ore_algebra@${ORE_ALGEBRA_COMMIT}" \
+    && curl -sSfL "https://github.com/mkauers/ore_algebra/archive/${ORE_ALGEBRA_COMMIT}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/ore_algebra-* \
+    && sed -i "s|^if list(map(int, sage.version.version.split('.')\\[:2\\])) < \\[10, 2\\]:|if True:  # patched: pure-python install, Cython >= 3.2 cannot build the arb extensions|" setup.py \
+    && grep -q '^if True:' setup.py \
+    && /opt/env/bin/pip install --no-cache-dir --no-build-isolation . \
+    && cd / && rm -rf /tmp/ore_algebra-* \
     && find /opt/env -name '__pycache__' -type d -prune -exec rm -rf {} +
 
 # --------------------------------------------------------------------------- #
@@ -366,26 +375,44 @@ RUN arch="$(uname -m)" \
 # --------------------------------------------------------------------------- #
 FROM base AS loogle_build
 
+# Retarget: the project's toolchain file replaces loogle's (v4.27.0-rc1 ->
+# v4.27.0; verified friction-free), and its mathlib require moves from
+# "master" to the rev the baked manifest pins. `lake update` then resolves
+# the transitive deps to exactly the FC manifest's revs and mathlib's
+# post-update hook fetches the olean cache (zero misses at the pinned rev).
 ARG LOOGLE_COMMIT=79343e3e37b64046e6b555936682012e80300df1
 RUN git clone https://github.com/nomeata/loogle.git /opt/loogle-src \
     && git -C /opt/loogle-src checkout --detach "${LOOGLE_COMMIT}" \
     && cd /opt/loogle-src \
     && cp /workspace/leanproject/lean-toolchain lean-toolchain \
     && MATHLIB_REV="$(python3 -c "import json; print(next(p['rev'] for p in json.load(open('/workspace/leanproject/lake-manifest.json'))['packages'] if p['name'] == 'mathlib'))")" \
-    && sed -i "s|require mathlib from git \"https://github.com/leanprover-community/mathlib4\" @ \"master\"|require mathlib from git \"https://github.com/leanprover-community/mathlib4\" @ \"${MATHLIB_REV}\"|" lakefile.lean \
+    && sed -i "s|@ \"master\"|@ \"${MATHLIB_REV}\"|" lakefile.lean \
     && grep -q "@ \"${MATHLIB_REV}\"" lakefile.lean \
     && rm lake-manifest.json \
     && lake update \
-    && lake exe cache get \
     && lake build loogle
 
-# Stage the runtime pieces: the binary plus loogle's own module oleans (its
-# Mathlib/dependency oleans are NOT staged -- the agent image points LEAN_PATH
-# at the FC project's baked packages, same toolchain and Mathlib rev by
-# construction).
-RUN mkdir -p /opt/loogle/bin \
+# Stage the runtime pieces -- the binary (statically linked against the
+# toolchain: no lake env / LD_LIBRARY_PATH needed), loogle's own module
+# oleans, and the prebuilt search index (built here, where a Mathlib rev
+# identical to the runtime one is guaranteed; peaks ~10 GB RSS). Its
+# Mathlib/dependency oleans are NOT staged: at runtime the wrapper passes
+# --path flags for the FC project's baked packages, same toolchain and
+# Mathlib rev by construction. The --json query doubles as a smoke test.
+RUN mkdir -p /opt/loogle/bin /opt/loogle/lib \
     && cp /opt/loogle-src/.lake/build/bin/loogle /opt/loogle/bin/loogle \
-    && cp -r /opt/loogle-src/.lake/build/lib/lean /opt/loogle/lib
+    && cp -r /opt/loogle-src/.lake/build/lib/lean /opt/loogle/lib/lean \
+    && find /opt/loogle/lib -type f ! -name '*.olean' -delete \
+    && /opt/loogle/bin/loogle \
+        $(for p in /workspace/leanproject/.lake/packages/*/.lake/build/lib/lean; do printf ' --path %s' "$p"; done) \
+        --path /workspace/leanproject/.lake/build/lib/lean \
+        --path /opt/loogle/lib/lean \
+        --path "/root/.elan/toolchains/$(sed 's|/|--|g; s|:|---|g' /workspace/leanproject/lean-toolchain)/lib/lean" \
+        --write-index /opt/loogle/loogle.index --json "Nat.Prime" \
+        > /tmp/loogle-smoke.json \
+    && grep -q '"name"' /tmp/loogle-smoke.json \
+    && rm /tmp/loogle-smoke.json \
+    && rm -rf /opt/loogle-src
 
 # --------------------------------------------------------------------------- #
 # agent: the agent's workspace. Layer order is big/stable first (the conda     #
@@ -416,22 +443,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Source-built solvers (kissat, plantri, prover9/mace4, msolve, cvc5).
 COPY --from=solvers_build /out/bin/ /usr/local/bin/
 
-# Loogle: binary + its own module oleans; Mathlib resolves from the FC
-# project's baked packages via LEAN_PATH (same toolchain + Mathlib rev as the
-# loogle_build stage by construction). The wrapper makes `loogle "..."` work
-# without the agent knowing any of this.
+# Loogle: binary + its own module oleans + prebuilt index; Mathlib resolves
+# from the FC project's baked packages (same toolchain + Mathlib rev as the
+# loogle_build stage by construction). The wrapper passes the --path roster
+# so `loogle "..."` works without the agent knowing any of this.
 COPY --from=loogle_build /opt/loogle /opt/loogle
-RUN printf '%s\n' \
-        '#!/bin/sh' \
-        '# Loogle needs its own oleans plus the project Mathlib oleans on LEAN_PATH.' \
-        'LEAN_PATH=/opt/loogle/lib' \
-        'for d in /workspace/leanproject/.lake/packages/*/.lake/build/lib/lean; do' \
-        '    LEAN_PATH="$LEAN_PATH:$d"' \
-        'done' \
-        'export LEAN_PATH' \
-        'exec /opt/loogle/bin/loogle "$@"' \
-        > /usr/local/bin/loogle \
-    && chmod 755 /usr/local/bin/loogle
+COPY loogle.sh /usr/local/bin/loogle
+RUN chmod 755 /usr/local/bin/loogle
 
 # In-sandbox references (the sandbox has no network): vendored, version-matched
 # docs for the tools whose syntax the agent is unlikely to know cold. Last:

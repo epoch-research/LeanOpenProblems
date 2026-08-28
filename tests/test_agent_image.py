@@ -100,7 +100,10 @@ PYTHON_MODULES = [
     "ortools",
     "pysat",  # python-sat
     "snappy",  # SnapPy
-    "ore_algebra",
+    # ore_algebra is a sage library: importing it before sage.all trips sage's
+    # circular-import guard, so the contract (and the agent's usage) is
+    # "import sage.all first".
+    "sage.all, ore_algebra",
     "sage.all",
 ]
 

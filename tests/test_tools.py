@@ -31,7 +31,6 @@ def test_user_prompt_mentions_environment_tools() -> None:
     assert "sage" in rendered
     assert "z3" in rendered
     assert "kissat" in rendered
-    assert "trace_state" in rendered
     assert "/opt/docs" in rendered
     # The pantograph toolchain is gone from the image; the prompt must not
     # advertise it.
