@@ -90,18 +90,7 @@ RESOURCE_BOUND_STEMS = {
     "oeis_271591_conjecture_0",
 }
 
-# Module-sensitive closure drift (comparator-migration-plan.md §3.3,
-# comparator#58): `private` declarations mangle their module name into the
-# exported closure, so Comparator falsely rejected faithful proofs (this sweep
-# caught oeis_A258667_conjecture_0 with "Const does not match between challenge
-# and target 'A258667'"). The OEIS generator now strips `private` at generation
-# (scripts.isolation.strip_private) -- semantics are unchanged, only name
-# visibility/mangling -- so no gold stem (all OEIS) drifts anymore and A258667
-# serves as the fix's regression guard. The remaining (non-gold) drift cases
-# are documented in scripts.comparator_drift.CONFIRMED_REJECT_IDS.
-MODULE_DRIFT_STEMS: set[str] = set()
-
-SKIP_STEMS = RESOURCE_BOUND_STEMS | MODULE_DRIFT_STEMS
+SKIP_STEMS = RESOURCE_BOUND_STEMS
 
 
 def _tar_of(files: dict[str, str]) -> bytes:
@@ -199,8 +188,6 @@ def test_gold_proofs_present() -> None:
 def _skip_reason(stem: str) -> str | None:
     if stem in RESOURCE_BOUND_STEMS:
         return "exceeds checker resource ceilings (pending §7 re-measurement)"
-    if stem in MODULE_DRIFT_STEMS:
-        return "known module-sensitive closure drift (§3.3); faithful proof rejected"
     return None
 
 
