@@ -10,15 +10,14 @@
 # verified for linux-64 and linux-aarch64 (local dev on Apple silicon); when
 # bumping a pin, keep versions that exist for both platforms.
 #
-# pip-layer packages (python-sat, cvc5 bindings, ortools, snappy, ore_algebra)
-# are installed into this same env by the Dockerfile, pinned there.
+# pip-layer packages (python-sat, cvc5 bindings, ortools, snappy) are
+# installed into this same env by the Dockerfile, pinned there.
 name: compute
 channels:
   - conda-forge
 dependencies:
   - python=3.13.15
   - pip=26.2.1
-  - setuptools=84.0.0  # ore_algebra's no-isolation pip build needs it
   # computer algebra systems and their engines
   - sage=10.9
   - pari=2.17.3          # PARI/GP: the `gp` binary + libpari
