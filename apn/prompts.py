@@ -36,7 +36,7 @@ def user_prompt(path: str, token_limit: int | None, literature: bool, util_modul
     PROOF_PATH = "/workspace/leanproject/Submission/Spec.lean"
 
     parts.append(f"""\
-Settle the conjecture in the Lean file `{PROOF_PATH}`. The file states two theorems, each with a `sorry` proof: the conjecture itself, and a `.disproof` theorem stating exactly its negation. Replace the `sorry` of exactly ONE of them with a complete proof:
+Settle the conjecture in the Lean file `{PROOF_PATH}`. The file states two theorems, each with a `sorry` proof: the conjecture itself, and a `.disproof` theorem stating exactly its negation. Replace the `sorry` of exactly one of them with a complete proof:
 
 * To prove the conjecture, fill in the original theorem's `sorry`.
 * To disprove it, fill in the `.disproof` theorem's `sorry`. Its proof must not reference the original theorem (which stays `sorry`).
