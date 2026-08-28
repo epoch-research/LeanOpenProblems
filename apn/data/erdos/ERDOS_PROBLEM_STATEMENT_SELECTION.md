@@ -19,14 +19,11 @@ Of the 48 modules, 15 hold a single research statement, 30 hold a default
 statement plus alternatives under `erdos_N.variants`, two (208 and 812) split
 the problem into statements under `erdos_N.parts`, and one (508, which
 predates the usual naming scheme) holds `HadwigerNelsonProblem` plus solved
-bounds. The variants mix stronger conjectures, weaker or solved bounds,
-special cases, and related questions, with no uniform implication ordering.
-This note records which statement represents each problem; the
+bounds. This note records which statement represents each problem; the
 machine-readable selection is `subsets/bloom_selection.json`.
 
 - The 15 single-statement modules: use the statement.
-- The 30 modules with variants: use the default (non-variant) statement, even
-  when a variant is the mathematically stronger claim.
+- The 30 modules with variants: use the default (non-variant) statement.
 - The two modules with parts use Thomas Bloom's explicit picks (2026-08-26):
   `erdos_208.parts.i` and `erdos_812.parts.i`.
 - Problem 508 (Hadwiger–Nelson): the module's one open statement,
