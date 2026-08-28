@@ -135,9 +135,10 @@ VERDICT_PROSE = [
 # bound), so the benchmark carries three derived prove-or-disprove samples in
 # its place, one per candidate value -- Greg Burnham's proposal, adopted by
 # Thomas Bloom (2026-08-25). Each spec is the source file cut down to the
-# target theorem with the `answer(sorry)` placeholder replaced by the literal.
-# The three samples share the declaration name, so their manifest rows carry
-# an explicit `decl_name` and the sample ids take an `.eqN` suffix.
+# target theorem with the `answer(sorry)` placeholder replaced by the literal
+# and the theorem renamed to `HadwigerNelsonProblem.eqN` -- so the three
+# statements carry distinct names and the id-is-the-declaration-name
+# convention holds.
 #
 # The derivation is pure text over the vendored source (no extractor run), so
 # generation and the fast suite (tests/test_erdos.py, byte-level re-derivation)
@@ -183,7 +184,11 @@ def derive_hadwiger_nelson_specs() -> dict[str, str]:
     for value, sample_id in zip(HN_VALUES, HN_SAMPLE_IDS):
         text, n = _HN_ANSWER_SORRY_RE.subn(str(value), base)
         assert n == 1, f"{sample_id}: {n} answer(sorry) substitutions"
-        specs[sample_id], _ = append_disproof(text, HN_DECL, HN_DECL)
+        old_header = "theorem HadwigerNelsonProblem :"
+        new_header = f"theorem HadwigerNelsonProblem.eq{value} :"
+        assert text.count(old_header) == 1, sample_id
+        text = text.replace(old_header, new_header)
+        specs[sample_id], _ = append_disproof(text, sample_id, sample_id)
     return specs
 
 
@@ -196,7 +201,6 @@ def hn_manifest_rows() -> list[dict]:
             "erdos_number": 508,
             "category_at_pin": "research open",
             "answer_form": None,
-            "decl_name": HN_DECL,
         }
         for sample_id in HN_SAMPLE_IDS
     ]

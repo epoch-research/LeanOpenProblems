@@ -39,10 +39,10 @@ scoped notation "χ(ℝ²)" => SimpleGraph.chromaticNumber (UnitDistancePlaneGra
 The Hadwiger–Nelson problem asks: How many colors are required to color the plane
 such that no two points at distance 1 from each other have the same color?
 -/
-theorem HadwigerNelsonProblem :
+theorem HadwigerNelsonProblem.eq6 :
     χ(ℝ²) = 6 := by
   sorry
 
 end Erdos508
 
-theorem Erdos508.HadwigerNelsonProblem.disproof : ¬ (type_of% @Erdos508.HadwigerNelsonProblem) := sorry
+theorem Erdos508.HadwigerNelsonProblem.eq6.disproof : ¬ (type_of% @Erdos508.HadwigerNelsonProblem.eq6) := sorry

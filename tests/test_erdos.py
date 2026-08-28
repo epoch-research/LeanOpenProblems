@@ -26,7 +26,6 @@ from apn.dataset import (
     load_subset,
 )
 from scripts.erdos_isolation import (
-    HN_DECL,
     HN_SAMPLE_IDS,
     PROVED_IN_FILE_REASON,
     SORRY_ALLOWLIST_FILES,
@@ -168,7 +167,7 @@ def test_508_derived_samples() -> None:
     for sample_id, text in specs.items():
         row = rows[sample_id]
         assert row.excluded is None
-        assert row.decl_name == HN_DECL
+        assert row.decl_name == sample_id  # the derivation renames the target
         assert row.extra["answer_form"] is None
         assert row.extra["category_at_pin"] == "research open"
         assert (ERDOS_DIR / row.statement_path).read_text() == text
@@ -308,8 +307,6 @@ def test_no_sibling_member_survives_in_any_spec() -> None:
     # excluded) may survive in another member's spec beyond the documented
     # dependency-kept few. Pure-Python guard over the committed files; the
     # authoritative re-extraction check lives in tests/test_erdos_isolation.py.
-    # Identity is the row's *declaration* name: the three derived
-    # Hadwiger–Nelson samples share HN_DECL under distinct sample ids.
     rows = load_manifest(ERDOS_DIR)
     all_ids = [r.id for r in rows]
     for row in rows:
@@ -317,9 +314,9 @@ def test_no_sibling_member_survives_in_any_spec() -> None:
             continue
         text = (ERDOS_DIR / row.statement_path).read_text()
         declared = _DECL_RE.findall(text)
-        assert any(_declares(row.decl_name, n) for n in declared), row.id
+        assert any(_declares(row.id, n) for n in declared), row.id
         for name in declared:
-            if _declares(row.decl_name, name):
+            if _declares(row.id, name):
                 continue
             offenders = [
                 i for i in all_ids

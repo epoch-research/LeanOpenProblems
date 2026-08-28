@@ -47,6 +47,7 @@ import pytest_asyncio
 
 from apn.dataset import ERDOS_DIR, SampleRow, fc_commit, fc_profile, load_manifest
 from scripts.erdos_isolation import (
+    HN_DECL,
     HN_SAMPLE_IDS,
     ISOLATED_DIR,
     SOURCES_DIR,
@@ -145,11 +146,14 @@ async def test_isolated_files_are_structurally_correct(
     rewritten forms."""
     failures: list[str] = []
     for row in kept_rows:
-        # The target's declaration name (== the sample id everywhere except
-        # the three derived Hadwiger–Nelson samples, which share HN_DECL).
-        name, rel = row.decl_name, row.source.removeprefix("Sources/")
+        name, rel = row.id, row.source.removeprefix("Sources/")
         stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
-        src_type, planned = planned_survivors(iso_data.src_ranges[rel], name)
+        # The derived Hadwiger–Nelson samples rename their source declaration
+        # (HN_DECL) to the sample's own name, so the cut prediction resolves
+        # the source name and is mapped through the rename.
+        src_name = HN_DECL if row.id in HN_SAMPLE_IDS else name
+        src_type, planned = planned_survivors(iso_data.src_ranges[rel], src_name)
+        planned = [name if d == src_name else d for d in planned]
         src_type = normalize_hygiene(src_type)
         fr = iso_data.iso_ranges.get(stem)
         if fr is None:
