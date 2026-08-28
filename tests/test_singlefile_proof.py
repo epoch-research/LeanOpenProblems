@@ -20,6 +20,8 @@ What they cover (the soundness-relevant behaviour of the single-file model; the
 plumbing -- tar shaping, verdict mapping -- is unit-tested in ``test_checker.py``):
 
 * a single-file proof is accepted;
+* a theorem whose fully qualified name contains a dotted guillemet-quoted
+  component is accepted (the shape of three live FC100 targets);
 * the same accept path in the *erdos* pin's comparator image -- the
   institutionalized pin-move smoke test: that pin sits past upstream's
   ``FormalConjecturesUtil`` rename, so the end-to-end build + kernel replay run
@@ -172,6 +174,38 @@ async def test_single_file_proof_is_accepted(
     )}
     outcome = await _check(comparator_env, monkeypatch, spec, submission)
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_quoted_decl_name_component_containing_dot_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A source-spelled declaration name must round-trip through Comparator's config.
+
+    FC100 contains three live targets under Arxiv namespaces whose quoted
+    component is an arXiv identifier such as ``«0912.2382»``. This pins the
+    end-to-end contract that Comparator's config decoding preserves that single
+    name component.
+    """
+    decl = "Arxiv.«0912.2382».curling_number_conjecture"
+    spec = (
+        _IMPORT
+        + "namespace Arxiv.«0912.2382»\n"
+        + "theorem curling_number_conjecture : 1 + 1 = 2 := by sorry\n"
+        + "end Arxiv.«0912.2382»\n"
+        + f"theorem {decl}.disproof : ¬ (type_of% @{decl}) := sorry\n"
+    )
+    submission = {
+        "Spec.lean": spec.replace(
+            "theorem curling_number_conjecture : 1 + 1 = 2 := by sorry",
+            "theorem curling_number_conjecture : 1 + 1 = 2 := by norm_num",
+        )
+    }
+    outcome = await _check(comparator_env, monkeypatch, spec, submission, decl=decl)
+    assert outcome.ok, (
+        "a valid proof under a quoted dotted name should be accepted, got "
+        f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+    )
 
 
 @pytest.mark.asyncio(loop_scope="module")
