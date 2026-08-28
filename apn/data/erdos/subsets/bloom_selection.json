@@ -1,5 +1,5 @@
 {
-  "description": "Thomas Bloom's Erdős problem statement selection: one representative statement per reviewed problem (ERDOS_PROBLEM_STATEMENT_SELECTION.md, reviewed at formal-conjectures 56534c04092446f2fd549d2865f2496924812da8). 47 of the 48 selected statements; the 48th, Erdos508.HadwigerNelsonProblem, is value-typed (χ(ℝ²) = answer(sorry), sorryAx in the statement type) and ships as an excluded manifest row. Statement text is vendored at the pinned commit (fc_commit), certified byte-identical to the review commit by scripts/erdos_statement_certificate.py (48/48 at vendor time; residual non-statement diffs in 8 files -- see that script's docstring). In problem-number order.",
+  "description": "Thomas Bloom's Erdős problem statement selection: one representative statement per reviewed problem (ERDOS_PROBLEM_STATEMENT_SELECTION.md, reviewed at formal-conjectures 56534c04092446f2fd549d2865f2496924812da8), except Problem 508, which contributes three derived prove-or-disprove samples (χ(ℝ²) = 5, 6, 7) in place of its value-typed HadwigerNelsonProblem (an excluded manifest row) -- 50 statements over 48 problems. Statement text is vendored at the pinned commit (fc_commit), certified byte-identical to the review commit by scripts/erdos_statement_certificate.py (48/48 at vendor time; residual non-statement diffs in 8 files -- see that script's docstring); the three 508 specs are derived from the vendored source by scripts/erdos_isolation.py's Hadwiger–Nelson special case. In problem-number order.",
   "ids": [
     "Erdos1.erdos_1",
     "Erdos3.erdos_3",
@@ -26,7 +26,7 @@
     "Erdos138.erdos_138",
     "Erdos172.erdos_172",
     "Erdos184.erdos_184",
-    "Erdos208.erdos_208.parts.ii",
+    "Erdos208.erdos_208.parts.i",
     "Erdos213.erdos_213",
     "Erdos241.erdos_241",
     "Erdos242.erdos_242",
@@ -35,6 +35,9 @@
     "Erdos371.erdos_371",
     "Erdos376.erdos_376",
     "Erdos406.erdos_406",
+    "Erdos508.HadwigerNelsonProblem.eq5",
+    "Erdos508.HadwigerNelsonProblem.eq6",
+    "Erdos508.HadwigerNelsonProblem.eq7",
     "Erdos564.erdos_564",
     "Erdos595.erdos_595",
     "Erdos647.erdos_647",

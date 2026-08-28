@@ -47,6 +47,8 @@ import pytest_asyncio
 
 from apn.dataset import ERDOS_DIR, SampleRow, fc_commit, fc_profile, load_manifest
 from scripts.erdos_isolation import (
+    HN_DECL,
+    HN_SAMPLE_IDS,
     ISOLATED_DIR,
     SOURCES_DIR,
 )
@@ -146,17 +148,22 @@ async def test_isolated_files_are_structurally_correct(
     for row in kept_rows:
         name, rel = row.id, row.source.removeprefix("Sources/")
         stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
-        src_type, planned = planned_survivors(iso_data.src_ranges[rel], name)
+        # The derived Hadwiger–Nelson samples rename their source declaration
+        # (HN_DECL) to the sample's own name, so the cut prediction resolves
+        # the source name and is mapped through the rename.
+        src_name = HN_DECL if row.id in HN_SAMPLE_IDS else name
+        src_type, planned = planned_survivors(iso_data.src_ranges[rel], src_name)
+        planned = [name if d == src_name else d for d in planned]
         src_type = normalize_hygiene(src_type)
         fr = iso_data.iso_ranges.get(stem)
         if fr is None:
-            failures.append(f"{name}: no isolated file extracted")
+            failures.append(f"{row.id}: no isolated file extracted")
             continue
         thms = theorem_command_decls(fr)
         target_hits = [d for d in thms if d["name"] == name]
         if len(target_hits) != 1:
             failures.append(
-                f"{name}: target appears {len(target_hits)}x among {[d['name'] for d in thms]}"
+                f"{row.id}: target appears {len(target_hits)}x among {[d['name'] for d in thms]}"
             )
             continue
         remaining = sorted(d["name"] for d in thms)
@@ -164,17 +171,27 @@ async def test_isolated_files_are_structurally_correct(
         # `.disproof` declaration (comparator-migration-plan.md §4).
         expected = sorted(planned + [f"{row.decl_name}.disproof"])
         if remaining != expected:
-            failures.append(f"{name}: surviving theorems {remaining} != expected {expected}")
+            failures.append(f"{row.id}: surviving theorems {remaining} != expected {expected}")
+            continue
+        iso_type = normalize_hygiene(target_hits[0]["type"])
+        if row.id in HN_SAMPLE_IDS:
+            # Derived Hadwiger–Nelson samples: the source statement is
+            # value-typed, so there is no answer(...) ↔ form to certify (the
+            # byte-level re-derivation check lives in tests/test_erdos.py).
+            # Assert the derived statement elaborates placeholder-free instead.
+            if row.extra["answer_form"] is not None:
+                failures.append(f"{row.id}: derived sample carries an answer_form")
+            elif "sorryAx" in iso_type:
+                failures.append(f"{row.id}: sorryAx in the derived statement's type")
             continue
         form = _source_form(name, rel, iso_data.src_ranges[rel])
         if form != row.extra["answer_form"]:
             failures.append(
-                f"{name}: manifest answer_form {row.extra['answer_form']} != source's {form}"
+                f"{row.id}: manifest answer_form {row.extra['answer_form']} != source's {form}"
             )
             continue
-        iso_type = normalize_hygiene(target_hits[0]["type"])
         if not answer_certified(form, src_type, iso_type):
-            failures.append(f"{name}: target statement changed during isolation ({form=})")
+            failures.append(f"{row.id}: target statement changed during isolation ({form=})")
     assert not failures, "structural validation failed:\n  " + "\n  ".join(failures)
 
 

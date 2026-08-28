@@ -1,0 +1,23 @@
+{
+  "description": "Thomas Bloom's verdicts on the autoformalized Erdős problems (2026-08-26): every manifest statement except Erdos1206.erdos_1206.parts.ii (part i alone represents Problem 1206) and Erdos1207.erdos_1207 (dropped from the benchmark entirely); Problem 713 stays split into its two parts as two samples. 18 statements over 17 problems. In problem-number order.",
+  "ids": [
+    "Erdos86.erdos_86",
+    "Erdos104.erdos_104",
+    "Erdos181.erdos_181",
+    "Erdos322.erdos_322",
+    "Erdos431.erdos_431",
+    "Erdos478.erdos_478",
+    "Erdos548.erdos_548",
+    "Erdos571.erdos_571",
+    "Erdos583.erdos_583",
+    "Erdos713.erdos_713.parts.i",
+    "Erdos713.erdos_713.parts.ii",
+    "Erdos714.erdos_714",
+    "Erdos773.erdos_773",
+    "Erdos970.erdos_970",
+    "Erdos1020.erdos_1020",
+    "Erdos1083.erdos_1083",
+    "Erdos1159.erdos_1159",
+    "Erdos1206.erdos_1206.parts.i"
+  ]
+}
