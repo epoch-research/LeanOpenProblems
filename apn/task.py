@@ -49,11 +49,8 @@ SandboxBackend = Literal["docker", "k8s"]
 # fails loudly, and collapsing to a single compose file becomes a reasonable   #
 # simplification.                                                              #
 # --------------------------------------------------------------------------- #
-AGENT_MEMORY_GIB = 10
-# Comparator holds both text exports in memory and replays the solution's
-# closure through its kernel; 16 GiB is the §7 starting point (the DAG-shaped
-# export removes SafeVerify's rebuildExpr blowup).
-COMPARATOR_MEMORY_GIB = 16
+AGENT_MEMORY_GIB = 32
+COMPARATOR_MEMORY_GIB = 32
 
 
 def _docker_tag_component(value: str) -> str:

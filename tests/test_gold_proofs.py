@@ -78,20 +78,6 @@ ISOLATED_DIR = REPO / "apn" / "data" / "oeis" / "Isolated"
 # Collected at import time so each conjecture is its own parametrized case.
 GOLD_STEMS = sorted(p.stem for p in GOLD_DIR.glob("*.lean"))
 
-# Module-sensitive closure drift (comparator-migration-plan.md §3.3,
-# comparator#58): `private` declarations mangle their module name into the
-# exported closure, so Comparator falsely rejected faithful proofs (this sweep
-# caught oeis_A258667_conjecture_0 with "Const does not match between challenge
-# and target 'A258667'"). The OEIS generator now strips `private` at generation
-# (scripts.isolation.strip_private) -- semantics are unchanged, only name
-# visibility/mangling -- so no gold stem (all OEIS) drifts anymore and A258667
-# serves as the fix's regression guard. The remaining (non-gold) drift cases
-# are documented in scripts.comparator_drift.CONFIRMED_REJECT_IDS.
-MODULE_DRIFT_STEMS: set[str] = set()
-
-SKIP_STEMS = MODULE_DRIFT_STEMS
-
-
 def _tar_of(files: dict[str, str]) -> bytes:
     """Pack ``{relative path: contents}`` into the tar the checker consumes
     (members relative to ``Submission/``). Mirrors ``test_singlefile_proof.py``."""
@@ -184,23 +170,8 @@ def test_gold_proofs_present() -> None:
     assert len(GOLD_STEMS) == 38, f"expected 38 gold proofs, found {len(GOLD_STEMS)}: {GOLD_STEMS}"
 
 
-def _skip_reason(stem: str) -> str | None:
-    if stem in MODULE_DRIFT_STEMS:
-        return "known module-sensitive closure drift (§3.3); faithful proof rejected"
-    return None
-
-
 @pytest.mark.asyncio(loop_scope="module")
-@pytest.mark.parametrize(
-    "stem",
-    [
-        pytest.param(
-            stem,
-            marks=[pytest.mark.skip(reason=reason)] if (reason := _skip_reason(stem)) else [],
-        )
-        for stem in GOLD_STEMS
-    ],
-)
+@pytest.mark.parametrize("stem", GOLD_STEMS)
 async def test_gold_proof_verifies(
     stem: str,
     sandbox_envs: dict[str, SandboxEnvironment],
