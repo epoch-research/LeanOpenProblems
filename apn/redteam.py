@@ -110,8 +110,9 @@ Rules of engagement:
   cannot break it, report what you tried and why each approach failed.
 
 Be persistent and methodical: when one approach fails, understand why from the
-codebase and try another. You have a Lean toolchain, `git`, `rg`, `jq`, `python`
-(sympy/mpmath/numpy/pantograph), and `sage` available.
+codebase and try another. You have a Lean toolchain, `git`, `rg`, `jq`, `python3`
+(numpy/scipy/sympy/mpmath and more), `sage`, and a suite of solver and math CLI
+tools available.
 """
 
 
@@ -123,7 +124,7 @@ def _apn_codebase_tar() -> bytes:
 
     root = Path(apn.__file__).parent
     skip_top = {"data", "__pycache__"}
-    skip_any = {"__pycache__", "pantograph-docs", "pypantograph-docs"}
+    skip_any = {"__pycache__", "docs"}
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tf:
         for p in sorted(root.rglob("*")):

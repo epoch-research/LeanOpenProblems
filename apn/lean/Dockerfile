@@ -9,9 +9,15 @@
 #                   rename -- the builder detects which from the checkout)
 #                   compiles. Shared by the two service images; not a service
 #                   itself.
-#   - agent      -- the agent's workspace: base + PyPantograph + numerical
-#                   Python libs. Deliberately contains NO verifier tooling (no
-#                   comparator, no lean4export, no landrun).
+#   - agent      -- the agent's workspace: base + a declared compute stack.
+#                   One locked conda-forge env at /opt/env (python + Sage +
+#                   the python stack + solver binaries; spec in
+#                   compute-env.yaml, built in `compute_build`), apt tools
+#                   conda-forge lacks, source-built solvers (`solvers_build`),
+#                   the Loogle Mathlib-search CLI (`loogle_build`), and
+#                   vendored per-tool docs at /opt/docs. Deliberately contains
+#                   NO verifier tooling (no comparator, no lean4export, no
+#                   landrun).
 #   - comparator -- the trusted verifier: base + the Comparator binary + the
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
@@ -25,8 +31,9 @@
 #
 #   - The FC project (statements, Mathlib, oleans) is pinned by the dataset's
 #     FC_COMMIT and builds with its own lean-toolchain (v4.27.0 today). This is
-#     dataset identity; PyPantograph's repl must match it (oleans load only
-#     under the toolchain that built them).
+#     dataset identity; anything that importModules-loads oleans (lean4export,
+#     Loogle) must be built at this toolchain (oleans load only under the
+#     toolchain that built them).
 #   - The lean4export *binary* (the runtime exporter) `importModules`-loads the
 #     project's oleans in-process, so it MUST be built at the project
 #     toolchain. Upstream's rev at that toolchain emits an export format the
@@ -42,10 +49,19 @@
 #     comparator tip only, so its pin tracks the newest tag, not the project
 #     toolchain (plan §2.1).
 #
-# On an FC-pin bump: PyPantograph and the exporter's toolchain move with it.
+# On an FC-pin bump: the exporter's and Loogle's builds move with it (Loogle
+# is rebuilt against the new pin's Mathlib rev; see `loogle_build`).
 # On a comparator bump: move LEAN4EXPORT_COMMIT to the rev in comparator's
 # lake-manifest.json, re-verify the toolchain-override build, and re-run the
 # primitive-constants check (plan §2.3; the gold-proof suite exercises it).
+#
+# The agent's compute stack is DECLARED, not accreted: the conda-forge env
+# spec (compute-env.yaml) plus the explicit install lines in `compute_build`,
+# `solvers_build`, and the `agent` stage are the source of truth for what the
+# agent can run; tests/test_agent_image.py contract-tests the roster and
+# apn/prompts.py advertises it. Loogle is the one deliberately pin-tied
+# addition outside the base layer; everything else in the compute stack is
+# Lean-agnostic.
 #
 # The builder stage clones the whole formal-conjectures repo and builds the
 # library; base copies in ONLY the toolchain, the lake build artifacts
@@ -180,18 +196,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APN_LEAN_PROJECT=/workspace/leanproject
 
 # Runtime libs for the Lean toolchain, plus the build tools the derived images
-# need (the agent builds PyPantograph; the comparator image builds lean4export)
-# and python3 (the agent uses it to drive PyPantograph and as a numerical
-# scratchpad).
+# need (the loogle_build and lean4export_build stages compile Lean projects)
+# and python3 (loogle_build reads the baked manifest with it; the `generate`
+# stage drives repo scripts with it). The agent's own python is NOT this one:
+# the agent image puts its /opt/env python first on PATH.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
         python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # The Lean/lake toolchain (binaries + the project toolchain). The image ENV PATH
-# above covers non-login execs (how ``sandbox().exec`` and the agent's PyPantograph
-# subprocess run); add a profile snippet so *login* shells (e.g. ``bash -lc``)
-# also find lake/lean.
+# above covers non-login execs (plain ``sandbox().exec`` calls); add a profile
+# snippet so *login* shells (``bash --login -c``, how the agent's bash tool
+# execs) also find lake/lean.
 COPY --from=builder /root/.elan /root/.elan
 RUN echo 'export PATH=/root/.elan/bin:$PATH' > /etc/profile.d/elan.sh
 
@@ -218,53 +235,208 @@ COPY --from=builder /staged ./
 CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
-# agent: the agent's workspace.                                                #
+# compute_build: the agent's conda-forge compute env at /opt/env (python +     #
+# Sage + the python stack + solver binaries; spec: compute-env.yaml). Built    #
+# in its own stage so the multi-GB env is one cached layer COPY'd into agent,  #
+# re-run only when the spec or the pip pins change. The pip layer installs     #
+# into the SAME env (no second python): PyPI-only packages, pinned here.       #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS compute_build
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# build-essential + pkg-config: ore_algebra below compiles Cython extensions
+# against the env's sage/flint headers (its setup probes flint via pkg-config).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates bzip2 git build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG MICROMAMBA_VERSION=2.9.0
+RUN arch="$(uname -m)" \
+    && case "$arch" in x86_64) plat=linux-64 ;; aarch64) plat=linux-aarch64 ;; *) echo "unsupported arch $arch" >&2; exit 1 ;; esac \
+    && curl -sSfL "https://micro.mamba.pm/api/micromamba/${plat}/${MICROMAMBA_VERSION}" \
+        | tar -xj -C /usr/local bin/micromamba
+
+COPY compute-env.yaml /tmp/compute-env.yaml
+RUN micromamba create -y -p /opt/env -f /tmp/compute-env.yaml \
+    && micromamba clean -afy
+
+# PyPI-only packages, into the same env. snappy is SnapPy (3-manifold
+# topology), not the compression lib. ore_algebra (D-finite guessing over
+# Sage) has no PyPI release, so it is pinned by commit; its setup.py imports
+# sage.env, so it must build WITHOUT pip's build isolation, against the env's
+# own sage/cython/flint (hence --no-build-isolation and the env's setuptools).
+ARG ORE_ALGEBRA_COMMIT=18680180c884fac869a064db99f29a221aad9dfe
+RUN /opt/env/bin/pip install --no-cache-dir \
+        python-sat==1.9.dev15 \
+        cvc5==1.3.4 \
+        ortools==9.15.6755 \
+        snappy==3.3.2 \
+    && PKG_CONFIG_PATH=/opt/env/lib/pkgconfig \
+        /opt/env/bin/pip install --no-cache-dir --no-build-isolation \
+        "ore_algebra @ git+https://github.com/mkauers/ore_algebra@${ORE_ALGEBRA_COMMIT}" \
+    && find /opt/env -name '__pycache__' -type d -prune -exec rm -rf {} +
+
+# --------------------------------------------------------------------------- #
+# solvers_build: tools with no conda-forge or bookworm packaging, built from   #
+# pinned sources (plus the pinned official cvc5 static binary -- its PyPI      #
+# wheel in compute_build carries only the python API). Everything lands in    #
+# /out/bin and links only libc/libm from the shared bookworm userland (flint/  #
+# gmp/mpfr are linked statically), so the binaries drop straight into agent.   #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS solvers_build
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates build-essential unzip m4 \
+        libgmp-dev libmpfr-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /out/bin
+
+# kissat: state-of-the-art CDCL SAT solver (DIMACS in/out).
+ARG KISSAT_VERSION=rel-4.0.4
+RUN curl -sSfL "https://github.com/arminbiere/kissat/archive/refs/tags/${KISSAT_VERSION}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/kissat-* \
+    && ./configure && make -j"$(nproc)" \
+    && install -m 755 build/kissat /out/bin/kissat \
+    && rm -rf /tmp/kissat-*
+
+# plantri: planar-graph generator (Brinkmann & McKay).
+ARG PLANTRI_VERSION=55
+RUN curl -sSfL "https://users.cecs.anu.edu.au/~bdm/plantri/plantri${PLANTRI_VERSION}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/plantri* \
+    && make plantri \
+    && install -m 755 plantri /out/bin/plantri \
+    && rm -rf /tmp/plantri*
+
+# prover9/mace4: first-order theorem prover + finite-model finder. Upstream
+# (cs.unm.edu LADR-2009-11A) has no releases and Debian dropped the package;
+# built from a pinned commit of the ai4reason mirror of that final release.
+ARG PROVER9_COMMIT=cdca95a51d3c3459b8fd2ebbb5ac1504be2172e3
+RUN curl -sSfL "https://github.com/ai4reason/Prover9/archive/${PROVER9_COMMIT}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/Prover9-* \
+    && make all \
+    && install -m 755 bin/prover9 bin/mace4 bin/interpformat bin/prooftrans /out/bin/ \
+    && rm -rf /tmp/Prover9-*
+
+# msolve: multivariate polynomial system solver (Groebner bases). Needs
+# FLINT >= 3, which bookworm lacks -- both are built here, FLINT static so
+# nothing but the msolve binaries ship.
+ARG FLINT_VERSION=3.6.0
+ARG MSOLVE_VERSION=0.10.1
+RUN curl -sSfL "https://github.com/flintlib/flint/releases/download/v${FLINT_VERSION}/flint-${FLINT_VERSION}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/flint-* \
+    && ./configure --disable-shared --prefix=/usr/local \
+    && make -j"$(nproc)" && make install \
+    && rm -rf /tmp/flint-*
+RUN curl -sSfL "https://github.com/algebraic-solving/msolve/releases/download/v${MSOLVE_VERSION}/msolve-${MSOLVE_VERSION}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/msolve-* \
+    && ./configure --disable-shared \
+    && make -j"$(nproc)" \
+    && install -m 755 msolve /out/bin/msolve \
+    && rm -rf /tmp/msolve-*
+
+# cvc5: SMT solver, official pinned static release binary (matches the pip
+# bindings' version in compute_build).
+ARG CVC5_VERSION=1.3.4
+RUN arch="$(uname -m)" \
+    && case "$arch" in x86_64) a=x86_64 ;; aarch64) a=arm64 ;; *) echo "unsupported arch $arch" >&2; exit 1 ;; esac \
+    && curl -sSfL -o /tmp/cvc5.zip \
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-${CVC5_VERSION}/cvc5-Linux-${a}-static.zip" \
+    && unzip -q /tmp/cvc5.zip -d /tmp/cvc5 \
+    && install -m 755 /tmp/cvc5/*/bin/cvc5 /out/bin/cvc5 \
+    && rm -rf /tmp/cvc5 /tmp/cvc5.zip
+
+# --------------------------------------------------------------------------- #
+# loogle_build: the Loogle type-pattern Mathlib search CLI, the one pin-tied   #
+# addition to the agent's compute stack. Built FROM base so it compiles at     #
+# the PROJECT toolchain against the PROJECT's Mathlib rev (read from the       #
+# baked lake-manifest.json): the binary importModules-loads Mathlib oleans at  #
+# runtime, and the agent image reuses the FC project's own oleans via          #
+# LEAN_PATH (see the loogle wrapper in `agent`) rather than shipping a second  #
+# multi-GB Mathlib. The Loogle rev is chosen inside the pin's toolchain        #
+# window (its own lean-toolchain is overwritten with the project's, exactly    #
+# like lean4export_build).                                                     #
+# --------------------------------------------------------------------------- #
+FROM base AS loogle_build
+
+ARG LOOGLE_COMMIT=79343e3e37b64046e6b555936682012e80300df1
+RUN git clone https://github.com/nomeata/loogle.git /opt/loogle-src \
+    && git -C /opt/loogle-src checkout --detach "${LOOGLE_COMMIT}" \
+    && cd /opt/loogle-src \
+    && cp /workspace/leanproject/lean-toolchain lean-toolchain \
+    && MATHLIB_REV="$(python3 -c "import json; print(next(p['rev'] for p in json.load(open('/workspace/leanproject/lake-manifest.json'))['packages'] if p['name'] == 'mathlib'))")" \
+    && sed -i "s|require mathlib from git \"https://github.com/leanprover-community/mathlib4\" @ \"master\"|require mathlib from git \"https://github.com/leanprover-community/mathlib4\" @ \"${MATHLIB_REV}\"|" lakefile.lean \
+    && grep -q "@ \"${MATHLIB_REV}\"" lakefile.lean \
+    && rm lake-manifest.json \
+    && lake update \
+    && lake exe cache get \
+    && lake build loogle
+
+# Stage the runtime pieces: the binary plus loogle's own module oleans (its
+# Mathlib/dependency oleans are NOT staged -- the agent image points LEAN_PATH
+# at the FC project's baked packages, same toolchain and Mathlib rev by
+# construction).
+RUN mkdir -p /opt/loogle/bin \
+    && cp /opt/loogle-src/.lake/build/bin/loogle /opt/loogle/bin/loogle \
+    && cp -r /opt/loogle-src/.lake/build/lib/lean /opt/loogle/lib
+
+# --------------------------------------------------------------------------- #
+# agent: the agent's workspace. Layer order is big/stable first (the conda     #
+# env), then apt, then the small solver binaries, then Loogle, then docs       #
+# (which churn most).                                                          #
 # --------------------------------------------------------------------------- #
 FROM base AS agent
 
-# PyPantograph commit b8608f3 pins Pantograph v0.3.13, whose repl targets Lean
-# v4.27.0 -- matching this track's Mathlib + FormalConjectures oleans. (The repl
-# must be built with the same toolchain that produced the oleans it loads.)
-# The clone is removed after install so the only importable `pantograph` is the
-# installed package (a lingering source tree would shadow it for any python
-# started inside /opt/PyPantograph, and the source tree lacks the built repl).
-ARG PYPANTOGRAPH_COMMIT=b8608f3
-RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
-    && cd /opt/PyPantograph \
-    && git checkout "${PYPANTOGRAPH_COMMIT}" \
-    && git submodule update --init --recursive \
-    && pip3 install --break-system-packages --no-cache-dir . \
-    && cd / && rm -rf /opt/PyPantograph
+# The compute env (see compute-env.yaml). /opt/env/bin goes FIRST on PATH so
+# the env's python IS the agent's `python3` (and sage, gp, gap, z3, ... all
+# resolve there); the profile.d snippet covers login shells (`bash --login
+# -c`, how apn.tools execs), the ENV covers plain execs.
+COPY --from=compute_build /opt/env /opt/env
+ENV PATH=/opt/env/bin:$PATH
+RUN echo 'export PATH=/opt/env/bin:$PATH' > /etc/profile.d/compute-env.sh
 
-# In-sandbox references for the agent (the sandbox has no network), vendored
-# version-matched to the installed package: PyPantograph docs + examples at the
-# pinned commit, and Pantograph's repl protocol reference at the submodule
-# commit that pin builds.
-COPY pypantograph-docs /opt/pypantograph-docs
-COPY pantograph-docs /opt/pantograph-docs
-
-# Numerical/symbolic scratchpad for the agent (the `bash` tool runs python3 in
-# this image). The sandbox has no network, so everything is baked in here.
-#   - sagemath: a full computer algebra system on the `sage` command, bundling
-#     PARI/GP, FLINT, Maxima, GAP and Singular -- far stronger than sympy for
-#     number theory (factoring, modular arithmetic, elliptic curves, continued
-#     fractions) and the dialect much of OEIS's own reference code is written in.
-#   - python3-{numpy,sympy,mpmath}: importable directly from `python3` (sympy =
-#     exact symbolic, mpmath = arbitrary precision with pslq/identify). Pulled
-#     from apt alongside sagemath so all versions resolve mutually consistent
-#     (a pip --break-system-packages upgrade could outrun what Sage expects).
-# This ~1.5 GB install is its own cached layer.
+# Tools conda-forge lacks, from bookworm: polymake (polyhedral geometry),
+# Macaulay2 (commutative algebra), regina-normal (low-dimensional topology;
+# `regina-python`), cryptominisat (SAT, newer here than conda-forge's),
+# coinor-csdp (semidefinite programming, `csdp`), jq + ripgrep for the bash
+# tool (git is already in `base`), libmpfr6 (msolve's one non-static runtime
+# link besides gmp, which base's libgmp-dev already provides).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        sagemath python3-numpy python3-sympy python3-mpmath \
+        polymake macaulay2 regina-normal cryptominisat coinor-csdp \
+        jq ripgrep libmpfr6 \
     && rm -rf /var/lib/apt/lists/*
 
-# CLI tools for the agent's `bash` tool (git is already in `base`): jq for JSON,
-# ripgrep for fast search (`rg`). In `agent` so both run conditions get them and
-# the agent can be prompted to use `rg` consistently whether or not /corpus is
-# present. A cheap layer kept after the sagemath layer so editing it never busts
-# that cache.
-RUN apt-get update && apt-get install -y --no-install-recommends jq ripgrep \
-    && rm -rf /var/lib/apt/lists/*
+# Source-built solvers (kissat, plantri, prover9/mace4, msolve, cvc5).
+COPY --from=solvers_build /out/bin/ /usr/local/bin/
+
+# Loogle: binary + its own module oleans; Mathlib resolves from the FC
+# project's baked packages via LEAN_PATH (same toolchain + Mathlib rev as the
+# loogle_build stage by construction). The wrapper makes `loogle "..."` work
+# without the agent knowing any of this.
+COPY --from=loogle_build /opt/loogle /opt/loogle
+RUN printf '%s\n' \
+        '#!/bin/sh' \
+        '# Loogle needs its own oleans plus the project Mathlib oleans on LEAN_PATH.' \
+        'LEAN_PATH=/opt/loogle/lib' \
+        'for d in /workspace/leanproject/.lake/packages/*/.lake/build/lib/lean; do' \
+        '    LEAN_PATH="$LEAN_PATH:$d"' \
+        'done' \
+        'export LEAN_PATH' \
+        'exec /opt/loogle/bin/loogle "$@"' \
+        > /usr/local/bin/loogle \
+    && chmod 755 /usr/local/bin/loogle
+
+# In-sandbox references (the sandbox has no network): vendored, version-matched
+# docs for the tools whose syntax the agent is unlikely to know cold. Last:
+# docs churn more than any layer above.
+COPY docs /opt/docs
 
 CMD ["sleep", "infinity"]
 
