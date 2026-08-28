@@ -150,6 +150,59 @@ async def test_cross_attempt_filesystem_poisoning_is_scrubbed(
         )
 
 
+# A compile-time #eval that leaves a *permission trap* in `.lake`: a nonempty
+# directory chmod'd to 000 (via Lean core's IO.setAccessRights -- in-process,
+# no subprocess spawn needed, and Landlock does not govern chmod). The build
+# owns what it creates under `.lake`, so the trap lands within the check --
+# and a non-root `rm -rf` cannot traverse it, which would turn the next
+# check's trusted reset into an infrastructure error. The reset therefore
+# runs as root.
+_PERMISSION_TRAP = (
+    '#eval (do\n'
+    '  IO.FS.createDirAll "/workspace/leanproject/.lake/trap"\n'
+    '  IO.FS.writeFile "/workspace/leanproject/.lake/trap/f" "x"\n'
+    '  IO.setAccessRights "/workspace/leanproject/.lake/trap" {}\n'
+    '  : IO Unit)\n'
+)
+
+
+async def test_permission_trap_in_dotlake_is_cleared(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Check #1's submission plants a nonempty chmod-000 directory in `.lake`
+    and otherwise fails normally; check #2's honest proof must still come back
+    as a *verdict* (accepted, here) rather than raising -- i.e. the root reset
+    cleared a trap that a comparator-user `rm -rf` provably cannot."""
+    async with _comparator_env() as env:
+        trap_submission = _IMPORT + _PERMISSION_TRAP + (
+            "theorem tgt : 1 + 1 = 2 := by sorry\n"
+            "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+        )
+        first = await _check(env, monkeypatch, _spec("1 + 1 = 2"), trap_submission)
+        assert not first.ok, "the trap submission is a wrong proof; it must reject"
+
+        # The attack premise must have landed, else check #2 proves nothing:
+        # the trap survived its own check, nonempty and mode 000.
+        probe = await env.exec(
+            ["stat", "-c", "%a", "/workspace/leanproject/.lake/trap"]
+        )
+        assert probe.success and probe.stdout.strip() == "0", (
+            f"trap was not planted as expected: "
+            f"rc={probe.returncode} out={probe.stdout!r} err={probe.stderr!r}"
+        )
+
+        honest = _IMPORT + (
+            "theorem tgt : 1 + 1 = 2 := by norm_num\n"
+            "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+        )
+        second = await _check(env, monkeypatch, _spec("1 + 1 = 2"), honest)
+        assert second.ok, (
+            f"honest proof after a permission-trap attempt was not accepted "
+            f"(reset failed to clear the trap?): stage={second.stage}\n"
+            f"{second.detail[-1500:]}"
+        )
+
+
 # Note on cross-attempt *process* isolation (plan §3.1 item 2): Inspect exposes
 # no per-service restart (issue #5034), so reset-dotlake.sh -- a filesystem
 # reset -- cannot by itself terminate a process a prior check left running. That

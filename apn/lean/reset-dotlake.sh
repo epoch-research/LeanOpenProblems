@@ -33,7 +33,9 @@ PROJECT=/workspace/leanproject
 PRISTINE=/opt/pristine
 
 # Destroy .lake and recreate it from the pristine skeleton, with
-# .lake/packages pointing at the pristine tree.
+# .lake/packages pointing at the pristine tree. Runs as root: the build can
+# leave a chmod-000 dir in .lake that no non-root rm -rf can traverse; the
+# copy drops back to the comparator user so .lake stays comparator-owned.
 rm -rf "$PROJECT/.lake"
-cp -a "$PRISTINE/dot-lake" "$PROJECT/.lake"
-ln -s "$PRISTINE/packages" "$PROJECT/.lake/packages"
+runuser -u comparator -- cp -a "$PRISTINE/dot-lake" "$PROJECT/.lake"
+runuser -u comparator -- ln -s "$PRISTINE/packages" "$PROJECT/.lake/packages"

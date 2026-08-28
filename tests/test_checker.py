@@ -248,13 +248,16 @@ async def test_check_execs_drop_to_comparator_user(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The comparator image stays root for Inspect's benefit, so the privilege
-    # drop lives on the exec calls: every command the checker runs in the
-    # comparator sandbox must carry user=COMPARATOR_USER.
+    # drop lives on the exec calls: staging and the comparator run must carry
+    # user=COMPARATOR_USER. The .lake reset alone stays root, so its rm can
+    # clear permission traps the untrusted build may leave in .lake.
     checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
     await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
     assert sb.commands == [[RESET_SCRIPT], STAGING_RESET,
                            ["lake", "env", checker_mod.COMPARATOR_BIN, CONFIG_PATH]]
-    assert [kw.get("user") for kw in sb.exec_kwargs] == [COMPARATOR_USER] * 3
+    assert [kw.get("user") for kw in sb.exec_kwargs] == [
+        None, COMPARATOR_USER, COMPARATOR_USER
+    ]
 
 
 async def test_check_proof_claim_targets_bare_decl(

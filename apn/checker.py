@@ -25,12 +25,13 @@ CONFIG_PATH = f"{RUN_DIR}/config.json"
 COMPARATOR_BIN = "/opt/apn/comparator/bin/comparator"
 RESET_SCRIPT = "/opt/apn/reset-dotlake.sh"
 
-# The non-privileged user every exec in the comparator sandbox runs as
+# The non-privileged user scoring work in the comparator sandbox runs as
 # (comparator README assumption 6). The image itself stays root -- Inspect's
 # sandbox plumbing assumes the default user can write anywhere, and
 # k8s_sandbox implements per-exec `user=` with runuser(1), root-only -- so the
 # privilege drop rides on each exec call instead of a Dockerfile USER
-# directive (see the comparator stage of apn/lean/Dockerfile).
+# directive (see the comparator stage of apn/lean/Dockerfile). The one
+# root exec is the .lake reset, which must out-privilege the build's traps.
 COMPARATOR_USER = "comparator"
 
 # The axioms a solution's proof closure may use (comparator rejects everything
@@ -163,9 +164,10 @@ class SandboxComparator:
         # restores a pristine .lake -- the only path the untrusted build can
         # write under its landrun sandbox; it does not terminate processes a
         # prior check left behind (Inspect issue #5034).
-        reset = await sb.exec(
-            [RESET_SCRIPT], user=COMPARATOR_USER, timeout=self._timeout
-        )
+        # Root, not COMPARATOR_USER: the rm must clear permission traps (e.g.
+        # a chmod-000 dir) the build can leave in .lake; the script itself
+        # drops back to the comparator user for the copy.
+        reset = await sb.exec([RESET_SCRIPT], timeout=self._timeout)
         if reset.returncode != 0:
             raise RuntimeError(
                 f".lake reset failed (exit {reset.returncode}):\n"

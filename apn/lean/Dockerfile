@@ -407,10 +407,10 @@ RUN git clone https://github.com/leanprover/lean4export.git /opt/lean4export \
 # Scoring runs as the non-privileged `comparator` user (comparator README      #
 # assumption 6) -- not via a USER directive (the image stays root for          #
 # Inspect; see the note at the end of this stage) but per exec: the checker    #
-# passes user=COMPARATOR_USER on every command. landrun (Landlock) confines    #
-# the untrusted solution build to writes in .lake, and                         #
-# /opt/apn/reset-dotlake.sh restores a pristine .lake before every check       #
-# (comparator-migration-plan.md §3.1).                                         #
+# passes user=COMPARATOR_USER on every command except the root .lake reset.    #
+# landrun (Landlock) confines the untrusted solution build to writes in        #
+# .lake, and /opt/apn/reset-dotlake.sh restores a pristine .lake before every  #
+# check (comparator-migration-plan.md §3.1).                                   #
 # --------------------------------------------------------------------------- #
 FROM base AS comparator
 
@@ -481,12 +481,14 @@ RUN git config --system --add safe.directory '*'
 # (write_file's tee/mkdir run as that user), and k8s_sandbox implements the
 # per-exec `user=` switch with runuser(1), which only root may invoke. The
 # privilege drop happens per command instead: the checker passes
-# user=COMPARATOR_USER (apn/checker.py) on every exec against this sandbox,
-# so all scoring work still runs as `comparator` -- both backends resolve its
-# HOME from the passwd entry (docker exec --user and runuser alike). Staged
-# inputs written as root land 0644, readable by the comparator user; run/ and
-# .lake are (re)created by comparator-user execs, so it owns everything it
-# must delete.
+# user=COMPARATOR_USER (apn/checker.py) on every exec against this sandbox
+# except the .lake reset, which stays root so its rm can clear permission
+# traps the untrusted build may leave in .lake (see reset-dotlake.sh). All
+# other scoring work runs as `comparator` -- both backends resolve its HOME
+# from the passwd entry (docker exec --user and runuser alike). Staged inputs
+# written as root land 0644, readable by the comparator user; run/ and .lake
+# are (re)created as the comparator user (the reset drops to it for the
+# copy), so it owns everything it must write.
 
 CMD ["sleep", "infinity"]
 
