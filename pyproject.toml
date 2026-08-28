@@ -1,6 +1,6 @@
 [project]
 name = "apn"
-version = "0.1.8"
+version = "0.1.9"
 description = "An Inspect implementation of the AlphaProof Nexus formal proof-search framework"
 license = "MIT AND Apache-2.0"
 license-files = ["LICENSE"]
