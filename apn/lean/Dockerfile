@@ -50,7 +50,8 @@
 #     toolchain (plan §2.1).
 #
 # On an FC-pin bump: the exporter's and Loogle's builds move with it (Loogle
-# is rebuilt against the new pin's Mathlib rev; see `loogle_build`).
+# is dependency-free and merely rebuilt at the pin's toolchain, with its
+# Mathlib search index rebaked; see `loogle_build`).
 # On a comparator bump: move LEAN4EXPORT_COMMIT to the rev in comparator's
 # lake-manifest.json, re-verify the toolchain-override build, and re-run the
 # primitive-constants check (plan §2.3; the gold-proof suite exercises it).
@@ -345,21 +346,24 @@ RUN arch="$(uname -m)" \
     && rm -rf /tmp/cvc5 /tmp/cvc5.zip
 
 # --------------------------------------------------------------------------- #
-# loogle_build: the Loogle type-pattern Mathlib search CLI, the one pin-tied   #
-# addition to the agent's compute stack. Built FROM base at /opt/loogle,      #
-# retargeted to the project's toolchain + pinned Mathlib rev and sharing the  #
-# project's package checkouts via symlink (loogle-build.sh) -- so the binary  #
-# compiles against the very oleans the agent image carries, its embedded     #
-# search path resolves at runtime, and its search index sits where it        #
-# auto-finds it. The agent stage copies the raw binary plus loogle's build   #
-# lib and recreates the symlink: no second Mathlib, no wrapper, no flags.    #
-# The Loogle rev is chosen inside the pin's toolchain window.                #
+# loogle_build: the Loogle type-pattern Mathlib search CLI. Upstream's        #
+# "Running locally" contract: the binary is dependency-free, must merely be   #
+# built with the TARGET project's toolchain, and then searches any Lake       #
+# project via `lake env loogle --module <M> "<query>"` (it reads LEAN_PATH).  #
+# The first query builds a search index cached next to the module's .olean    #
+# and auto-invalidated when the oleans change; running one here bakes that    #
+# index (and smoke-tests the build), so agents get fast queries.              #
 # --------------------------------------------------------------------------- #
 FROM base AS loogle_build
 
-ARG LOOGLE_COMMIT=79343e3e37b64046e6b555936682012e80300df1
-COPY loogle-build.sh /tmp/loogle-build.sh
-RUN bash /tmp/loogle-build.sh "${LOOGLE_COMMIT}"
+ARG LOOGLE_COMMIT=9f11169aaebf1ed1e7dcc4077f2aafe0fcf66fd0
+RUN git clone https://github.com/nomeata/loogle.git /opt/loogle \
+    && git -C /opt/loogle checkout --detach "${LOOGLE_COMMIT}" \
+    && cp /workspace/leanproject/lean-toolchain /opt/loogle/lean-toolchain \
+    && cd /opt/loogle \
+    && lake build \
+    && cd /workspace/leanproject \
+    && lake env /opt/loogle/.lake/build/bin/loogle --module Mathlib "Nat.Prime" > /dev/null
 
 # --------------------------------------------------------------------------- #
 # agent: the agent's workspace. Layer order is big/stable first (the conda     #
@@ -390,14 +394,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Source-built solvers (kissat, plantri, prover9/mace4, msolve, cvc5).
 COPY --from=solvers_build /out/bin/ /usr/local/bin/
 
-# Loogle: the raw binary, its module oleans + search index at the paths the
-# binary's compile-time-embedded search path expects, and the packages
-# symlink through which that embedded path reaches the project's own Mathlib
-# oleans (same revs as the build, by construction -- see loogle-build.sh).
-# No wrapper, no flags: `loogle "..."` just works.
+# Loogle: the dependency-free binary, plus the Mathlib search index it baked
+# next to Mathlib.olean (COPY preserves mtimes, and this stage shares base's
+# layers with loogle_build, so the index stays valid; were it ever judged
+# stale, loogle transparently rebuilds it). Invocation, per upstream's docs
+# (vendored at /opt/docs/loogle): from the project,
+#   lake env loogle --module Mathlib "<query>"
 COPY --from=loogle_build /opt/loogle/.lake/build/bin/loogle /usr/local/bin/loogle
-COPY --from=loogle_build /opt/loogle/.lake/build/lib /opt/loogle/.lake/build/lib
-RUN ln -s /workspace/leanproject/.lake/packages /opt/loogle/.lake/packages
+COPY --from=loogle_build \
+     /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index \
+     /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index
 
 # In-sandbox references (the sandbox has no network): vendored, version-matched
 # docs for the tools whose syntax the agent is unlikely to know cold. Last:

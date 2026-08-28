@@ -234,9 +234,14 @@ async def test_cpsat_solves_trivial_model(agent_env: SandboxEnvironment) -> None
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_loogle_finds_nat_prime(agent_env: SandboxEnvironment) -> None:
-    # Cold start loads the prebuilt index + Mathlib oleans; generous timeout.
+    # Upstream's documented invocation (vendored at /opt/docs/loogle): from
+    # the project, via `lake env`. The Mathlib index is prebuilt in the image,
+    # so this must not fall into the slow index-construction path -- but cold
+    # start still imports Mathlib, hence the generous timeout.
     code, stdout, stderr = await _bash(
-        agent_env, "loogle 'Nat.Prime'", timeout=900
+        agent_env,
+        "cd /workspace/leanproject && lake env loogle --module Mathlib 'Nat.Prime'",
+        timeout=900,
     )
     assert code == 0, f"loogle failed:\n{stderr[-2000:]}"
     assert "Nat.Prime" in stdout

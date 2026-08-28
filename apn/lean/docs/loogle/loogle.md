@@ -1,4 +1,4 @@
-<!-- Vendored from https://github.com/nomeata/loogle (blurb.md and README.md) at rev 79343e3e37b64046e6b555936682012e80300df1 -->
+<!-- Vendored from https://github.com/nomeata/loogle (blurb.md and README.md) at rev 9f11169aaebf1ed1e7dcc4077f2aafe0fcf66fd0 -->
 # Loogle
 
 Loogle searches Lean and Mathlib definitions and theorems.
@@ -46,13 +46,21 @@ hypothesis of the form `_ < _` (if there were any such lemmas). Metavariables (`
 
 ## CLI usage
 
-    $ loogle '(List.replicate (_ + _) _ = _)'
+The loogle binary searches any Lake project of the same Lean toolchain. Run it
+from the project via `lake env` (which supplies the olean search path):
+
+    $ lake env loogle --module Mathlib '(List.replicate (_ + _) _ = _)'
     Found 5 declarations mentioning List.replicate, HAdd.hAdd and Eq.
     Of these, 3 match your patterns.
 
     List.replicate_add
     List.replicate_succ
     List.replicate_succ'
+
+The first call builds the search index (slow); by default loogle caches it on
+disk next to the module's `.olean` so subsequent calls are fast, and quietly
+rebuilds it whenever the underlying `.olean`s change. (In this image the
+Mathlib index is prebuilt, so queries are fast from the start.)
 
     USAGE:
       loogle [OPTIONS] [QUERY]
@@ -63,9 +71,14 @@ hypothesis of the form `_ < _` (if there were any such lemmas). Metavariables (`
       --json, -j            print result in JSON format
       --module mod          import this module (default: Mathlib)
       --path path           search for .olean files here (default: the build time path)
-      --write-index file    persists the search index to a file
-      --read-index file     read the search index from a file. This file is blindly trusted!
-
-By default, it will create an internal index upon starting, which takes a bit.
-You can use `--write-index` and `--read-index` to cache that, but it is your
-responsibility to pass the right index for the given module and search path.
+      --index-mode MODE     how to manage the on-disk search index. One of:
+                              use   (default) load if present and up-to-date,
+                                    otherwise build and write
+                              read  load existing index; refuse to start if it
+                                    is missing or out of date
+                              write always (re)build the index and write it
+                              none  build in memory and discard on exit
+      --index-file PATH     override the default index path. The default lives
+                            next to the root module's .olean (with .loogle-index
+                            extension); pass this if that location is read-only.
+      --max-results n       limit the number of returned hits (default: 200)
