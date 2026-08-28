@@ -47,6 +47,7 @@ RESOURCE_INCORRECT_MESSAGE = (
 
 _RESOURCE_STAGES = frozenset(
     {
+        "comparator_output_limit",
         "comparator_resource",
         "comparator_timeout",
         "submission_oversize",

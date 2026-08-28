@@ -41,6 +41,12 @@ async def test_comparator_timeout_gets_resource_message() -> None:
     assert await _msg("comparator_timeout") == RESOURCE_INCORRECT_MESSAGE
 
 
+async def test_comparator_output_limit_gets_resource_message() -> None:
+    # Submission-controlled build output that exceeds Inspect's cap is another
+    # resource failure, not evidence that the proof itself is mathematically wrong.
+    assert await _msg("comparator_output_limit") == RESOURCE_INCORRECT_MESSAGE
+
+
 async def test_submission_oversize_gets_resource_message() -> None:
     # The scorer's verdict when the agent's Submission/ is too large to read.
     assert await _msg("submission_oversize") == RESOURCE_INCORRECT_MESSAGE
