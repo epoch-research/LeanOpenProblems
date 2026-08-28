@@ -311,9 +311,8 @@ def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
 
     Each sketch is the target's isolated spec followed by the derived
     ``<target>.disproof`` declaration. Problem 508's value-typed member is an
-    excluded row; three derived prove-or-disprove samples (χ(ℝ²) = 5/6/7,
-    each with a renamed ``...eqN`` target) stand in for it -- see the
-    Hadwiger–Nelson special case in ``scripts/erdos_isolation.py``.
+    excluded row with three derived prove-or-disprove samples in its place --
+    see the Hadwiger–Nelson special case in ``scripts/erdos_isolation.py``.
     """
     return build_dataset(ERDOS_DIR, "erdos", (), names)
 

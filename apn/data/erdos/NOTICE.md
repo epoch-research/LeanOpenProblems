@@ -6,4 +6,4 @@ The selection of 48 is based on Thomas Bloom's selection, see `ERDOS_PROBLEM_STA
 
 `samples.jsonl` lists every research-category statement in those files.
 
-`subsets/bloom_selection.json` lists the 50 selected statements (one per problem, except 508, which contributes three derived prove-or-disprove samples).
+`subsets/bloom_selection.json` lists the 50 selected statements.

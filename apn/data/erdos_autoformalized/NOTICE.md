@@ -6,4 +6,4 @@ This is our own autoformalization output, not upstream formal-conjectures (the p
 
 `samples.jsonl` lists every research-category statement in those files.
 
-`subsets/bloom_selection.json` lists the 18 statements Thomas Bloom's verdicts keep in the benchmark (1206 represented by part i alone; 1207 dropped entirely).
+`subsets/bloom_selection.json` lists the 18 statements Thomas Bloom's verdicts keep in the benchmark.
