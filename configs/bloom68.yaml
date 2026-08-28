@@ -1,27 +1,14 @@
-# Schema reference for eval-set config:
-# https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
 #
-# BLOOM68 -- the canonical run of Thomas Bloom's Erdős problem selection:
-# 68 samples over 65 distinct problems, the two `bloom_selection` subsets
-# combined (50 from apn_erdos + 18 from apn_erdos_autoformalized; see
-# apn/data/erdos/ERDOS_PROBLEM_STATEMENT_SELECTION.md and the subset files'
-# descriptions).
-#
-# Canonical harness conditions (TA recommendation, GB agreed, 2026-08-28):
-# maximum affordances, so results lower-bound what a model could do here.
-#   - agent_type: deep -- Inspect's deepagent loop; subagents (its main
-#     affordance) are enabled automatically.
-#   - literature: true -- the offline arXiv literature-snapshot image.
-# Neither condition measurably moved solve rates for current models on OEIS,
-# but they might help future models, and "all affordances" is the honest
-# canonical setting for an open-problems benchmark.
+# bloom68: the canonical run of Thomas Bloom's Erdős problem selection -- the
+# two bloom_selection subsets (50 + 18 samples), run with all affordances:
+# deep agent (subagents) + the offline literature snapshot (agreed 2026-08-28).
+retry_attempts: 5
 name: bloom68
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@main
     name: apn
     items:
-      # The subsets are these tasks' defaults; passed explicitly so this file
-      # fully determines the run.
       - name: apn_erdos
         args:
           subset: bloom_selection
@@ -34,19 +21,14 @@ tasks:
           literature: true
 epochs: 1
 models:
-  # Epoch model wrappers (bypass middleman): API keys come straight from the
-  # secrets below; max_tokens/context window come from the package's models.yaml.
-  - package: git+https://github.com/epoch-research/benchmarks@giles-hawkbench-newstuff
+  - package: git+https://github.com/epoch-research/benchmarks@main
     name: epoch
     items:
       - name: gpt-5.6-sol
         args:
           config:
-            # Defaults to 'none' in GPT 5.4
             reasoning_effort: "medium"
             max_retries: 7
-            # max_sandboxes isn't user-settable; Hawk sizes it as
-            # 2 x sum(max_connections) across providers
             max_connections: 40
       - name: claude-fable-5
         args:
@@ -55,19 +37,11 @@ models:
             max_retries: 7
             max_connections: 40
 
-# Per-sample spend cap -- the real budget. Requires model_cost_config below for
-# every model used, or Hawk/Inspect errors out.
-#
-# COST (2 models x 68 samples x 1 epoch = 136 samples, $200/sample cap):
-#   Max: 136 x $200 = $27,200   hard ceiling -- every sample hits its cap
-# Expected sits near max: runs are gated (default), so an unsolved problem
-# retries until it hits the cap, and the expected solve rate on this selection
-# is ~0% for current models.
+# 2 models x 68 samples x $200/sample cap = $27,200 max; gated runs sit near max.
 cost_limit: 200.0
 working_limit: 259_200  # 72 * 60 * 60
 
-# Prices in dollars per 1M tokens (from scripts/data/model_prices_and_context_window.json).
-# Keys must match Inspect's resolved <provider>/<model> names.
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
 model_cost_config:
   epoch/gpt-5.6-sol:
     input: 5.0
@@ -90,7 +64,6 @@ secrets:
 runner:
   memory: 200Gi
   environment:
-    # TODO: Remove once default in Hawk
     INSPECT_LOG_CONDENSE: "true"
     ANTHROPIC_BASE_URL: https://api.anthropic.com
     OPENAI_BASE_URL: https://api.openai.com/v1
@@ -98,5 +71,6 @@ runner:
     HAWK_RUNNER_REFRESH_CLIENT_ID: ""
     HAWK_RUNNER_REFRESH_TOKEN: ''
 
+# Keep this aligned with epoch-research/benchmarks@main.
 packages:
-  - inspect-ai==0.3.245
+  - inspect-ai==0.3.259
