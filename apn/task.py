@@ -50,9 +50,6 @@ SandboxBackend = Literal["docker", "k8s"]
 # simplification.                                                              #
 # --------------------------------------------------------------------------- #
 AGENT_MEMORY_GIB = 32
-# Comparator holds both text exports in memory and replays the solution's
-# closure through its kernel; 32 GiB is the current allocation (the DAG-shaped
-# export removes SafeVerify's rebuildExpr blowup).
 COMPARATOR_MEMORY_GIB = 32
 
 
