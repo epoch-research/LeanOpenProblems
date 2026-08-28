@@ -17,7 +17,10 @@ definitions + the single target theorem and cuts every other standalone
 recorded-verdict ``answer(True/False)`` members, whose answer key must not
 leak -- and FC's recorded-verdict annotations are stripped (see
 ``scripts/erdos_isolation.py``; the rewrite's re-elaboration certificate lives
-in ``scripts/fc_statements.py`` / ``tests/test_erdos_isolation.py``). The
+in ``scripts/fc_statements.py`` / ``tests/test_erdos_isolation.py``). One
+special case: 508's excluded value-typed member additionally yields three
+derived prove-or-disprove specs, ``χ(ℝ²) = 5/6/7`` (the Hadwiger–Nelson
+special case in ``scripts/erdos_isolation.py``). The
 per-row ``answer_form``/``category_at_pin`` land in the manifest for tooling
 and tests; ``apn/dataset.py`` deliberately keeps them out of sample metadata.
 
@@ -52,6 +55,7 @@ from concurrent.futures import ThreadPoolExecutor
 from apn.dataset import fc_commit, fc_profile, write_manifest
 from scripts.erdos_isolation import (
     ERDOS_DIR,
+    HN_DECL,
     ISOLATED_DIR,
     PROVED_IN_FILE_REASON,
     RESEARCH_ATTR_RE,
@@ -59,6 +63,8 @@ from scripts.erdos_isolation import (
     SOURCES_DIR,
     VALUE_TYPED_REASON,
     VERDICT_PROSE,
+    derive_hadwiger_nelson_specs,
+    hn_manifest_rows,
     research_categories,
     strip_fc_annotations,
     universe_members,
@@ -204,6 +210,16 @@ def main() -> None:
             row["category_at_pin"] = category
             if "excluded" in row:
                 rows.append(row)
+                if decl["name"] == HN_DECL:
+                    # 508's value-typed member stays excluded, but the
+                    # benchmark carries three derived prove-or-disprove
+                    # samples (χ(ℝ²) = 5/6/7) in its place -- see the
+                    # Hadwiger–Nelson special case in scripts/erdos_isolation.py.
+                    for sample_id, text in derive_hadwiger_nelson_specs().items():
+                        (ISOLATED_DIR / f"{sample_id}.lean").write_text(text)
+                    hn_rows = hn_manifest_rows()
+                    rows.extend(hn_rows)
+                    forms[None] = forms.get(None, 0) + len(hn_rows)
                 continue
 
             closure = dependency_closure(filerec, decl["name"])

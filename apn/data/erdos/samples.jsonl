@@ -89,6 +89,9 @@
 {"id": "Erdos508.HadwigerNelsonAtLeast4", "source": "Sources/508.lean", "erdos_number": 508, "category_at_pin": "research solved", "answer_form": null}
 {"id": "Erdos508.HadwigerNelsonAtLeastFive", "source": "Sources/508.lean", "erdos_number": 508, "category_at_pin": "research solved", "answer_form": null}
 {"id": "Erdos508.HadwigerNelsonProblem", "source": "Sources/508.lean", "excluded": "value-typed answer(sorry): the placeholder elaborates to a position-labeled sorryAx in the statement's type, so the statement cannot be closed (or even stated) without the paper's google.answer \"with_auxiliary\" machinery, and SafeVerify cannot score it", "erdos_number": 508, "category_at_pin": "research open"}
+{"id": "Erdos508.HadwigerNelsonProblem.eq5", "source": "Sources/508.lean", "erdos_number": 508, "category_at_pin": "research open", "answer_form": null, "decl_name": "Erdos508.HadwigerNelsonProblem"}
+{"id": "Erdos508.HadwigerNelsonProblem.eq6", "source": "Sources/508.lean", "erdos_number": 508, "category_at_pin": "research open", "answer_form": null, "decl_name": "Erdos508.HadwigerNelsonProblem"}
+{"id": "Erdos508.HadwigerNelsonProblem.eq7", "source": "Sources/508.lean", "erdos_number": 508, "category_at_pin": "research open", "answer_form": null, "decl_name": "Erdos508.HadwigerNelsonProblem"}
 {"id": "Erdos52.erdos_52", "source": "Sources/52.lean", "erdos_number": 52, "category_at_pin": "research open", "answer_form": "lhs_sorry"}
 {"id": "Erdos564.erdos_564", "source": "Sources/564.lean", "erdos_number": 564, "category_at_pin": "research open", "answer_form": "lhs_sorry"}
 {"id": "Erdos595.erdos_595", "source": "Sources/595.lean", "erdos_number": 595, "category_at_pin": "research open", "answer_form": "lhs_sorry"}

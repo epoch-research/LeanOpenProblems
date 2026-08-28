@@ -21,6 +21,7 @@ from apn.dataset import (
     ERDOS_AUTOFORMALIZED_DIR,
     erdos_autoformalized_dataset,
     load_manifest,
+    load_subset,
 )
 from scripts.fc_statements import strip_comments
 from scripts.isolation import disproof_declaration
@@ -79,6 +80,19 @@ def test_manifest_census() -> None:
         1206,
         1207,
     }
+
+
+def test_bloom_selection_subset() -> None:
+    # Thomas Bloom's verdicts (2026-08-26), apn_erdos_autoformalized's default
+    # subset: Problem 1206 is represented by part i alone, 1207 is dropped
+    # from the benchmark entirely, and 713 stays split into its two parts.
+    ids = load_subset(ERDOS_AUTOFORMALIZED_DIR, "bloom_selection")
+    assert len(ids) == 18
+    assert set(ids) == EXPECTED_IDS - {
+        "Erdos1206.erdos_1206.parts.ii",
+        "Erdos1207.erdos_1207",
+    }
+    assert len(erdos_autoformalized_dataset(names=ids)) == 18
 
 
 def test_manifest_row_shape() -> None:

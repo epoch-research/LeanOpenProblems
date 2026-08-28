@@ -278,13 +278,17 @@ def apn_erdos(
 
 @task
 def apn_erdos_autoformalized(
-    subset: str | None = None,
+    subset: str | None = "bloom_selection",
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
 ) -> Task:
-    """The Erdős problems our own autoformalization pipeline formalized."""
+    """The Erdős problems our own autoformalization pipeline formalized.
+
+    The default ``bloom_selection`` subset applies Thomas Bloom's verdicts
+    (1206 represented by part i alone; 1207 dropped); ``subset=None`` runs the
+    full 20-statement manifest."""
     name_list = (
         load_subset(ERDOS_AUTOFORMALIZED_DIR, subset) if subset is not None else None
     )

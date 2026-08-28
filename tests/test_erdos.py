@@ -5,9 +5,10 @@ elaboration, the certified per-form ``answer(...) ↔`` rewrite, only the target
 + its dependency decls surviving -- are enforced authoritatively, in a
 container, by ``tests/test_erdos_isolation.py``. This module checks what can
 be checked cheaply on every run: the manifest census (every research-category
-statement of the Bloom selection's 48 vendored files), the ``bloom_selection``
-subset (the 47 scoreable selected statements, ``apn_erdos``'s default), the
-dataset/sample shape, and textual invariants of the shipped sketches.
+statement of the Bloom selection's 48 vendored files, plus the three derived
+Hadwiger–Nelson samples), the ``bloom_selection`` subset (the 50 scoreable
+selected statements, ``apn_erdos``'s default), the dataset/sample shape, and
+textual invariants of the shipped sketches.
 """
 
 from __future__ import annotations
@@ -25,9 +26,12 @@ from apn.dataset import (
     load_subset,
 )
 from scripts.erdos_isolation import (
+    HN_DECL,
+    HN_SAMPLE_IDS,
     PROVED_IN_FILE_REASON,
     SORRY_ALLOWLIST_FILES,
     VALUE_TYPED_REASON,
+    derive_hadwiger_nelson_specs,
 )
 from scripts.isolation import matches_name
 
@@ -39,9 +43,10 @@ _SORRY_RE = re.compile(r"\bsorry\b")
 _DECL_RE = re.compile(r"(?m)^(?:protected\s+)?(?:theorem|lemma)\s+([^\s:({\[⦃]+)")
 
 # The Bloom selection (apn/data/erdos/ERDOS_PROBLEM_STATEMENT_SELECTION.md):
-# selected statement's short name per problem number. 508's selection is the
-# excluded value-typed HadwigerNelsonProblem, so the *scoreable* selection --
-# the bloom_selection subset -- is the other 47.
+# selected statement's short name per problem number. 508's reviewed statement
+# is the excluded value-typed HadwigerNelsonProblem; the *scoreable* selection
+# -- the bloom_selection subset -- carries its three derived prove-or-disprove
+# samples (HN_SAMPLE_IDS) in its place, 50 statements in all.
 SELECTED = {
     1: "erdos_1", 3: "erdos_3", 5: "erdos_5", 7: "erdos_7", 20: "erdos_20",
     23: "erdos_23", 28: "erdos_28", 30: "erdos_30", 39: "erdos_39",
@@ -49,7 +54,7 @@ SELECTED = {
     68: "erdos_68", 74: "erdos_74", 89: "erdos_89", 97: "erdos_97",
     101: "erdos_101", 107: "erdos_107", 120: "erdos_120", 126: "erdos_126",
     128: "erdos_128", 138: "erdos_138", 172: "erdos_172", 184: "erdos_184",
-    208: "erdos_208.parts.ii", 213: "erdos_213", 241: "erdos_241",
+    208: "erdos_208.parts.i", 213: "erdos_213", 241: "erdos_241",
     242: "erdos_242", 324: "erdos_324", 364: "erdos_364", 371: "erdos_371",
     376: "erdos_376", 406: "erdos_406", 508: "HadwigerNelsonProblem",
     564: "erdos_564", 595: "erdos_595", 647: "erdos_647", 672: "erdos_672",
@@ -70,9 +75,10 @@ def _selected_row(rows: list[SampleRow], number: int) -> SampleRow:
 
 def test_manifest_census() -> None:
     # The universe: every research-category statement of the 48 vendored
-    # files -- the selected statements plus their research variants.
+    # files -- the selected statements plus their research variants -- plus
+    # the three derived Hadwiger–Nelson samples.
     rows = load_manifest(ERDOS_DIR)
-    assert len(rows) == 144
+    assert len(rows) == 147
     assert {r.extra["erdos_number"] for r in rows} == set(SELECTED)
     excluded = {r.id: r.excluded for r in rows if r.excluded is not None}
     assert excluded == {
@@ -103,7 +109,7 @@ def test_manifest_answer_form_census() -> None:
     # re-checked per member in tests/test_erdos_isolation.py.)
     forms = Counter(r.extra["answer_form"] for r in load_manifest(ERDOS_DIR) if r.excluded is None)
     assert forms == {
-        None: 87,
+        None: 90,
         "lhs_sorry": 52,
         "lhs_true": 2,
     }
@@ -117,12 +123,13 @@ def test_spec_files_match_manifest_exactly() -> None:
 
 
 def test_bloom_selection_subset() -> None:
-    # The default subset: the 47 scoreable selected statements -- exactly one
-    # per reviewed problem except 508, each `research open` at the pin.
+    # The default subset: the 50 scoreable selected statements -- exactly one
+    # per reviewed problem, except 508's three derived samples -- each
+    # `research open` at the pin.
     rows = load_manifest(ERDOS_DIR)
     ids = load_subset(ERDOS_DIR, "bloom_selection")
-    assert len(ids) == 47
-    assert len(set(ids)) == 47
+    assert len(ids) == 50
+    assert len(set(ids)) == 50
     by_id = {r.id: r for r in rows}
     numbers = []
     for sample_id in ids:
@@ -130,9 +137,12 @@ def test_bloom_selection_subset() -> None:
         assert row.excluded is None, sample_id
         assert row.extra["category_at_pin"] == "research open", sample_id
         numbers.append(row.extra["erdos_number"])
-        assert matches_name(sample_id, SELECTED[row.extra["erdos_number"]]), sample_id
-    assert sorted(numbers) == sorted(set(SELECTED) - {508})
-    assert len(erdos_dataset(names=ids)) == 47
+        if row.extra["erdos_number"] == 508:
+            assert sample_id in HN_SAMPLE_IDS, sample_id
+        else:
+            assert matches_name(sample_id, SELECTED[row.extra["erdos_number"]]), sample_id
+    assert Counter(numbers) == Counter(set(SELECTED) - {508}) + Counter({508: 3})
+    assert len(erdos_dataset(names=ids)) == 50
 
 
 def test_508_ships_as_excluded_value_typed_row() -> None:
@@ -145,6 +155,25 @@ def test_508_ships_as_excluded_value_typed_row() -> None:
     assert row.excluded == VALUE_TYPED_REASON
 
 
+def test_508_derived_samples() -> None:
+    # In the excluded row's place, the benchmark carries three derived
+    # prove-or-disprove samples, χ(ℝ²) = 5/6/7 (Bloom's verdict, 2026-08-25;
+    # see the Hadwiger–Nelson special case in scripts/erdos_isolation.py).
+    # The committed specs must match the pure-text re-derivation byte for
+    # byte; their elaboration soundness (compile, certified disproof) is
+    # tests/test_erdos_isolation.py's job.
+    rows = {r.id: r for r in load_manifest(ERDOS_DIR)}
+    specs = derive_hadwiger_nelson_specs()
+    assert set(specs) == set(HN_SAMPLE_IDS)
+    for sample_id, text in specs.items():
+        row = rows[sample_id]
+        assert row.excluded is None
+        assert row.decl_name == HN_DECL
+        assert row.extra["answer_form"] is None
+        assert row.extra["category_at_pin"] == "research open"
+        assert (ERDOS_DIR / row.statement_path).read_text() == text
+
+
 def test_every_selected_statement_is_research_open_at_pin() -> None:
     rows = load_manifest(ERDOS_DIR)
     for number in SELECTED:
@@ -154,7 +183,7 @@ def test_every_selected_statement_is_research_open_at_pin() -> None:
 
 def test_erdos_dataset_loads_all_samples() -> None:
     ds = erdos_dataset()
-    assert len(ds) == 141
+    assert len(ds) == 144
     ids = [s.id for s in ds]
     assert len(set(ids)) == len(ids)
 
@@ -279,6 +308,8 @@ def test_no_sibling_member_survives_in_any_spec() -> None:
     # excluded) may survive in another member's spec beyond the documented
     # dependency-kept few. Pure-Python guard over the committed files; the
     # authoritative re-extraction check lives in tests/test_erdos_isolation.py.
+    # Identity is the row's *declaration* name: the three derived
+    # Hadwiger–Nelson samples share HN_DECL under distinct sample ids.
     rows = load_manifest(ERDOS_DIR)
     all_ids = [r.id for r in rows]
     for row in rows:
@@ -286,9 +317,9 @@ def test_no_sibling_member_survives_in_any_spec() -> None:
             continue
         text = (ERDOS_DIR / row.statement_path).read_text()
         declared = _DECL_RE.findall(text)
-        assert any(_declares(row.id, n) for n in declared), row.id
+        assert any(_declares(row.decl_name, n) for n in declared), row.id
         for name in declared:
-            if _declares(row.id, name):
+            if _declares(row.decl_name, name):
                 continue
             offenders = [
                 i for i in all_ids
