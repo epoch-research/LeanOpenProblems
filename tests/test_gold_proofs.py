@@ -78,18 +78,6 @@ ISOLATED_DIR = REPO / "apn" / "data" / "oeis" / "Isolated"
 # Collected at import time so each conjecture is its own parametrized case.
 GOLD_STEMS = sorted(p.stem for p in GOLD_DIR.glob("*.lean"))
 
-# Under SafeVerify these three gold proofs exceeded its resource ceilings
-# (mem_limit / 1800s timeout). Comparator's DAG-shaped export is expected to
-# remove the rebuildExpr blowup (plan §7.2), but that peak-RSS/timeout
-# re-measurement is an explicit §7 validation deliverable not yet run, so they
-# stay skipped here until it confirms the comparator mem_limit covers them --
-# at which point this set empties and they become regression guards.
-RESOURCE_BOUND_STEMS = {
-    "A382590_conjecture_kth_prime_factor_is_eventually_periodic",
-    "oeis_227582_conjecture_0",
-    "oeis_271591_conjecture_0",
-}
-
 # Module-sensitive closure drift (comparator-migration-plan.md §3.3,
 # comparator#58): `private` declarations mangle their module name into the
 # exported closure, so Comparator falsely rejected faithful proofs (this sweep
@@ -101,7 +89,7 @@ RESOURCE_BOUND_STEMS = {
 # are documented in scripts.comparator_drift.CONFIRMED_REJECT_IDS.
 MODULE_DRIFT_STEMS: set[str] = set()
 
-SKIP_STEMS = RESOURCE_BOUND_STEMS | MODULE_DRIFT_STEMS
+SKIP_STEMS = MODULE_DRIFT_STEMS
 
 
 def _tar_of(files: dict[str, str]) -> bytes:
@@ -197,8 +185,6 @@ def test_gold_proofs_present() -> None:
 
 
 def _skip_reason(stem: str) -> str | None:
-    if stem in RESOURCE_BOUND_STEMS:
-        return "exceeds checker resource ceilings (pending §7 re-measurement)"
     if stem in MODULE_DRIFT_STEMS:
         return "known module-sensitive closure drift (§3.3); faithful proof rejected"
     return None
