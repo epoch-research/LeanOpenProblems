@@ -6,7 +6,7 @@
 retry_attempts: 5
 name: bloom68
 tasks:
-  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@main
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn
     items:
       - name: apn_erdos
@@ -21,7 +21,7 @@ tasks:
           literature: true
 epochs: 1
 models:
-  - package: git+https://github.com/epoch-research/benchmarks@main
+  - package: git+https://github.com/epoch-research/benchmarks
     name: epoch
     items:
       - name: gpt-5.6-sol
@@ -64,6 +64,7 @@ secrets:
 runner:
   memory: 200Gi
   environment:
+    # TODO: Remove once default in Hawk
     INSPECT_LOG_CONDENSE: "true"
     ANTHROPIC_BASE_URL: https://api.anthropic.com
     OPENAI_BASE_URL: https://api.openai.com/v1
@@ -71,6 +72,7 @@ runner:
     HAWK_RUNNER_REFRESH_CLIENT_ID: ""
     HAWK_RUNNER_REFRESH_TOKEN: ''
 
-# Keep this aligned with epoch-research/benchmarks@main.
 packages:
+  # Right now needs to be kept in sync with epoch-research/benchmarks@main.
+  # TODO Remove once this wart is no longer necessary.
   - inspect-ai==0.3.259
