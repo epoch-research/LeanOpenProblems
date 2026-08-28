@@ -58,13 +58,13 @@ models:
 # Per-sample spend cap -- the real budget. Requires model_cost_config below for
 # every model used, or Hawk/Inspect errors out.
 #
-# COST (2 models x 68 samples x 1 epoch = 136 samples, $100/sample cap):
-#   Max: 136 x $100 = $13,600   hard ceiling -- every sample hits its cap
+# COST (2 models x 68 samples x 1 epoch = 136 samples, $200/sample cap):
+#   Max: 136 x $200 = $27,200   hard ceiling -- every sample hits its cap
 # Expected sits near max: runs are gated (default), so an unsolved problem
 # retries until it hits the cap, and the expected solve rate on this selection
 # is ~0% for current models.
-cost_limit: 100.0
-working_limit: 129_600  # 36 * 60 * 60
+cost_limit: 200.0
+working_limit: 259_200  # 72 * 60 * 60
 
 # Prices in dollars per 1M tokens (from scripts/data/model_prices_and_context_window.json).
 # Keys must match Inspect's resolved <provider>/<model> names.
