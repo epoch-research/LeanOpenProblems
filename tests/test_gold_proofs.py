@@ -78,21 +78,6 @@ ISOLATED_DIR = REPO / "apn" / "data" / "oeis" / "Isolated"
 # Collected at import time so each conjecture is its own parametrized case.
 GOLD_STEMS = sorted(p.stem for p in GOLD_DIR.glob("*.lean"))
 
-# Under SafeVerify these three gold proofs exceeded its resource ceilings
-# (mem_limit / 1800s timeout). Comparator's DAG-shaped export is expected to
-# remove the rebuildExpr blowup (plan §7.2), but that peak-RSS/timeout
-# re-measurement is an explicit §7 validation deliverable not yet run, so they
-# stay skipped here until it confirms the comparator mem_limit covers them --
-# at which point this set empties and they become regression guards.
-RESOURCE_BOUND_STEMS = {
-    "A382590_conjecture_kth_prime_factor_is_eventually_periodic",
-    "oeis_227582_conjecture_0",
-    "oeis_271591_conjecture_0",
-}
-
-SKIP_STEMS = RESOURCE_BOUND_STEMS
-
-
 def _tar_of(files: dict[str, str]) -> bytes:
     """Pack ``{relative path: contents}`` into the tar the checker consumes
     (members relative to ``Submission/``). Mirrors ``test_singlefile_proof.py``."""
@@ -185,23 +170,8 @@ def test_gold_proofs_present() -> None:
     assert len(GOLD_STEMS) == 38, f"expected 38 gold proofs, found {len(GOLD_STEMS)}: {GOLD_STEMS}"
 
 
-def _skip_reason(stem: str) -> str | None:
-    if stem in RESOURCE_BOUND_STEMS:
-        return "exceeds checker resource ceilings (pending §7 re-measurement)"
-    return None
-
-
 @pytest.mark.asyncio(loop_scope="module")
-@pytest.mark.parametrize(
-    "stem",
-    [
-        pytest.param(
-            stem,
-            marks=[pytest.mark.skip(reason=reason)] if (reason := _skip_reason(stem)) else [],
-        )
-        for stem in GOLD_STEMS
-    ],
-)
+@pytest.mark.parametrize("stem", GOLD_STEMS)
 async def test_gold_proof_verifies(
     stem: str,
     sandbox_envs: dict[str, SandboxEnvironment],
