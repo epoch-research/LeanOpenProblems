@@ -37,6 +37,9 @@ dependencies:
   # solvers (binary + python bindings)
   - z3-solver=5.1.0.0
   - glpk=5.0
+  - clingo=5.8.2         # ASP: clingo binary + python module
+  - cvxpy=1.9.2          # convex-optimization modeling front end
+  - clarabel=0.11.1
   # lattice reduction
   - fpylll=0.6.4
   # number theory CLI tools

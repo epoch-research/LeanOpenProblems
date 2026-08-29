@@ -23,6 +23,7 @@ loop. Docker is part of the test environment, so this always runs.
 
 from __future__ import annotations
 
+import platform
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -57,11 +58,19 @@ BINARIES = [
     "Singular",
     "maxima",
     "z3",
+    "clingo",
     "primesieve",
     "primecount",
     "ecm",
     "geng",
     "genbg",
+    "gentreeg",
+    "gentourng",
+    "vcolg",
+    "shortg",
+    "labelg",
+    "showg",
+    "amtog",
     "normaliz",
     "zsolve",
     "lrs",
@@ -72,15 +81,45 @@ BINARIES = [
     "msolve",
     "prover9",
     "mace4",
+    "vampire",
+    "drat-trim",
+    "lrat-check",
+    "cake_lpr",
+    "breakid",
+    "smsg",
+    "march_cu",
+    "msieve",
+    "redumis",
+    "gclc",
+    # julia_build
+    "julia",
     # apt (bookworm)
     "polymake",
     "M2",
     "regina-python",
     "cryptominisat",
     "csdp",
+    "topcom-points2triangs",
+    "cadabra2",
+    "minizinc",
+    "berkeley-abc",
+    "eprover",
+    "mpsolve",
+    "java",
     "jq",
     "rg",
     "git",
+    "gcc",
+    "make",
+]
+
+# The special-form primality toolchain: absent from arm64 images (local dev
+# on Apple silicon); CI and production images are amd64. sllr64/pfgw64 are
+# x86-64 gwnum assembly; srsieve2's makefile only knows x86 and 32-bit ARM.
+BINARIES_X86_ONLY = [
+    "sllr64",
+    "pfgw64",
+    "srsieve2",
 ]
 
 # Python modules importable from the agent's `python3` (the /opt/env python).
@@ -100,24 +139,39 @@ PYTHON_MODULES = [
     "ortools",
     "pysat",  # python-sat
     "snappy",  # SnapPy
+    "cvxpy",
+    "pyscipopt",
+    "clingo",
+    "graphillion",
+    "libsemigroups_pybind11",
+    "pymanopt",
+    "pysindy",
+    "hypothesis",
     "sage.all",
 ]
 
-# Vendored docs directories (apn/lean/docs/<tool> -> /opt/docs/<tool>).
+# Docs directories, downloaded at image build from pinned upstream sources
+# (Dockerfile `docs_fetch` stage -> /opt/docs/<tool>).
 DOCS_DIRS = [
     "loogle",
-    "nauty",
     "plantri",
-    "polymake",
     "normaliz",
     "4ti2",
     "lrslib",
     "msolve",
     "csdp",
-    "prover9",
     "regina",
     "snappy",
     "python-flint",
+    "sms",
+    "graphillion",
+    "breakid",
+    "drat-trim",
+    "cake_lpr",
+    "kamis",
+    "gclc",
+    "msieve",
+    "walnut",
 ]
 
 
@@ -170,6 +224,25 @@ async def _bash(
 async def test_binary_on_path(agent_env: SandboxEnvironment, binary: str) -> None:
     code, stdout, stderr = await _bash(agent_env, f"command -v {binary}")
     assert code == 0, f"binary {binary!r} not on the agent's login-shell PATH"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("binary", BINARIES_X86_ONLY)
+@pytest.mark.skipif(
+    platform.machine() in ("arm64", "aarch64"),
+    reason="x86-64-only binaries; the sandbox is built for the host arch",
+)
+async def test_x86_binary_on_path(agent_env: SandboxEnvironment, binary: str) -> None:
+    code, stdout, stderr = await _bash(agent_env, f"command -v {binary}")
+    assert code == 0, f"binary {binary!r} not on the agent's login-shell PATH"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_walnut_launcher_present(agent_env: SandboxEnvironment) -> None:
+    # Walnut is a tree at /opt/walnut, not a PATH binary; the prompt advertises
+    # its upstream launcher path verbatim.
+    code, stdout, _ = await _bash(agent_env, "test -x /opt/walnut/walnut.sh")
+    assert code == 0, "/opt/walnut/walnut.sh missing or not executable"
 
 
 @pytest.mark.asyncio(loop_scope="module")
@@ -230,6 +303,88 @@ async def test_cpsat_solves_trivial_model(agent_env: SandboxEnvironment) -> None
         agent_env, f"python3 - <<'EOF'\n{script}EOF", timeout=300
     )
     assert code == 0, f"CP-SAT smoke failed:\n{stderr[-2000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_kissat_drattrim_roundtrip(agent_env: SandboxEnvironment) -> None:
+    """An UNSAT claim is only usable if its certificate checks: kissat emits a
+    DRAT proof (exit 20 = UNSAT), drat-trim verifies it (s VERIFIED)."""
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "cd /tmp && printf 'p cnf 1 2\\n1 0\\n-1 0\\n' > smoke.cnf "
+        "&& kissat -q smoke.cnf smoke.drat; test $? -eq 20 "
+        "&& drat-trim smoke.cnf smoke.drat; rc=$?; rm -f smoke.cnf smoke.drat; exit $rc",
+    )
+    assert code == 0, f"kissat/drat-trim roundtrip failed:\n{stdout[-1000:]}{stderr[-1000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_gap_small_group(agent_env: SandboxEnvironment) -> None:
+    # The conda GAP ships the SmallGrp library; its absence would silently
+    # gut the group-theory workflow the prompt implies.
+    code, stdout, stderr = await _bash(
+        agent_env, "gap -q -c 'Print(Size(SmallGroup(64, 1)), \"\\n\"); QUIT;'", timeout=300
+    )
+    assert code == 0, f"gap failed:\n{stderr[-2000:]}"
+    # gap prints informational "#I ..." banner lines before the answer.
+    assert stdout.strip().splitlines()[-1] == "64", stdout[-2000:]
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_scip_solves_miqcp(agent_env: SandboxEnvironment) -> None:
+    # pyscipopt's wheel bundles libscip; max x+y s.t. x^2+y^2<=25, x integer.
+    script = (
+        "from pyscipopt import Model\n"
+        "m = Model()\n"
+        "x = m.addVar('x', vtype='I', lb=0, ub=10)\n"
+        "y = m.addVar('y', lb=0, ub=5)\n"
+        "m.addCons(x*x + y*y <= 25)\n"
+        "m.setObjective(x + y, 'maximize')\n"
+        "m.hideOutput()\n"
+        "m.optimize()\n"
+        "assert m.getStatus() == 'optimal', m.getStatus()\n"
+        "assert abs(m.getObjVal() - 7) < 1e-4, m.getObjVal()\n"
+    )
+    code, stdout, stderr = await _bash(
+        agent_env, f"python3 - <<'EOF'\n{script}EOF", timeout=300
+    )
+    assert code == 0, f"SCIP smoke failed:\n{stderr[-2000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_vampire_refutes(agent_env: SandboxEnvironment) -> None:
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "printf 'fof(a, axiom, p).\\nfof(c, conjecture, p).\\n' "
+        "| vampire --time_limit 30",
+    )
+    assert code == 0, f"vampire failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert "Refutation" in stdout
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_walnut_decides_trivial_property(agent_env: SandboxEnvironment) -> None:
+    # Walnut ships the Thue-Morse word T; a universally true statement about
+    # it must come back TRUE (proves the jar + word automata actually load).
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "cd /opt/walnut && printf 'eval smoketest \"?msd_2 An T[n]=T[n]\";\\nexit;\\n' | ./walnut.sh",
+        timeout=300,
+    )
+    assert code == 0, f"walnut failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert "TRUE" in stdout, f"expected TRUE:\n{stdout[-2000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_julia_oscar_loads(agent_env: SandboxEnvironment) -> None:
+    # The baked depot must load offline with no re-precompilation surprises.
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "julia -e 'using Oscar; println(order(symmetric_group(4)))'",
+        timeout=600,
+    )
+    assert code == 0, f"julia/Oscar failed:\n{stderr[-2000:]}"
+    assert stdout.strip().endswith("24")
 
 
 @pytest.mark.asyncio(loop_scope="module")

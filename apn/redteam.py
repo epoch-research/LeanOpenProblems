@@ -124,7 +124,7 @@ def _apn_codebase_tar() -> bytes:
 
     root = Path(apn.__file__).parent
     skip_top = {"data", "__pycache__"}
-    skip_any = {"__pycache__", "docs"}
+    skip_any = {"__pycache__"}
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tf:
         for p in sorted(root.rglob("*")):

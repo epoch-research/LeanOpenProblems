@@ -23,14 +23,20 @@ def test_user_prompt_references_path() -> None:
 
 def test_user_prompt_mentions_environment_tools() -> None:
     # Sentinel tools from each layer of the agent image's compute stack: the
-    # lean layer (loogle), the conda env (sage, z3), the source-built solvers
-    # (kissat), the goal-state idiom, and the vendored docs location.
+    # lean layer (loogle), the conda env (sage, z3, clingo), the pip layer
+    # (pyscipopt), the source-built/release solvers (kissat, vampire), the
+    # julia stack (Oscar), Walnut's launcher path, and the docs location.
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
     assert "Lean 4" in rendered
     assert "loogle" in rendered
     assert "sage" in rendered
     assert "z3" in rendered
+    assert "clingo" in rendered
+    assert "pyscipopt" in rendered
     assert "kissat" in rendered
+    assert "vampire" in rendered
+    assert "OSCAR" in rendered
+    assert "/opt/walnut/walnut.sh" in rendered
     assert "/opt/docs" in rendered
     # The pantograph toolchain is gone from the image; the prompt must not
     # advertise it.

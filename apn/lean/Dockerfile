@@ -13,11 +13,13 @@
 #                   One locked conda-forge env at /opt/env (python + Sage +
 #                   the python stack + solver binaries; spec in
 #                   compute-env.yaml, built in `compute_build`), apt tools
-#                   conda-forge lacks, source-built solvers (`solvers_build`),
-#                   the Loogle Mathlib-search CLI (`loogle_build`), and
-#                   vendored per-tool docs at /opt/docs. Deliberately contains
-#                   NO verifier tooling (no comparator, no lean4export, no
-#                   landrun).
+#                   conda-forge lacks, source-built and release-pinned solvers
+#                   (`solvers_build`), Walnut (`walnut_build`), Julia with
+#                   OSCAR/Hecke (`julia_build`), the Loogle Mathlib-search CLI
+#                   (`loogle_build`), and per-tool docs downloaded from pinned
+#                   upstream sources (`docs_fetch`) at /opt/docs. Deliberately
+#                   contains NO verifier tooling (no comparator, no
+#                   lean4export, no landrun).
 #   - comparator -- the trusted verifier: base + the Comparator binary + the
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
@@ -70,6 +72,22 @@
 # problems, the Erdős/Arxiv/etc. sets -- which contain real proofs and
 # axioms), the library test suite, and repo tooling/docs/.git never reach the
 # agent's sandbox, so there is no contamination to strip after the fact.
+
+# Shared pins: tools whose install AND whose /opt/docs documentation (the
+# `docs_fetch` stage) must come from the SAME revision. Declared once here;
+# stages redeclare `ARG <NAME>` (no value) to inherit these defaults, so a
+# bump moves the tool and its docs together. Docs for tools pinned elsewhere
+# (compute-env.yaml, bookworm's package table, the pip layer) hardcode the
+# matching revision in docs_fetch with a comment naming the pin they mirror.
+ARG MSOLVE_VERSION=0.10.1
+ARG PLANTRI_VERSION=55
+ARG DRATTRIM_VERSION=v05.22.2023
+ARG BREAKID_VERSION=3.1.3
+ARG SMS_VERSION=v2.1.1
+ARG CAKE_LPR_COMMIT=a36874a8b750b43fe4b385b8ddbf5b033e46a3fa
+ARG KAMIS_VERSION=v3.2
+ARG GCLC_VERSION=v2026.1
+ARG MSIEVE_VERSION=1.53
 
 # --------------------------------------------------------------------------- #
 # Builder: clone + build the FC library (everything here is discarded).        #
@@ -246,8 +264,10 @@ FROM debian:bookworm-slim AS compute_build
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# build-essential: graphillion has no cp313 wheel, so its pip install below
+# compiles the sdist (stage-local; the compiler does not ship).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl ca-certificates bzip2 \
+        curl ca-certificates bzip2 build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 ARG MICROMAMBA_VERSION=2.9.0
@@ -260,21 +280,32 @@ COPY compute-env.yaml /tmp/compute-env.yaml
 RUN micromamba create -y -p /opt/env -f /tmp/compute-env.yaml \
     && micromamba clean -afy
 
-# PyPI-only packages (prebuilt wheels), into the same env. snappy is SnapPy
-# (3-manifold topology), not the compression lib.
+# PyPI-only packages, into the same env. snappy is SnapPy (3-manifold
+# topology), not the compression lib. pyscipopt's wheel bundles libscip
+# (SCIP via conda is impossible: every scip/soplex build wants a boost newer
+# than the sage stack's pin). graphillion compiles from sdist (no cp313
+# wheel; verified clean on py3.13, both arches).
 RUN /opt/env/bin/pip install --no-cache-dir \
         python-sat==1.9.dev15 \
         cvc5==1.3.4 \
         ortools==9.15.6755 \
         snappy==3.3.2 \
+        pysindy==2.1.0 \
+        hypothesis==6.165.10 \
+        libsemigroups_pybind11==1.4.4 \
+        pymanopt==2.2.1 \
+        graphillion==2.1 \
+        pyscipopt==6.2.1 \
     && find /opt/env -name '__pycache__' -type d -prune -exec rm -rf {} +
 
 # --------------------------------------------------------------------------- #
 # solvers_build: tools with no conda-forge or bookworm packaging, built from   #
-# pinned sources (plus the pinned official cvc5 static binary -- its PyPI      #
-# wheel in compute_build carries only the python API). Everything lands in    #
-# /out/bin and links only libc/libm from the shared bookworm userland (flint/  #
-# gmp/mpfr are linked statically), so the binaries drop straight into agent.   #
+# pinned sources (plus pinned official release binaries: cvc5 static, whose    #
+# PyPI wheel in compute_build carries only the python API; vampire; cake_lpr;  #
+# and the x86-only LLR/PFGW primality provers). Everything lands in /out/bin   #
+# and links only the libc family, libstdc++, and zlib from the shared          #
+# bookworm userland (flint/gmp/mpfr are linked statically), so the binaries    #
+# drop straight into agent.                                                    #
 # --------------------------------------------------------------------------- #
 FROM debian:bookworm-slim AS solvers_build
 
@@ -282,6 +313,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates build-essential unzip m4 \
+        cmake git subversion p7zip perl zlib1g-dev \
+        libboost-graph-dev libboost-program-options-dev \
         libgmp-dev libmpfr-dev \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /out/bin
@@ -296,7 +329,7 @@ RUN curl -sSfL "https://github.com/arminbiere/kissat/archive/refs/tags/${KISSAT_
     && rm -rf /tmp/kissat-*
 
 # plantri: planar-graph generator (Brinkmann & McKay).
-ARG PLANTRI_VERSION=55
+ARG PLANTRI_VERSION
 RUN curl -sSfL "https://users.cecs.anu.edu.au/~bdm/plantri/plantri${PLANTRI_VERSION}.tar.gz" \
         | tar xz -C /tmp \
     && cd /tmp/plantri* \
@@ -319,7 +352,7 @@ RUN curl -sSfL "https://github.com/ai4reason/Prover9/archive/${PROVER9_COMMIT}.t
 # FLINT >= 3, which bookworm lacks -- both are built here, FLINT static so
 # nothing but the msolve binaries ship.
 ARG FLINT_VERSION=3.6.0
-ARG MSOLVE_VERSION=0.10.1
+ARG MSOLVE_VERSION
 RUN curl -sSfL "https://github.com/flintlib/flint/releases/download/v${FLINT_VERSION}/flint-${FLINT_VERSION}.tar.gz" \
         | tar xz -C /tmp \
     && cd /tmp/flint-* \
@@ -345,6 +378,201 @@ RUN arch="$(uname -m)" \
     && install -m 755 /tmp/cvc5/*/bin/cvc5 /out/bin/cvc5 \
     && rm -rf /tmp/cvc5 /tmp/cvc5.zip
 
+# vampire: superposition first-order prover + finite-model builder (--mode
+# fmb), official pinned release binaries (link only libc/libstdc++).
+ARG VAMPIRE_VERSION=v5.1.0
+RUN arch="$(uname -m)" \
+    && case "$arch" in \
+         x86_64)  z=vampire-Linux-X64.zip;   sha=495828dc76cb17a27080d62dedce755e46de96f47f06f5f0ad4be9cdaf6f968f ;; \
+         aarch64) z=vampire-Linux-ARM64.zip; sha=7abc39224fdf41bdb2c241f8b180a80b7c1a4bce1e46dc79df02cfea2798ad5c ;; \
+         *) echo "unsupported arch $arch" >&2; exit 1 ;; \
+       esac \
+    && curl -sSfL -o /tmp/vampire.zip \
+        "https://github.com/vprover/vampire/releases/download/${VAMPIRE_VERSION}/${z}" \
+    && echo "${sha}  /tmp/vampire.zip" | sha256sum -c - \
+    && unzip -q /tmp/vampire.zip -d /tmp/vampire \
+    && install -m 755 "$(find /tmp/vampire -type f -name vampire)" /out/bin/vampire \
+    && rm -rf /tmp/vampire /tmp/vampire.zip
+
+# drat-trim + lrat-check: proof checkers for SAT solvers' UNSAT certificates
+# (DRAT from kissat/cryptominisat; DRAT->LRAT conversion).
+ARG DRATTRIM_VERSION
+RUN curl -sSfL "https://github.com/marijnheule/drat-trim/archive/refs/tags/${DRATTRIM_VERSION}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/drat-trim-* \
+    && make \
+    && install -m 755 drat-trim lrat-check /out/bin/ \
+    && rm -rf /tmp/drat-trim-*
+
+# cake_lpr: formally verified LRAT proof checker (CakeML); built from the
+# repo's pre-generated per-arch assembly with one gcc call.
+ARG CAKE_LPR_COMMIT
+RUN curl -sSfL "https://github.com/tanyongkiam/cake_lpr/archive/${CAKE_LPR_COMMIT}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/cake_lpr-* \
+    && case "$(uname -m)" in x86_64) s=cake_lpr.S ;; aarch64) s=cake_lpr_arm8.S ;; esac \
+    && gcc -O2 -std=c99 basis_ffi.c "$s" -o /out/bin/cake_lpr \
+    && rm -rf /tmp/cake_lpr-*
+
+# BreakID: static CNF symmetry breaking (preprocessor for SAT searches).
+ARG BREAKID_VERSION
+RUN git clone --depth 1 --branch "release/${BREAKID_VERSION}" \
+        https://github.com/meelgroup/breakid /tmp/breakid \
+    && cmake -S /tmp/breakid -B /tmp/breakid/build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build /tmp/breakid/build -j"$(nproc)" \
+    && install -m 755 /tmp/breakid/build/breakid /out/bin/breakid \
+    && rm -rf /tmp/breakid
+
+# SMS (smsg): SAT-modulo-symmetries graph search -- find/enumerate graphs with
+# a property, modulo isomorphism. CaDiCaL is bundled as a pinned submodule.
+ARG SMS_VERSION
+RUN git clone --depth 1 --branch "${SMS_VERSION}" --recurse-submodules \
+        https://github.com/markirch/sat-modulo-symmetries /tmp/sms \
+    && cd /tmp/sms/cadical_sms && ./configure -fPIC && make -j"$(nproc)" \
+    && cd /tmp/sms \
+    # static boost so the binary keeps to the shared bookworm userland
+    && cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DBoost_USE_STATIC_LIBS=ON \
+    && cmake --build build -j"$(nproc)" \
+    && install -m 755 build/src/smsg /out/bin/smsg \
+    && rm -rf /tmp/sms
+
+# march_cu: cube-and-conquer splitter for hard SAT instances (Heule's CnC;
+# no tags upstream, commit-pinned). -fcommon: pre-C99 tentative definitions.
+ARG MARCH_CU_COMMIT=705b60c6491ef2b61988b3ce6ac674be1b90571d
+RUN curl -sSfL "https://github.com/marijnheule/CnC/archive/${MARCH_CU_COMMIT}.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/CnC-*/march_cu \
+    && make CFLAGS='-O3 -fno-strict-aliasing -Wall -DNDEBUG -fcommon' \
+    && install -m 755 march_cu /out/bin/march_cu \
+    && rm -rf /tmp/CnC-*
+
+# msieve: SIQS/NFS integer factorization past gmp-ecm's reach. OPT_FLAGS
+# overrides the Makefile's -march=native so the binary is portable.
+ARG MSIEVE_VERSION
+RUN curl -sSfL "https://downloads.sourceforge.net/project/msieve/msieve/Msieve%20v${MSIEVE_VERSION}/msieve$(echo "${MSIEVE_VERSION}" | tr -d .)_src.tar.gz" \
+        | tar xz -C /tmp \
+    && cd /tmp/msieve-* \
+    && make all -j"$(nproc)" OPT_FLAGS='-O3 -fomit-frame-pointer -D_FILE_OFFSET_BITS=64 -DNDEBUG' \
+    && install -m 755 msieve /out/bin/msieve \
+    && rm -rf /tmp/msieve-*
+
+# redumis (KaMIS): near-optimal maximum independent sets at scales exact
+# solvers can't reach (KaHIP is vendored in the release tarball).
+ARG KAMIS_VERSION
+RUN curl -sSfL "https://github.com/KarlsruheMIS/KaMIS/archive/refs/tags/${KAMIS_VERSION}.tar.gz" \
+        | tar xz -C /tmp \
+    && cmake -S /tmp/KaMIS-* -B /tmp/kamis-build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build /tmp/kamis-build -j"$(nproc)" --target redumis \
+    && install -m 755 /tmp/kamis-build/redumis /out/bin/redumis \
+    && rm -rf /tmp/KaMIS-* /tmp/kamis-build
+
+# gclc: automated Euclidean geometry proving (area/Wu methods; CLI only).
+ARG GCLC_VERSION
+RUN git clone --depth 1 --branch "${GCLC_VERSION}" https://github.com/janicicpredrag/gclc /tmp/gclc \
+    && cmake -S /tmp/gclc -B /tmp/gclc/build -DCMAKE_BUILD_TYPE=Release -Dgui=OFF \
+    && cmake --build /tmp/gclc/build -j"$(nproc)" \
+    && install -m 755 /tmp/gclc/build/gclc /out/bin/gclc \
+    && rm -rf /tmp/gclc
+
+# The special-form primality toolchain, amd64 images only (CI/production):
+# srsieve2 sieves k*b^n+-c candidate grids (mtsieve suite; SourceForge SVN,
+# revision-pinned; its makefile only knows x86 and 32-bit ARM), then sllr64
+# (LLR) and pfgw64 (OpenPFGW) prove primality at 10^5..10^7 digits (gwnum is
+# x86-64 assembly -- no arm route exists).
+ARG MTSIEVE_SVN_REV=469
+ARG LLR_VERSION=407
+ARG PFGW_VERSION=4.1.8
+RUN if [ "$(uname -m)" = x86_64 ]; then \
+      svn checkout -q -r "${MTSIEVE_SVN_REV}" https://svn.code.sf.net/p/mtsieve/svn/ /tmp/mtsieve \
+      && cd /tmp/mtsieve \
+      && make -j"$(nproc)" srsieve2 \
+      && install -m 755 srsieve2 /out/bin/srsieve2 \
+      && rm -rf /tmp/mtsieve; \
+    fi
+RUN if [ "$(uname -m)" = x86_64 ]; then \
+      curl -sSfL -o /tmp/llr.zip "https://jpenne.free.fr/llr4/llr${LLR_VERSION}slinux64.zip" \
+      && echo "b92424d85d0d37788bb33613ec1af2b6d5cb1f5ce37be5ed062b0aad604a6ab3  /tmp/llr.zip" | sha256sum -c - \
+      && unzip -q /tmp/llr.zip -d /tmp/llr \
+      && install -m 755 "$(find /tmp/llr -type f -name sllr64)" /out/bin/sllr64 \
+      && curl -sSfL -o /tmp/pfgw.7z "https://downloads.sourceforge.net/project/openpfgw/pfgw_linux_${PFGW_VERSION}.7z" \
+      && echo "aadf885e2d6489866bb7eeea2ba3f75a3fa02e679f1d6a86fd2632e042a99c99  /tmp/pfgw.7z" | sha256sum -c - \
+      && 7zr x -o/tmp/pfgw /tmp/pfgw.7z >/dev/null \
+      && install -m 755 /tmp/pfgw/pfgw64 /out/bin/pfgw64 \
+      && rm -rf /tmp/llr /tmp/llr.zip /tmp/pfgw /tmp/pfgw.7z; \
+    fi
+
+# --------------------------------------------------------------------------- #
+# walnut_build: Walnut, the decision procedure for automatic sequences /       #
+# base-k digit statements (Buechi arithmetic). Java; built once with the       #
+# repo's own gradle wrapper, shipped as the /opt/walnut tree and run via       #
+# upstream's launcher: /opt/walnut/walnut.sh (JRE comes from the agent         #
+# stage's default-jre-headless).                                               #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS walnut_build
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates openjdk-17-jdk-headless git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upstream's build.sh is its gradle invocation + chmod, followed by an
+# interactive "Press enter" prompt that exits 1 in a non-interactive build --
+# so run those two commands directly.
+ARG WALNUT_VERSION=v7.1.0
+RUN curl -sSfL "https://github.com/Walnut-Theorem-Prover/Walnut/archive/refs/tags/${WALNUT_VERSION}.tar.gz" \
+        | tar xz -C /opt \
+    && mv /opt/Walnut-* /opt/walnut \
+    && cd /opt/walnut \
+    && ./gradlew clean customFatJar \
+    && chmod +x walnut.sh \
+    && rm -rf /root/.gradle
+
+# --------------------------------------------------------------------------- #
+# julia_build: Julia + OSCAR/Hecke (computer algebra: Galois groups, number    #
+# fields, group theory) as a fully precompiled, offline-usable depot. The      #
+# multi-target JULIA_CPU_TARGET (the same lists the official binaries use)     #
+# makes the baked pkgimages load on any deploy CPU. NEVER build this stage     #
+# under qemu emulation: precompilation crashes there (native-only, both        #
+# arches verified for artifact coverage).                                      #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS julia_build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# sha256s from https://julialang-s3.julialang.org/bin/checksums/julia-1.12.7.sha256
+ARG JULIA_VERSION=1.12.7
+RUN arch="$(uname -m)" \
+    && case "$arch" in \
+         x86_64)  a=x64/1.12/julia-${JULIA_VERSION}-linux-x86_64.tar.gz; \
+                  sha=4e7e9e776634d24835250de67cde39b0d4af15bc432eb20697e6be6c28ea69e8 ;; \
+         aarch64) a=aarch64/1.12/julia-${JULIA_VERSION}-linux-aarch64.tar.gz; \
+                  sha=9243c0b524c7f300883240a1ee5ea3916a30e070bff718acf8ccaee31a731ef2 ;; \
+         *) echo "unsupported arch $arch" >&2; exit 1 ;; \
+       esac \
+    && curl -fsSL "https://julialang-s3.julialang.org/bin/linux/${a}" -o /tmp/julia.tar.gz \
+    && echo "${sha}  /tmp/julia.tar.gz" | sha256sum -c - \
+    && mkdir -p /opt/julia \
+    && tar -xzf /tmp/julia.tar.gz -C /opt/julia --strip-components=1 \
+    && rm /tmp/julia.tar.gz
+
+ENV JULIA_DEPOT_PATH=/opt/julia-depot
+ARG OSCAR_VERSION=1.8.1
+ARG HECKE_VERSION=0.39.22
+RUN case "$(uname -m)" in \
+         x86_64)  export JULIA_CPU_TARGET='generic;sandybridge,-xsaveopt,clone_all;haswell,-rdrnd,base(1);x86-64-v4,-rdrnd,base(1)' ;; \
+         aarch64) export JULIA_CPU_TARGET='generic;cortex-a57;thunderx2t99;carmel,clone_all;apple-m1,base(3);neoverse-512tvb,-rand,-fpac,base(3)' ;; \
+       esac \
+    && /opt/julia/bin/julia -e "using Pkg; Pkg.add([ \
+           PackageSpec(name=\"Oscar\", version=\"${OSCAR_VERSION}\"), \
+           PackageSpec(name=\"Hecke\", version=\"${HECKE_VERSION}\")]); \
+         Pkg.precompile(); Pkg.gc()" \
+    # The depot must be complete: loading may not touch the network.
+    && JULIA_PKG_OFFLINE=true /opt/julia/bin/julia -e \
+         'using Oscar; using Hecke; println("Oscar ", Oscar.VERSION_NUMBER)'
+
 # --------------------------------------------------------------------------- #
 # loogle_build: the Loogle type-pattern Mathlib search CLI. Upstream's        #
 # "Running locally" contract: the binary is dependency-free, must merely be   #
@@ -366,6 +594,89 @@ RUN git clone https://github.com/nomeata/loogle.git /opt/loogle \
     && lake env /opt/loogle/.lake/build/bin/loogle --module Mathlib "Nat.Prime" > /dev/null
 
 # --------------------------------------------------------------------------- #
+# docs_fetch: in-sandbox references at /opt/docs/<tool>, DOWNLOADED at build   #
+# from pinned sources (never vendored in the repo, never PDFs, always the     #
+# upstream files verbatim). Each fetch is pinned to the revision the image    #
+# actually installs: shared ARGs (top of file) where the install is ARG-      #
+# pinned, hardcoded matching revisions (with the mirrored pin named in a      #
+# comment) where the install pin lives in compute-env.yaml / bookworm / the   #
+# pip layer. Tools whose only docs are PDFs or mutable webpages ship          #
+# undocumented (their --help still works).                                    #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS docs_fetch
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Single-file fetches from pinned raw URLs.
+ARG DRATTRIM_VERSION
+ARG BREAKID_VERSION
+ARG CAKE_LPR_COMMIT
+ARG KAMIS_VERSION
+ARG GCLC_VERSION
+ARG MSOLVE_VERSION
+# Must equal loogle_build's LOOGLE_COMMIT.
+ARG LOOGLE_DOCS_COMMIT=9f11169aaebf1ed1e7dcc4077f2aafe0fcf66fd0
+RUN set -e; \
+    fetch() { mkdir -p "/opt/docs/$1" && curl -sSfL -o "/opt/docs/$1/$2" "$3"; }; \
+    fetch loogle README.md "https://raw.githubusercontent.com/nomeata/loogle/${LOOGLE_DOCS_COMMIT}/README.md"; \
+    fetch loogle blurb.md "https://raw.githubusercontent.com/nomeata/loogle/${LOOGLE_DOCS_COMMIT}/blurb.md"; \
+    fetch msolve msolve-tutorial.tex "https://raw.githubusercontent.com/algebraic-solving/msolve/v${MSOLVE_VERSION}/doc/msolve-tutorial.tex"; \
+    fetch drat-trim README.md "https://raw.githubusercontent.com/marijnheule/drat-trim/${DRATTRIM_VERSION}/README.md"; \
+    fetch breakid README.md "https://raw.githubusercontent.com/meelgroup/breakid/release/${BREAKID_VERSION}/README.md"; \
+    fetch cake_lpr README.md "https://raw.githubusercontent.com/tanyongkiam/cake_lpr/${CAKE_LPR_COMMIT}/README.md"; \
+    fetch kamis README.md "https://raw.githubusercontent.com/KarlsruheMIS/KaMIS/${KAMIS_VERSION}/README.md"; \
+    fetch gclc gclc_man.tex "https://raw.githubusercontent.com/janicicpredrag/gclc/${GCLC_VERSION}/manual/gclc_man.tex"; \
+    # matches bookworm coinor-csdp 6.2.0-4
+    fetch csdp csdpuser.tex "https://raw.githubusercontent.com/coin-or/Csdp/releases/6.2.0/doc/csdpuser.tex"; \
+    # matches the pip layer's graphillion==2.1
+    fetch graphillion README.md "https://raw.githubusercontent.com/takemaru/graphillion/v2.1/README.md"; \
+    # matches compute-env.yaml 4ti2=1.6.15
+    for f in 4ti2_manual 4ti2_manual_beginner 4ti2_manual_advanced 4ti2_manual_ref 4ti2_manual_api; do \
+        fetch 4ti2 "$f.tex" "https://raw.githubusercontent.com/4ti2/4ti2/Release_1_6_15/doc/$f.tex"; \
+    done
+
+# Tag-pinned clones where the docs are a file set.
+ARG SMS_VERSION
+RUN set -e; \
+    clonedocs() { git clone -q --depth 1 --branch "$2" "$1" /tmp/d && mkdir -p "/opt/docs/$3"; }; \
+    # matches solvers_build's SMS_VERSION
+    clonedocs https://github.com/markirch/sat-modulo-symmetries "${SMS_VERSION}" sms \
+        && cp /tmp/d/docs/*.md /opt/docs/sms/ && rm -rf /tmp/d; \
+    # matches compute-env.yaml normaliz=3.11.0
+    clonedocs https://github.com/Normaliz/Normaliz v3.11.0 normaliz \
+        && cp /tmp/d/doc/*.tex /tmp/d/README.md /opt/docs/normaliz/ && rm -rf /tmp/d; \
+    # matches the pip layer's snappy==3.3.2 (SnapPy)
+    clonedocs https://github.com/3-manifolds/SnapPy 3.3.2_as_released snappy \
+        && cp /tmp/d/doc_src/*.rst /opt/docs/snappy/ && rm -rf /tmp/d; \
+    # matches compute-env.yaml python-flint=0.8.0
+    clonedocs https://github.com/flintlib/python-flint 0.8.0 python-flint \
+        && cp /tmp/d/doc/source/*.rst /opt/docs/python-flint/ && rm -rf /tmp/d; \
+    # matches bookworm regina-normal 7.3 (handbook source; DocBook is text)
+    clonedocs https://github.com/regina-normal/regina regina-7.3 regina \
+        && cp /tmp/d/qtui/doc/regina/*.docbook /opt/docs/regina/ && rm -rf /tmp/d
+
+# Tarball-shipped docs (same tarballs the installs use).
+ARG PLANTRI_VERSION
+RUN set -e; \
+    mkdir -p /opt/docs/plantri /opt/docs/lrslib /opt/docs/msieve; \
+    curl -sSfL "https://users.cecs.anu.edu.au/~bdm/plantri/plantri${PLANTRI_VERSION}.tar.gz" | tar xz -C /tmp \
+        && cp /tmp/plantri*/plantri-guide.txt /opt/docs/plantri/ && rm -rf /tmp/plantri*; \
+    # matches compute-env.yaml lrslib=73.a
+    curl -sSfL "https://cgm.cs.mcgill.ca/~avis/C/lrslib/archive/lrslib-073a.tar.gz" | tar xz -C /tmp \
+        && cp -r /tmp/lrslib-073a/man/html /opt/docs/lrslib/man-html \
+        && cp /tmp/lrslib-073a/README /opt/docs/lrslib/ && rm -rf /tmp/lrslib-073a; \
+    curl -sSfL "https://downloads.sourceforge.net/project/msieve/msieve/Msieve%20v1.53/msieve153_src.tar.gz" | tar xz -C /tmp \
+        && cp /tmp/msieve-*/Readme* /opt/docs/msieve/ && rm -rf /tmp/msieve-*
+
+# Walnut's per-command help ships inside the same build the image runs.
+COPY --from=walnut_build /opt/walnut/README.md /opt/docs/walnut/README.md
+COPY --from=walnut_build ["/opt/walnut/Help Documentation/Commands", "/opt/docs/walnut/commands"]
+
+# --------------------------------------------------------------------------- #
 # agent: the agent's workspace. Layer order is big/stable first (the conda     #
 # env), then apt, then the small solver binaries, then Loogle, then docs       #
 # (which churn most).                                                          #
@@ -380,19 +691,35 @@ COPY --from=compute_build /opt/env /opt/env
 ENV PATH=/opt/env/bin:$PATH
 RUN echo 'export PATH=/opt/env/bin:$PATH' > /etc/profile.d/compute-env.sh
 
+# Julia with the precompiled OSCAR/Hecke depot (see julia_build). The depot
+# path must match the build-time one or every load re-precompiles.
+COPY --from=julia_build /opt/julia /opt/julia
+COPY --from=julia_build /opt/julia-depot /opt/julia-depot
+ENV JULIA_DEPOT_PATH=/opt/julia-depot
+RUN ln -s /opt/julia/bin/julia /usr/local/bin/julia \
+    && echo 'export JULIA_DEPOT_PATH=/opt/julia-depot' > /etc/profile.d/julia.sh
+
 # Tools conda-forge lacks, from bookworm: polymake (polyhedral geometry),
 # Macaulay2 (commutative algebra), regina-normal (low-dimensional topology;
 # `regina-python`), cryptominisat (SAT, newer here than conda-forge's),
-# coinor-csdp (semidefinite programming, `csdp`), jq + ripgrep for the bash
-# tool (git is already in `base`), libmpfr6 (msolve's one non-static runtime
-# link besides gmp, which base's libgmp-dev already provides).
+# coinor-csdp (semidefinite programming, `csdp`), topcom (triangulations),
+# cadabra2 (tensor algebra), minizinc (CP modeling), berkeley-abc (Boolean
+# networks), eprover (first-order ATP), mpsolve (certified polynomial roots),
+# default-jre-headless (runs Walnut), jq + ripgrep for the bash tool (git is
+# already in `base`), libmpfr6 (msolve's one non-static runtime link besides
+# gmp, which base's libgmp-dev already provides).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         polymake macaulay2 regina-normal cryptominisat coinor-csdp \
-        jq ripgrep libmpfr6 \
+        topcom cadabra2 minizinc berkeley-abc eprover mpsolve \
+        default-jre-headless jq ripgrep libmpfr6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Source-built solvers (kissat, plantri, prover9/mace4, msolve, cvc5).
+# Source-built and release-pinned solver binaries (see solvers_build).
 COPY --from=solvers_build /out/bin/ /usr/local/bin/
+
+# Walnut (automatic-sequence decision procedure): upstream's own tree and
+# launcher, run as /opt/walnut/walnut.sh (java from apt above).
+COPY --from=walnut_build /opt/walnut /opt/walnut
 
 # Loogle: the dependency-free binary, plus the Mathlib search index it baked
 # next to Mathlib.olean (COPY preserves mtimes, and this stage shares base's
@@ -405,10 +732,10 @@ COPY --from=loogle_build \
      /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index \
      /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index
 
-# In-sandbox references (the sandbox has no network): vendored, version-matched
-# docs for the tools whose syntax the agent is unlikely to know cold. Last:
-# docs churn more than any layer above.
-COPY docs /opt/docs
+# In-sandbox references (the sandbox has no network): version-matched upstream
+# docs, downloaded at build (see docs_fetch). Last: docs churn more than any
+# layer above.
+COPY --from=docs_fetch /opt/docs /opt/docs
 
 CMD ["sleep", "infinity"]
 
