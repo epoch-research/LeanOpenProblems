@@ -490,7 +490,8 @@ RUN if [ "$(uname -m)" = x86_64 ]; then \
       && rm -rf /tmp/mtsieve; \
     fi
 RUN if [ "$(uname -m)" = x86_64 ]; then \
-      curl -sSfL -o /tmp/llr.zip "https://jpenne.free.fr/llr4/llr${LLR_VERSION}slinux64.zip" \
+      # jpenne.free.fr is HTTP-only; integrity comes from the sha256 pin.
+      curl -sSfL -o /tmp/llr.zip "http://jpenne.free.fr/llr4/llr${LLR_VERSION}slinux64.zip" \
       && echo "b92424d85d0d37788bb33613ec1af2b6d5cb1f5ce37be5ed062b0aad604a6ab3  /tmp/llr.zip" | sha256sum -c - \
       && unzip -q /tmp/llr.zip -d /tmp/llr \
       && install -m 755 "$(find /tmp/llr -type f -name sllr64)" /out/bin/sllr64 \
