@@ -1,6 +1,5 @@
 # Schema reference for eval-set config:
 # https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
-retry_attempts: 0  # Disable retries while we're still working out the kinks
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn

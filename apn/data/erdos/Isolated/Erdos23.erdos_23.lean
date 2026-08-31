@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 23
@@ -22,9 +22,11 @@ import FormalConjectures.Util.ProblemImports
 *References:*
 * [erdosproblems.com/23](https://www.erdosproblems.com/23)
 * [OEIS A389646](https://oeis.org/A389646)
+* [Balogh-Clemen-Lidicky, Max Cuts in Triangle-free Graphs](https://arxiv.org/abs/2103.14179)
+* [McKay, Extremal graphs for bipartization of triangle-free graphs](https://users.cecs.anu.edu.au/~bdm/data/graphs.html)
 -/
 
-open SimpleGraph BigOperators Classical
+open SimpleGraph BigOperators
 
 namespace Erdos23
 
@@ -37,6 +39,7 @@ are adjacent iff $j = i + 1$ or $i = j + 1$ in $\mathbb{Z}/5\mathbb{Z}$.
 def blowupC5 (n : ℕ) : SimpleGraph (ZMod 5 × Fin n) :=
   SimpleGraph.fromRel fun (i, _) (j, _) => i + 1 = j ∨ j + 1 = i
 
+open scoped Classical in
 /--
 Can every triangle-free graph on $5n$ vertices be made bipartite by deleting at most $n^2$ edges?
 -/
@@ -50,3 +53,5 @@ theorem erdos_23 :
 -- TODO: add the remaining variants/statements/comments
 
 end Erdos23
+
+theorem Erdos23.erdos_23.disproof : ¬ (type_of% @Erdos23.erdos_23) := sorry

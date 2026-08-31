@@ -48,3 +48,5 @@ theorem oeis_261627_conjecture_0 (n : ℕ) :
   (n > 6 → A261627 n > 0) ∧
   (A261627 n = 1 ↔ n ∈ A261627_singletons) :=
 by sorry
+
+theorem oeis_261627_conjecture_0.disproof : ¬ (type_of% @oeis_261627_conjecture_0) := sorry

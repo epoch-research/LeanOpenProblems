@@ -7,12 +7,13 @@ re-elaboration certificates) in ``scripts/fc_statements.py``; this module owns
 what is Erdős-specific -- the data locations under ``apn/data/erdos/`` and the
 universe census. Membership is *defined* by the vendored sources: every
 ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
-attribute in ``Sources/`` (``FormalConjectures/ErdosProblems`` files at the
-pinned FC commit) is a universe member, resolution status notwithstanding;
-the committed ``samples.jsonl`` is curated down to the paper's attempted set
-(see ``apn/data/erdos/NOTICE.md``). Value-typed ``answer(sorry)`` members (a
-``sorryAx`` in the elaborated statement type, unscoreable by SafeVerify)
-become ``excluded`` rows.
+attribute in ``Sources/`` (the Bloom statement selection's 48
+``FormalConjectures/ErdosProblems`` files at the pinned FC commit -- see
+``apn/data/erdos/NOTICE.md`` and
+``ERDOS_PROBLEM_STATEMENT_SELECTION.md`` next to it) is a universe member,
+resolution status notwithstanding. Value-typed ``answer(sorry)`` members (a ``sorryAx``
+in the elaborated statement type, unscoreable by the verifier) and members
+carrying a complete in-file proof become ``excluded`` rows.
 
 Two callers import this module: ``scripts/generate_erdos_isolated.py`` (the
 vendor-time tool that produces ``samples.jsonl`` + ``Isolated/``) and
@@ -25,7 +26,13 @@ from __future__ import annotations
 import re
 
 from scripts.fc_statements import strip_category_attrs
-from scripts.isolation import REPO, is_theorem_command
+from scripts.isolation import (
+    REPO,
+    append_disproof,
+    is_theorem_command,
+    strip_private,
+    tidy,
+)
 
 ERDOS_DIR = REPO / "apn" / "data" / "erdos"
 SOURCES_DIR = ERDOS_DIR / "Sources"
@@ -52,23 +59,10 @@ PROVED_IN_FILE_REASON = (
 )
 
 # Files whose isolated specs may carry a `sorry` outside the target theorem:
-# each has a kept ``def``/``abbrev`` whose dependency closure pulls in a
-# sorry'd helper theorem, which therefore survives the cut -- 1055's
-# `def p := Nat.find (exists_p r)` on the textbook `exists_p` (the precedent,
-# decided at task-addition time, mirroring FC100's EllipticCurveRank
-# instance), 295's `abbrev k := Nat.find (exists_k N)` likewise, 633's
-# `IsCuttable.sq` API lemma, 697's `def δ := (density_exists m α).choose`,
-# and 961's `def f := Nat.find (well_defined k hk)` whose proof uses the
-# sorry'd Sylvester-Schur statement. Those samples implicitly also require
-# proving the helper -- in each case an established result, so a strict
-# weakening of the target. Generation reports these instead of failing.
-SORRY_ALLOWLIST_FILES = {
-    "295.lean",
-    "633.lean",
-    "697.lean",
-    "961.lean",
-    "1055.lean",
-}
+# a kept ``def``/``abbrev`` whose dependency closure pulls in a sorry'd helper
+# theorem, which therefore survives the cut (such samples implicitly also
+# require proving the helper).
+SORRY_ALLOWLIST_FILES: set[str] = set()
 
 # A research-category classification attribute and its status field. Matched
 # against a *command's* source span (the extractor includes the attribute list
@@ -89,8 +83,9 @@ def universe_members(src: bytes, filerec: dict) -> list[tuple[dict, str]]:
     """The file's universe members: ``(theorem_decl, category)`` for every
     standalone theorem/lemma command carrying a research-category attribute.
 
-    Anonymous ``example`` commands may carry the attribute too (387.lean's
-    sanity check does); they introduce no declaration and are not members.
+    Anonymous ``example`` commands may carry the attribute too (the
+    Tsoukalas-era 387.lean's sanity check did; none of the current 48 files
+    do); they introduce no declaration and are not members.
     The caller cross-checks that no research attribute was silently skipped by
     comparing the file-total against the per-command sum.
     """
@@ -125,61 +120,90 @@ def universe_members(src: bytes, filerec: dict) -> list[tuple[dict, str]]:
 # loudly instead of leaking. tests/test_erdos.py asserts the markers are
 # absent from every shipped sketch.
 VERDICT_PROSE = [
-    # -- resolutions by the paper's own agent -------------------------------
-    "\n\nThis was disproved by the DeepMind prover agent.\n",
-    "\n\nThis was proved by DeepMind prover agent.\n",
+    # 138.variants.difference: a recorded-verdict answer(True) member shipped
+    # un-filled; this sentence is that verdict in prose.
     "\n\nThe DeepMind prover agent has found a formal proof of this statement.\n",
-    "\n\nThe DeepMind prover agent has found a formal disproof of this statement.\n",  # 12.parts.ii, 26.tenenbaum
-    "\n\nThis was proved formally by the DeepMind prover agent [DM26a].\n",  # 152
-    "\n\nThe DeepMind prover agent found a formal proof for this statement\n",  # 741.variants.upper (no period upstream)
-    "\n\nFormal proof linked here provided by AlphaProof.\n",  # 1052, 233.lower_bound, 1074.EHSNumbers_infinite
-    "\n\nFormal proof provided by AlphaProof\n",  # 267.specialization_pow_two
-    "\nThis was found be AlphaProof for the specific instance $X^2 - X + 1$ and then generalised.\n",  # 477
-    "\n\nThis was found and proved by AlphaProof.\n\nIt also found $(n + 1)! + n$.\n",  # 198.concrete
-    "\n\nAlphaProof has found the following explicit construction: $A = \\{ (n+1)!+n : n\\geq 0\\}$. This is a\n"
-    "Sidon set, and intersects every arithmetic progression, since for any $a,d\\in \\mathbb{N}$,\n"
-    "$(a+d+1)!+(a+d)\\in A$, and $d$ divides $(a+d+1)!+d$.\n",  # 198
-    " - [DM26a] DeepMind prover agent, [formal proof of Erdős problem 152]"
-    "(https://github.com/mo271/formal-conjectures/blob/"
-    "29c60aa79729701905cf9e92517af23f588971f2/FormalConjectures/ErdosProblems/152.lean#L485)"
-    " (2026)\n",
-    " - [DM26b] DeepMind prover agent, [formal proof of the quadratic variant of Erdős problem 152]"
-    "(https://github.com/mo271/formal-conjectures/blob/"
-    "ff58c933d53bb807bf85d98a47402703f9f14ed3/FormalConjectures/ErdosProblems/152.lean#L496)"
-    " (2026)\n",
-    "\n\nThis stronger quadratic variant was also proved formally by the DeepMind prover agent"
-    " [DM26b].\n",
-    # -- resolutions recorded from other provers/authors --------------------
-    "\nSolved affirmatively by [Fo99], who gave an explicit construction.\n\n"
-    "This was formalized in Lean by Alexeev using Aristotle and ChatGPT.\n",  # 1071.parts.ii
-    "\n\nThis was proved affirmatively by Chojecki [Ch26], using a Duke-type equidistribution"
-    " theorem.\nA Lean formalisation of the reduction (conditional on a Duke-type equidistribution"
-    " theorem) exists;\nsee the [forum discussion]"
-    "(https://www.erdosproblems.com/forum/thread/1148#post-4849).\n",  # 1148
-    "- [Ch26] P. Chojecki, [Bounded Representations by $x^2 + y^2 - z^2$]"
-    "(https://www.ulam.ai/research/erdos1148-full.pdf) (2026)\n",  # 1148 module-doc reference
-    "\n\nThis has been falsified.\n",  # 125.variants.positive_lower_density
-    "\n\nThe answer is yes, by [APSSV26, Section 4]; a Lean formalisation is available"
-    " in [Mo26].\n",  # 997
-    "- [Mo26] P. Monticone, [Lean formalisation of Erdős problem 997]"
-    "(https://live.lean-lang.org/#project=mathlib-v4.28.0&url=https://gist.githubusercontent.com/"
-    "pitmonticone/016f2ed66b4cd1c4c4b9998095170e60/raw/"
-    "b7dfc05c525ae385b5835f89f1ada721443e4305/Erdos997.lean) (2026)\n",  # 997 module-doc reference
-    "\n\nThis question has been answered negatively by Xichuan in the\n[comments]"
-    "(https://www.erdosproblems.com/forum/thread/1082), who gave a set of $42$ points in\n"
-    "$\\mathbb{R}^2$, with no three on a line, such that each point determines only $20$ distinct"
-    " distances.\n\nA smaller counterexample has been formalised here: it comprised of $8$ points,"
-    " where each point only\ndetermines $3$ distances.\n\n"
-    "This counterexample has originally been found by Heiko Harborth.\n",  # 1082.parts.ii
-    "\n\nA positive [solution](https://github.com/spicylemonade/erdos-38) was given by GPT 5.5 Pro\n"
-    "(prompted by gebyjaff, cleanup by Liam Price); in fact a sparse random set $B$ has this"
-    " property,\nwith $f(\\alpha)\\gg \\alpha (1-\\alpha)^2$.\n",  # 38
-    "\n\nLarsen and Larsen [LaLa26] answered this in the negative.\n",  # 868.parts.i
-    "\n\nLarsen and Larsen [LaLa26] constructed a counterexample with $f(n) > c \\log n$ for all"
-    " large $n$.\n",  # 868.parts.ii
-    "- [LaLa26] Larsen and Larsen, [Erdős problem 868]"
-    "(https://github.com/Larsen-Daniel/Erdos-868/blob/main/868.pdf) (2026)\n",  # 868 module-doc ref
 ]
+
+
+# --------------------------------------------------------------------------- #
+# The Hadwiger–Nelson special case (Problem 508).                              #
+# --------------------------------------------------------------------------- #
+# 508's only research-open statement, `HadwigerNelsonProblem`, is value-typed
+# (`χ(ℝ²) = answer(sorry)`) and ships as an excluded manifest row. χ(ℝ²) is
+# known to lie in {5, 6, 7} (de Grey's lower bound, Isbell's hexagonal upper
+# bound), so the benchmark carries three derived prove-or-disprove samples in
+# its place, one per candidate value -- Greg Burnham's proposal, adopted by
+# Thomas Bloom (2026-08-25). Each spec is the source file cut down to the
+# target theorem with the `answer(sorry)` placeholder replaced by the literal
+# and the theorem renamed to `HadwigerNelsonProblem.eqN` -- so the three
+# statements carry distinct names and the id-is-the-declaration-name
+# convention holds.
+#
+# The derivation is pure text over the vendored source (no extractor run), so
+# generation and the fast suite (tests/test_erdos.py, byte-level re-derivation)
+# both recompute it, and the container gates (compile, disproof certification)
+# cover the derived specs like every other spec in
+# tests/test_erdos_isolation.py -- which skips only the answer-form
+# certificate for them (the source statement is value-typed; there is no
+# rewrite form to certify) and asserts the derived statement's elaborated type
+# is sorryAx-free instead.
+HN_DECL = "Erdos508.HadwigerNelsonProblem"
+HN_VALUES = (5, 6, 7)
+HN_SAMPLE_IDS = tuple(f"{HN_DECL}.eq{v}" for v in HN_VALUES)
+
+# The target command's exact source text at the pin. Anchoring on the full
+# span keeps the derivation honest: if the pinned file drifts, generation and
+# the tests fail loudly here instead of silently deriving from something else.
+_HN_TARGET_COMMAND = """/--
+The Hadwiger–Nelson problem asks: How many colors are required to color the plane
+such that no two points at distance 1 from each other have the same color?
+-/
+@[category research open, AMS 52]
+theorem HadwigerNelsonProblem :
+    χ(ℝ²) = answer(sorry) := by
+  sorry
+"""
+
+_HN_ANSWER_SORRY_RE = re.compile(r"answer\(\s*sorry\s*\)")
+
+
+def derive_hadwiger_nelson_specs() -> dict[str, str]:
+    """The three derived Hadwiger–Nelson isolated specs, ``{sample id: text}``."""
+    src = (SOURCES_DIR / "508.lean").read_text()
+    idx = src.index(_HN_TARGET_COMMAND)
+    preamble = src[:idx]
+    # The target is the file's first theorem, so the preamble is exactly the
+    # header/module doc/opens/notation and everything after the target (the
+    # solved/textbook siblings) is dropped whole.
+    assert "theorem" not in preamble and "@[category" not in preamble
+    base, n_attrs = strip_category_attrs(preamble + _HN_TARGET_COMMAND)
+    assert n_attrs == 1
+    base = strip_private(tidy(base.encode()).decode())
+    specs: dict[str, str] = {}
+    for value, sample_id in zip(HN_VALUES, HN_SAMPLE_IDS):
+        text, n = _HN_ANSWER_SORRY_RE.subn(str(value), base)
+        assert n == 1, f"{sample_id}: {n} answer(sorry) substitutions"
+        old_header = "theorem HadwigerNelsonProblem :"
+        new_header = f"theorem HadwigerNelsonProblem.eq{value} :"
+        assert text.count(old_header) == 1, sample_id
+        text = text.replace(old_header, new_header)
+        specs[sample_id], _ = append_disproof(text, sample_id, sample_id)
+    return specs
+
+
+def hn_manifest_rows() -> list[dict]:
+    """Manifest rows for the three derived Hadwiger–Nelson samples."""
+    return [
+        {
+            "id": sample_id,
+            "source": "Sources/508.lean",
+            "erdos_number": 508,
+            "category_at_pin": "research open",
+            "answer_form": None,
+        }
+        for sample_id in HN_SAMPLE_IDS
+    ]
 
 
 def strip_fc_annotations(text: str) -> tuple[str, dict[str, int]]:

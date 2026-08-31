@@ -29,3 +29,5 @@ def a : ℕ → ℕ
 /-- A212844 Conjecture: every integer k >= 0 appears in a(n) at least once. -/
 theorem oeis_212844_conjecture_0 : Surjective a := by
   sorry
+
+theorem oeis_212844_conjecture_0.disproof : ¬ (type_of% @oeis_212844_conjecture_0) := sorry

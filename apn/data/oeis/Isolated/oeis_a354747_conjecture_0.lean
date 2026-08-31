@@ -31,3 +31,5 @@ noncomputable def a354747 (n : ℕ) : ℕ :=
 /-- The smallest unknown case is n = 100943. Is a(100943) = 0? -/
 theorem oeis_a354747_conjecture_0 : a354747 100943 = 0 := by
   sorry
+
+theorem oeis_a354747_conjecture_0.disproof : ¬ (type_of% @oeis_a354747_conjecture_0) := sorry

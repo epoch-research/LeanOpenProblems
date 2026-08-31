@@ -47,3 +47,5 @@ is conjectured to be $207/208$.
 -/
 theorem oeis_379732_conjecture_0 : max_packing_density_truncated_tetrahedra = (207 : Real) / 208 :=
 by sorry
+
+theorem oeis_379732_conjecture_0.disproof : ¬ (type_of% @oeis_379732_conjecture_0) := sorry

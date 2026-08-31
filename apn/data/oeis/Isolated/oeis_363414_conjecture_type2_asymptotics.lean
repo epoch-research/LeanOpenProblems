@@ -47,3 +47,5 @@ This is formalized using asymptotic equivalence (`~[atTop]`) for the p-adic valu
 theorem oeis_363414_conjecture_type2_asymptotics :
   ∀ p : ℕ, Nat.Prime p → p ∈ type_two_primes_conjectured →
   (fun n ↦ (padicValInt p (a n) : ℝ)) ~[atTop] (fun n ↦ (n : ℝ) / ((p : ℝ) - 1)) := by sorry
+
+theorem oeis_363414_conjecture_type2_asymptotics.disproof : ¬ (type_of% @oeis_363414_conjecture_type2_asymptotics) := sorry

@@ -58,3 +58,5 @@ Also, $a(n)$ is odd if and only if $n = 2^m$ for some $m \in \mathbb{Z}_{>0}$.
 theorem oeis_a176477_conjecture (n : ℕ) (hn : n ≥ 1) :
   a n > 0 ∧ (Odd (a n) ↔ ∃ m : ℕ, m ≥ 1 ∧ n = 2^m) := by
   sorry
+
+theorem oeis_a176477_conjecture.disproof : ¬ (type_of% @oeis_a176477_conjecture) := sorry

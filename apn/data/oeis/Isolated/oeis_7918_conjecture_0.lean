@@ -46,3 +46,5 @@ the corresponding common differences are given by A061558.
 theorem oeis_7918_conjecture_0 (n : ℕ) (hn : n > 0) :
     a n = sInf { p0 : ℕ | ∃ d : ℕ, is_ap_of_n_primes n p0 d } := by
   sorry
+
+theorem oeis_7918_conjecture_0.disproof : ¬ (type_of% @oeis_7918_conjecture_0) := sorry

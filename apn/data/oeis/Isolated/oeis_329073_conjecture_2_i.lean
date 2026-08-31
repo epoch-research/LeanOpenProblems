@@ -101,3 +101,5 @@ theorem oeis_329073_conjecture_2_i :
   -- Moreover b(n) is odd if and only if n is a power of two.
   (A329073_b n % 2 = 1 ↔ Nat.isPowerOfTwo n)
   := by sorry
+
+theorem oeis_329073_conjecture_2_i.disproof : ¬ (type_of% @oeis_329073_conjecture_2_i) := sorry

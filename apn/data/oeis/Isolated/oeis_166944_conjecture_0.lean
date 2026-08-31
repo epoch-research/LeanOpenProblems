@@ -54,3 +54,5 @@ Conjecture: Every record of differences $a(n)-a(n-1)$ more than 5 is the greater
 theorem oeis_166944_conjecture_0 :
   ∀ R : ℕ, 5 < R → is_difference_record R → is_greater_twin_prime R :=
 by sorry
+
+theorem oeis_166944_conjecture_0.disproof : ¬ (type_of% @oeis_166944_conjecture_0) := sorry

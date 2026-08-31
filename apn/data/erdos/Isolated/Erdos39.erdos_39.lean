@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 39
@@ -39,3 +39,5 @@ theorem erdos_39 : ∃ (A : Set ℕ), A.Infinite ∧ IsSidon A ∧
 -- TODO(firsching): add the various known bounds as variants.
 
 end Erdos39
+
+theorem Erdos39.erdos_39.disproof : ¬ (type_of% @Erdos39.erdos_39) := sorry

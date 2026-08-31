@@ -79,3 +79,5 @@ The claim is that the set of values $\{a(n) \mid n \in \mathbb{N}\}$ equals $\ma
 theorem oeis_319303_conjecture_0 :
   collatz_conjecture → ∀ m : ℕ, m > 0 → ∃ n : ℕ, a n = m :=
 by sorry
+
+theorem oeis_319303_conjecture_0.disproof : ¬ (type_of% @oeis_319303_conjecture_0) := sorry

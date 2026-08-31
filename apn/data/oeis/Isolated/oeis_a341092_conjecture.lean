@@ -65,3 +65,5 @@ Conjecture 2: No row of Pascal's triangle contains an arithmetic progression of 
 theorem oeis_a341092_conjecture :
   (∀ n : ℕ, n > 0 → (RowHas3TermAP n ↔ n = 19 ∨ IsA341092Row n))
   ∧ (∀ n : ℕ, ¬ RowHas4TermAP n) := by sorry
+
+theorem oeis_a341092_conjecture.disproof : ¬ (type_of% @oeis_a341092_conjecture) := sorry

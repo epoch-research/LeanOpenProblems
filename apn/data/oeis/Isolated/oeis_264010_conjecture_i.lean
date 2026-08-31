@@ -39,3 +39,5 @@ Conjecture (i): a(n) > 0 for all n > 2, and a(n) = 1 only for n = 3, 4, 5, 6, 10
 theorem oeis_264010_conjecture_i (n : ℕ) (H_n : n > 2) :
   A264010 n > 0 ∧ (A264010 n = 1 ↔ n ∈ ({3, 4, 5, 6, 10, 11, 15, 20, 29, 1125} : Finset ℕ)) :=
 by sorry
+
+theorem oeis_264010_conjecture_i.disproof : ¬ (type_of% @oeis_264010_conjecture_i) := sorry

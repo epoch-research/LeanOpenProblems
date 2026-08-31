@@ -51,3 +51,5 @@ theorem conjecture_4_1 (k : ℕ) (hprim : k.Prime) (hodd : Odd k) (hgt : k > 5) 
   sorry
 
 end Arxiv.«2501.03234»
+
+theorem Arxiv.«2501.03234».conjecture_4_1.disproof : ¬ (type_of% @Arxiv.«2501.03234».conjecture_4_1) := sorry

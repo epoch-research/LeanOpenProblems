@@ -41,3 +41,5 @@ The formal statement is that the set of indices $n$ for which $a(n)=0$ is finite
 -/
 theorem oeis_266952_conjecture_0 : Set.Finite {n : ℕ | a n = 0} := by
   sorry
+
+theorem oeis_266952_conjecture_0.disproof : ¬ (type_of% @oeis_266952_conjecture_0) := sorry

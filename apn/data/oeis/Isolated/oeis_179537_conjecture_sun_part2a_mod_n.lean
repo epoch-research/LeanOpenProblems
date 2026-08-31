@@ -46,3 +46,5 @@ for all $n \ge 1$.
 -/
 theorem oeis_179537_conjecture_sun_part2a_mod_n :
   ∀ n : ℕ, n ≥ 1 → A179537_sum_weighted n ≡ 0 [ZMOD n] := by sorry
+
+theorem oeis_179537_conjecture_sun_part2a_mod_n.disproof : ¬ (type_of% @oeis_179537_conjecture_sun_part2a_mod_n) := sorry

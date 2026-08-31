@@ -31,3 +31,5 @@ noncomputable def A248123 (n : ℕ) : ℕ :=
 
 /-- A248123 Conjecture: a(n) exists for all n > 0. -/
 theorem oeis_248123_conjecture_0 (n : ℕ) (hn : n > 0) : A248123 n > 0 := by sorry
+
+theorem oeis_248123_conjecture_0.disproof : ¬ (type_of% @oeis_248123_conjecture_0) := sorry

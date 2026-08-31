@@ -43,3 +43,5 @@ and all primes $p \ge 5$. We conjecture that the present sequence $a(n)$ satisfi
 theorem oeis_361883_conjecture_0 {p n r : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (hn : 0 < n) (hr : 0 < r) :
     a (n * p ^ r) ≡ a (n * p ^ (r - 1)) [MOD p ^ (3 * r)] := by
   sorry
+
+theorem oeis_361883_conjecture_0.disproof : ¬ (type_of% @oeis_361883_conjecture_0) := sorry

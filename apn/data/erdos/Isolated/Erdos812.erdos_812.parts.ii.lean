@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 812
@@ -44,3 +44,5 @@ theorem erdos_812.parts.ii :
 --  TODO: Add Erdos Problem 165 implication when Erdos Problem 165 is formalized.
 
 end Erdos812
+
+theorem Erdos812.erdos_812.parts.ii.disproof : ¬ (type_of% @Erdos812.erdos_812.parts.ii) := sorry

@@ -43,3 +43,5 @@ This means that every natural number $n$ can be written as an ordered sum of a t
 -/
 theorem oeis_240088_conjecture : ∀ (n : ℕ), A240088 n > 0 := by
   sorry
+
+theorem oeis_240088_conjecture.disproof : ¬ (type_of% @oeis_240088_conjecture) := sorry

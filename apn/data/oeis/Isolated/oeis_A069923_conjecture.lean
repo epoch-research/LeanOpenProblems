@@ -41,3 +41,5 @@ Equivalently, $a(n) \ge 1$ for all $n \ge 1$.
 theorem oeis_A069923_conjecture (n : ℕ) (hn : 0 < n) :
   1 ≤ a n :=
 by sorry
+
+theorem oeis_A069923_conjecture.disproof : ¬ (type_of% @oeis_A069923_conjecture) := sorry

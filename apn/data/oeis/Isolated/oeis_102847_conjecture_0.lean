@@ -32,3 +32,5 @@ Formalization: Does there exist a prime term after a(4)?
 -/
 theorem oeis_102847_conjecture_0 : ∃ n : ℕ, 4 < n ∧ Nat.Prime (a n) := by
   sorry
+
+theorem oeis_102847_conjecture_0.disproof : ¬ (type_of% @oeis_102847_conjecture_0) := sorry

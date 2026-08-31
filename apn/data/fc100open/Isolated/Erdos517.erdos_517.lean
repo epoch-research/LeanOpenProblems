@@ -37,3 +37,5 @@ theorem erdos_517 : ∀ {f : ℂ → ℂ} {n : ℕ → ℕ} (hn : HasFabryGaps n
   sorry
 
 end Erdos517
+
+theorem Erdos517.erdos_517.disproof : ¬ (type_of% @Erdos517.erdos_517) := sorry

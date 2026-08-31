@@ -47,3 +47,5 @@ Conjecture: $a(n) > 0$ for all $n > 1$.
 -/
 theorem oeis_237413_conjecture_0 (n : ℕ) : 1 < n → A237413 n > 0 := by
   sorry
+
+theorem oeis_237413_conjecture_0.disproof : ¬ (type_of% @oeis_237413_conjecture_0) := sorry

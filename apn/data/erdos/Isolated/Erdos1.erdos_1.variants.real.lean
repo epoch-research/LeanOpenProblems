@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 1
@@ -56,3 +56,5 @@ theorem erdos_1.variants.real : ∃ C > (0 : ℝ), ∀ (N : ℕ) (A : Finset ℝ
   sorry
 
 end Erdos1
+
+theorem Erdos1.erdos_1.variants.real.disproof : ¬ (type_of% @Erdos1.erdos_1.variants.real) := sorry

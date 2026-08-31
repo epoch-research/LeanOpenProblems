@@ -107,3 +107,5 @@ theorem oeis_A336982_conjecture_3 (p : ℕ) [hp : Fact p.Prime] (h_prime_gt_7 : 
     ∃ x y : ℤ, (p : ℤ) = 5 * x ^ 2 + 6 * y ^ 2 ∧
     S ≡ lg (-1 : ℤ) * (20 * x ^ 2 - 2 * p.cast) [ZMOD (p ^ 2 : ℤ)]
   ) := by sorry
+
+theorem oeis_A336982_conjecture_3.disproof : ¬ (type_of% @oeis_A336982_conjecture_3) := sorry

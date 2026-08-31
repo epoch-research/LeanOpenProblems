@@ -50,3 +50,5 @@ A160324: On Sep 04 2009, _Zhi-Wei Sun_ conjectured that the sequence contains ev
 -/
 theorem oeis_a160324_conjecture_3 : ∀ k : ℕ, 0 < k → ∃ n : ℕ, a n = k :=
   by sorry
+
+theorem oeis_a160324_conjecture_3.disproof : ¬ (type_of% @oeis_a160324_conjecture_3) := sorry

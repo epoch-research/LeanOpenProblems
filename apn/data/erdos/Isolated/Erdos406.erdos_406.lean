@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 406
@@ -32,3 +32,5 @@ theorem erdos_406 : { n | n.isPowerOfTwo ∧ Nat.digits 3 n ⊆ [0, 1] }.Finite 
   sorry
 
 end Erdos406
+
+theorem Erdos406.erdos_406.disproof : ¬ (type_of% @Erdos406.erdos_406) := sorry

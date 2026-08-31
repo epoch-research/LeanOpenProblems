@@ -59,3 +59,5 @@ Formalized as $a(n) = O(\sqrt{n})$ as $n \to \infty$.
 -/
 theorem oeis_316774_conjecture_4 : (fun n : ℕ => (a n : ℝ)) =O[atTop] fun n : ℕ => Real.sqrt (n : ℝ) := by
   sorry
+
+theorem oeis_316774_conjecture_4.disproof : ¬ (type_of% @oeis_316774_conjecture_4) := sorry

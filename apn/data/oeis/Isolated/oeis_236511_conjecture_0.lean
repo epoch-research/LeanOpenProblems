@@ -30,3 +30,5 @@ def a (n : ℕ) : ℕ :=
 
 /-- Conjecture: a(n) > 0 for all n > 1075. -/
 theorem oeis_236511_conjecture_0 : ∀ n : ℕ, n > 1075 → a n > 0 := by sorry
+
+theorem oeis_236511_conjecture_0.disproof : ¬ (type_of% @oeis_236511_conjecture_0) := sorry

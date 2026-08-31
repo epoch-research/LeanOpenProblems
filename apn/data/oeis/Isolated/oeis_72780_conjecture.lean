@@ -41,3 +41,5 @@ theorem oeis_72780_conjecture (n : ℕ) :
   (a n = 0 ↔ n = 1 ∨ n.Prime) ∧
   (a n = 2 ↔ ∃ p q, p.Prime ∧ q.Prime ∧ p ≠ q ∧ n = p * q) :=
 by sorry
+
+theorem oeis_72780_conjecture.disproof : ¬ (type_of% @oeis_72780_conjecture) := sorry

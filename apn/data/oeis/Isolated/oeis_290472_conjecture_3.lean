@@ -50,3 +50,5 @@ In support of the first conjecture, a(n) > 1 for $286 < n \le 10^7$.
 theorem oeis_290472_conjecture_3 :
   ∀ n : ℕ, 286 < n ∧ n ≤ 10000000 → a n > 1 :=
 by sorry
+
+theorem oeis_290472_conjecture_3.disproof : ¬ (type_of% @oeis_290472_conjecture_3) := sorry

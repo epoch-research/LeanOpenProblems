@@ -57,3 +57,5 @@ theorem oeis_A271644_conjecture_i :
     (A271644 n = 1 ↔
       n = 3 ∨ n = 7 ∨ n = 15 ∨ n = 47 ∨ n = 71 ∨ n = 379 ∨ (∃ (k : ℕ), n = 4^k))) :=
 by sorry
+
+theorem oeis_A271644_conjecture_i.disproof : ¬ (type_of% @oeis_A271644_conjecture_i) := sorry

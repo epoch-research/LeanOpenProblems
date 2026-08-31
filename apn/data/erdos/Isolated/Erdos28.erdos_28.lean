@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 28
@@ -38,3 +38,5 @@ theorem erdos_28 (A : Set ℕ) (h : (A + A)ᶜ.Finite) :
 -- TODO(firsching): add the theorems/conjectures for the comments on the page
 
 end Erdos28
+
+theorem Erdos28.erdos_28.disproof : ¬ (type_of% @Erdos28.erdos_28) := sorry

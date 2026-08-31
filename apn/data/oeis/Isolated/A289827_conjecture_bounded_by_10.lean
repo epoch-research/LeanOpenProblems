@@ -36,3 +36,5 @@ pi(y) arbitrarily large. Since pi(2x) < 2*pi(x), by increasing y in a y,x exampl
 come on a new pair y' < x with pi(x+y') = pi(x) + pi(y')."
 -/
 theorem A289827_conjecture_bounded_by_10 : ∀ (n : ℕ), A289827 n ≤ 10 := by sorry
+
+theorem A289827_conjecture_bounded_by_10.disproof : ¬ (type_of% @A289827_conjecture_bounded_by_10) := sorry

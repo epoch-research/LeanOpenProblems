@@ -37,3 +37,5 @@ theorem noPowerPartitionNumber : ∀ k, ¬IsPerfectPower (p k) := by
   sorry
 
 end OeisA41
+
+theorem OeisA41.noPowerPartitionNumber.disproof : ¬ (type_of% @OeisA41.noPowerPartitionNumber) := sorry

@@ -42,3 +42,5 @@ Conjecture: for r >= 2, and all primes p >= 5, a(p^r) == a(p^(r-1)) (mod p^(3*r+
 theorem oeis_212334_conjecture_0 (p r : ℕ) (hp : Nat.Prime p) (h_ge5 : 5 ≤ p) (h_ge2 : 2 ≤ r) :
     A212334 (p ^ r) % (p ^ (3 * r + 3)) = A212334 (p ^ (r - 1)) % (p ^ (3 * r + 3)) :=
   by sorry
+
+theorem oeis_212334_conjecture_0.disproof : ¬ (type_of% @oeis_212334_conjecture_0) := sorry

@@ -60,3 +60,5 @@ by
     have h_prop := an_prop n h_n
 
     exact ⟨h_prop.1, ⟨h_prop.2.1, h_an_lt n h_n⟩⟩
+
+theorem oeis_7491_conjecture_1.disproof : ¬ (type_of% @oeis_7491_conjecture_1) := sorry

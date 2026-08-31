@@ -46,3 +46,5 @@ This is equivalent to stating that the sequence is injective on positive indices
 theorem oeis_223086_conjecture_0 :
   ∀ (i j : ℕ), 0 < i → 0 < j → a i = a j → i = j := by
   sorry
+
+theorem oeis_223086_conjecture_0.disproof : ¬ (type_of% @oeis_223086_conjecture_0) := sorry

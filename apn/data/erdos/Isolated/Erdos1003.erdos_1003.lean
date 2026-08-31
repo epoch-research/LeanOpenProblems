@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 1003
@@ -35,3 +35,5 @@ theorem erdos_1003 : Set.Infinite {n | φ n = φ (n + 1)} := by
   sorry
 
 end Erdos1003
+
+theorem Erdos1003.erdos_1003.disproof : ¬ (type_of% @Erdos1003.erdos_1003) := sorry

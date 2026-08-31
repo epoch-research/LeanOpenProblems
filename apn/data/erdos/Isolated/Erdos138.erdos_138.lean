@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 138
@@ -61,3 +61,7 @@ $$ \lim_{k \to \infty} (W(k))^{1/k} = \infty $$
 -/
 theorem erdos_138 : atTop.Tendsto (fun k => (W k : ℝ)^(1/(k : ℝ))) atTop := by
   sorry
+
+end Erdos138
+
+theorem Erdos138.erdos_138.disproof : ¬ (type_of% @Erdos138.erdos_138) := sorry

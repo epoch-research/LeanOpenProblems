@@ -38,3 +38,5 @@ theorem oeis_181830_conjecture_0 (n : ℕ) : a n = cardboard_braids_count n := b
   sorry
 
 end
+
+theorem oeis_181830_conjecture_0.disproof : ¬ (type_of% @oeis_181830_conjecture_0) := sorry

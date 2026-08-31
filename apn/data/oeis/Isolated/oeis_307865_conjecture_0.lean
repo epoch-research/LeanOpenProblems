@@ -44,3 +44,5 @@ For a meaningful statement, one usually considers $n>3$.
 -/
 theorem oeis_307865_conjecture_0 (h : IsAbsoluteEulerPseudoprime (2 * n + 1)) : a n = 0 := by
   sorry
+
+theorem oeis_307865_conjecture_0.disproof : ¬ (type_of% @oeis_307865_conjecture_0) := sorry

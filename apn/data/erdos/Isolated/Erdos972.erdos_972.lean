@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -/
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 972
@@ -38,3 +38,5 @@ theorem erdos_972 : ∀ α > 1, Irrational α → (primeSet α).Infinite := by
   sorry
 
 end Erdos972
+
+theorem Erdos972.erdos_972.disproof : ¬ (type_of% @Erdos972.erdos_972) := sorry

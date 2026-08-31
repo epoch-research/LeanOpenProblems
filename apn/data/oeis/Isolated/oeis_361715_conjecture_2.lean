@@ -27,3 +27,5 @@ def a (n : ℕ) : ℕ :=
 /-- Conjecture 2: for r >= 2, the supercongruence a(p^r) == a(p^(r-1)) (mod p^(3*r+3)) holds for all primes p >= 5. -/
 theorem oeis_361715_conjecture_2 (p r : ℕ) (hp : Nat.Prime p) (hp5 : 5 ≤ p) (hr : 2 ≤ r) :
   (a (p ^ r) : ℤ) ≡ a (p ^ (r - 1)) [ZMOD (p ^ (3 * r + 3) : ℕ)] := by sorry
+
+theorem oeis_361715_conjecture_2.disproof : ¬ (type_of% @oeis_361715_conjecture_2) := sorry

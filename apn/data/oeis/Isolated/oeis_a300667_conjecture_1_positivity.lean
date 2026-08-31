@@ -51,3 +51,5 @@ A300667 a(n) > 0 for all n = 0..10^8. Also, Conjecture 2 holds for all n = 0..10
 -/
 theorem oeis_a300667_conjecture_1_positivity (n : ℕ) : a n > 0 := by
   sorry
+
+theorem oeis_a300667_conjecture_1_positivity.disproof : ¬ (type_of% @oeis_a300667_conjecture_1_positivity) := sorry

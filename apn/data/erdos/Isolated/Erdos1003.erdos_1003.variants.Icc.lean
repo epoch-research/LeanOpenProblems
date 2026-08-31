@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 1003
@@ -38,3 +38,5 @@ theorem erdos_1003.variants.Icc :
   sorry
 
 end Erdos1003
+
+theorem Erdos1003.erdos_1003.variants.Icc.disproof : ¬ (type_of% @Erdos1003.erdos_1003.variants.Icc) := sorry

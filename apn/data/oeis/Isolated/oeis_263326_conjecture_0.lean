@@ -40,3 +40,5 @@ theorem oeis_263326_conjecture_0 (k s : ℕ) (hk : k > 0) (hs : s > 0) :
   (∀ n₁ n₂ : ℕ, n₁ > 0 → n₂ > 0 → n₁ ≠ n₂ →
     Int.fract (S n₁ k s) ≠ Int.fract (S n₂ k s)) :=
 by sorry
+
+theorem oeis_263326_conjecture_0.disproof : ¬ (type_of% @oeis_263326_conjecture_0) := sorry

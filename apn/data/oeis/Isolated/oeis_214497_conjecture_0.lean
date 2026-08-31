@@ -34,3 +34,5 @@ $(3^n-k)2^n-1$ and $(3^n-k)2^n+1$ are a twin prime pair.
 theorem oeis_214497_conjecture_0 (n : ℕ) (hn : n > 0) :
     ∃ k : ℕ, Nat.Prime ((3 ^ n - k) * (2 ^ n) - 1) ∧ Nat.Prime ((3 ^ n - k) * (2 ^ n) + 1) := by
   sorry
+
+theorem oeis_214497_conjecture_0.disproof : ¬ (type_of% @oeis_214497_conjecture_0) := sorry

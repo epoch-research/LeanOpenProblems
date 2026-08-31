@@ -36,3 +36,5 @@ theorem oeis_247824_conjecture_0 :
   ∧
   (∀ n : ℕ, 2 < n → a n < n * (n - 1)) :=
 by sorry
+
+theorem oeis_247824_conjecture_0.disproof : ¬ (type_of% @oeis_247824_conjecture_0) := sorry

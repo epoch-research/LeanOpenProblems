@@ -39,3 +39,5 @@ It is conjectured that a(n) is an integer for all n.
 -/
 theorem oeis_296056_conjecture_0 (n : ℕ) : A296056 n ∈ Set.range (Int.cast : ℤ → ℚ) :=
   by sorry
+
+theorem oeis_296056_conjecture_0.disproof : ¬ (type_of% @oeis_296056_conjecture_0) := sorry

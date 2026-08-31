@@ -35,3 +35,5 @@ theorem oeis_38098_conjecture_0 :
   ∀ n : ℕ, 2 ≤ n →
   (Nat.primeCounting (n ^ k) : ℚ) / (n ^ k : ℚ) > (Nat.primeCounting ((n + 1) ^ k) : ℚ) / ((n + 1) ^ k : ℚ) :=
 by sorry
+
+theorem oeis_38098_conjecture_0.disproof : ¬ (type_of% @oeis_38098_conjecture_0) := sorry

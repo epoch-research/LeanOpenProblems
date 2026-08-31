@@ -44,3 +44,5 @@ Can it be proved that the number of L-digit terms (cf. A355276) tends to infinit
 theorem oeis_347475_conjecture_0 :
   Tendsto A355276 atTop atTop :=
 by sorry
+
+theorem oeis_347475_conjecture_0.disproof : ¬ (type_of% @oeis_347475_conjecture_0) := sorry

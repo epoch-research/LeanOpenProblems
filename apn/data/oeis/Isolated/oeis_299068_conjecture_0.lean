@@ -32,3 +32,5 @@ Dickson's conjecture implies there are infinitely many such k, and thus infinite
 -/
 theorem oeis_299068_conjecture_0 : Set.Infinite {n : ℕ | A299068 n = 7} :=
 by sorry
+
+theorem oeis_299068_conjecture_0.disproof : ¬ (type_of% @oeis_299068_conjecture_0) := sorry

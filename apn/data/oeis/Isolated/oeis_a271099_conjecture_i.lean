@@ -50,3 +50,5 @@ theorem oeis_a271099_conjecture_i :
   (∀ n : ℕ, A271099 n > 0) ∧
   (∀ n : ℕ, A271099 n = 1 ↔ n ∈ A271099_lone_count_set) :=
 by sorry
+
+theorem oeis_a271099_conjecture_i.disproof : ¬ (type_of% @oeis_a271099_conjecture_i) := sorry

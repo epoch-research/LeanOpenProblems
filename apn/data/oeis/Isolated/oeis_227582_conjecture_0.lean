@@ -52,3 +52,5 @@ theorem oeis_227582_conjecture_0 (n : ℕ) (hn : 0 < n) :
             (↑(harmonic (n * n + n - 1)) : ℝ) -
             Real.eulerMascheroniConstant))).toNat := by
   sorry
+
+theorem oeis_227582_conjecture_0.disproof : ¬ (type_of% @oeis_227582_conjecture_0) := sorry

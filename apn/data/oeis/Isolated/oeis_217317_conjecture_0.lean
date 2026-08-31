@@ -39,3 +39,5 @@ Conjecture: $A217317(n) > 0$ for $n > 4765516$.
 -/
 theorem oeis_217317_conjecture_0 : ∀ (n : ℕ), n > 4765516 → A217317 n > 0 :=
   by sorry
+
+theorem oeis_217317_conjecture_0.disproof : ¬ (type_of% @oeis_217317_conjecture_0) := sorry

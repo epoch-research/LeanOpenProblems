@@ -29,3 +29,5 @@ def a (n : ℕ) : ℕ :=
 theorem oeis_93818_conjecture_0 :
   ∀ (p : ℕ), Nat.Prime p → p ≠ 2 → ∃ (n : ℕ), 0 < n ∧ a n = p :=
 by sorry
+
+theorem oeis_93818_conjecture_0.disproof : ¬ (type_of% @oeis_93818_conjecture_0) := sorry

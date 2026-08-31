@@ -12,13 +12,16 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 SUNPRIZES_DIR = Path(__file__).parent / "data" / "sunprizes"
+ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
     """The dataset's pinned formal-conjectures commit (``fc_commit``).
 
     The pin is what the dataset's sandbox images bake (compose build arg,
-    image tag component) and what its vendored ``Sources/`` were extracted at.
+    image tag component). For FC-vendored datasets it is also the commit their
+    ``Sources/`` were extracted at; non-FC sources use it only as the proving
+    environment pin.
     """
     commit = (Path(dataset_dir) / "fc_commit").read_text().strip()
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
@@ -26,6 +29,55 @@ def fc_commit(dataset_dir: str | Path) -> str:
             f"{Path(dataset_dir).name}: fc_commit must hold a 40-hex commit, got {commit!r}"
         )
     return commit
+
+
+@dataclass(frozen=True)
+class FCProfile:
+    """Layout facts about one supported formal-conjectures commit.
+
+    The upstream repo renamed its proving-library entry point (the lake lib
+    ``FormalConjectures.Util`` became ``FormalConjecturesUtil``), and pins on
+    both sides of the rename are live simultaneously, so everything generic
+    (extractor invocation, prompts) is parameterized by the pin's profile.
+    """
+
+    util_module: str
+    """The import that pulls Mathlib + the FC utilities into a problem file's
+    scope (what every vendored source file ``import``\\ s)."""
+
+
+_FC_PROFILES = {
+    # Pre-rename layout: FormalConjectures/Util/*.
+    "67338a157bbb8d87e9a349d662f82a868bda6327": FCProfile(
+        util_module="FormalConjectures.Util.ProblemImports"
+    ),
+    # Post-rename layout: FormalConjecturesUtil.lean + FormalConjecturesUtil/*.
+    "488aade228ec37880b8fec178c173c07d279bb53": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+    "9cbe1d3c12998c786b7c2cd99ce28a21b6631f66": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+}
+
+
+def fc_profile(commit: str) -> FCProfile:
+    """The :class:`FCProfile` for a pinned FC commit.
+
+    An explicit registry, not layout sniffing: Python has no FC checkout at
+    runtime, and an unknown pin must fail loudly at task-construction time so
+    every pin move forces a conscious registry update (the Dockerfile detects
+    the layout from the checkout itself; the isolation test suites run this
+    registry's ``util_module`` against the built image, catching drift).
+    """
+    try:
+        return _FC_PROFILES[commit]
+    except KeyError:
+        raise KeyError(
+            f"No FC profile registered for commit {commit!r}; moving a dataset's "
+            f"fc_commit pin requires adding its layout facts to "
+            f"apn.dataset._FC_PROFILES (known pins: {sorted(_FC_PROFILES)})"
+        ) from None
 
 
 @dataclass(frozen=True)
@@ -52,6 +104,20 @@ class SampleRow:
     @property
     def statement_path(self) -> str:
         return self.statement or f"Isolated/{self.id}.lean"
+
+    @property
+    def decl_name(self) -> str:
+        """The target theorem's fully qualified declaration name.
+
+        Equal to the sample id by convention; the manifest's ``decl_name``
+        field overrides it for the few members whose id is a shorthand (some
+        OEIS targets live inside a ``namespace``, so their environment name
+        carries a prefix the id does not). The checker configures Comparator
+        with this exact name.
+        """
+        name = self.extra.get("decl_name", self.id)
+        assert isinstance(name, str)
+        return name
 
 
 def load_manifest(dataset_dir: str | Path) -> list[SampleRow]:
@@ -129,7 +195,9 @@ def write_subset(path: str | Path, description: str, ids: list[str]) -> Path:
     path = Path(path)
     path.parent.mkdir(exist_ok=True)
     path.write_text(
-        json.dumps({"description": description, "ids": ids}, indent=2, ensure_ascii=False)
+        json.dumps(
+            {"description": description, "ids": ids}, indent=2, ensure_ascii=False
+        )
         + "\n"
     )
     return path
@@ -173,10 +241,12 @@ def build_dataset(
     """A dataset's non-excluded manifest rows as Samples.
 
     Each sample's input is its isolated spec (``Isolated/<id>.lean``, license
-    header stripped). ``Sample.metadata`` gets ``sketch``, ``source``, and the
-    whitelisted ``metadata_keys`` only -- other manifest fields (notably
-    ``category_at_pin``/``answer_form``, the recorded verdict in
-    machine-readable form) exist for tooling and must not reach the agent.
+    header stripped). ``Sample.metadata`` gets ``sketch``, ``source``,
+    ``decl_name`` (the target theorem's fully qualified name, which the scorer
+    hands to the checker), and the whitelisted ``metadata_keys`` only -- other
+    manifest fields (notably ``category_at_pin``/``answer_form``, the recorded
+    verdict in machine-readable form) exist for tooling and must not reach the
+    agent.
 
     Args:
         dataset_dir: The dataset's directory under ``apn/data/``.
@@ -195,7 +265,11 @@ def build_dataset(
     samples: list[Sample] = []
     for row in rows:
         text = strip_license_header((dataset_dir / row.statement_path).read_text())
-        metadata: dict[str, Any] = {"sketch": text, "source": row.source}
+        metadata: dict[str, Any] = {
+            "sketch": text,
+            "source": row.source,
+            "decl_name": row.decl_name,
+        }
         for key in metadata_keys:
             if key in row.extra:
                 metadata[key] = row.extra[key]
@@ -208,9 +282,11 @@ def oeis_dataset(names: list[str] | None = None) -> MemoryDataset:
 
     One sample per manifest row (one conjecture; 492). The sketch is the
     conjecture's *isolated* spec: the sequence definitions plus the single
-    target theorem (all sibling conjectures and test lemmas removed).
-    ``oeis_id`` and (for the 3 multi-formalization conjectures)
-    ``other_sources`` ride along in metadata.
+    target theorem (all sibling conjectures and test lemmas removed), followed
+    by the mechanically derived ``<target>.disproof`` declaration stating its
+    negation (the two theorems the agent may settle; see
+    comparator-migration-plan.md §4). ``oeis_id`` and (for the 3
+    multi-formalization conjectures) ``other_sources`` ride along in metadata.
     """
     return build_dataset(OEIS_DIR, "oeis", ("oeis_id", "other_sources"), names)
 
@@ -224,7 +300,8 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     single target theorem, siblings/test lemmas/``example`` commands removed,
     propositional ``answer(sorry) ↔ P`` statements rewritten to plain ``P``
     (certified by ``tests/test_fc100_isolation.py``), and FC's
-    ``@[category ...]`` classification lists dropped. The 14 value-typed
+    ``@[category ...]`` classification lists dropped -- followed by the
+    derived ``<target>.disproof`` declaration. The 14 value-typed
     ``answer(sorry)`` members of the paper's 100 are excluded manifest rows.
     """
     return build_dataset(FC100_DIR, "fc100open", (), names)
@@ -247,18 +324,20 @@ def sunprizes_dataset(names: list[str] | None = None) -> MemoryDataset:
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The Tsoukalas paper's canonical Erdős attempted set (arXiv 2605.22763)
-    as Samples.
+    """The Erdős universe (the Bloom statement selection's 48 files) as Samples.
 
-    One sample per manifest row (350; the paper's attempted statements
-    resolvable at the pinned FC commit); the sample id is the target's fully
-    qualified declaration name (e.g. ``Erdos200.erdos_200``). The sketch is
-    the target's *isolated* spec -- the source file's definitions plus the
-    single target theorem, siblings/test lemmas/``example`` commands removed,
-    and all four ``answer(...) ↔`` statement forms rewritten to plain ``P``
-    (recorded ``True``/``False`` verdicts un-filled and FC's recorded-verdict
-    annotations stripped -- the answer key must not leak; certified by
-    ``tests/test_erdos_isolation.py``). The ``tsoukalas_attempted`` subset
-    names the same 350 ids -- the canonical replication invocation.
+    Each sketch is the target's isolated spec followed by the derived
+    ``<target>.disproof`` declaration. Problem 508's value-typed member is an
+    excluded row with three derived prove-or-disprove samples in its place --
+    see the Hadwiger–Nelson special case in ``scripts/erdos_isolation.py``.
     """
     return build_dataset(ERDOS_DIR, "erdos", (), names)
+
+
+def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The Erdős problems our own autoformalization pipeline formalized
+    (18 problems absent from formal-conjectures at the run's pin; two two-part
+    files, so 20 samples). Each sketch ends with the derived
+    ``<target>.disproof`` declaration. See
+    ``apn/data/erdos_autoformalized/NOTICE.md``."""
+    return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)

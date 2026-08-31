@@ -28,3 +28,5 @@ In this case, that would be stronger than the Schinzel conjecture: "for m > 1 th
 -/
 theorem oeis_69922_conjecture_0 : ∀ (n : ℕ), n > 0 → A069922 n > 0 :=
 by sorry
+
+theorem oeis_69922_conjecture_0.disproof : ¬ (type_of% @oeis_69922_conjecture_0) := sorry

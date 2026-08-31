@@ -60,3 +60,5 @@ with $w,x,y,z$ nonnegative integers.
 -/
 theorem oeis_308584_conjecture_1 : ∀ (n : ℕ), n > 0 → A308584 n > 0 :=
 by sorry
+
+theorem oeis_308584_conjecture_1.disproof : ¬ (type_of% @oeis_308584_conjecture_1) := sorry

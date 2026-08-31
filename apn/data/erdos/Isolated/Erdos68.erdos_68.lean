@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 68
@@ -34,3 +34,5 @@ theorem erdos_68 :
   sorry
 
 end Erdos68
+
+theorem Erdos68.erdos_68.disproof : ¬ (type_of% @Erdos68.erdos_68) := sorry

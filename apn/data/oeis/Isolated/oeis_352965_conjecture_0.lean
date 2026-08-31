@@ -48,3 +48,5 @@ noncomputable def A352965 : ℕ → ℕ
 
 /-- A352965 Will every prime number appear in the sequence? -/
 theorem oeis_352965_conjecture_0 : ∀ (p : ℕ), Nat.Prime p → ∃ (n : ℕ), A352965 n = p := by sorry
+
+theorem oeis_352965_conjecture_0.disproof : ¬ (type_of% @oeis_352965_conjecture_0) := sorry

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 7
@@ -35,3 +35,5 @@ theorem erdos_7 :
   sorry
 
 end Erdos7
+
+theorem Erdos7.erdos_7.disproof : ¬ (type_of% @Erdos7.erdos_7) := sorry

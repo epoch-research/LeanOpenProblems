@@ -86,3 +86,5 @@ See also A271510 and A271518 for related conjectures.
 -/
 theorem oeis_271513_conjecture_3 : True :=
 by sorry
+
+theorem oeis_271513_conjecture_3.disproof : ¬ (type_of% @oeis_271513_conjecture_3) := sorry

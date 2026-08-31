@@ -43,3 +43,5 @@ theorem oeis_238281_conjecture_0 (n : ℕ) :
       (Nat.primeCounting (k * n) - Nat.primeCounting ((k - 1) * n)) =
       (Nat.primeCounting ((k + 1) * n) - Nat.primeCounting (k * n))) :=
 by sorry
+
+theorem oeis_238281_conjecture_0.disproof : ¬ (type_of% @oeis_238281_conjecture_0) := sorry

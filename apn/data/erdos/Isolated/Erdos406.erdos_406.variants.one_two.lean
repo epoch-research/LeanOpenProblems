@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 406
@@ -33,3 +33,5 @@ theorem erdos_406.variants.one_two :
   sorry
 
 end Erdos406
+
+theorem Erdos406.erdos_406.variants.one_two.disproof : ¬ (type_of% @Erdos406.erdos_406.variants.one_two) := sorry

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 74
@@ -82,3 +82,5 @@ theorem erdos_74.variants.sqrt :
 -- TODO(firsching): add the remaining statements/comments
 
 end Erdos74
+
+theorem Erdos74.erdos_74.variants.sqrt.disproof : ¬ (type_of% @Erdos74.erdos_74.variants.sqrt) := sorry

@@ -65,3 +65,5 @@ theorem erdos_358.variants.prime_set :
   sorry
 
 end Erdos358
+
+theorem Erdos358.erdos_358.variants.prime_set.disproof : ¬ (type_of% @Erdos358.erdos_358.variants.prime_set) := sorry

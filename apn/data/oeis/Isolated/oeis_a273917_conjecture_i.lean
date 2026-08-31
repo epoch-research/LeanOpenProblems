@@ -35,3 +35,5 @@ The claim A273917 Conjectures a(n) > 0 and (ii) verified up to 10^11 is also men
 -/
 theorem oeis_a273917_conjecture_i (n : ℕ) (hn : n > 0) : a n > 0 := by
   sorry
+
+theorem oeis_a273917_conjecture_i.disproof : ¬ (type_of% @oeis_a273917_conjecture_i) := sorry

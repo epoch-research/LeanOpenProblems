@@ -40,3 +40,5 @@ A080101: The maximum value of terms in the sequence is conjectured to be 2.
 This is a formalization of the OEIS conjecture: "The maximum value of terms in the sequence, through the (10^5)th term, is 2. - Harvey P. Dale, Aug 24 2014 This is conjectured to be the maximum, see also A366833. - Gus Wiseman, Nov 06 2024"
 -/
 theorem oeis_80101_conjecture : ∀ (n : ℕ), a n ≤ 2 := by sorry
+
+theorem oeis_80101_conjecture.disproof : ¬ (type_of% @oeis_80101_conjecture) := sorry

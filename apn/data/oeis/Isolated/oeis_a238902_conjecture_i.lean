@@ -32,3 +32,5 @@ Conjecture (i): a(n) > 0 for all n > 0.
 -/
 theorem oeis_a238902_conjecture_i (n : ℕ) (hn : n > 0) : a n > 0 := by
   sorry
+
+theorem oeis_a238902_conjecture_i.disproof : ¬ (type_of% @oeis_a238902_conjecture_i) := sorry

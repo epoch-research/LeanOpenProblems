@@ -51,3 +51,5 @@ theorem oeis_365179_conjecture_2 :
           Fintype.card (MulAut H) = A365179 n →
           Nonempty (G ≃* H)) :=
   by sorry
+
+theorem oeis_365179_conjecture_2.disproof : ¬ (type_of% @oeis_365179_conjecture_2) := sorry

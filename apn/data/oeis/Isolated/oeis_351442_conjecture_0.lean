@@ -40,3 +40,5 @@ The list of fixed points is taken verbatim from the OEIS entry.
 theorem oeis_351442_conjecture_0 :
   ∀ n : ℕ, n > 0 → (a n = n ↔ n ∈ ({1, 2, 8, 128, 288, 720, 32768, 29719872, 2147483648} : Finset ℕ)) := by
   sorry
+
+theorem oeis_351442_conjecture_0.disproof : ¬ (type_of% @oeis_351442_conjecture_0) := sorry

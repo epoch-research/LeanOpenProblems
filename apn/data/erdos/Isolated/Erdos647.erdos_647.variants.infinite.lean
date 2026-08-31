@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 647
@@ -36,3 +36,5 @@ theorem erdos_647.variants.infinite :
   sorry
 
 end Erdos647
+
+theorem Erdos647.erdos_647.variants.infinite.disproof : ¬ (type_of% @Erdos647.erdos_647.variants.infinite) := sorry

@@ -44,3 +44,5 @@ A087455 It is an open question whether or not this sequence satisfies Benford's 
 -/
 theorem oeis_87455_conjecture_0 : A087455_satisfies_Benfords_law := by
   sorry
+
+theorem oeis_87455_conjecture_0.disproof : ¬ (type_of% @oeis_87455_conjecture_0) := sorry

@@ -34,3 +34,5 @@ A034386(n) is `Nat.primorial n`.
 theorem oeis_a080326_eq_primorial_infinitely_often :
     Set.Infinite {n : ℕ | a n = primorial n} := by
   sorry
+
+theorem oeis_a080326_eq_primorial_infinitely_often.disproof : ¬ (type_of% @oeis_a080326_eq_primorial_infinitely_often) := sorry

@@ -36,3 +36,5 @@ This implies A. Murthy's conjecture mentioned in A109909.
 -/
 theorem A230241_conjecture (n : ℕ) (hn : n > 5) : A230241 n > 0 := by
   sorry
+
+theorem A230241_conjecture.disproof : ¬ (type_of% @A230241_conjecture) := sorry

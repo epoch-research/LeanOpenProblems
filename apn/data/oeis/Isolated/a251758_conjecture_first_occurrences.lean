@@ -62,3 +62,5 @@ theorem a251758_conjecture_first_occurrences :
   (IsLeast (first_occurrence_set 16) 289) ∧
   (IsLeast (first_occurrence_set 17) 17)
   := by sorry
+
+theorem a251758_conjecture_first_occurrences.disproof : ¬ (type_of% @a251758_conjecture_first_occurrences) := sorry

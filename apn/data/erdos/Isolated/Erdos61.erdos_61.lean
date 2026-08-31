@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 61 -- Erdős–Hajnal Conjecture
@@ -48,3 +48,5 @@ theorem erdos_61 :
   sorry
 
 end Erdos61
+
+theorem Erdos61.erdos_61.disproof : ¬ (type_of% @Erdos61.erdos_61) := sorry

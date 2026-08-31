@@ -38,3 +38,5 @@ def A363983 (n : ℕ) : ℕ :=
 theorem oeis_A363983_conjecture_supercongruence (p n r : ℕ) (hp : Nat.Prime p) (h_p_ge_5 : p ≥ 5) (hn : n > 0) (hr : r > 0) :
   (A363983 (n * p ^ r) : ℤ) ≡ A363983 (n * p ^ (r - 1)) [ZMOD (p : ℤ) ^ (3 * r)] := by
   sorry
+
+theorem oeis_A363983_conjecture_supercongruence.disproof : ¬ (type_of% @oeis_A363983_conjecture_supercongruence) := sorry

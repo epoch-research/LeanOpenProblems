@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 723: The prime power conjecture.
@@ -35,3 +35,5 @@ theorem erdos_723 :
   sorry
 
 end Erdos723
+
+theorem Erdos723.erdos_723.disproof : ¬ (type_of% @Erdos723.erdos_723) := sorry

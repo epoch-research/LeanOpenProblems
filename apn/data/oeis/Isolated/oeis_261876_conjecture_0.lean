@@ -53,3 +53,5 @@ theorem oeis_261876_conjecture_0 (n : ℕ) :
   (n > 0 → a n > 0) ∧
   (a n = 1 ↔ ∃ k m : ℕ, special_m_set m ∧ n = 4^k * m) :=
 by sorry
+
+theorem oeis_261876_conjecture_0.disproof : ¬ (type_of% @oeis_261876_conjecture_0) := sorry

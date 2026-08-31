@@ -56,3 +56,5 @@ def a273021_is_one_value (n : ℕ) : Prop :=
 n = 1, 11, 31, 47, 55, 71, 105, 115, 119, 253, 383, 385, 4^k*m (k = 0,1,2,... and m = 2, 22, 23, 30, 330). -/
 theorem A273021_conjecture_i (n : ℕ) (hn : n > 0) :
   A273021 n > 0 ∧ (A273021 n = 1 ↔ a273021_is_one_value n) := by sorry
+
+theorem A273021_conjecture_i.disproof : ¬ (type_of% @A273021_conjecture_i) := sorry

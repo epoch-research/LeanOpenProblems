@@ -88,3 +88,5 @@ Formally, the sequence of fractions $\frac{\mathrm{A}340737(n)}{\mathrm{A}340738
 theorem oeis_340737_conjecture_0 :
   Filter.Tendsto (fun n : ℕ => (A340737 n : ℝ) / (A340738 n : ℝ)) Filter.atTop (nhds (Real.exp 1)) :=
 by sorry
+
+theorem oeis_340737_conjecture_0.disproof : ¬ (type_of% @oeis_340737_conjecture_0) := sorry

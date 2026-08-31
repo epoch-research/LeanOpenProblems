@@ -66,3 +66,5 @@ Assuming the conjecture that the positions of the 0-bits of the middle column ("
 theorem oeis_267581_conjecture_0 (n : ℕ) (hn : 2 ≤ n) :
   a n = 2 * a (n - 1) + 1 - oeis_floor_term n :=
 by sorry
+
+theorem oeis_267581_conjecture_0.disproof : ¬ (type_of% @oeis_267581_conjecture_0) := sorry

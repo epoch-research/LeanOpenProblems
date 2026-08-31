@@ -48,3 +48,5 @@ theorem oeis_a190969_conjecture_0 (p : ℕ) (hp : p.Prime) (hp_odd : p ≠ 2) :
             num * den⁻¹
     S 2 = 0 ∧ (p % 7 ∈ ({1, 2, 4} : Set ℕ) → S 3 = 0) := by
   sorry
+
+theorem oeis_a190969_conjecture_0.disproof : ¬ (type_of% @oeis_a190969_conjecture_0) := sorry

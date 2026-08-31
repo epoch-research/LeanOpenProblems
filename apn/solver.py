@@ -20,15 +20,17 @@ from inspect_ai.model import (
 from inspect_ai.scorer import Score
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, tool
-from inspect_ai.util import sandbox
+from inspect_ai.util import sandbox, store
 
+from apn.checker import Claim
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
+from apn.scorer import CLAIM_STORE_KEY
 from apn.tools import bash, resources
 
 logger = logging.getLogger(__name__)
 
-# Deliberately reveals nothing about *why* (no SafeVerify output), so the model
+# Deliberately reveals nothing about *why* (no verifier output), so the model
 # cannot search for verifier gaps.
 INCORRECT_MESSAGE = (
     "Your submission did not pass verification. Keep working to find a correct, "
@@ -45,11 +47,9 @@ RESOURCE_INCORRECT_MESSAGE = (
 
 _RESOURCE_STAGES = frozenset(
     {
-        "compile_submission_resource",
-        "compile_submission_timeout",
-        "compile_submission_oversize",
-        "safeverify_resource",
-        "safeverify_timeout",
+        "comparator_output_limit",
+        "comparator_resource",
+        "comparator_timeout",
         "submission_oversize",
     }
 )
@@ -83,10 +83,26 @@ def _warn_if_ignored_formalizations(state: TaskState) -> None:
 
 @tool
 def submit() -> Tool:
-    """A no-argument submit tool."""
+    """The submit tool: the agent declares its claim, nothing else.
 
-    async def execute() -> ToolResult:
-        """Submit the proof for verification."""
+    The claim (proof vs disproof) selects which of the spec's two theorems the
+    checker verifies (``foo`` or ``foo.disproof``); the scorer reads it from
+    the sample store. There is no sniffing of submission content -- a wrong
+    declaration simply fails its check like any wrong submission. Inspect's
+    tool-argument validation rejects a malformed call before it reaches us, so
+    the model retries rather than submitting nothing.
+    """
+
+    async def execute(claim: Claim) -> ToolResult:
+        """Submit the proof for verification.
+
+        Args:
+            claim: "proof" if you proved the original theorem, "disproof" if
+                you proved its `.disproof` negation.
+        """
+        if claim not in ("proof", "disproof"):
+            raise ValueError(f'claim must be "proof" or "disproof", got {claim!r}')
+        store().set(CLAIM_STORE_KEY, claim)
         return "Submitted."
 
     return execute
@@ -134,12 +150,16 @@ def lean_prover(
     agent_type: AgentType,
     gated: bool,
     literature: bool,
+    util_module: str,
 ) -> Solver:
     """
     Args:
         gated: Gated submission (retry until correct or token/time limit).
         literature: Run with the offline arXiv corpus.
         agent_type: Which agent loop to run.
+        util_module: The dataset pin's FC util module
+            (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
+            import-integrity rule.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
@@ -185,7 +205,7 @@ def lean_prover(
         )
         state.messages = [
             ChatMessageUser(
-                content=user_prompt(ENTRY_PATH, state.token_limit, literature),
+                content=user_prompt(ENTRY_PATH, state.token_limit, literature, util_module),
                 source="input",
             )
         ]

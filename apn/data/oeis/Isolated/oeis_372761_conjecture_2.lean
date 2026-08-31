@@ -71,3 +71,5 @@ there is exactly one index $n \ge 3$ such that $a(n) = p$.
 theorem oeis_372761_conjecture_2 :
   ∀ p : ℕ, Nat.Prime p ∧ p % 2 = 1 ∧ p ≠ 3 ∧ p ≠ 5 →
     ∃! n, n ≥ 3 ∧ a n = p := by sorry
+
+theorem oeis_372761_conjecture_2.disproof : ¬ (type_of% @oeis_372761_conjecture_2) := sorry

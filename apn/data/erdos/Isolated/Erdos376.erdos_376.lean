@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 376
@@ -31,3 +31,5 @@ theorem erdos_376 : { (n : ℕ) | n.centralBinom.Coprime 105 }.Infinite := by
   sorry
 
 end Erdos376
+
+theorem Erdos376.erdos_376.disproof : ¬ (type_of% @Erdos376.erdos_376) := sorry

@@ -53,3 +53,5 @@ Conjecture: a(n) > 0 for all n > 1. In other words, any integer n > 1 can be wri
 -/
 theorem oeis_303401_conjecture_1 : ∀ (n : ℕ), 1 < n → A303401 n > 0 := by
   sorry
+
+theorem oeis_303401_conjecture_1.disproof : ¬ (type_of% @oeis_303401_conjecture_1) := sorry

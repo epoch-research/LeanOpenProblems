@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 371
@@ -34,3 +34,5 @@ theorem erdos_371 :
 
 -- TODO: add the statements from the additional material
 end Erdos371
+
+theorem Erdos371.erdos_371.disproof : ¬ (type_of% @Erdos371.erdos_371) := sorry

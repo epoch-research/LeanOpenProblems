@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 1
@@ -55,3 +55,5 @@ abbrev IsSumDistinctRealSet (A : Finset ℝ) (N : ℕ) : Prop :=
     1 ≤ dist (S₁.sum id) (S₂.sum id)
 
 end Erdos1
+
+theorem Erdos1.erdos_1.disproof : ¬ (type_of% @Erdos1.erdos_1) := sorry

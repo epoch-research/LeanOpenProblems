@@ -4,9 +4,11 @@ The deeper Lean guarantees over the committed ``Isolated/`` specs -- clean
 elaboration, the certified per-form ``answer(...) ↔`` rewrite, only the target
 + its dependency decls surviving -- are enforced authoritatively, in a
 container, by ``tests/test_erdos_isolation.py``. This module checks what can
-be checked cheaply on every run: the manifest census (the paper's 350
-attempted statements, no excluded rows), the ``tsoukalas_attempted`` subset,
-the dataset/sample shape, and textual invariants of the shipped sketches.
+be checked cheaply on every run: the manifest census (every research-category
+statement of the Bloom selection's 48 vendored files, plus the three derived
+Hadwiger–Nelson samples), the ``bloom_selection`` subset (the 50 scoreable
+selected statements, ``apn_erdos``'s default), the dataset/sample shape, and
+textual invariants of the shipped sketches.
 """
 
 from __future__ import annotations
@@ -18,25 +20,71 @@ import pytest
 
 from apn.dataset import (
     ERDOS_DIR,
+    SampleRow,
     erdos_dataset,
     load_manifest,
     load_subset,
 )
-from scripts.erdos_isolation import SORRY_ALLOWLIST_FILES
+from scripts.erdos_isolation import (
+    HN_SAMPLE_IDS,
+    PROVED_IN_FILE_REASON,
+    SORRY_ALLOWLIST_FILES,
+    VALUE_TYPED_REASON,
+    derive_hadwiger_nelson_specs,
+)
+from scripts.isolation import matches_name
+
 from scripts.fc_statements import strip_comments
+from scripts.isolation import disproof_declaration
 
 _SORRY_RE = re.compile(r"\bsorry\b")
-# A top-level theorem/lemma declaration in an isolated spec (column 0;
-# `protected` included -- 633.lean's kept dependency lemma is protected).
+# A top-level theorem/lemma declaration in an isolated spec (column 0).
 _DECL_RE = re.compile(r"(?m)^(?:protected\s+)?(?:theorem|lemma)\s+([^\s:({\[⦃]+)")
+
+# The Bloom selection (apn/data/erdos/ERDOS_PROBLEM_STATEMENT_SELECTION.md):
+# selected statement's short name per problem number. 508's reviewed statement
+# is the excluded value-typed HadwigerNelsonProblem; the *scoreable* selection
+# -- the bloom_selection subset -- carries its three derived prove-or-disprove
+# samples (HN_SAMPLE_IDS) in its place, 50 statements in all.
+SELECTED = {
+    1: "erdos_1", 3: "erdos_3", 5: "erdos_5", 7: "erdos_7", 20: "erdos_20",
+    23: "erdos_23", 28: "erdos_28", 30: "erdos_30", 39: "erdos_39",
+    41: "erdos_41", 52: "erdos_52", 61: "erdos_61", 66: "erdos_66",
+    68: "erdos_68", 74: "erdos_74", 89: "erdos_89", 97: "erdos_97",
+    101: "erdos_101", 107: "erdos_107", 120: "erdos_120", 126: "erdos_126",
+    128: "erdos_128", 138: "erdos_138", 172: "erdos_172", 184: "erdos_184",
+    208: "erdos_208.parts.i", 213: "erdos_213", 241: "erdos_241",
+    242: "erdos_242", 324: "erdos_324", 364: "erdos_364", 371: "erdos_371",
+    376: "erdos_376", 406: "erdos_406", 508: "HadwigerNelsonProblem",
+    564: "erdos_564", 595: "erdos_595", 647: "erdos_647", 672: "erdos_672",
+    723: "erdos_723", 812: "erdos_812.parts.i", 821: "erdos_821",
+    829: "erdos_829", 952: "erdos_952", 972: "erdos_972", 975: "erdos_975",
+    1003: "erdos_1003", 1057: "erdos_1057",
+}
+
+
+def _selected_row(rows: list[SampleRow], number: int) -> SampleRow:
+    hits = [
+        r for r in rows
+        if r.extra["erdos_number"] == number and matches_name(r.id, SELECTED[number])
+    ]
+    assert len(hits) == 1, (number, [r.id for r in hits])
+    return hits[0]
 
 
 def test_manifest_census() -> None:
-    # The universe: the paper's canonical attempted set, one row per
-    # statement, none excluded.
+    # The universe: every research-category statement of the 48 vendored
+    # files -- the selected statements plus their research variants -- plus
+    # the three derived Hadwiger–Nelson samples.
     rows = load_manifest(ERDOS_DIR)
-    assert len(rows) == 350
-    assert all(r.excluded is None for r in rows)
+    assert len(rows) == 147
+    assert {r.extra["erdos_number"] for r in rows} == set(SELECTED)
+    excluded = {r.id: r.excluded for r in rows if r.excluded is not None}
+    assert excluded == {
+        "Erdos508.HadwigerNelsonProblem": VALUE_TYPED_REASON,
+        "Erdos975.erdos_975.variants.quadratic": VALUE_TYPED_REASON,
+        "Erdos647.erdos_647.variants.twenty_four": PROVED_IN_FILE_REASON,
+    }
 
 
 def test_manifest_row_shape() -> None:
@@ -60,11 +108,9 @@ def test_manifest_answer_form_census() -> None:
     # re-checked per member in tests/test_erdos_isolation.py.)
     forms = Counter(r.extra["answer_form"] for r in load_manifest(ERDOS_DIR) if r.excluded is None)
     assert forms == {
-        None: 85,
-        "lhs_sorry": 249,
-        "lhs_true": 7,
-        "lhs_false": 6,
-        "rhs_sorry": 3,
+        None: 90,
+        "lhs_sorry": 52,
+        "lhs_true": 2,
     }
 
 
@@ -75,38 +121,88 @@ def test_spec_files_match_manifest_exactly() -> None:
     assert on_disk == expected
 
 
-def test_tsoukalas_attempted_subset() -> None:
-    # The paper's canonical 350-statement attempted set: all ids resolve to
-    # kept manifest rows, and the dataset filtered to it has exactly 350
-    # samples. (The 353->350 derivation lives in the subset's description.)
-    ids = load_subset(ERDOS_DIR, "tsoukalas_attempted")
-    assert len(ids) == 350
-    assert len(set(ids)) == 350
-    assert len(erdos_dataset(names=ids)) == 350
+def test_bloom_selection_subset() -> None:
+    # The default subset: the 50 scoreable selected statements -- exactly one
+    # per reviewed problem, except 508's three derived samples -- each
+    # `research open` at the pin.
+    rows = load_manifest(ERDOS_DIR)
+    ids = load_subset(ERDOS_DIR, "bloom_selection")
+    assert len(ids) == 50
+    assert len(set(ids)) == 50
+    by_id = {r.id: r for r in rows}
+    numbers = []
+    for sample_id in ids:
+        row = by_id[sample_id]
+        assert row.excluded is None, sample_id
+        assert row.extra["category_at_pin"] == "research open", sample_id
+        numbers.append(row.extra["erdos_number"])
+        if row.extra["erdos_number"] == 508:
+            assert sample_id in HN_SAMPLE_IDS, sample_id
+        else:
+            assert matches_name(sample_id, SELECTED[row.extra["erdos_number"]]), sample_id
+    assert Counter(numbers) == Counter(set(SELECTED) - {508}) + Counter({508: 3})
+    assert len(erdos_dataset(names=ids)) == 50
+
+
+def test_508_ships_as_excluded_value_typed_row() -> None:
+    # The selection's 48th statement: χ(ℝ²) = answer(sorry) is value-typed
+    # (sorryAx in the statement type), unscoreable, and 508.lean has no other
+    # `research open` statement -- so it ships as an excluded row, documented
+    # rather than silently dropped.
+    row = _selected_row(load_manifest(ERDOS_DIR), 508)
+    assert row.id == "Erdos508.HadwigerNelsonProblem"
+    assert row.excluded == VALUE_TYPED_REASON
+
+
+def test_508_derived_samples() -> None:
+    # In the excluded row's place, the benchmark carries three derived
+    # prove-or-disprove samples, χ(ℝ²) = 5/6/7 (Bloom's verdict, 2026-08-25;
+    # see the Hadwiger–Nelson special case in scripts/erdos_isolation.py).
+    # The committed specs must match the pure-text re-derivation byte for
+    # byte; their elaboration soundness (compile, certified disproof) is
+    # tests/test_erdos_isolation.py's job.
+    rows = {r.id: r for r in load_manifest(ERDOS_DIR)}
+    specs = derive_hadwiger_nelson_specs()
+    assert set(specs) == set(HN_SAMPLE_IDS)
+    for sample_id, text in specs.items():
+        row = rows[sample_id]
+        assert row.excluded is None
+        assert row.decl_name == sample_id  # the derivation renames the target
+        assert row.extra["answer_form"] is None
+        assert row.extra["category_at_pin"] == "research open"
+        assert (ERDOS_DIR / row.statement_path).read_text() == text
+
+
+def test_every_selected_statement_is_research_open_at_pin() -> None:
+    rows = load_manifest(ERDOS_DIR)
+    for number in SELECTED:
+        row = _selected_row(rows, number)
+        assert row.extra["category_at_pin"] == "research open", row.id
 
 
 def test_erdos_dataset_loads_all_samples() -> None:
     ds = erdos_dataset()
-    assert len(ds) == 350
+    assert len(ds) == 144
     ids = [s.id for s in ds]
     assert len(set(ids)) == len(ids)
 
 
 def test_erdos_dataset_sample_shape() -> None:
-    ds = erdos_dataset(names=["Erdos741.erdos_741.parts.i"])
+    ds = erdos_dataset(names=["Erdos138.erdos_138.variants.difference"])
     assert len(ds) == 1
     sample = ds[0]
-    assert sample.id == "Erdos741.erdos_741.parts.i"
+    assert sample.id == "Erdos138.erdos_138.variants.difference"
     assert sample.metadata is not None
-    assert sample.metadata["source"] == "Sources/741.lean"
+    assert sample.metadata["source"] == "Sources/138.lean"
     sketch = sample.metadata["sketch"]
     assert sample.input == sketch
-    assert "import FormalConjectures.Util.ProblemImports" in sketch
-    assert "theorem erdos_741.parts.i" in sketch
-    # This member carries a recorded verdict upstream (`answer(False) ↔ P`)
-    # and is shipped un-filled, as plain `P` -- the answer key must not leak.
+    assert "import FormalConjecturesUtil" in sketch
+    assert "theorem erdos_138.variants.difference" in sketch
+    # This member carries a recorded verdict upstream (`answer(True) ↔ P` plus
+    # prose crediting the prover) and is shipped un-filled, as plain `P` --
+    # the answer key must not leak.
     assert "answer(" not in sketch
-    assert "False" not in strip_comments(sketch)
+    assert "True" not in strip_comments(sketch)
 
 
 def test_verdict_material_never_reaches_sample_metadata() -> None:
@@ -115,7 +211,7 @@ def test_verdict_material_never_reaches_sample_metadata() -> None:
     # agent-facing sample.
     for sample in erdos_dataset():
         assert sample.metadata is not None
-        assert set(sample.metadata) == {"sketch", "source"}
+        assert set(sample.metadata) == {"sketch", "source", "decl_name"}
 
 
 def test_erdos_dataset_names_filter_unknown_raises() -> None:
@@ -144,11 +240,9 @@ def test_sketches_have_no_fc_annotations() -> None:
     # (scripts/erdos_isolation.py:strip_fc_annotations): the recorded answer
     # must not reach the shipped sketch in any form. None of these markers
     # legitimately occurs in problem prose.
-    # "deepmind prover", not bare "deepmind": 488.lean carries a legitimate
-    # implementation comment linking a google-deepmind PR (no verdict in it).
     markers = (
         "@[category", "formal_proof", "research solved",
-        "deepmind prover", "prover agent", "alphaproof",
+        "deepmind", "prover agent", "alphaproof",
     )
     for sample in erdos_dataset():
         assert sample.metadata is not None
@@ -160,7 +254,7 @@ def test_sketches_have_no_fc_annotations() -> None:
 def test_sketches_have_no_example_commands() -> None:
     # FC's anonymous `example` sanity checks are cut so the trusted target
     # compile never executes them at score time. Comment-stripped: module-doc
-    # prose may start a line with the word "example" (602.lean does).
+    # prose may start a line with the word "example".
     for sample in erdos_dataset():
         assert sample.metadata is not None
         stripped = strip_comments(sample.metadata["sketch"])
@@ -168,28 +262,24 @@ def test_sketches_have_no_example_commands() -> None:
 
 
 def test_sketches_sorry_count() -> None:
-    # Exactly one `sorry` per sketch -- the target's proof -- except in the
-    # allowlisted files, where a kept definition depends on a sorry'd helper
-    # theorem (those samples implicitly require proving it too).
+    # Exactly two `sorry`s per sketch -- the target's proof and the appended
+    # `.disproof` declaration's. The allowlist (a kept definition depending on
+    # a sorry'd helper theorem, which those samples implicitly require proving
+    # too) is currently empty; if a future pin re-adds entries, those files
+    # may carry three.
     for sample in erdos_dataset():
         assert sample.metadata is not None
         n = len(_SORRY_RE.findall(strip_comments(sample.metadata["sketch"])))
         if sample.metadata["source"].removeprefix("Sources/") in SORRY_ALLOWLIST_FILES:
-            assert n in (1, 2), f"{sample.id}: {n} sorries"
+            assert n in (2, 3), f"{sample.id}: {n} sorries"
         else:
-            assert n == 1, f"{sample.id}: {n} sorries"
+            assert n == 2, f"{sample.id}: {n} sorries"
 
 
-# Universe members that legitimately survive in *sibling* specs: kept
-# definitions depend on them (697's `def δ := (density_exists m α).choose`;
-# 961's `def f := Nat.find (well_defined k hk)`, whose proof uses the
-# Sylvester-Schur statement). Dependency-closure survivors, not cut leaks;
-# keep in sync with generation output (a stable property of the data).
-_DEPENDENCY_KEPT_MEMBERS = {
-    "Erdos697.density_exists",
-    "Erdos961.erdos_961.variants.well_defined",
-    "Erdos961.erdos_961.sylvester_schur",
-}
+# Universe members that legitimately survive in *sibling* specs because kept
+# definitions depend on them (dependency-closure survivors, not cut leaks);
+# keep in sync with generation output. None in the Bloom selection.
+_DEPENDENCY_KEPT_MEMBERS: set[str] = set()
 
 
 def _declares(member_id: str, text_name: str) -> bool:
@@ -197,6 +287,18 @@ def _declares(member_id: str, text_name: str) -> bool:
     text name omits enclosing ``namespace`` components (matches_name
     semantics)."""
     return member_id == text_name or member_id.endswith("." + text_name)
+
+
+def test_sketches_end_with_disproof_declaration() -> None:
+    # Every spec's final declaration is the derived `.disproof` line for its
+    # target's fully-qualified name (comparator-migration-plan.md §4); the
+    # container-side certifier in tests/test_erdos_isolation.py proves its
+    # elaborated type is the negation.
+    for row in load_manifest(ERDOS_DIR):
+        if row.excluded is not None:
+            continue
+        text = (ERDOS_DIR / row.statement_path).read_text()
+        assert text.rstrip().endswith(disproof_declaration(row.decl_name)), row.id
 
 
 def test_no_sibling_member_survives_in_any_spec() -> None:

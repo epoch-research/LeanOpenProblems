@@ -35,3 +35,5 @@ $a(p^r) \equiv a(p^{r-1}) \pmod{p^{3r+3}}$ for $r \ge 2$ and for all primes $p \
 theorem oeis_A357960_conjecture_2 (p r : ℕ) (hp : p.Prime) (hp_ge_3 : 3 ≤ p) (hr_ge_2 : 2 ≤ r) :
     a (p^r) ≡ a (p^(r-1)) [MOD p^(3*r + 3)] := by
   sorry
+
+theorem oeis_A357960_conjecture_2.disproof : ¬ (type_of% @oeis_A357960_conjecture_2) := sorry

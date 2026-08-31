@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 101
@@ -29,7 +29,7 @@ open EuclideanGeometry Filter Asymptotics
 /--
 The set of lines in $\mathbb{R}^2$ containing exactly $k$ points from a given set $S$.
 -/
-private noncomputable def linesWithPointsFor (k : ℕ) (S : Set ℝ²) : Set (AffineSubspace ℝ ℝ²) :=
+noncomputable def linesWithPointsFor (k : ℕ) (S : Set ℝ²) : Set (AffineSubspace ℝ ℝ²) :=
   let determined_lines := { affineSpan ℝ {p, q} | (p ∈ S) (q ∈ S) (_ : p ≠ q) }
   { L ∈ determined_lines | (↑L ∩ S).ncard = k }
 
@@ -51,3 +51,5 @@ theorem erdos_101 : (fun n => (numLinesWithFourPointMax n : ℝ)) =o[atTop] (fun
 -- TODO(firsching): formalize other results from the additional material
 
 end Erdos101
+
+theorem Erdos101.erdos_101.disproof : ¬ (type_of% @Erdos101.erdos_101) := sorry

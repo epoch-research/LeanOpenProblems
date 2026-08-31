@@ -54,3 +54,5 @@ Conjecture: a(n) > 0 for all n > 5 with n not equal to 13.
 theorem oeis_a229232_conjecture_gt_zero (n : ℕ) :
   (n > 5 ∧ n ≠ 13) → A229232 n > 0 := by
   sorry
+
+theorem oeis_a229232_conjecture_gt_zero.disproof : ¬ (type_of% @oeis_a229232_conjecture_gt_zero) := sorry

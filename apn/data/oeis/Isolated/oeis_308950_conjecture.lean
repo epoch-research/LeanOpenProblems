@@ -52,3 +52,5 @@ theorem oeis_308950_conjecture :
         -- We require the argument to Nat.Prime to be positive, so 2^a * 3^b < n.
         2 ^ a * 3 ^ b < n ∧ Nat.Prime (6 * (n - 2 ^ a * 3 ^ b) - 1)
     ) := by sorry
+
+theorem oeis_308950_conjecture.disproof : ¬ (type_of% @oeis_308950_conjecture) := sorry

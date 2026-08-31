@@ -41,3 +41,5 @@ It is conjectured that for all $n > 2$, $a(n) = 0$ implies that $7n+6 = a(n+1)$ 
 -/
 theorem oeis_261307_conjecture_0 : ∀ (n : ℕ), n > 2 → a n = 0 → Nat.Prime (7 * n + 6) := by
   sorry
+
+theorem oeis_261307_conjecture_0.disproof : ¬ (type_of% @oeis_261307_conjecture_0) := sorry

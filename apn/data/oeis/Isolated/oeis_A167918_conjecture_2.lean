@@ -49,3 +49,5 @@ The conjecture is formalized as: for any bound $M$, there exists an index $n > M
 theorem oeis_A167918_conjecture_2 :
   (∀ M : ℕ, ∃ n : ℕ, n ≥ M ∧ n > 0 ∧ S (A167918 n) = 2 * S n) := by
   sorry
+
+theorem oeis_A167918_conjecture_2.disproof : ¬ (type_of% @oeis_A167918_conjecture_2) := sorry

@@ -29,3 +29,5 @@ Conjecture: a(n) <= 1+phi(n) = 1+A000010(n), for n>0. This improves on Oppermann
 -/
 theorem oeis_53000_conjecture_1 (n : ℕ) (hn : n > 0) : A053000 n ≤ 1 + Nat.totient n := by
   sorry
+
+theorem oeis_53000_conjecture_1.disproof : ¬ (type_of% @oeis_53000_conjecture_1) := sorry

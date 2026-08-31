@@ -38,3 +38,5 @@ Conjecture: a(n) > 0 for n > 23.
 -/
 theorem oeis_256012_conjecture_0 (n : ℕ) (hn : n > 23) : A256012 n > 0 := by
   sorry
+
+theorem oeis_256012_conjecture_0.disproof : ¬ (type_of% @oeis_256012_conjecture_0) := sorry

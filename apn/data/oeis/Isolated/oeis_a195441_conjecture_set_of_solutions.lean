@@ -41,3 +41,5 @@ See Kellner 2023. - _Bernd C. Kellner_, Oct 18 2023
 theorem oeis_a195441_conjecture_set_of_solutions :
     { n : ℕ | 1 ≤ n ∧ A195441 (n - 1) = radical (n + 1) } =
     ({3, 5, 8, 9, 11, 27, 29, 35, 59} : Finset ℕ).toSet := by sorry
+
+theorem oeis_a195441_conjecture_set_of_solutions.disproof : ¬ (type_of% @oeis_a195441_conjecture_set_of_solutions) := sorry

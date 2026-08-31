@@ -50,3 +50,5 @@ a(p) ≡ a(1) (mod p^5) for all primes p ≥ 5.
 theorem oeis_357958_conjecture_01 :
   ∀ (p : ℕ), Nat.Prime p → 5 ≤ p → (a p) ≡ (a 1) [MOD p^5] :=
 by sorry
+
+theorem oeis_357958_conjecture_01.disproof : ¬ (type_of% @oeis_357958_conjecture_01) := sorry

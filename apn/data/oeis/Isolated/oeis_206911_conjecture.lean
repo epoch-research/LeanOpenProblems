@@ -56,3 +56,5 @@ theorem oeis_206911_conjecture :
      (35/10 : ℝ) < L ∧ L < (36/10 : ℝ) ∧
      Tendsto (fun N : ℕ => (A206911_count_3s N : ℝ) / (A206911_count_2s N : ℝ)) atTop (nhds L))
 := by sorry
+
+theorem oeis_206911_conjecture.disproof : ¬ (type_of% @oeis_206911_conjecture) := sorry

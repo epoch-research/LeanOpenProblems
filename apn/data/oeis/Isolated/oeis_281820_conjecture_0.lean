@@ -100,3 +100,5 @@ theorem oeis_281820_conjecture_0 (k : ℕ) (hk : 1 ≤ k) :
     (∑' n : ℕ, conj_term_1 k n) = (∑' n : ℕ, conj_term_2 k n) ∧
     (∑' n : ℕ, conj_term_1 k n) = zeta_three - (a k : ℝ) / (A281821 k : ℝ) :=
   by sorry
+
+theorem oeis_281820_conjecture_0.disproof : ¬ (type_of% @oeis_281820_conjecture_0) := sorry

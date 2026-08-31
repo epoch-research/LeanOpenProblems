@@ -36,3 +36,5 @@ Conjecture: a(n) > 0 for all n = 0,1,2,....
 -/
 theorem oeis_282542_conjecture_0 (n : ℕ) : A282542 n > 0 := by
   sorry
+
+theorem oeis_282542_conjecture_0.disproof : ¬ (type_of% @oeis_282542_conjecture_0) := sorry

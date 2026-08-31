@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 213
@@ -43,3 +43,5 @@ such that all pairwise distances are integers?
 theorem erdos_213 : ∀ n : ℕ, n ≥ 4 → Erdos213For n := by sorry
 
 end Erdos213
+
+theorem Erdos213.erdos_213.disproof : ¬ (type_of% @Erdos213.erdos_213) := sorry

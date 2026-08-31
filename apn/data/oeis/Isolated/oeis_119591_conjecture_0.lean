@@ -34,3 +34,5 @@ noncomputable def A119591 (n : ℕ) : ℕ :=
 theorem oeis_119591_conjecture_0 :
   ∀ n : ℕ, n ≥ 2 → ∃ k : ℕ, 0 < k ∧ Nat.Prime (2 * n ^ k - 1) :=
 by sorry
+
+theorem oeis_119591_conjecture_0.disproof : ¬ (type_of% @oeis_119591_conjecture_0) := sorry

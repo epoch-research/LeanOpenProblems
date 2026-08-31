@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 241
@@ -29,7 +29,7 @@ import FormalConjectures.Util.ProblemImports
 -/
 
 open Filter Finset
-open scoped Asymptotics Classical
+open scoped Asymptotics
 
 namespace Erdos241
 
@@ -40,6 +40,7 @@ $a,b,c\in A$ are all distinct (aside from the trivial coincidences).
 Formalization note: this is generalized to allow for different $r$.
 -/
 noncomputable def f (N r : ℕ) : ℕ :=
+  open scoped Classical in
   letI candidates := (Icc 1 N).powerset.filter (fun A ↦
     ∀ m₁ m₂ : Multiset ℕ,
       m₁.card = r → m₂.card = r →
@@ -62,3 +63,5 @@ theorem erdos_241.variants.generalization (r : ℕ) (hr : r ≥ 2) :  BoseChowla
   sorry
 
 end Erdos241
+
+theorem Erdos241.erdos_241.variants.generalization.disproof : ¬ (type_of% @Erdos241.erdos_241.variants.generalization) := sorry

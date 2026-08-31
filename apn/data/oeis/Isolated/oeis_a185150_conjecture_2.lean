@@ -32,3 +32,5 @@ def a (n : ℕ) : ℕ :=
 
 /-- We have verified the conjecture for n up to 10^9. -/
 theorem oeis_a185150_conjecture_2 : ∀ (n : ℕ), n ∈ Finset.Ioc 0 1000000000 → 0 < a n := by sorry
+
+theorem oeis_a185150_conjecture_2.disproof : ¬ (type_of% @oeis_a185150_conjecture_2) := sorry

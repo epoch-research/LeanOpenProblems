@@ -93,11 +93,11 @@ def test_sunprizes_dataset_sample_shape() -> None:
 
 
 def test_prize_fields_never_reach_sample_metadata() -> None:
-    # The prize fields exist for tooling; the agent-facing sample carries only
-    # the sketch, source, and oeis_id.
+    # The prize fields exist for tooling; the sample carries only the sketch,
+    # source, oeis_id, and the decl_name the scorer hands to the checker.
     for sample in sunprizes_dataset():
         assert sample.metadata is not None
-        assert set(sample.metadata) == {"sketch", "source", "oeis_id"}
+        assert set(sample.metadata) == {"sketch", "source", "oeis_id", "decl_name"}
 
 
 def test_sunprizes_dataset_names_filter_unknown_raises() -> None:

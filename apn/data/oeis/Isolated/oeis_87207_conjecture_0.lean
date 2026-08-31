@@ -43,3 +43,5 @@ there are neither finite nor infinite cycles in A019565.
 theorem oeis_87207_conjecture_0 :
   ∀ n : ℕ, ∃ k : ℕ, (a^[k]) n = 0 := by
   sorry
+
+theorem oeis_87207_conjecture_0.disproof : ¬ (type_of% @oeis_87207_conjecture_0) := sorry

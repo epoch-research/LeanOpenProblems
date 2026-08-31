@@ -47,3 +47,5 @@ for any prime $p \ne 7$.
 theorem oeis_179537_conjecture_sun_part2b_mod_p_sq (p : ℕ) [h_prime : Fact p.Prime] (h_p_ne_7 : p ≠ 7) :
   A179537_sum_weighted p ≡
     (p : ℤ) * (((21 : ℤ) * leg_sym_7 p) + (16 : ℤ)) [ZMOD (p : ℤ) ^ 2] := by sorry
+
+theorem oeis_179537_conjecture_sun_part2b_mod_p_sq.disproof : ¬ (type_of% @oeis_179537_conjecture_sun_part2b_mod_p_sq) := sorry

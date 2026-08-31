@@ -64,3 +64,5 @@ theorem A382590_conjecture_kth_prime_factor_is_eventually_periodic :
     ∃ N₀ p : ℕ, p > 0 ∧ ∀ n : ℕ, n ≥ N₀ →
       kth_prime_factor k (A382590 (n + p)) = kth_prime_factor k (A382590 n) :=
   by sorry
+
+theorem A382590_conjecture_kth_prime_factor_is_eventually_periodic.disproof : ¬ (type_of% @A382590_conjecture_kth_prime_factor_is_eventually_periodic) := sorry

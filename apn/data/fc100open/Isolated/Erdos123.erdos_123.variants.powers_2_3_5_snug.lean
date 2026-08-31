@@ -71,3 +71,5 @@ theorem erdos_123.variants.powers_2_3_5_snug :
         ∑ x ∈ A, x = n := by sorry
 
 end Erdos123
+
+theorem Erdos123.erdos_123.variants.powers_2_3_5_snug.disproof : ¬ (type_of% @Erdos123.erdos_123.variants.powers_2_3_5_snug) := sorry

@@ -62,3 +62,5 @@ theorem oeis_A377224_conjecture1 :
   (∀ (n : ℕ), a n = 0 ↔ n = 1) ∧
   (∀ (n : ℕ), a n = 1 ↔ n ∈ ({0, 2, 3, 5, 7, 14, 16, 19, 37, 43, 58, 61, 79} : Finset ℕ)) :=
 by sorry
+
+theorem oeis_A377224_conjecture1.disproof : ¬ (type_of% @oeis_A377224_conjecture1) := sorry

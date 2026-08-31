@@ -59,3 +59,5 @@ def is_A100570 (n : ℕ) : Prop := a n = 2
 theorem oeis_241922_conjecture_1 :
   goldbach_binary_conjecture ↔ ¬ ∃ n : ℕ, (∃ m, n = m * m) ∧ is_A100570 n :=
 by sorry
+
+theorem oeis_241922_conjecture_1.disproof : ¬ (type_of% @oeis_241922_conjecture_1) := sorry

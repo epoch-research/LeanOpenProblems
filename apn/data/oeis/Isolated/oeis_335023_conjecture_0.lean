@@ -45,3 +45,5 @@ def a (n : ℕ) : ℕ :=
 /-- Conjecture: a(n) = 1 if and only if n+1 is prime. -/
 theorem oeis_335023_conjecture_0 (n : ℕ) (h : n > 0) :
   a n = 1 ↔ Nat.Prime (n + 1) := by sorry
+
+theorem oeis_335023_conjecture_0.disproof : ¬ (type_of% @oeis_335023_conjecture_0) := sorry

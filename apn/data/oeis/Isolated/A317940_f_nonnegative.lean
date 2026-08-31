@@ -66,3 +66,5 @@ A317940 No negative terms among the first 2^20 terms. Is the sequence nonnegativ
 Conjecture: The sequence of rational numbers $A317940\_f(n)$ is nonnegative for all $n \ge 1$.
 -/
 theorem A317940_f_nonnegative (n : ℕ) (h : n > 0) : A317940_f n ≥ 0 := by sorry
+
+theorem A317940_f_nonnegative.disproof : ¬ (type_of% @A317940_f_nonnegative) := sorry

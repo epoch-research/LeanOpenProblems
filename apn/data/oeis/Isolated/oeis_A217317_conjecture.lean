@@ -42,3 +42,5 @@ where $\gamma$ is Euler's constant.
 -/
 theorem oeis_A217317_conjecture : ∀ n : ℕ, n > 4765516 → A217317 n > 0 := by
   sorry
+
+theorem oeis_A217317_conjecture.disproof : ¬ (type_of% @oeis_A217317_conjecture) := sorry

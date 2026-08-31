@@ -53,3 +53,5 @@ theorem oeis_227923_conjecture_1 :
   (∀ (n : ℕ), 1 < n → A227923 n > 0) →
   (Set.Infinite SophieGermainPrimes ∧ Set.Infinite TwinPrimes) :=
 by sorry
+
+theorem oeis_227923_conjecture_1.disproof : ¬ (type_of% @oeis_227923_conjecture_1) := sorry

@@ -45,3 +45,5 @@ theorem oeis_333206_conjecture_0 :
   -- The set is $\{n \mid a(n) \ge 2 \}$.
   -- $\forall M \in \mathbb{N}, \exists n \ge M$ such that $a(n) > 1$.
   (sorry)
+
+theorem oeis_333206_conjecture_0.disproof : ¬ (type_of% @oeis_333206_conjecture_0) := sorry

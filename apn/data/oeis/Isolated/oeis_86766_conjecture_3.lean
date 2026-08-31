@@ -51,3 +51,5 @@ Based on the OEIS notes, $a(10^m)=0$ for $m=2, 3, \dots, 275$, so the smallest s
 -/
 theorem oeis_86766_conjecture_3 :
   smallest_m_for_a10pow_nonzero > 275 := by sorry
+
+theorem oeis_86766_conjecture_3.disproof : ¬ (type_of% @oeis_86766_conjecture_3) := sorry

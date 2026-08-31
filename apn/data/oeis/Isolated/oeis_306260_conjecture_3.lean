@@ -45,3 +45,5 @@ Conjecture 3: Each $n = 0,1,2,...$ can be written as $4 \cdot w^2 + x(4x+1) + y(
 theorem oeis_306260_conjecture_3 (n : ℕ) :
   ∃ w x y z : ℕ, n = 4 * w^2 + x * (4 * x + 1) + y * (4 * y - 2) + z * (4 * z - 3) :=
 by sorry
+
+theorem oeis_306260_conjecture_3.disproof : ¬ (type_of% @oeis_306260_conjecture_3) := sorry

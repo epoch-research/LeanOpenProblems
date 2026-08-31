@@ -41,3 +41,5 @@ theorem erdos_1097 : ∃ C > (0 : ℝ), ∀ (A : Finset ℤ),
   sorry
 
 end Erdos1097
+
+theorem Erdos1097.erdos_1097.disproof : ¬ (type_of% @Erdos1097.erdos_1097) := sorry

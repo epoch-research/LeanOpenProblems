@@ -49,3 +49,5 @@ theorem oeis_a263326_conjecture_1 :
   -- The fractional parts are distinct for distinct n
   (∀ n₁ n₂ : ℕ, n₁ > 0 → n₂ > 0 → Int.fract (sum_divisors_inv_pow n₁ k s) = Int.fract (sum_divisors_inv_pow n₂ k s) → n₁ = n₂) := by
   sorry
+
+theorem oeis_a263326_conjecture_1.disproof : ¬ (type_of% @oeis_a263326_conjecture_1) := sorry

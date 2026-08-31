@@ -48,3 +48,5 @@ noncomputable def A242775 (n : ℕ) : ℕ :=
 /-- OEIS A242775 Conjecture: for $n \ge 4$, $a(n)>0$. -/
 theorem oeis_242775_conjecture_0 : ∀ n, 4 ≤ n → A242775 n > 0 := by
   sorry
+
+theorem oeis_242775_conjecture_0.disproof : ¬ (type_of% @oeis_242775_conjecture_0) := sorry

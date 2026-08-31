@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 242
@@ -41,3 +41,5 @@ theorem erdos_242.variants.schinzel_generalization
   sorry
 
 end Erdos242
+
+theorem Erdos242.erdos_242.variants.schinzel_generalization.disproof : ¬ (type_of% @Erdos242.erdos_242.variants.schinzel_generalization) := sorry

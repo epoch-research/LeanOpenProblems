@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 66
@@ -39,3 +39,5 @@ theorem erdos_66 : ∃ (A : Set ℕ) (c : ℝ), c ≠ 0 ∧
 -- TODO(firsching): add the theorems/conjectures for the comments on the page
 
 end Erdos66
+
+theorem Erdos66.erdos_66.disproof : ¬ (type_of% @Erdos66.erdos_66) := sorry

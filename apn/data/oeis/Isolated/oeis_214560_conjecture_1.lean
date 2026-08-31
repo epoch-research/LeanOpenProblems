@@ -28,3 +28,5 @@ def a (n : ℕ) : ℕ :=
 /-- Conjecture: for every x>=0 there is an i such that a(n)>x for n>i. -/
 theorem oeis_214560_conjecture_1 : ∀ (x : ℕ), ∃ (i : ℕ), ∀ (n : ℕ), i < n → a n > x := by
   sorry
+
+theorem oeis_214560_conjecture_1.disproof : ¬ (type_of% @oeis_214560_conjecture_1) := sorry

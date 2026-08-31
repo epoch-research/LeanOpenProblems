@@ -43,3 +43,5 @@ noncomputable def A100800 (n : ℕ) : ℕ :=
 /-- A100800 Conjecture: No term is zero. -/
 theorem oeis_100800_conjecture_0 : ∀ (n : ℕ), n ≠ 0 → A100800 n ≠ 0 := by
   sorry
+
+theorem oeis_100800_conjecture_0.disproof : ¬ (type_of% @oeis_100800_conjecture_0) := sorry

@@ -64,3 +64,5 @@ Formalized as: The image of the sequence $A338238$ for $n \ge 2$ contains infini
 theorem A338238_infinitely_often_primorial_conjecture :
   Set.Infinite { val : ℕ | (∃ (n : ℕ), n ≥ 2 ∧ val = A338238 n) ∧ (∃ (m : ℕ), val = Nat_primorial m) } :=
   by sorry
+
+theorem A338238_infinitely_often_primorial_conjecture.disproof : ¬ (type_of% @A338238_infinitely_often_primorial_conjecture) := sorry

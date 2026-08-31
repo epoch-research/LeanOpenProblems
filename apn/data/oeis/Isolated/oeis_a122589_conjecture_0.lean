@@ -59,3 +59,5 @@ theorem oeis_a122589_conjecture_0 :
 
 instance : Coe ℕ ℝ where
   coe := Nat.cast
+
+theorem oeis_a122589_conjecture_0.disproof : ¬ (type_of% @oeis_a122589_conjecture_0) := sorry

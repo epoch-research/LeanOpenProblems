@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 208
@@ -38,3 +38,5 @@ theorem erdos_208.parts.i :
     ∀ ε > (0 : ℝ), (fun n => (s (n + 1) - s n : ℝ)) =O[atTop] (fun n => (s n : ℝ)^ε) := by sorry
 
 end Erdos208
+
+theorem Erdos208.erdos_208.parts.i.disproof : ¬ (type_of% @Erdos208.erdos_208.parts.i) := sorry

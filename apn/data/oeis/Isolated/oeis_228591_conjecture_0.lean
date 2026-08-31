@@ -38,3 +38,5 @@ theorem oeis_228591_conjecture_0 : ∀ n : ℕ, 15 < n → a n ≠ 0 := by
 -- theorem a_two : a 2 = 0 := by trivial
 -- theorem a_three : a 3 = 0 := by trivial
 -- theorem a_four : a 4 = 0 := by trivial
+
+theorem oeis_228591_conjecture_0.disproof : ¬ (type_of% @oeis_228591_conjecture_0) := sorry

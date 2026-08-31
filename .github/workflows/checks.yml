@@ -7,26 +7,19 @@ on:
       - main
 
 jobs:
-  # The CI image tags (LeanOpenProblems_*_<version>) are keyed on
-  # apn.__version__, while the wheel build uses pyproject.toml's version. The two
-  # must stay in lockstep (scripts/bump_version.py edits both) -- this guards
-  # against a bump that touches only one of them.
+  # apn.__version__ (CI image tags) and pyproject.toml (wheel) must stay in
+  # lockstep; scripts/bump_version.py edits both.
   check-version:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version-file: pyproject.toml
-
       - name: Check apn.__version__ matches pyproject.toml
         run: |-
           version_from_init="$(python -c "import apn; print(apn.__version__)")"
@@ -42,100 +35,60 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version-file: pyproject.toml
+      - run: uv sync
+      - run: uv run mypy
 
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run mypy
-        run: uv run mypy
-
-  # The gold-proof sweep (~2h of sequential SafeVerify checks) and the
-  # isolation suites (~55m compiling every committed spec in-container) each
-  # dwarf the rest of the suite (~7m), so they run as their own jobs for
-  # early signal. All three jobs build the Lean sandbox image from the
-  # Dockerfile in-test; a stock runner's ~14GB disk cannot hold that build.
-  tests:
+  # One job per suite for parallel early signal; the container suites build the
+  # Lean sandbox image in-test (too big for a stock runner's disk).
+  pytest:
+    name: ${{ matrix.suite }}
     runs-on: epoch-research-x64-64core-256GB-2040GB
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Fast pure-Python/mocked tests: everything the suites below don't own.
+          - suite: tests
+            args: >-
+              --ignore=tests/test_gold_proofs.py
+              --ignore=tests/test_oeis_isolation.py
+              --ignore=tests/test_erdos_isolation.py
+              --ignore=tests/test_erdos_autoformalized_isolation.py
+              --ignore=tests/test_fc100_isolation.py
+              --ignore=tests/test_singlefile_proof.py
+              --ignore=tests/test_lean_vuln_e2e.py
+              --ignore=tests/test_comparator_security.py
+              --ignore=tests/test_comparator_primitives.py
+          - suite: comparator-tests
+            args: >-
+              tests/test_singlefile_proof.py
+              tests/test_lean_vuln_e2e.py
+              tests/test_comparator_security.py
+              tests/test_comparator_primitives.py
+          - suite: isolation
+            args: >-
+              tests/test_oeis_isolation.py
+              tests/test_erdos_isolation.py
+              tests/test_erdos_autoformalized_isolation.py
+              tests/test_fc100_isolation.py
+          - suite: gold-proofs
+            args: tests/test_gold_proofs.py
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version-file: pyproject.toml
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run tests
-        run: >-
-          uv run pytest
-          --ignore=tests/test_gold_proofs.py
-          --ignore=tests/test_oeis_isolation.py
-          --ignore=tests/test_erdos_isolation.py
-          --ignore=tests/test_fc100_isolation.py
-
-  isolation:
-    runs-on: epoch-research-x64-64core-256GB-2040GB
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: pyproject.toml
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run the isolation suites
-        run: >-
-          uv run pytest
-          tests/test_oeis_isolation.py
-          tests/test_erdos_isolation.py
-          tests/test_fc100_isolation.py
-
-  gold-proofs:
-    runs-on: epoch-research-x64-64core-256GB-2040GB
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: pyproject.toml
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run the gold-proof sweep
-        run: uv run pytest tests/test_gold_proofs.py
+      - run: uv sync
+      - name: Run ${{ matrix.suite }}
+        run: uv run pytest ${{ matrix.args }}

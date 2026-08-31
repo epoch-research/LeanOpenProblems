@@ -43,3 +43,5 @@ theorem oeis_268197_conjecture_i :
     n = 3 ∨ n = 7 ∨ n = 15 ∨ n = 23 ∨ n = 43 ∨ n = 55 ∨ n = 463 ∨
     (∃ k : ℕ, n = 4^k * 1 ∨ n = 4^k * 31 ∨ n = 4^k * 34)) :=
 by sorry
+
+theorem oeis_268197_conjecture_i.disproof : ¬ (type_of% @oeis_268197_conjecture_i) := sorry

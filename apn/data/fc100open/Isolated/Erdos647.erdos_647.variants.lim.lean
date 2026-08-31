@@ -36,3 +36,5 @@ theorem erdos_647.variants.lim :
   sorry
 
 end Erdos647
+
+theorem Erdos647.erdos_647.variants.lim.disproof : ¬ (type_of% @Erdos647.erdos_647.variants.lim) := sorry

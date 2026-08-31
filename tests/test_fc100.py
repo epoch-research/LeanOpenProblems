@@ -22,6 +22,7 @@ from apn.dataset import (
 )
 from scripts.fc100_isolation import SORRY_ALLOWLIST
 from scripts.fc_statements import strip_comments
+from scripts.isolation import disproof_declaration
 
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
 _DECL_RE = re.compile(r"(?m)^(?:theorem|lemma)\b")
@@ -125,13 +126,14 @@ def test_sketches_have_no_example_commands() -> None:
 
 
 def test_sketches_sorry_count() -> None:
-    # Exactly one `sorry` per sketch -- the target's proof -- except the
-    # allowlisted EllipticCurveRank spec, which also keeps FC's own sorry'd
-    # Mordell-Weil instance (that sample implicitly requires proving it too).
+    # Exactly two `sorry`s per sketch -- the target's proof and the appended
+    # `.disproof` declaration's -- except the allowlisted EllipticCurveRank
+    # spec, which also keeps FC's own sorry'd Mordell-Weil instance (that
+    # sample implicitly requires proving it too).
     for sample in fc100open_dataset():
         assert sample.metadata is not None
         n = len(_SORRY_RE.findall(strip_comments(sample.metadata["sketch"])))
-        expected = 2 if sample.id in SORRY_ALLOWLIST else 1
+        expected = 3 if sample.id in SORRY_ALLOWLIST else 2
         assert n == expected, f"{sample.id}: {n} sorries"
 
 
@@ -149,7 +151,8 @@ _DEPENDENCY_LEMMA_SPECS = {
 def test_every_target_has_isolated_single_theorem_spec() -> None:
     # Pure-Python structural guard over the committed, Lean-authored Isolated/
     # files (CI has no Lean toolchain); the authoritative re-extraction check
-    # lives in tests/test_fc100_isolation.py.
+    # lives in tests/test_fc100_isolation.py. Each spec carries its target,
+    # any dependency lemmas, and the appended `.disproof` declaration.
     for row in load_manifest(FC100_DIR):
         if row.excluded is not None:
             continue
@@ -158,7 +161,8 @@ def test_every_target_has_isolated_single_theorem_spec() -> None:
         assert "import FormalConjectures.Util.ProblemImports" in text, row.id
         short = row.id.rsplit(".", 1)[-1]
         assert re.search(rf"\b(?:theorem|lemma)\s+.*{re.escape(short)}\b", text), row.id
-        expected = _DEPENDENCY_LEMMA_SPECS.get(row.id, 1)
+        assert text.rstrip().endswith(disproof_declaration(row.decl_name)), row.id
+        expected = _DEPENDENCY_LEMMA_SPECS.get(row.id, 1) + 1
         assert len(_DECL_RE.findall(text)) == expected, row.id
 
 

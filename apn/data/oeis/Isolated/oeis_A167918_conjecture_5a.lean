@@ -64,3 +64,5 @@ Formally, is the sequence $n \mapsto (S_{a(n)} / S_n)$ bounded?
 -/
 theorem oeis_A167918_conjecture_5a :
   ∃ C : ℕ, ∀ n : ℕ, n > 0 → A167918_ratio n ≤ C := by sorry
+
+theorem oeis_A167918_conjecture_5a.disproof : ¬ (type_of% @oeis_A167918_conjecture_5a) := sorry

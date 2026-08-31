@@ -55,3 +55,5 @@ This formalizes the statement that the main A261627 conjecture implies both Gold
 -/
 theorem oeis_261627_conjecture_1 : A261627_conjecture → goldbach_conjecture ∧ lemoine_conjecture := by
   sorry
+
+theorem oeis_261627_conjecture_1.disproof : ¬ (type_of% @oeis_261627_conjecture_1) := sorry

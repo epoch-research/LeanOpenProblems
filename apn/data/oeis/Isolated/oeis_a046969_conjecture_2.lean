@@ -49,3 +49,5 @@ theorem oeis_a046969_conjecture_2 (n : ℕ) :
     6 ∣ (((a n) / 12 : ℤ) - (n : ℤ)) ∧
     6 ∣ (((a (n + 2)) / 12 : ℤ) - ((n + 2) : ℤ)) :=
 by sorry
+
+theorem oeis_a046969_conjecture_2.disproof : ¬ (type_of% @oeis_a046969_conjecture_2) := sorry

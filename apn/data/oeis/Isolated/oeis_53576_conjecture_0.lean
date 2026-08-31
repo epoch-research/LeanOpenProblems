@@ -35,3 +35,5 @@ theorem oeis_53576_conjecture_0 :
     let F33 : ℕ := Nat.fermatNumber N_idx
     a N = if F33.Prime then F33 else 2 ^ (N + 1) := by
   sorry
+
+theorem oeis_53576_conjecture_0.disproof : ¬ (type_of% @oeis_53576_conjecture_0) := sorry

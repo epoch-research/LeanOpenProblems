@@ -50,3 +50,5 @@ Conjecture A197630: Is 13 the only Lerch quotient that is itself prime?
 The sequence $a(n)$ is the Lerch quotient, and 13 is the value for $n=3$ (prime $p=5$).
 -/
 theorem oeis_197630_conjecture_0 : ∀ n : ℕ, 1 < n → Nat.Prime (a n) → a n = 13 := by sorry
+
+theorem oeis_197630_conjecture_0.disproof : ¬ (type_of% @oeis_197630_conjecture_0) := sorry

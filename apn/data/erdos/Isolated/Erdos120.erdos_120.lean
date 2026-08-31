@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -/
 
-import FormalConjectures.Util.ProblemImports
+import FormalConjecturesUtil
 
 /-!
 # Erdős Problem 120
@@ -45,3 +45,5 @@ theorem erdos_120 : ∀ A : Set ℝ, A.Infinite → Erdos120For A := by
   sorry
 
 end Erdos120
+
+theorem Erdos120.erdos_120.disproof : ¬ (type_of% @Erdos120.erdos_120) := sorry
