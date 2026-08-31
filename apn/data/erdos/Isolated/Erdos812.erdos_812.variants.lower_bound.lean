@@ -43,3 +43,5 @@ theorem erdos_812.variants.lower_bound :
 --  TODO: Add Erdos Problem 165 implication when Erdos Problem 165 is formalized.
 
 end Erdos812
+
+theorem Erdos812.erdos_812.variants.lower_bound.disproof : ¬ (type_of% @Erdos812.erdos_812.variants.lower_bound) := sorry

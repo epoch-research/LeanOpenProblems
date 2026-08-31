@@ -50,3 +50,5 @@ theorem erdos_89.variants.n_dvd_log_n :
 -- TODO(firsching): formalize any remaining remarks from the erdosproblems.com page.
 
 end Erdos89
+
+theorem Erdos89.erdos_89.variants.n_dvd_log_n.disproof : ¬ (type_of% @Erdos89.erdos_89.variants.n_dvd_log_n) := sorry

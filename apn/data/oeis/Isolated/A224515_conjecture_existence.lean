@@ -39,3 +39,5 @@ This ensures that $a(n) \ge 0$ in the context of the OEIS definition, as the set
 theorem A224515_conjecture_existence (n : ℕ) :
   ∃ k : ℕ, Nat.xor (k ^ 2) ((k + 1) ^ 2) = (2 * n + 1) ^ 2 := by
   sorry
+
+theorem A224515_conjecture_existence.disproof : ¬ (type_of% @A224515_conjecture_existence) := sorry

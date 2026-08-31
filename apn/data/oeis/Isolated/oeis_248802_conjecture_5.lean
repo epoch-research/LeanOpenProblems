@@ -26,3 +26,5 @@ Conjecture 5: a(138n+6) = 1669 for n >= 0 and n <> 2 mod 5.
 -/
 theorem oeis_248802_conjecture_5 (n : ℕ) (h : n % 5 ≠ 2) : a (138 * n + 6) = 1669 := by
   sorry
+
+theorem oeis_248802_conjecture_5.disproof : ¬ (type_of% @oeis_248802_conjecture_5) := sorry

@@ -51,3 +51,5 @@ theorem oeis_3162_supercongruence_conjecture :
       n > 0 → k > 0 → Nat.Prime p → p ≥ 5
       → (A003162.b (n * p ^ k) : ℤ) ≡ (A003162.b (n * p ^ (k - 1)) : ℤ) [ZMOD (p : ℤ) ^ (3 * k)] :=
   by sorry
+
+theorem oeis_3162_supercongruence_conjecture.disproof : ¬ (type_of% @oeis_3162_supercongruence_conjecture) := sorry

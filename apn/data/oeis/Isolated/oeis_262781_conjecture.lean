@@ -61,3 +61,5 @@ theorem oeis_262781_conjecture :
   ∧
   (∀ n : ℕ, A262781 n = 1 ↔ n ∈ A262781_ones) :=
 by sorry
+
+theorem oeis_262781_conjecture.disproof : ¬ (type_of% @oeis_262781_conjecture) := sorry

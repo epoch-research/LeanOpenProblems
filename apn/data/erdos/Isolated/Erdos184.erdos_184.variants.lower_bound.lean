@@ -61,3 +61,5 @@ theorem erdos_184.variants.lower_bound :
   sorry
 
 end Erdos184
+
+theorem Erdos184.erdos_184.variants.lower_bound.disproof : ¬ (type_of% @Erdos184.erdos_184.variants.lower_bound) := sorry

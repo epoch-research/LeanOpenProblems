@@ -42,3 +42,5 @@ theorem gilbreath_conjecture (k : ℕ+) : d k 0 = 1 := by
   sorry
 
 end Gilbreath
+
+theorem Gilbreath.gilbreath_conjecture.disproof : ¬ (type_of% @Gilbreath.gilbreath_conjecture) := sorry

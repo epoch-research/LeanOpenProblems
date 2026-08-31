@@ -42,3 +42,5 @@ A338483: Are there prime terms greater than 31?
 theorem oeis_338483_conjecture_0 :
   ∃ n : ℕ, n > 0 ∧ Nat.Prime (a n) ∧ a n > 31 := by
   sorry
+
+theorem oeis_338483_conjecture_0.disproof : ¬ (type_of% @oeis_338483_conjecture_0) := sorry

@@ -65,3 +65,5 @@ theorem erdos_340.variants.co_density_zero_sub :
   sorry
 
 end Erdos340
+
+theorem Erdos340.erdos_340.variants.co_density_zero_sub.disproof : ¬ (type_of% @Erdos340.erdos_340.variants.co_density_zero_sub) := sorry

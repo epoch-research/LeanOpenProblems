@@ -31,3 +31,5 @@ theorem irrational_five : ∃ x, Irrational x ∧ riemannZeta 5 = x := by
   sorry
 
 end RiemannZetaValues
+
+theorem RiemannZetaValues.irrational_five.disproof : ¬ (type_of% @RiemannZetaValues.irrational_five) := sorry

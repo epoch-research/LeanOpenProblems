@@ -55,3 +55,5 @@ theorem oeis_228143_conjecture_1 :
     ∃ C : PowerSeries ℤ,
       (PowerSeries.map (Int.castRingHom ℚ)) (C ^ 8) = OGF_A_scaled :=
   by sorry
+
+theorem oeis_228143_conjecture_1.disproof : ¬ (type_of% @oeis_228143_conjecture_1) := sorry

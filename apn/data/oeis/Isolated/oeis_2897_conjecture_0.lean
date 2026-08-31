@@ -59,3 +59,5 @@ Conjecture: The g.f. is also the diagonal of the rational function 1/(1 - (x + y
 theorem oeis_2897_conjecture_0 (n : ℕ) :
   (a n : ℤ) = MvPolynomial.coeff (xyz_pow_n n) (P_n n) :=
 by sorry
+
+theorem oeis_2897_conjecture_0.disproof : ¬ (type_of% @oeis_2897_conjecture_0) := sorry

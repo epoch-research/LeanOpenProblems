@@ -54,3 +54,5 @@ floor(T(x)/m) + floor(T(y)/m) + floor(T(z)/m) with x,y,z nonnegative integers.
 theorem oeis_256544_conjecture_0 (m : ℕ) (hm : m > 0) (n : ℕ) :
     ∃ x y z : ℕ, n = triangular x / m + triangular y / m + triangular z / m :=
   by sorry
+
+theorem oeis_256544_conjecture_0.disproof : ¬ (type_of% @oeis_256544_conjecture_0) := sorry

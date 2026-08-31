@@ -53,3 +53,5 @@ theorem oeis_337332_conjecture_4 (p : ℕ) (hp : Nat.Prime p) (hp_gt_3 : p > 3) 
     ) ∧
     (p % 4 = 3 → S_p = 0) :=
 by sorry
+
+theorem oeis_337332_conjecture_4.disproof : ¬ (type_of% @oeis_337332_conjecture_4) := sorry

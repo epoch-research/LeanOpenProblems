@@ -34,3 +34,5 @@ theorem oeis_361713_conjecture_2 (p r : ℕ) :
   r ≥ 2 →
   a (p ^ r) ≡ a (p ^ (r - 1)) [MOD (p ^ (4 * r + 1))] :=
 by sorry
+
+theorem oeis_361713_conjecture_2.disproof : ¬ (type_of% @oeis_361713_conjecture_2) := sorry

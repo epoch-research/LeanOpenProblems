@@ -15,15 +15,19 @@ from inspect_ai.scorer import (
 from inspect_ai.solver import TaskState
 from inspect_ai.util import OutputLimitExceededError, sandbox, store
 
-from apn.checker import SafeVerifyChecker
+from apn.checker import Claim, ProofChecker
 from apn.filetree import build_tree_from_tar, read_submission_tar
 
 logger = logging.getLogger(__name__)
 
+# Where the submit tool records the agent's declared claim (see apn.solver).
+CLAIM_STORE_KEY = "submission_claim"
+
 
 @scorer(metrics=[accuracy(), stderr()])
-def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
-    """Score a sample by checking the agent's ``Submission/Spec.lean`` with SafeVerify."""
+def proof_scorer(checker: ProofChecker) -> Scorer:
+    """Score a sample by checking the agent's ``Submission/Spec.lean`` with the
+    configured proof checker (Comparator in production)."""
 
     async def score(state: TaskState, target: Target) -> Score:
         # Per-attempt attempt index, kept in the sample store (the react/deepagent
@@ -38,18 +42,30 @@ def proof_scorer(checker: SafeVerifyChecker) -> Scorer:
             return Score(
                 value=INCORRECT,
                 explanation=str(exc),
-                metadata={"stage": "submission_oversize", "safeverify_report": None},
+                metadata={"stage": "submission_oversize", "verifier_output": None},
             )
 
         _write_submission_sidecar(state, attempt, tar)
         _record_submission_tree(state, tar)
 
-        target_spec = state.metadata["sketch"]
-        outcome = await checker.check(target_spec, tar)
+        # The claim the agent declared on its submit call. A sample scored
+        # without one (e.g. it hit its limits before ever submitting) defaults
+        # to "proof" -- deterministic, and such submissions reject anyway.
+        claim: Claim = store().get(CLAIM_STORE_KEY, "proof")
+        # The target theorem's fully qualified name (== the sample id except
+        # where the manifest overrides it; see apn.dataset.build_dataset).
+        decl = state.metadata["decl_name"]
+
+        spec = state.metadata["sketch"]
+        outcome = await checker.check(spec, tar, decl=decl, claim=claim)
         return Score(
             value=CORRECT if outcome.ok else INCORRECT,
             explanation=outcome.detail,
-            metadata={"stage": outcome.stage, "safeverify_report": outcome.report},
+            metadata={
+                "stage": outcome.stage,
+                "claim": claim,
+                "verifier_output": outcome.detail,
+            },
         )
 
     return score

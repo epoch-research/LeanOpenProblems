@@ -43,3 +43,5 @@ A210186 Conjecture: all the terms are primes and a(n) < n^2 for all n > 1.
 theorem oeis_210186_conjecture :
   (∀ n : ℕ, Nat.Prime (A210186 n)) ∧ (∀ n : ℕ, 1 < n → A210186 n < n^2) := by
   sorry
+
+theorem oeis_210186_conjecture.disproof : ¬ (type_of% @oeis_210186_conjecture) := sorry

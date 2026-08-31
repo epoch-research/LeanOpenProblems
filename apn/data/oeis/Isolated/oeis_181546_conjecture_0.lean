@@ -48,3 +48,5 @@ We state the limit for $L \ge 0$, corresponding to $\mathtt{L} : \nat$.
 theorem oeis_181546_conjecture_0 (L : ℕ) :
     Tendsto (fun n => (F (n+1) L : ℝ) / (F n L : ℝ)) atTop (nhds (limit_value L)) := by
   sorry
+
+theorem oeis_181546_conjecture_0.disproof : ¬ (type_of% @oeis_181546_conjecture_0) := sorry

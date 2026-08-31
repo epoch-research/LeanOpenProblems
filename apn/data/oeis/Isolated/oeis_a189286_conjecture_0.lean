@@ -48,3 +48,5 @@ theorem oeis_a189286_conjecture_0 (n : ℕ) :
     let denominator : ℤ := ((2 * n : ℤ) - 1) * ((3 * n).choose n : ℤ)
     denominator ∣ numerator_int :=
 by sorry
+
+theorem oeis_a189286_conjecture_0.disproof : ¬ (type_of% @oeis_a189286_conjecture_0) := sorry

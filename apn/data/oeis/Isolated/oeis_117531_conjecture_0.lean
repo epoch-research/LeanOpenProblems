@@ -34,3 +34,5 @@ Conjecture: $a(n) < n$ for $n > 13$.
 -/
 theorem oeis_117531_conjecture_0 (n : ℕ) (h : n > 13) : a n < n := by
   sorry
+
+theorem oeis_117531_conjecture_0.disproof : ¬ (type_of% @oeis_117531_conjecture_0) := sorry

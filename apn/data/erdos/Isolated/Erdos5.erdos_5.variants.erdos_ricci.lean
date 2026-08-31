@@ -78,3 +78,5 @@ theorem erdos_5.variants.erdos_ricci : 0 < volume limitPointSet := by
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.erdos_ricci.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.erdos_ricci) := sorry

@@ -49,3 +49,5 @@ Conjecture 1 from A347865: a(n) > 0 except for n = 744.
 -/
 theorem oeis_347865_conjecture_0 (n : ℕ) : (a n > 0) ↔ (n ≠ 744) := by
   sorry
+
+theorem oeis_347865_conjecture_0.disproof : ¬ (type_of% @oeis_347865_conjecture_0) := sorry

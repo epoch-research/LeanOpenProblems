@@ -67,3 +67,5 @@ theorem erdos_595.variants.folkman_finite :
   sorry
 
 end Erdos595
+
+theorem Erdos595.erdos_595.variants.folkman_finite.disproof : ¬ (type_of% @Erdos595.erdos_595.variants.folkman_finite) := sorry

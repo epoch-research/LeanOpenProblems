@@ -29,3 +29,5 @@ theorem oeis_234360_conjecture_0 :
   (∀ n, 1 < n → 0 < a n) ∧
   (∀ n, 5 < n → ∃ k, 0 < k ∧ k < n ∧ Nat.Prime ((k + 1) ^ (Nat.totient (n - k) / 2) - k)) :=
 by sorry
+
+theorem oeis_234360_conjecture_0.disproof : ¬ (type_of% @oeis_234360_conjecture_0) := sorry

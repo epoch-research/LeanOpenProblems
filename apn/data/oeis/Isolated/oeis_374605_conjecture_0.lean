@@ -32,3 +32,5 @@ theorem oeis_374605_conjecture_0 (p : ℕ) (hp : Nat.Prime p) (hp5 : 5 ≤ p) :
     (2 * p + 3) / 3 ≤ n →
     n ≤ p - 1 →
     (p ^ 3 : ℕ) ∣ a n := by sorry
+
+theorem oeis_374605_conjecture_0.disproof : ¬ (type_of% @oeis_374605_conjecture_0) := sorry

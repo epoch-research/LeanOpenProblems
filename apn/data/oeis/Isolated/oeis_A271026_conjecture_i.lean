@@ -51,3 +51,5 @@ $n$ belongs to the finite set $\{0, 47, 61, 62, 112, 175, 448, 573, 714, 1073, 1
 theorem oeis_A271026_conjecture_i (n : ℕ) :
   A271026 n > 0 ∧ (A271026 n = 1 ↔ n ∈ A271026_exceptional_set) := by
   sorry
+
+theorem oeis_A271026_conjecture_i.disproof : ¬ (type_of% @oeis_A271026_conjecture_i) := sorry

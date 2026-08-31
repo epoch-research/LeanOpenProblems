@@ -70,3 +70,5 @@ Note: The set of such sequences is finite, as their maximum element is bounded b
 theorem oeis_52709_conjecture_0 (n : ℕ) (h : 0 < n) [Fintype (sequences_counted_by_A052709 n)] :
     A052709 n = Fintype.card (sequences_counted_by_A052709 n) :=
   by sorry
+
+theorem oeis_52709_conjecture_0.disproof : ¬ (type_of% @oeis_52709_conjecture_0) := sorry

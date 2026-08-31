@@ -75,3 +75,5 @@ theorem oeis_308656_conjecture_2 :
     ∃ f : ℤ → ℤ, f ∈ set_of_polynomials_F ∧
     ∃ a b : ℕ, ∃ c d : ℤ, (n : ℤ) = square_term a b + f c + poly_g d := by
   sorry
+
+theorem oeis_308656_conjecture_2.disproof : ¬ (type_of% @oeis_308656_conjecture_2) := sorry

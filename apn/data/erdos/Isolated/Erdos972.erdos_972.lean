@@ -38,3 +38,5 @@ theorem erdos_972 : ∀ α > 1, Irrational α → (primeSet α).Infinite := by
   sorry
 
 end Erdos972
+
+theorem Erdos972.erdos_972.disproof : ¬ (type_of% @Erdos972.erdos_972) := sorry

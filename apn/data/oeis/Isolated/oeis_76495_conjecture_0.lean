@@ -30,3 +30,5 @@ That is, it is conjectured that there is no positive natural number $x$ such tha
 $\sigma_1(x) \bmod x = 5$.
 -/
 theorem oeis_76495_conjecture_0 : A076495 5 = 0 := by sorry
+
+theorem oeis_76495_conjecture_0.disproof : ¬ (type_of% @oeis_76495_conjecture_0) := sorry

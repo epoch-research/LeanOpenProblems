@@ -57,3 +57,5 @@ theorem oeis_51293_conjecture_0 :
       )
       atTop
       (nhds 0) := by sorry
+
+theorem oeis_51293_conjecture_0.disproof : ¬ (type_of% @oeis_51293_conjecture_0) := sorry

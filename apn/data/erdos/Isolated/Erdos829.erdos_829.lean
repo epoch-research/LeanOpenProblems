@@ -49,3 +49,5 @@ namespace variants
 end variants
 
 end Erdos829
+
+theorem Erdos829.erdos_829.disproof : ¬ (type_of% @Erdos829.erdos_829) := sorry

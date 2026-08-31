@@ -33,3 +33,5 @@ theorem erdos_406.variants.one_two :
   sorry
 
 end Erdos406
+
+theorem Erdos406.erdos_406.variants.one_two.disproof : ¬ (type_of% @Erdos406.erdos_406.variants.one_two) := sorry

@@ -50,3 +50,5 @@ We conjecture that, if we apply the Eratosthenes-like sieve to b(n) and remove 1
 theorem oeis_a250131_conjecture :
     ∀ n : ℕ, n ∈ sieved_indices → Nat.Prime (b n) := by
   sorry
+
+theorem oeis_a250131_conjecture.disproof : ¬ (type_of% @oeis_a250131_conjecture) := sorry

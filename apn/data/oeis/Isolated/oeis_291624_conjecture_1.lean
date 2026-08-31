@@ -44,3 +44,5 @@ def A291624 (n : ℕ) : ℕ :=
 /-- Conjecture: a(n) > 0 for all n > 1 not divisible by 4. -/
 theorem oeis_291624_conjecture_1 (n : ℕ) : n > 1 ∧ ¬ (4 ∣ n) → A291624 n > 0 := by
   sorry
+
+theorem oeis_291624_conjecture_1.disproof : ¬ (type_of% @oeis_291624_conjecture_1) := sorry

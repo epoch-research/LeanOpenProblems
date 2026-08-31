@@ -61,3 +61,5 @@ noncomputable def W (k r : ℕ) : ℕ := sInf (mixedMonoAPGuaranteeSet k r)
 theorem W_3_37_lower : W 3 37 > 1338 := sorry
 
 end Green14
+
+theorem Green14.W_3_37_lower.disproof : ¬ (type_of% @Green14.W_3_37_lower) := sorry

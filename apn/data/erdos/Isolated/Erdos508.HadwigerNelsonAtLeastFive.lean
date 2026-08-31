@@ -45,3 +45,7 @@ to 5 in 2018 using a graph that has >1000 nodes.
 theorem HadwigerNelsonAtLeastFive :
     5 ≤ χ(ℝ²) := by
   sorry
+
+end Erdos508
+
+theorem Erdos508.HadwigerNelsonAtLeastFive.disproof : ¬ (type_of% @Erdos508.HadwigerNelsonAtLeastFive) := sorry

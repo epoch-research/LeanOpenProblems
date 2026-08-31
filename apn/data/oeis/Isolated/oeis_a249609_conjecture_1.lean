@@ -45,3 +45,5 @@ An odious number is one whose population count is odd.
 -/
 theorem oeis_a249609_conjecture_1 (n : ℕ) : a n = 0 ↔ n ∈ ({0, 1, 2, 7, 8} : Finset ℕ) := by
   sorry
+
+theorem oeis_a249609_conjecture_1.disproof : ¬ (type_of% @oeis_a249609_conjecture_1) := sorry

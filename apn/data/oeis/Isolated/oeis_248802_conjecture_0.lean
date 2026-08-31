@@ -24,3 +24,5 @@ def a (n : ℕ) : ℕ := (2 ^ (2 ^ n + 2) + 3).minFac
 /-- OEIS A248802 Conjecture 1: a(10n+2) = 67 for n >= 0. -/
 theorem oeis_248802_conjecture_0 (n : ℕ) : a (10 * n + 2) = 67 :=
   by sorry
+
+theorem oeis_248802_conjecture_0.disproof : ¬ (type_of% @oeis_248802_conjecture_0) := sorry

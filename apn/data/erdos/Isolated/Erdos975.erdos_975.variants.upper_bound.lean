@@ -51,3 +51,5 @@ theorem erdos_975.variants.upper_bound (f : ℤ[X]) (hf : Irreducible f)
   sorry
 
 end Erdos975
+
+theorem Erdos975.erdos_975.variants.upper_bound.disproof : ¬ (type_of% @Erdos975.erdos_975.variants.upper_bound) := sorry

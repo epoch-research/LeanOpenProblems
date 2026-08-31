@@ -109,3 +109,5 @@ theorem oeis_255916_conjecture_i :
     3 ≤ j ∧ j ≤ k →
     ((∀ (n : ℕ), is_sum_of_G7_Pj_Pk n j k) ↔ (j, k) ∈ sun_polygonal_pairs_set)) :=
 by sorry
+
+theorem oeis_255916_conjecture_i.disproof : ¬ (type_of% @oeis_255916_conjecture_i) := sorry

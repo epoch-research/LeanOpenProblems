@@ -34,3 +34,5 @@ theorem erdos_723.variants.leq_11 {P L : Type} [Membership P L] [Fintype P] [Fin
   sorry
 
 end Erdos723
+
+theorem Erdos723.erdos_723.variants.leq_11.disproof : ¬ (type_of% @Erdos723.erdos_723.variants.leq_11) := sorry

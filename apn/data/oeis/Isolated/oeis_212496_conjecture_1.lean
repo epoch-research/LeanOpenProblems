@@ -57,3 +57,5 @@ theorem oeis_212496_conjecture_1 (n : ℕ) :
   (n > 1 → b n < -1 / sqrt (n : ℝ)) ∧
   (n > 2008 → b n > -log (log (n : ℝ)) / sqrt (n : ℝ)) :=
 by sorry
+
+theorem oeis_212496_conjecture_1.disproof : ¬ (type_of% @oeis_212496_conjecture_1) := sorry

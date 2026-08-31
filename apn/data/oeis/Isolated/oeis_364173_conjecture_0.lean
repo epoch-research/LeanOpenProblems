@@ -41,3 +41,5 @@ theorem oeis_364173_conjecture_0
   ≡ (Classical.choose (h_int (n * p ^ (r - 1))) : ℤ)
   [ZMOD ((p : ℤ) ^ (3 * r))] :=
 by sorry
+
+theorem oeis_364173_conjecture_0.disproof : ¬ (type_of% @oeis_364173_conjecture_0) := sorry

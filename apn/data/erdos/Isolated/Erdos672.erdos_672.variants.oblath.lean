@@ -38,3 +38,5 @@ lemma erdos_672.variants.oblath :
   sorry
 
 end Erdos672
+
+theorem Erdos672.erdos_672.variants.oblath.disproof : ¬ (type_of% @Erdos672.erdos_672.variants.oblath) := sorry

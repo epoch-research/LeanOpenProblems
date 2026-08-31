@@ -66,3 +66,5 @@ We require $k > 0$ for the formula to be well-defined (due to $\sqrt{k}$).
 theorem oeis_380275_conjecture_general (k : ℕ) (hk : k > 0) :
   Asymptotics.IsEquivalent Filter.atTop (fun n => A_k_n k n) (q_factorial_asymptotic_term_func k) :=
 by sorry
+
+theorem oeis_380275_conjecture_general.disproof : ¬ (type_of% @oeis_380275_conjecture_general) := sorry

@@ -45,3 +45,5 @@ theorem oeis_228304_conjecture_0 (p : ℕ) (hp : Nat.Prime p) (h_odd : p ≠ 2) 
     let C : Matrix N N ℤ := fun i j => c (i.val + j.val)
     (Matrix.det A ≡ (-1 : ℤ) ^ half_minus_one [ZMOD p]) ∧ (Matrix.det C ≡ 1 [ZMOD p]) := by
   sorry
+
+theorem oeis_228304_conjecture_0.disproof : ¬ (type_of% @oeis_228304_conjecture_0) := sorry

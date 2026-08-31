@@ -57,3 +57,5 @@ This is equivalent to $\forall n : \mathbb{N}, a(n) \neq 0$.
 -/
 theorem a_never_zero (n : ℕ) : a n ≠ 0 := by
   sorry
+
+theorem a_never_zero.disproof : ¬ (type_of% @a_never_zero) := sorry

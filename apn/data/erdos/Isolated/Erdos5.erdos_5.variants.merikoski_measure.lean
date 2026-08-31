@@ -81,3 +81,5 @@ theorem erdos_5.variants.merikoski_measure : ∀ T > (0 : ℝ),
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.merikoski_measure.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.merikoski_measure) := sorry

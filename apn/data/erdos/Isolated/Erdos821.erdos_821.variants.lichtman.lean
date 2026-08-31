@@ -54,3 +54,5 @@ theorem erdos_821.variants.lichtman :
   sorry
 
 end Erdos821
+
+theorem Erdos821.erdos_821.variants.lichtman.disproof : ¬ (type_of% @Erdos821.erdos_821.variants.lichtman) := sorry

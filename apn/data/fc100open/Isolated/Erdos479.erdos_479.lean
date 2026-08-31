@@ -32,3 +32,5 @@ theorem erdos_479 : ∀ᵉ (k > 1), { n | 2 ^ n ≡ k [MOD n]}.Infinite := by
   sorry
 
 end Erdos479
+
+theorem Erdos479.erdos_479.disproof : ¬ (type_of% @Erdos479.erdos_479) := sorry

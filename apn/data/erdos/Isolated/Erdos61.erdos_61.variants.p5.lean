@@ -51,3 +51,5 @@ theorem erdos_61.variants.p5 :
   sorry
 
 end Erdos61
+
+theorem Erdos61.erdos_61.variants.p5.disproof : ¬ (type_of% @Erdos61.erdos_61.variants.p5) := sorry

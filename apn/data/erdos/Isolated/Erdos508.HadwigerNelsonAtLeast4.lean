@@ -42,3 +42,7 @@ or the [Golomb graph](https://en.wikipedia.org/wiki/Golomb_graph) graph.
 -/
 theorem HadwigerNelsonAtLeast4 : 4 ≤ χ(ℝ²) := by
   sorry
+
+end Erdos508
+
+theorem Erdos508.HadwigerNelsonAtLeast4.disproof : ¬ (type_of% @Erdos508.HadwigerNelsonAtLeast4) := sorry

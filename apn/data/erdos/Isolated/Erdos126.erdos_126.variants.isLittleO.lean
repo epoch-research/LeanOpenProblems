@@ -42,3 +42,5 @@ theorem erdos_126.variants.isLittleO
   sorry
 
 end Erdos126
+
+theorem Erdos126.erdos_126.variants.isLittleO.disproof : ¬ (type_of% @Erdos126.erdos_126.variants.isLittleO) := sorry

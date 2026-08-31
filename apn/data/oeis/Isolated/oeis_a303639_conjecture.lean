@@ -44,3 +44,5 @@ Conjecture A303639: $a(n) > 0$ for all $n > 1$.
 -/
 theorem oeis_a303639_conjecture (n : ℕ) (hn : n > 1) : a n > 0 := by
   sorry
+
+theorem oeis_a303639_conjecture.disproof : ¬ (type_of% @oeis_a303639_conjecture) := sorry

@@ -64,3 +64,5 @@ Every nonnegative integer $n$ can be written as $x^2 + y^2 + z^2 + w^2$ with
 $x, y, z \in \mathbb{N}$, $w \in \mathbb{Z}$, and $x-y$ and $3z+w$ being perfect squares.
 -/
 theorem oeis_281939_conjecture_i : ∀ n : ℕ, A281939 n > 0 := by sorry
+
+theorem oeis_281939_conjecture_i.disproof : ¬ (type_of% @oeis_281939_conjecture_i) := sorry

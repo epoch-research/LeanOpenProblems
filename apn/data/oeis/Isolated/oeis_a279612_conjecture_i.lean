@@ -49,7 +49,7 @@ def a (n : ℕ) : ℕ :=
     else 0
 
 -- The set of special multipliers q.
-private def Q : Finset ℕ := {1, 2, 3, 6, 7, 8, 12, 15, 27, 31, 47, 72, 76, 92, 111, 127}
+def Q : Finset ℕ := {1, 2, 3, 6, 7, 8, 12, 15, 27, 31, 47, 72, 76, 92, 111, 127}
 
 /--
 Conjecture: (i) a(n) > 0 for all n > 0, and a(n) = 1 only for n = 16^k*q (k = 0,1,2,... and q = 1, 2, 3, 6, 7, 8, 12, 15, 27, 31, 47, 72, 76, 92, 111, 127).
@@ -58,3 +58,5 @@ theorem oeis_a279612_conjecture_i :
   (∀ n : ℕ, 0 < n → 0 < a n) ∧
   (∀ n : ℕ, 0 < n → (a n = 1 ↔ ∃ k q, q ∈ Q ∧ n = 16 ^ k * q))
 := by sorry
+
+theorem oeis_a279612_conjecture_i.disproof : ¬ (type_of% @oeis_a279612_conjecture_i) := sorry

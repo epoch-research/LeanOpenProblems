@@ -39,3 +39,5 @@ Equivalently, for $n > 1$, $a(n)=2$ if and only if $n$ is prime.
 theorem oeis_321576_conjecture_prime_iff_val_two (n : ℕ) (h_n : n > 1) :
   a n = 2 ↔ Nat.Prime n :=
 by sorry
+
+theorem oeis_321576_conjecture_prime_iff_val_two.disproof : ¬ (type_of% @oeis_321576_conjecture_prime_iff_val_two) := sorry

@@ -58,3 +58,5 @@ by sorry
 -- Define the set of coefficient triples T
 def A275298_conjecture_ii_triples : Finset (ℕ × ℕ × ℕ) :=
   List.toFinset [ (1, 1, 1), (2, 1, 1), (2, 1, 2), (2, 2, 2), (3, 1, 2) ]
+
+theorem a275298_conjecture_i_positivity.disproof : ¬ (type_of% @a275298_conjecture_i_positivity) := sorry

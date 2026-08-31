@@ -45,3 +45,5 @@ This is the specific case of the general conjecture for r=1 with D(1)=1.
 theorem oeis_a211417_conjecture_specific (n : ℕ) :
   (30 * (n : ℤ) - 1) ∣ (a n : ℤ) := by
   sorry
+
+theorem oeis_a211417_conjecture_specific.disproof : ¬ (type_of% @oeis_a211417_conjecture_specific) := sorry

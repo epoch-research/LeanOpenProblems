@@ -47,3 +47,5 @@ theorem oeis_364175_conjecture_0 (p n r : ℕ) (hp : p.Prime) (h_prime_ge_five :
   (hn : 0 < n) (hr : 0 < r) :
   a (n * p ^ r) ≡ a (n * p ^ (r - 1)) [MOD p ^ (3 * r)] := by
   sorry
+
+theorem oeis_364175_conjecture_0.disproof : ¬ (type_of% @oeis_364175_conjecture_0) := sorry

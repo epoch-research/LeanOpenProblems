@@ -36,3 +36,5 @@ theorem oeis_237578_conjecture_0 :
   -- Part 3: k < 3*sqrt(n) + 3 with pi(k*n) prime
   (∀ n : ℕ, 1 ≤ n → ∃ k : ℕ, 0 < k ∧ (k : ℝ) < 3 * Real.sqrt (n : ℝ) + 3 ∧ Nat.Prime (Nat.primeCounting (k * n))) :=
 by sorry
+
+theorem oeis_237578_conjecture_0.disproof : ¬ (type_of% @oeis_237578_conjecture_0) := sorry

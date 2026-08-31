@@ -43,3 +43,5 @@ This is the main conjecture related to A309132.
 -/
 theorem oeis_309132_conjecture_key (n : ℕ) (hn : n > 1) : a n = 1 ↔ Nat.Prime n := by
   sorry
+
+theorem oeis_309132_conjecture_key.disproof : ¬ (type_of% @oeis_309132_conjecture_key) := sorry

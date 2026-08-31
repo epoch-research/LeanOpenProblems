@@ -63,3 +63,5 @@ theorem oeis_329475_conjecture_1_full {p : ℕ} (hp : Fact p.Prime) (h_odd : p �
   (p % 12 = 5 → (∃ (x y : ℤ), (p : ℤ) = x^2 + y^2 ∧ x ≡ y [ZMOD 3] ∧ S p h_odd ≡ 4 * x * y [ZMOD p^2])) ∧
   (p % 4 = 3 → S p h_odd ≡ 0 [ZMOD p^2])
 := by sorry
+
+theorem oeis_329475_conjecture_1_full.disproof : ¬ (type_of% @oeis_329475_conjecture_1_full) := sorry

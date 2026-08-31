@@ -41,7 +41,7 @@ open PowerSeries
 open scoped PowerSeries
 
 -- We work with formal power series over ℚ.
-private abbrev PQS := PowerSeries ℚ
+abbrev PQS := PowerSeries ℚ
 
 /--
 The generating function for A097913, viewed as a power series over ℚ.
@@ -69,3 +69,5 @@ theorem poincare_series_conjecture :
 by sorry
 
 end noncomputable section
+
+theorem poincare_series_conjecture.disproof : ¬ (type_of% @poincare_series_conjecture) := sorry

@@ -41,3 +41,5 @@ theorem oeis_a120424_conjecture_0 :
   -- There are infinitely many consecutive pairs that differ by 1.
   Set.Infinite { n : ℕ | A120424 (n + 1) = A120424 n + 1 ∨ A120424 n = A120424 (n + 1) + 1 } := by
   sorry
+
+theorem oeis_a120424_conjecture_0.disproof : ¬ (type_of% @oeis_a120424_conjecture_0) := sorry

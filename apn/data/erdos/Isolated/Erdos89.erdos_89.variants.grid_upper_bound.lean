@@ -53,3 +53,5 @@ theorem erdos_89.variants.grid_upper_bound :
 -- TODO(firsching): formalize any remaining remarks from the erdosproblems.com page.
 
 end Erdos89
+
+theorem Erdos89.erdos_89.variants.grid_upper_bound.disproof : ¬ (type_of% @Erdos89.erdos_89.variants.grid_upper_bound) := sorry

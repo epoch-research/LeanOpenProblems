@@ -56,3 +56,5 @@ a(n) > 0 for all n = 0,1,2,...
 theorem oeis_A271510_conjecture_i_positive :
   ∀ n : ℕ, 0 < A271510 n
   := by sorry
+
+theorem oeis_A271510_conjecture_i_positive.disproof : ¬ (type_of% @oeis_A271510_conjecture_i_positive) := sorry

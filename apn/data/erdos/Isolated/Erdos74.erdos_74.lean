@@ -83,3 +83,5 @@ theorem erdos_74 : ∀ f : ℕ → ℕ, Tendsto f atTop atTop →
 -- TODO(firsching): add the remaining statements/comments
 
 end Erdos74
+
+theorem Erdos74.erdos_74.disproof : ¬ (type_of% @Erdos74.erdos_74) := sorry

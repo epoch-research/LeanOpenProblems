@@ -47,3 +47,5 @@ that is, the first n such that a(n) = -1 is 254602.
 theorem oeis_a108129_conjecture_0 :
   a 254602 = -1 ∧ (∀ n : ℕ, 1 ≤ n ∧ n < 254602 → a n ≠ -1) :=
 by sorry
+
+theorem oeis_a108129_conjecture_0.disproof : ¬ (type_of% @oeis_a108129_conjecture_0) := sorry

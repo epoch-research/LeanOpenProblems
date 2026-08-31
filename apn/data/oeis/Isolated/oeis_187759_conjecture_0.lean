@@ -37,3 +37,5 @@ A187759 Conjecture: If n>200 is not among 211, 226, 541, 701, then a(n)>0.
 theorem oeis_187759_conjecture_0 (n : ℕ) :
     (n > 200 ∧ n ∉ ({211, 226, 541, 701} : Finset ℕ)) → a n > 0 :=
   by sorry
+
+theorem oeis_187759_conjecture_0.disproof : ¬ (type_of% @oeis_187759_conjecture_0) := sorry

@@ -30,3 +30,5 @@ We formalize the claim for $n^k+m^k+1^k$, which generalizes the sequence A159829
 theorem oeis_159829_conjecture_0 : ∀ (k : ℕ), k ≥ 3 →
     Set.Infinite { p : ℕ | ∃ n m : ℕ, 1 ≤ n ∧ 1 ≤ m ∧ Nat.Prime p ∧ p = n ^ k + m ^ k + 1 } := by
   sorry
+
+theorem oeis_159829_conjecture_0.disproof : ¬ (type_of% @oeis_159829_conjecture_0) := sorry

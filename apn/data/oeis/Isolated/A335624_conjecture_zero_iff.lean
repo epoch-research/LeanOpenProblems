@@ -46,3 +46,5 @@ theorem A335624_conjecture_zero_iff (n : ℕ) :
       m ∈ ({1, 3, 5, 43} : Set ℕ) ∧
       n = 2 ^ (4 * k + 3) * m :=
 by sorry
+
+theorem A335624_conjecture_zero_iff.disproof : ¬ (type_of% @A335624_conjecture_zero_iff) := sorry

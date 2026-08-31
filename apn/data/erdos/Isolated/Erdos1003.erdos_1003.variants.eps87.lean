@@ -39,3 +39,5 @@ theorem erdos_1003.variants.eps87 :  ∀ᶠ x in atTop,
   sorry
 
 end Erdos1003
+
+theorem Erdos1003.erdos_1003.variants.eps87.disproof : ¬ (type_of% @Erdos1003.erdos_1003.variants.eps87) := sorry

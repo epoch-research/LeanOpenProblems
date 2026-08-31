@@ -46,3 +46,5 @@ theorem oeis_238568_conjecture :
   (∀ (n : ℕ), 1 < n → 0 < a n) ∧
   (∀ (n : ℕ), a n = 1 ↔ n ∈ A238568_special_set) :=
 by sorry
+
+theorem oeis_238568_conjecture.disproof : ¬ (type_of% @oeis_238568_conjecture) := sorry

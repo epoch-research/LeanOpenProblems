@@ -38,3 +38,5 @@ theorem erdos_1003.variants.Icc :
   sorry
 
 end Erdos1003
+
+theorem Erdos1003.erdos_1003.variants.Icc.disproof : ¬ (type_of% @Erdos1003.erdos_1003.variants.Icc) := sorry

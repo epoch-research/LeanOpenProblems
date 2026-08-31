@@ -39,3 +39,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 since no factorial less than $10000$ contained just 24 sixes. -/
 theorem oeis_72200_conjecture_0 : a 24 = 0 := by
   sorry
+
+theorem oeis_72200_conjecture_0.disproof : ¬ (type_of% @oeis_72200_conjecture_0) := sorry

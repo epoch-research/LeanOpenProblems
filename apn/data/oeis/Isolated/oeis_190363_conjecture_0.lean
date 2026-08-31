@@ -61,3 +61,5 @@ We formalize this by checking if the sequence indexed from $a(1)$ satisfies the 
 -/
 theorem oeis_190363_conjecture_0 :
   A190363_LR.IsSolution (fun n : ℕ => (a (n + 1) : ℤ)) := by sorry
+
+theorem oeis_190363_conjecture_0.disproof : ¬ (type_of% @oeis_190363_conjecture_0) := sorry

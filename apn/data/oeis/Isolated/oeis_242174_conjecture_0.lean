@@ -61,3 +61,5 @@ theorem oeis_242174_conjecture_0 :
   (∀ n : ℕ, 0 < n → (A242174 n).Prime) ∧
   (∀ r : ℕ, 2 < r → ∃ N : ℕ, ∀ n : ℕ, N ≤ n → A_franel_r r n ≠ 1) :=
   by sorry
+
+theorem oeis_242174_conjecture_0.disproof : ¬ (type_of% @oeis_242174_conjecture_0) := sorry

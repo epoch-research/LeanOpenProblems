@@ -49,3 +49,5 @@ theorem erdos_975.variants.n2_plus_1 :
   sorry
 
 end Erdos975
+
+theorem Erdos975.erdos_975.variants.n2_plus_1.disproof : ¬ (type_of% @Erdos975.erdos_975.variants.n2_plus_1) := sorry

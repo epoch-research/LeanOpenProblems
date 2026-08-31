@@ -42,3 +42,5 @@ This is equivalent to the function x \mapsto pi(T(x))$ being injective.
 theorem A262403_conjecture_ii_distinctness :
   Function.Injective pi_T := by
   sorry
+
+theorem A262403_conjecture_ii_distinctness.disproof : ¬ (type_of% @A262403_conjecture_ii_distinctness) := sorry

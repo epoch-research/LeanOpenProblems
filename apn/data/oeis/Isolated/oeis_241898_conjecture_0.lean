@@ -47,3 +47,5 @@ If this could be proved, it would only remain to check if all the numbers up to 
 -/
 theorem oeis_241898_conjecture_0 : ∀ n : ℕ, 599 < n → a n > 7 := by
   sorry
+
+theorem oeis_241898_conjecture_0.disproof : ¬ (type_of% @oeis_241898_conjecture_0) := sorry

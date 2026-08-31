@@ -42,3 +42,5 @@ The best construction to date, due to Kreisel and Kurz, has $n = 7$.
 theorem erdos_213.variants.KK08 : Erdos213For 7 := by sorry
 
 end Erdos213
+
+theorem Erdos213.erdos_213.variants.KK08.disproof : ¬ (type_of% @Erdos213.erdos_213.variants.KK08) := sorry

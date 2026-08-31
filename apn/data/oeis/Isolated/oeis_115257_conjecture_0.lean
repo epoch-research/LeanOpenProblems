@@ -43,3 +43,5 @@ are irreducible over the field of rational numbers. (Zhi-Wei Sun, Mar 23 2013)
 theorem oeis_115257_conjecture_0 :
   ∀ (n : ℕ), 1 ≤ n → Irreducible (poly_A115257_P n) ∧ Irreducible (poly_A115257_Q n) := by
   sorry
+
+theorem oeis_115257_conjecture_0.disproof : ¬ (type_of% @oeis_115257_conjecture_0) := sorry

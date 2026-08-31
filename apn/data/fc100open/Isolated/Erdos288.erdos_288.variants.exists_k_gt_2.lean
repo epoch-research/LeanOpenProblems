@@ -34,3 +34,5 @@ theorem erdos_288.variants.exists_k_gt_2 :
   sorry
 
 end Erdos288
+
+theorem Erdos288.erdos_288.variants.exists_k_gt_2.disproof : ¬ (type_of% @Erdos288.erdos_288.variants.exists_k_gt_2) := sorry

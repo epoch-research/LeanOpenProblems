@@ -55,3 +55,5 @@ Conjecture A284852: -2 < n*r - a(n) < 2 for n >= 1, where r = (3+sqrt(3))/3.
 -/
 theorem oeis_284852_conjecture : ∀ (n : ℕ), 0 < n →
   abs ((n : ℝ) * r - (a n : ℝ)) < 2 := by sorry
+
+theorem oeis_284852_conjecture.disproof : ¬ (type_of% @oeis_284852_conjecture) := sorry

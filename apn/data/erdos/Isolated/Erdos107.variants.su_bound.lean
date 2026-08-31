@@ -55,3 +55,5 @@ theorem su_bound :
   sorry
 
 end Erdos107.variants
+
+theorem Erdos107.variants.su_bound.disproof : ¬ (type_of% @Erdos107.variants.su_bound) := sorry

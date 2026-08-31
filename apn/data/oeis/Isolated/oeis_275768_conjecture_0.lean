@@ -30,3 +30,5 @@ def a (n : ℕ) : ℕ :=
 /-- OEIS A275768 conjecture 0: Does a(n) = 4 occur for any n? -/
 theorem oeis_275768_conjecture_0 : ¬ ∃ n : ℕ, a n = 4 := by
   sorry
+
+theorem oeis_275768_conjecture_0.disproof : ¬ (type_of% @oeis_275768_conjecture_0) := sorry

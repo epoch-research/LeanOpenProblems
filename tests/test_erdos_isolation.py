@@ -10,8 +10,12 @@ The gates (all over the committed files, recomputing independently what
 
 * **Structural** -- re-extract each isolated file and confirm the target theorem
   is present exactly once and the surviving theorem/lemma commands are exactly
-  the ones the cut predicts (target + its definitional-dependency lemmas,
-  nothing else).
+  the ones the cut predicts (target + its definitional-dependency lemmas + the
+  appended ``.disproof`` declaration, nothing else).
+* **Disproof certification** -- every spec declares exactly its target plus
+  ``<target>.disproof``, whose elaborated type an independent metaprogram
+  (``certify_disproof``, recomputing via ``mkNot``) certifies as exactly the
+  target statement's negation (comparator-migration-plan.md §4).
 * **Rewrite certificates** -- the target's *elaborated* statement must relate
   to the vendored source's exactly, per the source statement's ``answer(...)``
   form, which this test re-detects from the source span independently of
@@ -43,6 +47,8 @@ import pytest_asyncio
 
 from apn.dataset import ERDOS_DIR, SampleRow, fc_commit, fc_profile, load_manifest
 from scripts.erdos_isolation import (
+    HN_DECL,
+    HN_SAMPLE_IDS,
     ISOLATED_DIR,
     SOURCES_DIR,
 )
@@ -57,7 +63,7 @@ from scripts.isolation import (
     planned_survivors,
     theorem_command_decls,
 )
-from tests.lean_sandbox import compile_all, extract, generate_env
+from tests.lean_sandbox import certify, compile_all, extract, generate_env
 
 
 # --------------------------------------------------------------------------- #
@@ -69,6 +75,7 @@ class IsoData:
 
     src_ranges: dict[str, dict[str, Any]]  # extractor records for Sources/, by relpath
     iso_ranges: dict[str, dict[str, Any]]  # extractor records for Isolated/, by stem (= name)
+    cert_verdicts: dict[str, dict[str, Any]]  # certify_disproof verdicts, by stem
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
@@ -97,10 +104,12 @@ async def iso_data(kept_rows: list[SampleRow]) -> IsoData:
         src = await extract(env, [SOURCES_DIR / rel for rel in rels], util_module, arcnames=rels)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
         iso = await extract(env, iso_files, util_module)
+        cert = await certify(env, iso_files, util_module)
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},
         iso_ranges={fr["file"][: -len(".lean")]: fr for fr in iso},
+        cert_verdicts={v["file"][: -len(".lean")]: v for v in cert},
         compile_failures=failures,
     )
 
@@ -139,32 +148,50 @@ async def test_isolated_files_are_structurally_correct(
     for row in kept_rows:
         name, rel = row.id, row.source.removeprefix("Sources/")
         stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
-        src_type, planned = planned_survivors(iso_data.src_ranges[rel], name)
+        # The derived Hadwiger–Nelson samples rename their source declaration
+        # (HN_DECL) to the sample's own name, so the cut prediction resolves
+        # the source name and is mapped through the rename.
+        src_name = HN_DECL if row.id in HN_SAMPLE_IDS else name
+        src_type, planned = planned_survivors(iso_data.src_ranges[rel], src_name)
+        planned = [name if d == src_name else d for d in planned]
         src_type = normalize_hygiene(src_type)
         fr = iso_data.iso_ranges.get(stem)
         if fr is None:
-            failures.append(f"{name}: no isolated file extracted")
+            failures.append(f"{row.id}: no isolated file extracted")
             continue
         thms = theorem_command_decls(fr)
         target_hits = [d for d in thms if d["name"] == name]
         if len(target_hits) != 1:
             failures.append(
-                f"{name}: target appears {len(target_hits)}x among {[d['name'] for d in thms]}"
+                f"{row.id}: target appears {len(target_hits)}x among {[d['name'] for d in thms]}"
             )
             continue
         remaining = sorted(d["name"] for d in thms)
-        if remaining != planned:
-            failures.append(f"{name}: surviving theorems {remaining} != planned {planned}")
+        # The committed spec is the cut's prediction plus the appended
+        # `.disproof` declaration (comparator-migration-plan.md §4).
+        expected = sorted(planned + [f"{row.decl_name}.disproof"])
+        if remaining != expected:
+            failures.append(f"{row.id}: surviving theorems {remaining} != expected {expected}")
+            continue
+        iso_type = normalize_hygiene(target_hits[0]["type"])
+        if row.id in HN_SAMPLE_IDS:
+            # Derived Hadwiger–Nelson samples: the source statement is
+            # value-typed, so there is no answer(...) ↔ form to certify (the
+            # byte-level re-derivation check lives in tests/test_erdos.py).
+            # Assert the derived statement elaborates placeholder-free instead.
+            if row.extra["answer_form"] is not None:
+                failures.append(f"{row.id}: derived sample carries an answer_form")
+            elif "sorryAx" in iso_type:
+                failures.append(f"{row.id}: sorryAx in the derived statement's type")
             continue
         form = _source_form(name, rel, iso_data.src_ranges[rel])
         if form != row.extra["answer_form"]:
             failures.append(
-                f"{name}: manifest answer_form {row.extra['answer_form']} != source's {form}"
+                f"{row.id}: manifest answer_form {row.extra['answer_form']} != source's {form}"
             )
             continue
-        iso_type = normalize_hygiene(target_hits[0]["type"])
         if not answer_certified(form, src_type, iso_type):
-            failures.append(f"{name}: target statement changed during isolation ({form=})")
+            failures.append(f"{row.id}: target statement changed during isolation ({form=})")
     assert not failures, "structural validation failed:\n  " + "\n  ".join(failures)
 
 
@@ -186,9 +213,32 @@ async def test_no_example_commands_survive(
 
 
 @pytest.mark.asyncio(loop_scope="module")
+async def test_disproof_declarations_certified(
+    kept_rows: list[SampleRow], iso_data: IsoData
+) -> None:
+    """Every spec declares exactly its target plus ``<target>.disproof``, and
+    the certifier's independent ``mkNot`` recomputation confirms the disproof's
+    elaborated type is the target statement's negation (plan §4)."""
+    failures: list[str] = []
+    for row in kept_rows:
+        stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
+        v = iso_data.cert_verdicts.get(stem)
+        if v is None:
+            failures.append(f"{row.id}: no certifier verdict")
+        elif not v["ok"]:
+            failures.append(f"{row.id}: {v['error']}")
+        elif v["target"] != row.decl_name or v["disproof"] != f"{row.decl_name}.disproof":
+            failures.append(
+                f"{row.id}: certified pair ({v['target']}, {v['disproof']}) does not "
+                f"match the manifest decl name {row.decl_name}"
+            )
+    assert not failures, "disproof certification failed:\n  " + "\n  ".join(failures)
+
+
+@pytest.mark.asyncio(loop_scope="module")
 async def test_isolated_files_compile(iso_data: IsoData) -> None:
-    """The authoritative gate: every isolated file compiles with the scorer's
-    exact ``lake env lean -o`` command."""
+    """The authoritative gate: every isolated file compiles cleanly with
+    ``lake env lean -o`` in the project environment."""
     assert not iso_data.compile_failures, (
         f"{len(iso_data.compile_failures)} isolated file(s) failed to compile: "
         f"{iso_data.compile_failures}"

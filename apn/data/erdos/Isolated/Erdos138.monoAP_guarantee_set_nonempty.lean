@@ -63,3 +63,7 @@ This represents the smallest integer `N` such that any 2-coloring of `{1, ..., N
 must contain a monochromatic arithmetic progression of length `k`.
 -/
 noncomputable abbrev W : ℕ → ℕ := monoAPNumber 2
+
+end Erdos138
+
+theorem Erdos138.monoAP_guarantee_set_nonempty.disproof : ¬ (type_of% @Erdos138.monoAP_guarantee_set_nonempty) := sorry

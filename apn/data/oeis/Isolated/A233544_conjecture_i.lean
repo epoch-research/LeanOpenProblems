@@ -36,3 +36,5 @@ There are no counterexamples to conjecture (i) < 5.12 * 10^10.
 -/
 theorem A233544_conjecture_i : ∀ (n : ℕ), n > 1 → a n > 0 :=
   by sorry
+
+theorem A233544_conjecture_i.disproof : ¬ (type_of% @A233544_conjecture_i) := sorry

@@ -35,3 +35,5 @@ lemma erdos_672.variants.euler :
   sorry
 
 end Erdos672
+
+theorem Erdos672.erdos_672.variants.euler.disproof : ¬ (type_of% @Erdos672.erdos_672.variants.euler) := sorry

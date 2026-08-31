@@ -53,3 +53,5 @@ can be written as the sum of two squares, a power of 3 and a power of 5.
 -/
 theorem oeis_303656_conjecture_0 : ∀ n : ℕ, n > 1 → A303656 n > 0 := by
   sorry
+
+theorem oeis_303656_conjecture_0.disproof : ¬ (type_of% @oeis_303656_conjecture_0) := sorry

@@ -36,3 +36,5 @@ noncomputable def A078729 (n : ℕ) : ℕ :=
 Conjecture: $a(n) = 0$ if and only if $n=4$.
 -/
 theorem oeis_78729_conjecture_0 : ∀ n : ℕ, A078729 n = 0 ↔ n = 4 := by sorry
+
+theorem oeis_78729_conjecture_0.disproof : ¬ (type_of% @oeis_78729_conjecture_0) := sorry

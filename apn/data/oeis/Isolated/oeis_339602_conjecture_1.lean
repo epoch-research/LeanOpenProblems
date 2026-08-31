@@ -45,3 +45,5 @@ theorem oeis_339602_conjecture_1 (p : ℕ) (hp_odd : p % 2 = 1) :
     ∃ N₀ : ℕ, ∀ N ≥ N₀,
       (filter (fun n : ℕ => a n = p) (range N)).card > (filter (fun n : ℕ => a n = p + 1) (range N)).card := by
   sorry
+
+theorem oeis_339602_conjecture_1.disproof : ¬ (type_of% @oeis_339602_conjecture_1) := sorry

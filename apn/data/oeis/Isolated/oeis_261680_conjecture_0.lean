@@ -39,3 +39,5 @@ def a (n : ℕ) : ℕ :=
 /-- OEIS A261680 Conjecture: a(n)>0: every number is the sum of four binary palindromes. -/
 theorem oeis_261680_conjecture_0 (n : ℕ) : a n > 0 := by
   sorry
+
+theorem oeis_261680_conjecture_0.disproof : ¬ (type_of% @oeis_261680_conjecture_0) := sorry

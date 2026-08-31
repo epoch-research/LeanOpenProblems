@@ -60,3 +60,7 @@ When $p$ is prime Berlekamp [Be68] has proved $W(p+1) ≥ p^{2^p}$.
 -/
 theorem erdos_138.variants.prime (p : ℕ) (hp : p.Prime) : p * (2 ^ p) ≤ W (p + 1) := by
   sorry
+
+end Erdos138
+
+theorem Erdos138.erdos_138.variants.prime.disproof : ¬ (type_of% @Erdos138.erdos_138.variants.prime) := sorry

@@ -50,3 +50,5 @@ theorem oeis_217785_conjecture_1 :
     )
   ) :=
 by sorry
+
+theorem oeis_217785_conjecture_1.disproof : ¬ (type_of% @oeis_217785_conjecture_1) := sorry

@@ -43,3 +43,5 @@ theorem erdos_120.variants.finite_set {A : Set ℝ} (h : A.Finite) : ¬ Erdos120
   sorry
 
 end Erdos120
+
+theorem Erdos120.erdos_120.variants.finite_set.disproof : ¬ (type_of% @Erdos120.erdos_120.variants.finite_set) := sorry

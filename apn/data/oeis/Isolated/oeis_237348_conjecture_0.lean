@@ -71,3 +71,5 @@ theorem oeis_237348_conjecture_0 :
     ∃ (N : ℕ), 0 < N ∧
       ∀ (n : ℕ), N < n →
         0 < a_generalized n d := by sorry
+
+theorem oeis_237348_conjecture_0.disproof : ¬ (type_of% @oeis_237348_conjecture_0) := sorry

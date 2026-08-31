@@ -36,3 +36,5 @@ The stronger congruence $a(p) \equiv 27 \pmod{p^5}$ holds for all primes $p \ge 
 -/
 theorem oeis_a357506_conjecture_0 : ∀ (p : ℕ), Nat.Prime p → p ≥ 3 → a p ≡ 27 [MOD (p ^ 5)] := by
   sorry
+
+theorem oeis_a357506_conjecture_0.disproof : ¬ (type_of% @oeis_a357506_conjecture_0) := sorry

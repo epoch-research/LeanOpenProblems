@@ -30,3 +30,5 @@ def A218585 (n : ℕ) : ℕ :=
 theorem oeis_218585_conjecture_0 :
   (∀ n : ℕ, 1 < n → n ≠ 8 → A218585 n > 0) ∧ (A218585 8 = 0) := by
   sorry
+
+theorem oeis_218585_conjecture_0.disproof : ¬ (type_of% @oeis_218585_conjecture_0) := sorry

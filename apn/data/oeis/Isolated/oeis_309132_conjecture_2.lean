@@ -58,3 +58,5 @@ Formalizing the conjecture that the property $a(n) = 1 \iff \text{prime } n$ for
 is equivalent to the Agoh-Giuga conjecture.
 -/
 theorem oeis_309132_conjecture_2 : A309132_conjecture ↔ agoh_giuga_conjecture := by sorry
+
+theorem oeis_309132_conjecture_2.disproof : ¬ (type_of% @oeis_309132_conjecture_2) := sorry

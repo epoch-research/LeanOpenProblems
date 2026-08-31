@@ -38,3 +38,5 @@ def a (n : ℕ) : ℕ :=
 nonnegative integer can be written as a^2 + 2*b^2 + c^4 + 4*d^4 + c^2*d^2 with a,b,c,d integers. -/
 theorem oeis_352627_conjecture_1 : ∀ n : ℕ, 0 < a n := by
   sorry
+
+theorem oeis_352627_conjecture_1.disproof : ¬ (type_of% @oeis_352627_conjecture_1) := sorry

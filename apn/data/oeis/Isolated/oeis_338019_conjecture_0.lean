@@ -47,3 +47,5 @@ theorem oeis_338019_conjecture_0 (n : ℕ) (h_n_pos : n > 0) :
     (m = 1 ∨ m = 3 ∨ m = 5 ∨ m = 61) ∧ n = 2^(4 * k + 3) * m) ∧
   (¬ (8 ∣ n) → a n > 0) :=
 by sorry
+
+theorem oeis_338019_conjecture_0.disproof : ¬ (type_of% @oeis_338019_conjecture_0) := sorry

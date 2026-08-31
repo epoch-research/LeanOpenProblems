@@ -67,3 +67,5 @@ def A262880_Conjecture2_Pairs : Finset (ℕ × ℕ) :=
   (List.toFinset (
   [ (3, 4), (3, 6), (4, 8) ]
   ))
+
+theorem oeis_262880_conjecture_1.disproof : ¬ (type_of% @oeis_262880_conjecture_1) := sorry

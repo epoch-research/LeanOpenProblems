@@ -61,3 +61,7 @@ In [Er81] Erdős asks whether $W(k+1) - W(k) \to \infty$.
 theorem erdos_138.variants.difference :
     atTop.Tendsto (fun k => (W (k + 1) - W k)) atTop := by
   sorry
+
+end Erdos138
+
+theorem Erdos138.erdos_138.variants.difference.disproof : ¬ (type_of% @Erdos138.erdos_138.variants.difference) := sorry

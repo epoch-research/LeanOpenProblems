@@ -292,3 +292,5 @@ theorem eqSystem_no_solution_ge6_ge3_real :
    (implemented as ℤ-valued weights with a pointwise restriction) -/
 
 end MonochromaticQuantumGraph
+
+theorem MonochromaticQuantumGraph.eqSystem_no_solution_ge6_ge3_real.disproof : ¬ (type_of% @MonochromaticQuantumGraph.eqSystem_no_solution_ge6_ge3_real) := sorry

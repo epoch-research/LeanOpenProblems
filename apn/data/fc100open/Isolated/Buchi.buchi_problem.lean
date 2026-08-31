@@ -40,3 +40,5 @@ theorem buchi_problem :
   sorry
 
 end Buchi
+
+theorem Buchi.buchi_problem.disproof : ¬ (type_of% @Buchi.buchi_problem) := sorry

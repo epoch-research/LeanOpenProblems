@@ -39,3 +39,5 @@ theorem erdos_39 : ∃ (A : Set ℕ), A.Infinite ∧ IsSidon A ∧
 -- TODO(firsching): add the various known bounds as variants.
 
 end Erdos39
+
+theorem Erdos39.erdos_39.disproof : ¬ (type_of% @Erdos39.erdos_39) := sorry

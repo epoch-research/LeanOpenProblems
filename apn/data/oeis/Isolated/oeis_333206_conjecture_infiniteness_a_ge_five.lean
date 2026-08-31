@@ -29,3 +29,5 @@ that there are infinitely many $n$ such that $a(n) \ge 5$.
 theorem oeis_333206_conjecture_infiniteness_a_ge_five :
   ∀ (M : ℕ), ∃ (n : ℕ), M ≤ n ∧ 5 ≤ a n :=
   sorry
+
+theorem oeis_333206_conjecture_infiniteness_a_ge_five.disproof : ¬ (type_of% @oeis_333206_conjecture_infiniteness_a_ge_five) := sorry

@@ -65,3 +65,5 @@ theorem oeis_386888_conjecture_2 :
   ∧
   (∀ n : ℕ, n > 2258 → a n > 1) :=
 by sorry
+
+theorem oeis_386888_conjecture_2.disproof : ¬ (type_of% @oeis_386888_conjecture_2) := sorry

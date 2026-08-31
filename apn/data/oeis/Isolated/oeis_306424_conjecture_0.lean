@@ -35,3 +35,5 @@ A306424 Conjecture: The sequence is finite, with 43 being the last term.
 -/
 theorem oeis_306424_conjecture_0 : A306424_condition 43 ∧ ∀ k : ℕ, 43 < k → ¬ A306424_condition k := by
   sorry
+
+theorem oeis_306424_conjecture_0.disproof : ¬ (type_of% @oeis_306424_conjecture_0) := sorry

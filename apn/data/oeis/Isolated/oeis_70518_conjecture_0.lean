@@ -31,3 +31,5 @@ A070518 a(28341) is divisible by 283411^2. What is the next n such that a(n) is 
 theorem oeis_70518_conjecture_0 :
   (283411 : ℕ) ^ 2 ∣ a 28341 :=
 by sorry
+
+theorem oeis_70518_conjecture_0.disproof : ¬ (type_of% @oeis_70518_conjecture_0) := sorry

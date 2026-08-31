@@ -48,3 +48,5 @@ theorem stewart : ∃ C > (0 : ℝ),
 end variants
 
 end Erdos829
+
+theorem Erdos829.variants.stewart.disproof : ¬ (type_of% @Erdos829.variants.stewart) := sorry

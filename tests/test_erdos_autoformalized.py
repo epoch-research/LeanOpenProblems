@@ -1,13 +1,14 @@
 """Tests for the Erdős-autoformalized dataset loader (pure Python, no Docker).
 
 The deeper Lean guarantees over the committed ``Isolated/`` specs -- clean
-elaboration, only the target + its dependency decls surviving, the target's
-elaborated statement unchanged by isolation -- are enforced authoritatively,
-in a container, by ``tests/test_erdos_autoformalized_isolation.py``. This
-module checks what can be checked cheaply on every run: the manifest census
-(every research-category statement of the 18 vendored files from our own
-autoformalization run -- see the dataset's ``NOTICE.md``), the dataset/sample
-shape, and textual invariants of the shipped sketches.
+elaboration, only the target + its dependency decls + derived disproof
+surviving, and the target/disproof statements having their certified meanings
+-- are enforced authoritatively, in a container, by
+``tests/test_erdos_autoformalized_isolation.py``. This module checks what can
+be checked cheaply on every run: the manifest census (every research-category
+statement of the 18 vendored files from our own autoformalization run -- see
+the dataset's ``NOTICE.md``), the dataset/sample shape, and textual invariants
+of the shipped sketches.
 """
 
 from __future__ import annotations
@@ -20,8 +21,10 @@ from apn.dataset import (
     ERDOS_AUTOFORMALIZED_DIR,
     erdos_autoformalized_dataset,
     load_manifest,
+    load_subset,
 )
 from scripts.fc_statements import strip_comments
+from scripts.isolation import disproof_declaration
 
 _SORRY_RE = re.compile(r"\bsorry\b")
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
@@ -30,13 +33,25 @@ _DECL_RE = re.compile(r"(?m)^(?:protected\s+)?(?:theorem|lemma)\s+([^\s:({\[⦃]
 # The universe: one member per @[category research ...] theorem in the 18
 # vendored files. 713 and 1206 state two-part problems, hence 20 members.
 EXPECTED_IDS = {
-    "Erdos86.erdos_86", "Erdos104.erdos_104", "Erdos181.erdos_181",
-    "Erdos322.erdos_322", "Erdos431.erdos_431", "Erdos478.erdos_478",
-    "Erdos548.erdos_548", "Erdos571.erdos_571", "Erdos583.erdos_583",
-    "Erdos713.erdos_713.parts.i", "Erdos713.erdos_713.parts.ii",
-    "Erdos714.erdos_714", "Erdos773.erdos_773", "Erdos970.erdos_970",
-    "Erdos1020.erdos_1020", "Erdos1083.erdos_1083", "Erdos1159.erdos_1159",
-    "Erdos1206.erdos_1206.parts.i", "Erdos1206.erdos_1206.parts.ii",
+    "Erdos86.erdos_86",
+    "Erdos104.erdos_104",
+    "Erdos181.erdos_181",
+    "Erdos322.erdos_322",
+    "Erdos431.erdos_431",
+    "Erdos478.erdos_478",
+    "Erdos548.erdos_548",
+    "Erdos571.erdos_571",
+    "Erdos583.erdos_583",
+    "Erdos713.erdos_713.parts.i",
+    "Erdos713.erdos_713.parts.ii",
+    "Erdos714.erdos_714",
+    "Erdos773.erdos_773",
+    "Erdos970.erdos_970",
+    "Erdos1020.erdos_1020",
+    "Erdos1083.erdos_1083",
+    "Erdos1159.erdos_1159",
+    "Erdos1206.erdos_1206.parts.i",
+    "Erdos1206.erdos_1206.parts.ii",
     "Erdos1207.erdos_1207",
 }
 
@@ -46,9 +61,38 @@ def test_manifest_census() -> None:
     assert {r.id for r in rows} == EXPECTED_IDS
     assert all(r.excluded is None for r in rows)
     assert {r.extra["erdos_number"] for r in rows} == {
-        86, 104, 181, 322, 431, 478, 548, 571, 583, 713, 714, 773, 970,
-        1020, 1083, 1159, 1206, 1207,
+        86,
+        104,
+        181,
+        322,
+        431,
+        478,
+        548,
+        571,
+        583,
+        713,
+        714,
+        773,
+        970,
+        1020,
+        1083,
+        1159,
+        1206,
+        1207,
     }
+
+
+def test_bloom_selection_subset() -> None:
+    # Thomas Bloom's verdicts (2026-08-26), apn_erdos_autoformalized's default
+    # subset: Problem 1206 is represented by part i alone, 1207 is dropped
+    # from the benchmark entirely, and 713 stays split into its two parts.
+    ids = load_subset(ERDOS_AUTOFORMALIZED_DIR, "bloom_selection")
+    assert len(ids) == 18
+    assert set(ids) == EXPECTED_IDS - {
+        "Erdos1206.erdos_1206.parts.ii",
+        "Erdos1207.erdos_1207",
+    }
+    assert len(erdos_autoformalized_dataset(names=ids)) == 18
 
 
 def test_manifest_row_shape() -> None:
@@ -66,7 +110,9 @@ def test_manifest_row_shape() -> None:
 def test_spec_files_match_manifest_exactly() -> None:
     rows = load_manifest(ERDOS_AUTOFORMALIZED_DIR)
     expected = sorted((ERDOS_AUTOFORMALIZED_DIR / r.statement_path).name for r in rows)
-    on_disk = sorted(p.name for p in (ERDOS_AUTOFORMALIZED_DIR / "Isolated").glob("*.lean"))
+    on_disk = sorted(
+        p.name for p in (ERDOS_AUTOFORMALIZED_DIR / "Isolated").glob("*.lean")
+    )
     assert on_disk == expected
 
 
@@ -84,6 +130,7 @@ def test_dataset_sample_shape() -> None:
     assert sample.id == "Erdos104.erdos_104"
     assert sample.metadata is not None
     assert sample.metadata["source"] == "Sources/104.lean"
+    assert sample.metadata["decl_name"] == "Erdos104.erdos_104"
     sketch = sample.metadata["sketch"]
     assert sample.input == sketch
     assert "import FormalConjecturesUtil" in sketch
@@ -95,7 +142,7 @@ def test_category_never_reaches_sample_metadata() -> None:
     # flow to the agent-facing sample (same policy as the other datasets).
     for sample in erdos_autoformalized_dataset():
         assert sample.metadata is not None
-        assert set(sample.metadata) == {"sketch", "source"}
+        assert set(sample.metadata) == {"sketch", "source", "decl_name"}
 
 
 def test_dataset_names_filter_unknown_raises() -> None:
@@ -127,11 +174,17 @@ def test_sketches_have_no_example_commands() -> None:
 
 
 def test_sketches_sorry_count() -> None:
-    # Exactly one `sorry` per sketch -- the target's proof.
+    # Exactly two `sorry`s: the target and its derived `.disproof`.
     for sample in erdos_autoformalized_dataset():
         assert sample.metadata is not None
         n = len(_SORRY_RE.findall(strip_comments(sample.metadata["sketch"])))
-        assert n == 1, f"{sample.id}: {n} sorries"
+        assert n == 2, f"{sample.id}: {n} sorries"
+
+
+def test_sketches_end_with_disproof_declaration() -> None:
+    for row in load_manifest(ERDOS_AUTOFORMALIZED_DIR):
+        text = (ERDOS_AUTOFORMALIZED_DIR / row.statement_path).read_text()
+        assert text.rstrip().endswith(disproof_declaration(row.decl_name)), row.id
 
 
 def _declares(member_id: str, text_name: str) -> bool:
@@ -156,6 +209,6 @@ def test_no_sibling_member_survives_in_any_spec() -> None:
             if _declares(row.id, name):
                 continue
             offenders = [i for i in all_ids if _declares(i, name) and i != row.id]
-            assert not offenders, (
-                f"{row.id}: sibling universe member(s) {offenders} survived isolation"
-            )
+            assert (
+                not offenders
+            ), f"{row.id}: sibling universe member(s) {offenders} survived isolation"

@@ -38,3 +38,5 @@ Conjecture: There are finitely many numbers such that $a(n)$ is not $\equiv 0 \p
 theorem oeis_93456_conjecture_0 :
   Set.Finite {n : ℕ | n > 1 ∧ ¬ (a (n - 1) ∣ a n)} :=
 by sorry
+
+theorem oeis_93456_conjecture_0.disproof : ¬ (type_of% @oeis_93456_conjecture_0) := sorry

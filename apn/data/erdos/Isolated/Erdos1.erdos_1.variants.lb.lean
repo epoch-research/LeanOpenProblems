@@ -57,3 +57,5 @@ abbrev IsSumDistinctRealSet (A : Finset ℝ) (N : ℕ) : Prop :=
     1 ≤ dist (S₁.sum id) (S₂.sum id)
 
 end Erdos1
+
+theorem Erdos1.erdos_1.variants.lb.disproof : ¬ (type_of% @Erdos1.erdos_1.variants.lb) := sorry

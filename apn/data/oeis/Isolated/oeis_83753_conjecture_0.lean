@@ -53,3 +53,5 @@ theorem oeis_83753_conjecture_0 :
     →
     False
 := by sorry
+
+theorem oeis_83753_conjecture_0.disproof : ¬ (type_of% @oeis_83753_conjecture_0) := sorry

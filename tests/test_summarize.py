@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from apn.dataset import OEIS_DIR, fc_commit, oeis_dataset
 from apn.task import get_identifier_for_image
 from scripts.summarize.collect import (
@@ -46,22 +48,47 @@ def test_proof_summarizer_compose_uses_oeis_pin() -> None:
     assert "network_mode: none" in compose
 
 
-def test_proof_task_creates_independent_summary_and_full_proof(
-    tmp_path: Path,
+@pytest.mark.parametrize(
+    ("claim", "settlement"),
+    [("proof", "proved"), ("disproof", "disproved")],
+)
+def test_proof_task_uses_claim_for_independent_summary_and_full_proof(
+    tmp_path: Path, claim: str, settlement: str
 ) -> None:
     conjecture = subset_conjectures("lite")[0]
     sample_dir = tmp_path / "run" / "test_plaintext" / conjecture.id
     submission_dir = sample_dir / "Submission"
     submission_dir.mkdir(parents=True)
     (sample_dir / "scores.json").write_text(
-        json.dumps({"proof_scorer": {"value": "C"}})
+        json.dumps(
+            {
+                "proof_scorer": {
+                    "value": "C",
+                    "metadata": {
+                        "stage": "comparator",
+                        "claim": claim,
+                        "verifier_output": "Your solution is okay!",
+                    },
+                }
+            }
+        )
     )
     (sample_dir / "info.json").write_text(
         json.dumps({"oeis_id": conjecture.oeis_id})
     )
-    (submission_dir / "Spec.lean").write_text(
-        "theorem accepted_proof : True := by trivial\n"
-    )
+    if claim == "proof":
+        submission = (
+            "theorem accepted_proof : True := by trivial\n"
+            "theorem accepted_proof.disproof : "
+            "¬ (type_of% @accepted_proof) := by sorry\n"
+        )
+    else:
+        submission = (
+            "theorem accepted_proof : False := by sorry\n"
+            "theorem accepted_proof.disproof : "
+            "¬ (type_of% @accepted_proof) := by simp\n"
+        )
+    (submission_dir / "Spec.lean").write_text(submission)
     metadata_dir = tmp_path / "metadata"
     metadata_dir.mkdir()
     (metadata_dir / "sequences.json").write_text("{}")
@@ -89,15 +116,43 @@ def test_proof_task_creates_independent_summary_and_full_proof(
         assert "relying on another generated version" not in str(sample.input)
     summary_prompt = " ".join(str(samples[0].input).split())
     full_proof_prompt = " ".join(str(samples[1].input).split())
+    noun = "proof" if claim == "proof" else "disproof"
+    assert f"AI agent {settlement} the conjecture" in summary_prompt
     assert (
         "one or two concise sentences explaining the key mathematical ideas "
-        "of this specific proof"
+        f"of this specific {noun}"
         in summary_prompt
     )
-    assert "complete, self-contained natural-language proof" in full_proof_prompt
+    assert (
+        f"complete, self-contained natural-language {noun}" in full_proof_prompt
+    )
     assert "There is no maximum length" in full_proof_prompt
     assert "3,000-word exposition is entirely acceptable" in full_proof_prompt
     assert "not a synopsis or an expanded summary" in full_proof_prompt
+
+
+@pytest.mark.parametrize(
+    ("proof_score", "error"),
+    [
+        ({"value": "C"}, "has no proof_scorer metadata"),
+        (
+            {"value": "C", "metadata": {"claim": "counterexample"}},
+            "has invalid proof_scorer claim",
+        ),
+    ],
+)
+def test_proof_task_rejects_score_without_new_claim(
+    tmp_path: Path, proof_score: dict[str, object], error: str
+) -> None:
+    conjecture = subset_conjectures("lite")[0]
+    sample_dir = tmp_path / "run" / "test_plaintext" / conjecture.id
+    sample_dir.mkdir(parents=True)
+    (sample_dir / "scores.json").write_text(
+        json.dumps({"proof_scorer": proof_score})
+    )
+
+    with pytest.raises(ValueError, match=error):
+        summarize_proofs(run_dir=str(tmp_path / "run"), metadata_dir=str(tmp_path))
 
 
 def test_proof_collection_groups_summary_and_full_proof() -> None:

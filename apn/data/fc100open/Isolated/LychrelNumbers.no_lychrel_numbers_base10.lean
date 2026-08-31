@@ -71,3 +71,5 @@ theorem no_lychrel_numbers_base10 :
   sorry
 
 end LychrelNumbers
+
+theorem LychrelNumbers.no_lychrel_numbers_base10.disproof : ¬ (type_of% @LychrelNumbers.no_lychrel_numbers_base10) := sorry

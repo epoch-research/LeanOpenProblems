@@ -37,3 +37,5 @@ theorem oeis_233549_conjecture_1 :
   (∀ n, 2 < n → 0 < a n) →
   Set.Infinite {p : ℕ | Nat.Prime p ∧ ∃ x : ℕ, p = x ^ 4 + 1} :=
 by sorry
+
+theorem oeis_233549_conjecture_1.disproof : ¬ (type_of% @oeis_233549_conjecture_1) := sorry

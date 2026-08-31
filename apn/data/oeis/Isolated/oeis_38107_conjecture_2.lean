@@ -40,3 +40,5 @@ theorem oeis_38107_conjecture_2 :
     Int.fract (Finset.sum (Finset.Icc j k) a_inv) = Int.fract (Finset.sum (Finset.Icc j' k') a_inv) →
     -- ...then the index pairs must be identical.
     (j, k) = (j', k') := by sorry
+
+theorem oeis_38107_conjecture_2.disproof : ¬ (type_of% @oeis_38107_conjecture_2) := sorry

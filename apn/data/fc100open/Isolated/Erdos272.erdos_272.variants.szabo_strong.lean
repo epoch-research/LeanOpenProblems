@@ -49,3 +49,5 @@ theorem erdos_272.variants.szabo_strong :
   sorry
 
 end Erdos272
+
+theorem Erdos272.erdos_272.variants.szabo_strong.disproof : ¬ (type_of% @Erdos272.erdos_272.variants.szabo_strong) := sorry

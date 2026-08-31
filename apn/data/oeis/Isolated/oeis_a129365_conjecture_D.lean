@@ -43,3 +43,5 @@ ordp(a(n*p),p) = b(n) + b(floor(n/p)) + b(floor(n/p^2)) + b(floor(n/p^3)) + ....
 theorem oeis_a129365_conjecture_D (n p : ℕ) (hn : 0 < n) (hp : Nat.Prime p) :
   (a (n * p)).factorization p = ∑' (i : ℕ), b (n / (p ^ i)) := by
   sorry
+
+theorem oeis_a129365_conjecture_D.disproof : ¬ (type_of% @oeis_a129365_conjecture_D) := sorry

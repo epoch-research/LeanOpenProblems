@@ -46,3 +46,5 @@ Conjecture 1: There are infinitely many pairs of consecutive equal terms.
 theorem oeis_a319524_conjecture_1 :
   Set.Infinite { n : ℕ | 1 ≤ n ∧ A319524 n = A319524 (n + 1) } :=
 by sorry
+
+theorem oeis_a319524_conjecture_1.disproof : ¬ (type_of% @oeis_a319524_conjecture_1) := sorry

@@ -42,3 +42,5 @@ theorem oeis_333095_conjecture_0 (p n k : ℕ) :
   p.Prime → 5 ≤ p → 0 < n → 0 < k →
   a (n * p ^ k) ≡ a (n * p ^ (k - 1)) [MOD p ^ (3 * k)] := by
   sorry
+
+theorem oeis_333095_conjecture_0.disproof : ¬ (type_of% @oeis_333095_conjecture_0) := sorry

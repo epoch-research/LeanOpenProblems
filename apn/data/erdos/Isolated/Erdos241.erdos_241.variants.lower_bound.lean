@@ -64,3 +64,5 @@ def BoseChowlaConjecture (r : ℕ) : Prop :=
   (fun N ↦ (f N r : ℝ)) ~[atTop] (fun N ↦ (N : ℝ) ^ ((1 : ℝ) / r))
 
 end Erdos241
+
+theorem Erdos241.erdos_241.variants.lower_bound.disproof : ¬ (type_of% @Erdos241.erdos_241.variants.lower_bound) := sorry

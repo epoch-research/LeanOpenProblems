@@ -56,3 +56,5 @@ theorem A344989_conjecture_heuristic_zero (n : ℕ) (hn : 0 < n):
       (∀ m' : ℕ, m' ≤ k → m' = 0 ∨ count_distinct_prime_partitions m' n ≠ n)
   ) → a n = 0 := by
   sorry
+
+theorem A344989_conjecture_heuristic_zero.disproof : ¬ (type_of% @A344989_conjecture_heuristic_zero) := sorry

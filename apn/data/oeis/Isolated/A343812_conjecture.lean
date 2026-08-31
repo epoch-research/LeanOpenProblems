@@ -33,3 +33,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 /-- A343812 Does any term occur more than once? (Conjectured to be "no" for $n \ge 1$). -/
 theorem A343812_conjecture (m n : ℕ) (hm : 0 < m) (hn : 0 < n) : a m = a n → m = n := by
   sorry
+
+theorem A343812_conjecture.disproof : ¬ (type_of% @A343812_conjecture) := sorry

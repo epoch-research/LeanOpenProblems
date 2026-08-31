@@ -78,3 +78,5 @@ for prime $p \ge 5$ and positive integers $n$ and $k$.
 theorem oeis_333096_supercongruence_conjecture (m : ℤ) (p : ℕ) (hp : p.Prime) (hp5 : p ≥ 5) (n k : ℕ) (hn : n > 0) (hk : k > 0) :
     a_gen m (n * p ^ k) ≡ a_gen m (n * p ^ (k - 1)) [ZMOD (p ^ (3 * k) : ℤ)] := by
   sorry
+
+theorem oeis_333096_supercongruence_conjecture.disproof : ¬ (type_of% @oeis_333096_supercongruence_conjecture) := sorry

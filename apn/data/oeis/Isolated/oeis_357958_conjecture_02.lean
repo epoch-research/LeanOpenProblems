@@ -50,3 +50,5 @@ a(p^r) ≡ a(p^(r-1)) ( mod p^(3*r+3) ) for r ≥ 2 and for all primes p ≥ 3.
 theorem oeis_357958_conjecture_02 :
   ∀ (p r : ℕ), Nat.Prime p → 3 ≤ p → 2 ≤ r → (a (p^r)) ≡ (a (p^(r-1))) [MOD p^3 * p^r * p^(2*r) * p^3] :=
 by sorry -- The exponent is 3*r + 3, which is p^(3*r + 3) or p^3 * p^(3*r). The formalization p^(3*r + 3) is easier.
+
+theorem oeis_357958_conjecture_02.disproof : ¬ (type_of% @oeis_357958_conjecture_02) := sorry

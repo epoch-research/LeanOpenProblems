@@ -36,3 +36,5 @@ theorem oeis_1818_conjecture_0 (n : ℕ) (h_n : 1 ≤ n) :
           (1 + ζ ^ (i.val - j.val : ℤ)) / (1 - ζ ^ (i.val - j.val : ℤ))
       ) = (a n : ℂ) := by
   sorry
+
+theorem oeis_1818_conjecture_0.disproof : ¬ (type_of% @oeis_1818_conjecture_0) := sorry

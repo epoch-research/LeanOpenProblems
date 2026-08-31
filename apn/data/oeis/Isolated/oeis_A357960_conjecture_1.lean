@@ -35,3 +35,5 @@ $a(p) \equiv a(1) \pmod{p^5}$ for all primes $p \ge 3$.
 theorem oeis_A357960_conjecture_1 (p : ℕ) (hp : p.Prime) (hp_ge_3 : 3 ≤ p) :
     a p ≡ a 1 [MOD p ^ 5] := by
   sorry
+
+theorem oeis_A357960_conjecture_1.disproof : ¬ (type_of% @oeis_A357960_conjecture_1) := sorry

@@ -78,3 +78,5 @@ theorem erdos_5.variants.pintz : ∃ c > (0 : ℝ), Icc 0 c ⊆ limitPointSet :=
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.pintz.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.pintz) := sorry

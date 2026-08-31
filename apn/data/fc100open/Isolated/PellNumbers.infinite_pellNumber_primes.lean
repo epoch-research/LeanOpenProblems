@@ -44,3 +44,5 @@ theorem infinite_pellNumber_primes : Infinite {n : ℕ | Prime (pellNumber n)} :
 -- TODO : Formalise connection between Pell numbers and Pell equation x^2 - 2*y^2 = -1
 
 end PellNumbers
+
+theorem PellNumbers.infinite_pellNumber_primes.disproof : ¬ (type_of% @PellNumbers.infinite_pellNumber_primes) := sorry

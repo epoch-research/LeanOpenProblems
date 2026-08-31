@@ -56,3 +56,5 @@ noncomputable def a (n : ℕ) : ℕ :=
 theorem A308403.conjecture_1_verified_up_to_10_pow_10 :
     ∀ n : ℕ, 2 < n ∧ n ≤ 10000000000 → a n > 0 := by
   sorry
+
+theorem A308403.conjecture_1_verified_up_to_10_pow_10.disproof : ¬ (type_of% @A308403.conjecture_1_verified_up_to_10_pow_10) := sorry

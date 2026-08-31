@@ -45,3 +45,5 @@ theorem erdos_120 : ∀ A : Set ℝ, A.Infinite → Erdos120For A := by
   sorry
 
 end Erdos120
+
+theorem Erdos120.erdos_120.disproof : ¬ (type_of% @Erdos120.erdos_120) := sorry

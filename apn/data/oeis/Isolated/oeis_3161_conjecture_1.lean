@@ -46,3 +46,5 @@ A003161 Conjecture: Let b(n) = a(2*n-1). Then the supercongruence b(n*p^k) == b(
 theorem oeis_3161_conjecture_1 (n k p : ℕ) (hn : n > 0) (hk : k > 0) (hp : Nat.Prime p) (hmod : p ≥ 5) :
     (b (n * p ^ k)).cast ≡ (b (n * p ^ (k - 1))).cast [ZMOD (p.cast ^ (3 * k) : ℤ)] := by
   sorry
+
+theorem oeis_3161_conjecture_1.disproof : ¬ (type_of% @oeis_3161_conjecture_1) := sorry

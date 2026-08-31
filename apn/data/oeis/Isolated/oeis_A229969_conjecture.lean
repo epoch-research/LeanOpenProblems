@@ -45,3 +45,5 @@ theorem oeis_A229969_conjecture (n : ℕ) :
     Nat.Prime (2 * x - 1) ∧ Nat.Prime (2 * y - 1) ∧ Nat.Prime (2 * z - 1) ∧
     Nat.Prime (2 * x * y - 1) ∧ Nat.Prime (2 * x * z - 1) ∧ Nat.Prime (2 * y * z - 1)) :=
 by sorry
+
+theorem oeis_A229969_conjecture.disproof : ¬ (type_of% @oeis_A229969_conjecture) := sorry

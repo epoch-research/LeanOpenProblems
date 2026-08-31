@@ -56,3 +56,5 @@ def IsAttractingCycle (f : ℂ → ℂ) (n : ℕ) (z : ℂ) : Prop :=
   (0 < n) ∧ f.IsPeriodicPt n z ∧ DifferentiableAt ℂ f^[n] z ∧ ‖deriv f^[n] z‖ < 1
 
 end Mandelbrot
+
+theorem Mandelbrot.MLC.disproof : ¬ (type_of% @Mandelbrot.MLC) := sorry

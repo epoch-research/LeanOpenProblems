@@ -35,3 +35,5 @@ theorem erdos_723.variants.eq_12 :
   sorry
 
 end Erdos723
+
+theorem Erdos723.erdos_723.variants.eq_12.disproof : ¬ (type_of% @Erdos723.erdos_723.variants.eq_12) := sorry

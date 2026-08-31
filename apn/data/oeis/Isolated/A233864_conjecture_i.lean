@@ -45,3 +45,5 @@ Conjecture A233864 (i): $a(n) > 0$ for all $n > 3$.
 -/
 theorem A233864_conjecture_i : ∀ n : ℕ, 3 < n → A233864_a n > 0 := by
   sorry
+
+theorem A233864_conjecture_i.disproof : ¬ (type_of% @A233864_conjecture_i) := sorry

@@ -34,3 +34,5 @@ theorem erdos_376.variants.prime {p q : ℕ} (h₁ : p.Prime)
   sorry
 
 end Erdos376
+
+theorem Erdos376.erdos_376.variants.prime.disproof : ¬ (type_of% @Erdos376.erdos_376.variants.prime) := sorry

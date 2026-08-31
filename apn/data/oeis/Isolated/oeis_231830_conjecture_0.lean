@@ -30,3 +30,5 @@ OEIS A231830 conjecture: Similarly to Sylvester's sequence (A000058), it is unkn
 -/
 theorem oeis_231830_conjecture_0 : ∀ n : ℕ, Squarefree (a n) := by
   sorry
+
+theorem oeis_231830_conjecture_0.disproof : ¬ (type_of% @oeis_231830_conjecture_0) := sorry

@@ -42,3 +42,5 @@ A091591: Proving a(n)>0 for n>122 would also prove Legendre's conjecture that th
 -/
 theorem oeis_a091591_conjecture_1 :
   (∀ n : ℕ, n > 122 → a n > 0) → (∀ n : ℕ, n > 0 → ∃ p, p.Prime ∧ n^2 < p ∧ p < (n+1)^2) := by sorry
+
+theorem oeis_a091591_conjecture_1.disproof : ¬ (type_of% @oeis_a091591_conjecture_1) := sorry

@@ -47,3 +47,5 @@ theorem oeis_304522_conjecture_0 :
   (∀ (n : ℕ), 0 < n → A304522 n > 0) ∧
   (∀ (n : ℕ), A304522 n = 1 ↔ n = 1 ∨ n = 2 ∨ n = 27 ∨ n = 83 ∨ n = 31509) :=
 by sorry
+
+theorem oeis_304522_conjecture_0.disproof : ¬ (type_of% @oeis_304522_conjecture_0) := sorry

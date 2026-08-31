@@ -291,3 +291,5 @@ theorem eqSystem6_no_solution_d4 :
    (implemented as ℤ-valued weights with a pointwise restriction) -/
 
 end MonochromaticQuantumGraph
+
+theorem MonochromaticQuantumGraph.eqSystem6_no_solution_d4.disproof : ¬ (type_of% @MonochromaticQuantumGraph.eqSystem6_no_solution_d4) := sorry

@@ -88,3 +88,5 @@ theorem erdos_97.variants.three_unit_distance_cut_min :
   sorry
 
 end Erdos97
+
+theorem Erdos97.erdos_97.variants.three_unit_distance_cut_min.disproof : ¬ (type_of% @Erdos97.erdos_97.variants.three_unit_distance_cut_min) := sorry

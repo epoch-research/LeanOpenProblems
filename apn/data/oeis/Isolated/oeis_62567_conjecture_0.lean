@@ -48,3 +48,5 @@ Conjecture A062567: It seems that only for n=2,3 & 4 we have a($3^n$) = $10^{3^{
 theorem oeis_62567_conjecture_0 (n : ℕ) :
   2 ≤ n → (a (3^n) = 10 ^ (3 ^ (n - 2)) - 1 ↔ n = 2 ∨ n = 3 ∨ n = 4) :=
 by sorry
+
+theorem oeis_62567_conjecture_0.disproof : ¬ (type_of% @oeis_62567_conjecture_0) := sorry

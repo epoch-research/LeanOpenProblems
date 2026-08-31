@@ -29,3 +29,5 @@ Conjecture (1): All numbers appear infinitely often, i.e., for every number k >=
 -/
 theorem A096535_occurs_infinitely_often (k : ℕ) :
   ∀ (N : ℕ), ∃ (n : ℕ), n > N ∧ A096535 n = k := by sorry
+
+theorem A096535_occurs_infinitely_often.disproof : ¬ (type_of% @A096535_occurs_infinitely_often) := sorry

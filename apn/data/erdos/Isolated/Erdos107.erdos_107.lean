@@ -49,3 +49,5 @@ theorem erdos_107 : ∀ n ≥ 3, f n = 2^(n - 2) + 1 := by
 namespace variants
 
 end Erdos107.variants
+
+theorem Erdos107.erdos_107.disproof : ¬ (type_of% @Erdos107.erdos_107) := sorry

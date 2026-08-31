@@ -85,3 +85,5 @@ theorem erdos_5 : ∀ C : ℝ, 0 ≤ C →
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.disproof : ¬ (type_of% @Erdos5.erdos_5) := sorry

@@ -64,3 +64,5 @@ theorem oeis_A271510_conjecture_iv (b c : ℕ) :
     x ≥ y ∧
     is_square (16*x^2 + b*y^2 + c*z^2)
   := by sorry
+
+theorem oeis_A271510_conjecture_iv.disproof : ¬ (type_of% @oeis_A271510_conjecture_iv) := sorry

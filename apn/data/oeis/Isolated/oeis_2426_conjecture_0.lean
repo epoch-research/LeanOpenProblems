@@ -35,3 +35,5 @@ for any prime p > 3 (cf. A277640). - Zhi-Wei Sun, Nov 30 2016
 theorem oeis_2426_conjecture_0 :
   ∀ n : ℕ, 3 < n → (n.Prime ↔ (A002426 n : ℤ) ≡ 1 [ZMOD (n^2 : ℤ)]) := by
   sorry
+
+theorem oeis_2426_conjecture_0.disproof : ¬ (type_of% @oeis_2426_conjecture_0) := sorry

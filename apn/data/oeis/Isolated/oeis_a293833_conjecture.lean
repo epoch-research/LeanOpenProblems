@@ -45,3 +45,5 @@ This is an analog of Legendre's conjecture that for each $n = 1,2,3,...$ there i
 theorem oeis_a293833_conjecture :
   ∀ n : ℕ, n > 0 → (a n > 0 ∧ (a n = 1 ↔ n = 12)) :=
 by sorry
+
+theorem oeis_a293833_conjecture.disproof : ¬ (type_of% @oeis_a293833_conjecture) := sorry

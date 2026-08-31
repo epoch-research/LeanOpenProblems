@@ -75,3 +75,5 @@ structure OEIS_A092243_Conjectures where
   infinitely_negative : Set.Infinite {n : ℕ | A092243 n < 0}
 
 theorem oeis_92243_conjecture : OEIS_A092243_Conjectures := by sorry
+
+theorem oeis_92243_conjecture.disproof : ¬ (type_of% @oeis_92243_conjecture) := sorry

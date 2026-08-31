@@ -39,3 +39,5 @@ Conjecture: a(n) > 0 for all n > 0. In other words, for each n = 1,2,3,... the i
 -/
 theorem oeis_a263206_conjecture_0 (n : ℕ) : 0 < n → a n > 0 := by
   sorry
+
+theorem oeis_a263206_conjecture_0.disproof : ¬ (type_of% @oeis_a263206_conjecture_0) := sorry

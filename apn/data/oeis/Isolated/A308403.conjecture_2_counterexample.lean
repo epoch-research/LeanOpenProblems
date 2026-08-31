@@ -70,3 +70,5 @@ theorem A308403.conjecture_2_counterexample :
             0
     generalized_a n_val 2 12 = 0 := by
   sorry
+
+theorem A308403.conjecture_2_counterexample.disproof : ¬ (type_of% @A308403.conjecture_2_counterexample) := sorry

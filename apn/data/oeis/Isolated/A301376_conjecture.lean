@@ -43,3 +43,5 @@ x² + y² + z² + w² with x,y,z,w integers and y even such that x² - (3*y)² =
 -/
 theorem A301376_conjecture : ∀ (n : ℕ), n > 0 → a n > 0 := by
   sorry
+
+theorem A301376_conjecture.disproof : ¬ (type_of% @A301376_conjecture) := sorry

@@ -42,3 +42,5 @@ def a (n : ℕ) : ℕ :=
 
 /-- Conjecture: a(n) > 0 except for n = 449. -/
 theorem oeis_a275471_conjecture : ∀ n : ℕ, n > 0 → (a n > 0 ↔ n ≠ 449) := by sorry
+
+theorem oeis_a275471_conjecture.disproof : ¬ (type_of% @oeis_a275471_conjecture) := sorry

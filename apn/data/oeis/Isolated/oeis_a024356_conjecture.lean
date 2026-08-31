@@ -32,3 +32,5 @@ I conjecture that a(4) is the only zero. - Jon Perry, Mar 22 2004
 -/
 theorem oeis_a024356_conjecture : A024356 4 = 0 ∧ ∀ n : ℕ, A024356 n = 0 → n = 4 := by
   sorry
+
+theorem oeis_a024356_conjecture.disproof : ¬ (type_of% @oeis_a024356_conjecture) := sorry

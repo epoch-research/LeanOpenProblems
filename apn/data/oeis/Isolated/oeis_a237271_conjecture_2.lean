@@ -70,3 +70,5 @@ The conjecture 2 is essentially the same as the second conjecture in the Comment
 -/
 theorem oeis_a237271_conjecture_2 (n : ℕ) : a n = num_2_dense_sublists n := by
   sorry
+
+theorem oeis_a237271_conjecture_2.disproof : ¬ (type_of% @oeis_a237271_conjecture_2) := sorry

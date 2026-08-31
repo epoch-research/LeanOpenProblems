@@ -78,3 +78,5 @@ theorem erdos_5.variants.goldston_pintz_yildirim : (0 : ℝ) ∈ limitPointSet :
 -- `(p (n + 1) - p n) / log n < c`.
 
 end Erdos5
+
+theorem Erdos5.erdos_5.variants.goldston_pintz_yildirim.disproof : ¬ (type_of% @Erdos5.erdos_5.variants.goldston_pintz_yildirim) := sorry

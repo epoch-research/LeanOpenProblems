@@ -50,3 +50,5 @@ This is much stronger than Lagrange's four-square theorem.
 -/
 theorem oeis_a308734_conjecture_0 : ∀ n : ℕ, 1 < n → A308734 n > 0 := by
   sorry
+
+theorem oeis_a308734_conjecture_0.disproof : ¬ (type_of% @oeis_a308734_conjecture_0) := sorry

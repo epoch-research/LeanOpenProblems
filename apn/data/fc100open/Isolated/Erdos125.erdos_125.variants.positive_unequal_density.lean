@@ -60,3 +60,5 @@ theorem erdos_125.variants.positive_unequal_density :
   sorry
 
 end Erdos125
+
+theorem Erdos125.erdos_125.variants.positive_unequal_density.disproof : ¬ (type_of% @Erdos125.erdos_125.variants.positive_unequal_density) := sorry

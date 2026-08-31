@@ -89,3 +89,5 @@ theorem oeis_271099_conjecture :
 := by sorry
 
 end A271099
+
+theorem A271099.oeis_271099_conjecture.disproof : ¬ (type_of% @A271099.oeis_271099_conjecture) := sorry

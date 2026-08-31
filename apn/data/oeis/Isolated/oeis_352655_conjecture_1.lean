@@ -39,3 +39,5 @@ theorem oeis_352655_conjecture_1 :
     r ≥ 2 →
     Nat.ModEq (p ^ (3 * r + 3)) (a (p ^ r)) (a (p ^ (r - 1))) :=
   by sorry
+
+theorem oeis_352655_conjecture_1.disproof : ¬ (type_of% @oeis_352655_conjecture_1) := sorry

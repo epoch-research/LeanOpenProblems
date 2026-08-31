@@ -55,3 +55,5 @@ theorem oeis_364176_conjecture_0
   -- This is formalized as the quotient being an integer.
   (a k_r - a k_r_minus_1) / modulus ∈ Set.range (Int.cast : ℤ → ℝ)
 := by sorry
+
+theorem oeis_364176_conjecture_0.disproof : ¬ (type_of% @oeis_364176_conjecture_0) := sorry

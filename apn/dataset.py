@@ -21,7 +21,9 @@ def fc_commit(dataset_dir: str | Path) -> str:
     """The dataset's pinned formal-conjectures commit (``fc_commit``).
 
     The pin is what the dataset's sandbox images bake (compose build arg,
-    image tag component) and what its vendored ``Sources/`` were extracted at.
+    image tag component). For FC-vendored datasets it is also the commit their
+    ``Sources/`` were extracted at; non-FC sources use it only as the proving
+    environment pin.
     """
     commit = (Path(dataset_dir) / "fc_commit").read_text().strip()
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
@@ -105,6 +107,20 @@ class SampleRow:
     def statement_path(self) -> str:
         return self.statement or f"Isolated/{self.id}.lean"
 
+    @property
+    def decl_name(self) -> str:
+        """The target theorem's fully qualified declaration name.
+
+        Equal to the sample id by convention; the manifest's ``decl_name``
+        field overrides it for the few members whose id is a shorthand (some
+        OEIS targets live inside a ``namespace``, so their environment name
+        carries a prefix the id does not). The checker configures Comparator
+        with this exact name.
+        """
+        name = self.extra.get("decl_name", self.id)
+        assert isinstance(name, str)
+        return name
+
 
 def load_manifest(dataset_dir: str | Path) -> list[SampleRow]:
     """Parse a dataset's ``samples.jsonl`` (one JSON object per line)."""
@@ -181,7 +197,9 @@ def write_subset(path: str | Path, description: str, ids: list[str]) -> Path:
     path = Path(path)
     path.parent.mkdir(exist_ok=True)
     path.write_text(
-        json.dumps({"description": description, "ids": ids}, indent=2, ensure_ascii=False)
+        json.dumps(
+            {"description": description, "ids": ids}, indent=2, ensure_ascii=False
+        )
         + "\n"
     )
     return path
@@ -225,10 +243,12 @@ def build_dataset(
     """A dataset's non-excluded manifest rows as Samples.
 
     Each sample's input is its isolated spec (``Isolated/<id>.lean``, license
-    header stripped). ``Sample.metadata`` gets ``sketch``, ``source``, and the
-    whitelisted ``metadata_keys`` only -- other manifest fields (notably
-    ``category_at_pin``/``answer_form``, the recorded verdict in
-    machine-readable form) exist for tooling and must not reach the agent.
+    header stripped). ``Sample.metadata`` gets ``sketch``, ``source``,
+    ``decl_name`` (the target theorem's fully qualified name, which the scorer
+    hands to the checker), and the whitelisted ``metadata_keys`` only -- other
+    manifest fields (notably ``category_at_pin``/``answer_form``, the recorded
+    verdict in machine-readable form) exist for tooling and must not reach the
+    agent.
 
     Args:
         dataset_dir: The dataset's directory under ``apn/data/``.
@@ -247,7 +267,11 @@ def build_dataset(
     samples: list[Sample] = []
     for row in rows:
         text = strip_license_header((dataset_dir / row.statement_path).read_text())
-        metadata: dict[str, Any] = {"sketch": text, "source": row.source}
+        metadata: dict[str, Any] = {
+            "sketch": text,
+            "source": row.source,
+            "decl_name": row.decl_name,
+        }
         for key in metadata_keys:
             if key in row.extra:
                 metadata[key] = row.extra[key]
@@ -260,9 +284,11 @@ def oeis_dataset(names: list[str] | None = None) -> MemoryDataset:
 
     One sample per manifest row (one conjecture; 492). The sketch is the
     conjecture's *isolated* spec: the sequence definitions plus the single
-    target theorem (all sibling conjectures and test lemmas removed).
-    ``oeis_id`` and (for the 3 multi-formalization conjectures)
-    ``other_sources`` ride along in metadata.
+    target theorem (all sibling conjectures and test lemmas removed), followed
+    by the mechanically derived ``<target>.disproof`` declaration stating its
+    negation (the two theorems the agent may settle; see
+    comparator-migration-plan.md §4). ``oeis_id`` and (for the 3
+    multi-formalization conjectures) ``other_sources`` ride along in metadata.
     """
     return build_dataset(OEIS_DIR, "oeis", ("oeis_id", "other_sources"), names)
 
@@ -276,21 +302,30 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
     single target theorem, siblings/test lemmas/``example`` commands removed,
     propositional ``answer(sorry) ↔ P`` statements rewritten to plain ``P``
     (certified by ``tests/test_fc100_isolation.py``), and FC's
-    ``@[category ...]`` classification lists dropped. The 14 value-typed
+    ``@[category ...]`` classification lists dropped -- followed by the
+    derived ``<target>.disproof`` declaration. The 14 value-typed
     ``answer(sorry)`` members of the paper's 100 are excluded manifest rows.
     """
     return build_dataset(FC100_DIR, "fc100open", (), names)
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The Erdős universe (the Bloom statement selection's 48 files) as Samples."""
+    """The Erdős universe (the Bloom statement selection's 48 files) as Samples.
+
+    Each sketch is the target's isolated spec followed by the derived
+    ``<target>.disproof`` declaration. Problem 508's value-typed member is an
+    excluded row with three derived prove-or-disprove samples in its place --
+    see the Hadwiger–Nelson special case in ``scripts/erdos_isolation.py``.
+    """
     return build_dataset(ERDOS_DIR, "erdos", (), names)
 
 
 def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDataset:
     """The Erdős problems our own autoformalization pipeline formalized
     (18 problems absent from formal-conjectures at the run's pin; two two-part
-    files, so 20 samples). See ``apn/data/erdos_autoformalized/NOTICE.md``."""
+    files, so 20 samples). Each sketch ends with the derived
+    ``<target>.disproof`` declaration. See
+    ``apn/data/erdos_autoformalized/NOTICE.md``."""
     return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
 
 

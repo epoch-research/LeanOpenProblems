@@ -38,3 +38,5 @@ If n is prime, then a(n) = 2. Conjecture: If n is composite, then a(n) > 2.
 theorem oeis_321576_conjecture_0 (n : ℕ) (hn : n > 1) :
   (n.Prime → a n = 2) ∧ (¬ n.Prime → a n > 2) :=
 by sorry
+
+theorem oeis_321576_conjecture_0.disproof : ¬ (type_of% @oeis_321576_conjecture_0) := sorry

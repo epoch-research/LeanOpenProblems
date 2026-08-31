@@ -69,3 +69,5 @@ theorem oeis_A352656_conjecture_1 (p : ℕ) (hp : p.Prime) (r : ℕ) (hr : 0 < r
   (F (a * p ^ (r - 1)) (b * p ^ (r - 1)) (c * p ^ (r - 1)) : ℤ) ^ p
     [ZMOD (p ^ (4 * r) : ℤ)] :=
 by sorry
+
+theorem oeis_A352656_conjecture_1.disproof : ¬ (type_of% @oeis_A352656_conjecture_1) := sorry

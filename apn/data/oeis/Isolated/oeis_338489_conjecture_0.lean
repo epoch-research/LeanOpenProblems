@@ -70,3 +70,5 @@ This is equivalent to asserting that $n!$ is triangular if and only if $n \in \{
 -/
 theorem oeis_338489_conjecture_0 :
     ∀ n : ℕ, is_triangular n.factorial ↔ n = 0 ∨ n = 1 ∨ n = 3 ∨ n = 5 := by sorry
+
+theorem oeis_338489_conjecture_0.disproof : ¬ (type_of% @oeis_338489_conjecture_0) := sorry

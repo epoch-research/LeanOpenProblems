@@ -62,3 +62,5 @@ theorem erdos_241.variants.r_eq_2 :
   sorry
 
 end Erdos241
+
+theorem Erdos241.erdos_241.variants.r_eq_2.disproof : ¬ (type_of% @Erdos241.erdos_241.variants.r_eq_2) := sorry

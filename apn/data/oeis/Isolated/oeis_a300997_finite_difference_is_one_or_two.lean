@@ -59,3 +59,5 @@ It is also conjectured that $a(n) = 2n - \sum_{k=1}^{n} I(k)$ where $I(n)$ is th
 -/
 theorem oeis_a300997_finite_difference_is_one_or_two :
   ∀ n : ℕ, 1 ≤ n → a (n + 1) = a n + 1 ∨ a (n + 1) = a n + 2 := by sorry
+
+theorem oeis_a300997_finite_difference_is_one_or_two.disproof : ¬ (type_of% @oeis_a300997_finite_difference_is_one_or_two) := sorry

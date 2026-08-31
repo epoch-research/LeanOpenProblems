@@ -35,3 +35,5 @@ Conjecture: all elements in absolute value are Fibonacci numbers. That is, for e
 -/
 theorem oeis_103311_conjecture_0 (n : ℕ) : ∃ m : ℕ, Int.natAbs (a n) = Nat.fib m := by
   sorry
+
+theorem oeis_103311_conjecture_0.disproof : ¬ (type_of% @oeis_103311_conjecture_0) := sorry

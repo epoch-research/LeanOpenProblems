@@ -42,3 +42,5 @@ theorem oeis_A105751_conjecture_Moll_2 :
   sorry
 
 end AsymptoticConjectures
+
+theorem oeis_A105751_conjecture_Moll_2.disproof : ¬ (type_of% @oeis_A105751_conjecture_Moll_2) := sorry

@@ -51,3 +51,5 @@ theorem oeis_271026_conjecture_0 :
   (∀ (n : ℕ), A271026 n > 0) ∧
   (∀ (n : ℕ), A271026 n = 1 ↔ n ∈ A271026_unique_set) :=
 by sorry
+
+theorem oeis_271026_conjecture_0.disproof : ¬ (type_of% @oeis_271026_conjecture_0) := sorry

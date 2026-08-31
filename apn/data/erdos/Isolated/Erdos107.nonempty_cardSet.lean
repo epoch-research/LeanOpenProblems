@@ -46,3 +46,5 @@ theorem nonempty_cardSet : ∀ n ≥ 3, (cardSet n).Nonempty := by
 namespace variants
 
 end Erdos107.variants
+
+theorem Erdos107.nonempty_cardSet.disproof : ¬ (type_of% @Erdos107.nonempty_cardSet) := sorry

@@ -93,7 +93,7 @@ def test_sample_shape_and_metadata(name: str) -> None:
     # answer_form is tooling-only and must not flow to the agent-facing sample.
     for sample in _dataset(name):
         assert sample.metadata is not None
-        assert set(sample.metadata) == {"sketch", "source"}
+        assert set(sample.metadata) == {"sketch", "source", "decl_name"}
         assert sample.input == sample.metadata["sketch"]
 
 

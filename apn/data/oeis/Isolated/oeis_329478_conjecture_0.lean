@@ -58,3 +58,5 @@ When $q$ is an integer rational number, its value is given by its numerator, $q.
 theorem oeis_329478_conjecture_0 (n : ℕ) (hn : 0 < n) :
   (A329478 n).isInt ∧
   (Odd (A329478 n).num ↔ Nat.isPowerOfTwo n) := by sorry
+
+theorem oeis_329478_conjecture_0.disproof : ¬ (type_of% @oeis_329478_conjecture_0) := sorry
