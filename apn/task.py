@@ -62,8 +62,8 @@ COMPARATOR_MEMORY_GIB = 32
 # backend tini must be the command itself. tini exists only to reap; `-s`
 # (subreaper) keeps it correct where it is not PID 1 -- the local-docker case.
 #
-# This is a workaround. Reported upstream, so remove this (and the tini
-# install in apn/lean/Dockerfile's base stage) if it is fixed there:
+# This is a workaround. TODO: remove this (and the tini install in
+# apn/lean/Dockerfile's base stage) if it is fixed upstream:
 # https://github.com/UKGovernmentBEIS/inspect_k8s_sandbox/issues/251
 SANDBOX_COMMAND = ["/usr/bin/tini", "-s", "--", "tail", "-f", "/dev/null"]
 

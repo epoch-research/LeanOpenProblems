@@ -186,8 +186,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # agent_corpus, comparator, generate) builds FROM this stage, and the sandbox
 # entrypoint/command is shared (apn.task.SANDBOX_COMMAND), so a service whose
 # image lacked tini would fail to start at all. It exists only to run as a
-# reaping PID 1 -- see the SANDBOX_COMMAND comment in apn/task.py and
-# https://github.com/UKGovernmentBEIS/inspect_k8s_sandbox/issues/251.
+# reaping PID 1 (see the SANDBOX_COMMAND comment in apn/task.py). TODO:
+# remove it if the upstream issue is fixed:
+# https://github.com/UKGovernmentBEIS/inspect_k8s_sandbox/issues/251
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
         python3 python3-pip tini \
