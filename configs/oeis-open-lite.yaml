@@ -1,0 +1,74 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# oeis-open-lite: the canonical run of the OEIS Open Lite subset -- the
+# 100-conjecture random draw from the 492 OEIS Open Problems
+# (apn/data/oeis/subsets/lite.json), run with the basic agent (react, no
+# subagents, no literature snapshot).
+retry_attempts: 5
+name: oeis-open-lite
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
+    name: apn
+    items:
+      - name: apn_oeis
+        args:
+          subset: lite
+          agent_type: react
+          literature: false
+epochs: 1
+models:
+  - package: git+https://github.com/epoch-research/benchmarks
+    name: epoch
+    items:
+      - name: gpt-5.6-sol
+        args:
+          config:
+            reasoning_effort: "medium"
+            max_retries: 7
+            max_connections: 40
+      - name: claude-fable-5
+        args:
+          config:
+            reasoning_effort: "high"
+            max_retries: 7
+            max_connections: 40
+
+# 2 models x 100 samples x $200/sample cap = $40,000 max; gated runs sit near max.
+cost_limit: 200.0
+working_limit: 259_200  # 72 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  epoch/gpt-5.6-sol:
+    input: 5.0
+    output: 30.0
+    input_cache_read: 0.5
+    input_cache_write: 6.25
+  epoch/claude-fable-5:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with epoch-research/benchmarks@main.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.259
