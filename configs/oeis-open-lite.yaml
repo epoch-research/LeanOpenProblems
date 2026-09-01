@@ -1,23 +1,17 @@
 # Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
 #
-# bloom68: the canonical run of Thomas Bloom's Erdős problem selection -- the
-# two bloom_selection subsets (50 + 18 samples), run with all affordances:
-# deep agent (subagents) + the offline literature snapshot (agreed 2026-08-28).
-name: bloom68
+# oeis-open-lite: canonical run of the OEIS Open Lite subset -- 100 random
+# conjectures from the 492 OEIS Open Problems, with the basic agent.
+name: oeis-open-lite
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn
     items:
-      - name: apn_erdos
+      - name: apn_oeis
         args:
-          subset: bloom_selection
-          agent_type: deep
-          literature: true
-      - name: apn_erdos_autoformalized
-        args:
-          subset: bloom_selection
-          agent_type: deep
-          literature: true
+          subset: lite
+          agent_type: react
+          literature: false
 models:
   - package: git+https://github.com/epoch-research/benchmarks
     name: epoch
@@ -25,12 +19,10 @@ models:
       - name: gpt-5.6-sol
         args:
           config:
-            # Policy: use the highest reasoning effort the model supports.
-            reasoning_effort: "max"
             max_retries: 7
             max_connections: 40
 
-# 1 model x 68 samples x $200/sample cap = $13,600 max; gated runs sit near max.
+# 1 model x 100 samples x $200/sample cap = $20,000 max; gated runs sit near max.
 cost_limit: 200.0
 working_limit: 259_200  # 72 * 60 * 60
 
