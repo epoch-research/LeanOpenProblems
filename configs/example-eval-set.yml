@@ -48,3 +48,5 @@ runner:
     OPENAI_BASE_URL: https://api.openai.com/v1
     GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
     HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+
+retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
