@@ -30,8 +30,8 @@ models:
             max_retries: 7
             max_connections: 40
 
-# 1 model x 68 samples x $200/sample cap = $13,600 max; gated runs sit near max.
-cost_limit: 200.0
+# 1 model x 68 samples x $300/sample cap = $20,400 max; gated runs sit near max.
+cost_limit: 300.0
 working_limit: 259_200  # 72 * 60 * 60
 
 # $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
