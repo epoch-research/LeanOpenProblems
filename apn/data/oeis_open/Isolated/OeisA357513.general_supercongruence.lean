@@ -57,3 +57,5 @@ theorem general_supercongruence (m : ℕ) : ∃ (exceptions : Finset ℕ), ∀ p
   sorry
 
 end OeisA357513
+
+theorem OeisA357513.general_supercongruence.disproof : ¬ (type_of% @OeisA357513.general_supercongruence) := sorry

@@ -54,3 +54,5 @@ theorem same_parity_betrothed :
   sorry
 
 end BetrothedNumbers
+
+theorem BetrothedNumbers.same_parity_betrothed.disproof : ¬ (type_of% @BetrothedNumbers.same_parity_betrothed) := sorry

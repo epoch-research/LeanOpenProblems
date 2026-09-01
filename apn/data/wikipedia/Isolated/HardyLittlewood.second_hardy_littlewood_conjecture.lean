@@ -83,3 +83,5 @@ theorem second_hardy_littlewood_conjecture {x y : ℕ} (hx : 2 ≤ x) (hy : 2 �
   sorry
 
 end HardyLittlewood
+
+theorem HardyLittlewood.second_hardy_littlewood_conjecture.disproof : ¬ (type_of% @HardyLittlewood.second_hardy_littlewood_conjecture) := sorry

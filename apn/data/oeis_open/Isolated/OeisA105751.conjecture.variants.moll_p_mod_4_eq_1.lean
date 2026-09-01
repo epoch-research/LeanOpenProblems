@@ -47,3 +47,5 @@ theorem conjecture.variants.moll_p_mod_4_eq_1 {p : ℕ} (hp : p.Prime) (h_mod : 
   sorry
 
 end OeisA105751
+
+theorem OeisA105751.conjecture.variants.moll_p_mod_4_eq_1.disproof : ¬ (type_of% @OeisA105751.conjecture.variants.moll_p_mod_4_eq_1) := sorry

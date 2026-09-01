@@ -59,3 +59,5 @@ theorem conjecture (n : ℕ) (hn : 1 ≤ n) (h_not_prime : ¬ isFactorialPrime n
   sorry
 
 end OeisA55487
+
+theorem OeisA55487.conjecture.disproof : ¬ (type_of% @OeisA55487.conjecture) := sorry

@@ -64,3 +64,5 @@ theorem every_prime_occurs :
   sorry
 
 end OeisA945
+
+theorem OeisA945.every_prime_occurs.disproof : ¬ (type_of% @OeisA945.every_prime_occurs) := sorry

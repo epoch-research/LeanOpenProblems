@@ -49,3 +49,5 @@ theorem exists_semi_magic_square_cubes :
   sorry
 
 end MagicSquares
+
+theorem MagicSquares.exists_semi_magic_square_cubes.disproof : ¬ (type_of% @MagicSquares.exists_semi_magic_square_cubes) := sorry

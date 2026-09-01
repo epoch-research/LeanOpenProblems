@@ -41,3 +41,5 @@ theorem conjecture : a 24 = 0 := by
   sorry
 
 end OeisA72200
+
+theorem OeisA72200.conjecture.disproof : ¬ (type_of% @OeisA72200.conjecture) := sorry

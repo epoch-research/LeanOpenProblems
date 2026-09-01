@@ -43,3 +43,5 @@ theorem lander_parkin_selfridge :
   sorry
 
 end LanderParkinSelfridge
+
+theorem LanderParkinSelfridge.lander_parkin_selfridge.disproof : ¬ (type_of% @LanderParkinSelfridge.lander_parkin_selfridge) := sorry

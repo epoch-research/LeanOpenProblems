@@ -72,3 +72,5 @@ theorem new_mersenne_conjecture.variants.prime (p : ℕ) (hp : p.Prime) (h : Odd
   sorry
 
 end Mersenne
+
+theorem Mersenne.new_mersenne_conjecture.variants.prime.disproof : ¬ (type_of% @Mersenne.new_mersenne_conjecture.variants.prime) := sorry

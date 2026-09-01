@@ -42,3 +42,5 @@ theorem conjecture (n : ℕ) (hn : 2 < n) : (n : ℤ) ∣ a (n - 2) ↔ n.Prime 
   sorry
 
 end OeisA64169
+
+theorem OeisA64169.conjecture.disproof : ¬ (type_of% @OeisA64169.conjecture) := sorry

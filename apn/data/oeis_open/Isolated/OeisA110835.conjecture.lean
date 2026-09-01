@@ -47,3 +47,5 @@ theorem conjecture : ∀ n > 0, a n ≥ n := by
   sorry
 
 end OeisA110835
+
+theorem OeisA110835.conjecture.disproof : ¬ (type_of% @OeisA110835.conjecture) := sorry

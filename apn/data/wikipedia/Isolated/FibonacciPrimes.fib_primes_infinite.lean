@@ -34,3 +34,5 @@ theorem fib_primes_infinite : {n : ℕ | (∃ m : ℕ, m.fib = n) ∧ n.Prime}.I
   sorry
 
 end FibonacciPrimes
+
+theorem FibonacciPrimes.fib_primes_infinite.disproof : ¬ (type_of% @FibonacciPrimes.fib_primes_infinite) := sorry

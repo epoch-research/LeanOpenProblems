@@ -35,3 +35,5 @@ theorem a_isBigO : (fun n ↦ (a n : ℝ)) =O[atTop] (fun n ↦ Real.log n * Rea
   sorry
 
 end OeisA34693
+
+theorem OeisA34693.a_isBigO.disproof : ¬ (type_of% @OeisA34693.a_isBigO) := sorry

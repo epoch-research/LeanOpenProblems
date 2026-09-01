@@ -56,3 +56,5 @@ theorem selfridge_conjecture :
   sorry
 
 end SierpinskiNumber
+
+theorem SierpinskiNumber.selfridge_conjecture.disproof : ¬ (type_of% @SierpinskiNumber.selfridge_conjecture) := sorry

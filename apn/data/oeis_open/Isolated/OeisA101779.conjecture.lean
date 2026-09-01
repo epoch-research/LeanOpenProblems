@@ -53,3 +53,5 @@ theorem conjecture : ∀ (n : ℕ), 1 ≤ n → ∃ k : ℕ, Ak n k := by
   sorry
 
 end OeisA101779
+
+theorem OeisA101779.conjecture.disproof : ¬ (type_of% @OeisA101779.conjecture) := sorry

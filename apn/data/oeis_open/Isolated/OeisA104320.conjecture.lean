@@ -39,3 +39,5 @@ theorem conjecture : ∀ n : ℕ, 15 < n → a n > 0 := by
   sorry
 
 end OeisA104320
+
+theorem OeisA104320.conjecture.disproof : ¬ (type_of% @OeisA104320.conjecture) := sorry

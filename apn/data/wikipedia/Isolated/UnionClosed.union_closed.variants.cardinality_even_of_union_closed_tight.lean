@@ -49,3 +49,5 @@ theorem union_closed.variants.cardinality_even_of_union_closed_tight
   sorry
 
 end UnionClosed
+
+theorem UnionClosed.union_closed.variants.cardinality_even_of_union_closed_tight.disproof : ¬ (type_of% @UnionClosed.union_closed.variants.cardinality_even_of_union_closed_tight) := sorry

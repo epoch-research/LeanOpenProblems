@@ -57,3 +57,5 @@ theorem conjecture2 (m : ℕ) : ∃ N : ℕ, ∀ n : ℕ, N < n → generalDet m
   sorry
 
 end OeisA71524
+
+theorem OeisA71524.conjecture2.disproof : ¬ (type_of% @OeisA71524.conjecture2) := sorry

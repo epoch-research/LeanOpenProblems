@@ -51,3 +51,5 @@ theorem infinite_sexy_primes :
 -/
 
 end Dickson
+
+theorem Dickson.infinite_sexy_primes.disproof : ¬ (type_of% @Dickson.infinite_sexy_primes) := sorry

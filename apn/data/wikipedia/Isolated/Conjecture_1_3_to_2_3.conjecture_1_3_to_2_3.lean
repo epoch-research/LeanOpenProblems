@@ -40,3 +40,5 @@ theorem conjecture_1_3_to_2_3 : ∀ (P : Type) [Finite P] [PartialOrder P]
   sorry
 
 end Conjecture_1_3_to_2_3
+
+theorem Conjecture_1_3_to_2_3.conjecture_1_3_to_2_3.disproof : ¬ (type_of% @Conjecture_1_3_to_2_3.conjecture_1_3_to_2_3) := sorry

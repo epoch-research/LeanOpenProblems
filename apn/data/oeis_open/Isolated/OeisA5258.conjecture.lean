@@ -49,3 +49,5 @@ theorem conjecture (n : ℕ) (hn : 1 ≤ n) : Irreducible (aperyPoly n) := by
   sorry
 
 end OeisA5258
+
+theorem OeisA5258.conjecture.disproof : ¬ (type_of% @OeisA5258.conjecture) := sorry

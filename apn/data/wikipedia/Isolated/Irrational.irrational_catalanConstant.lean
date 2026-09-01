@@ -39,3 +39,5 @@ theorem irrational_catalanConstant :
   sorry
 
 end Irrational
+
+theorem Irrational.irrational_catalanConstant.disproof : ¬ (type_of% @Irrational.irrational_catalanConstant) := sorry

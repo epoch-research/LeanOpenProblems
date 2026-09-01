@@ -51,3 +51,5 @@ theorem infinite_safe_primes :
 -/
 
 end Dickson
+
+theorem Dickson.infinite_safe_primes.disproof : ¬ (type_of% @Dickson.infinite_safe_primes) := sorry

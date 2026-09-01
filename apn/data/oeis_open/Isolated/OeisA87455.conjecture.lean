@@ -57,3 +57,5 @@ theorem conjecture : SatisfiesBenford a := by
   sorry
 
 end OeisA87455
+
+theorem OeisA87455.conjecture.disproof : ¬ (type_of% @OeisA87455.conjecture) := sorry

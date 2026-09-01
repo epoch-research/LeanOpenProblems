@@ -47,3 +47,5 @@ theorem exists_magic_square_squares :
   sorry
 
 end MagicSquares
+
+theorem MagicSquares.exists_magic_square_squares.disproof : ¬ (type_of% @MagicSquares.exists_magic_square_squares) := sorry

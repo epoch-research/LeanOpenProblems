@@ -61,3 +61,5 @@ theorem conjecture.variants.a_40 :
   sorry
 
 end OeisA103662
+
+theorem OeisA103662.conjecture.variants.a_40.disproof : ¬ (type_of% @OeisA103662.conjecture.variants.a_40) := sorry

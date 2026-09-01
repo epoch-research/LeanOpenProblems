@@ -40,3 +40,5 @@ theorem conjecture : {p : ℕ | A p}.Infinite := by
   sorry
 
 end OeisA2407
+
+theorem OeisA2407.conjecture.disproof : ¬ (type_of% @OeisA2407.conjecture) := sorry

@@ -49,3 +49,5 @@ theorem inverse_galois_problem {G : Type*} [Fintype G] [Group G] :
   sorry
 
 end InverseGalois
+
+theorem InverseGalois.inverse_galois_problem.disproof : ¬ (type_of% @InverseGalois.inverse_galois_problem) := sorry

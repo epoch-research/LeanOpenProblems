@@ -46,3 +46,5 @@ theorem conjecture : ∃ n > 2, (a n).Prime := by
   sorry
 
 end OeisA100474
+
+theorem OeisA100474.conjecture.disproof : ¬ (type_of% @OeisA100474.conjecture) := sorry

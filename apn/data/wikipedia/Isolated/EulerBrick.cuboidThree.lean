@@ -100,3 +100,5 @@ theorem cuboidThree : CuboidThree := by
 end Cuboid
 
 end EulerBrick
+
+theorem EulerBrick.cuboidThree.disproof : ¬ (type_of% @EulerBrick.cuboidThree) := sorry

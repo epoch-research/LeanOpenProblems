@@ -87,3 +87,5 @@ theorem conjecture2 (n : ℕ) : e n + f n = b n := by
   sorry
 
 end OeisA100434
+
+theorem OeisA100434.conjecture2.disproof : ¬ (type_of% @OeisA100434.conjecture2) := sorry

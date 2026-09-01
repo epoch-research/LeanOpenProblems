@@ -102,3 +102,5 @@ theorem observation_carmichael (k : ℕ) (hk : IsCarmichael k) :
   sorry
 
 end OeisA237271
+
+theorem OeisA237271.observation_carmichael.disproof : ¬ (type_of% @OeisA237271.observation_carmichael) := sorry

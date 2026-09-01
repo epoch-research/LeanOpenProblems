@@ -78,3 +78,5 @@ theorem new_mersenne_conjecture (p : ℕ) (hp : Odd p) :
   sorry
 
 end Mersenne
+
+theorem Mersenne.new_mersenne_conjecture.disproof : ¬ (type_of% @Mersenne.new_mersenne_conjecture) := sorry

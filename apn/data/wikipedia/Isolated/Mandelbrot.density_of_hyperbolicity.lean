@@ -58,3 +58,5 @@ theorem density_of_hyperbolicity :
   sorry
 
 end Mandelbrot
+
+theorem Mandelbrot.density_of_hyperbolicity.disproof : ¬ (type_of% @Mandelbrot.density_of_hyperbolicity) := sorry

@@ -47,3 +47,5 @@ theorem conjectureA81091 :
 -- TODO(Paul-Lez): add result that for m ≥ 3, there is no prime number with precisely 2m bits, exactly two of which are zero bits.
 
 end OeisA81091
+
+theorem OeisA81091.conjectureA81091.disproof : ¬ (type_of% @OeisA81091.conjectureA81091) := sorry

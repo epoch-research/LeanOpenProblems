@@ -51,3 +51,5 @@ theorem conjecture (m k : ℕ) (hm : 1 < m) (hpal : IsDecimalPalindrome m) (hk :
   sorry
 
 end OeisA83753
+
+theorem OeisA83753.conjecture.disproof : ¬ (type_of% @OeisA83753.conjecture) := sorry

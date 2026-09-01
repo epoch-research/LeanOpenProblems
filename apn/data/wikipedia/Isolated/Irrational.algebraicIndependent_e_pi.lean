@@ -37,3 +37,5 @@ theorem algebraicIndependent_e_pi :
   sorry
 
 end Irrational
+
+theorem Irrational.algebraicIndependent_e_pi.disproof : ¬ (type_of% @Irrational.algebraicIndependent_e_pi) := sorry

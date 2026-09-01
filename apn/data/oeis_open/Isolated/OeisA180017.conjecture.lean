@@ -38,3 +38,5 @@ theorem conjecture (z : ℤ) : Set.Infinite {n : ℕ | a n = z} := by
   sorry
 
 end OeisA180017
+
+theorem OeisA180017.conjecture.disproof : ¬ (type_of% @OeisA180017.conjecture) := sorry

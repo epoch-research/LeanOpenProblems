@@ -45,3 +45,5 @@ theorem conjecture3 (p : ℕ) (hp : p.Prime)
   sorry
 
 end OeisA179524
+
+theorem OeisA179524.conjecture3.disproof : ¬ (type_of% @OeisA179524.conjecture3) := sorry

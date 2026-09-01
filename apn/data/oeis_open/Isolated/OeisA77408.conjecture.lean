@@ -49,3 +49,5 @@ theorem conjecture (n : ℕ) : ¬ IsBasePalindrome 3 (a n) := by
   sorry
 
 end OeisA77408
+
+theorem OeisA77408.conjecture.disproof : ¬ (type_of% @OeisA77408.conjecture) := sorry

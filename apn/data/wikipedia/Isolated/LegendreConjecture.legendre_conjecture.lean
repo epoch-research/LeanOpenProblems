@@ -35,3 +35,5 @@ theorem legendre_conjecture :
   sorry
 
 end LegendreConjecture
+
+theorem LegendreConjecture.legendre_conjecture.disproof : ¬ (type_of% @LegendreConjecture.legendre_conjecture) := sorry

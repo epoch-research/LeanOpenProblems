@@ -33,3 +33,5 @@ theorem exp_exp_transcendental : Transcendental ℚ (exp (exp 1)) := by
   sorry
 
 end Transcendental
+
+theorem Transcendental.exp_exp_transcendental.disproof : ¬ (type_of% @Transcendental.exp_exp_transcendental) := sorry

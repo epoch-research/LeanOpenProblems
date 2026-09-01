@@ -43,3 +43,5 @@ theorem gap_conjecture :
   sorry
 
 end GapConjecture
+
+theorem GapConjecture.gap_conjecture.disproof : ¬ (type_of% @GapConjecture.gap_conjecture) := sorry

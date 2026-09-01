@@ -40,3 +40,5 @@ theorem conjecture1 : Set.ncard {n : ℕ | a n = 0} = 8 := by
   sorry
 
 end OeisA182510
+
+theorem OeisA182510.conjecture1.disproof : ¬ (type_of% @OeisA182510.conjecture1) := sorry

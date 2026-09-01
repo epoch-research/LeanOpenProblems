@@ -39,3 +39,5 @@ theorem independentDominationOdd (hIso : 0 < G.minDegree) (hOdd : Odd G.maxDegre
   sorry
 
 end Arxiv.«2107.00295»
+
+theorem Arxiv.«2107.00295».independentDominationOdd.disproof : ¬ (type_of% @Arxiv.«2107.00295».independentDominationOdd) := sorry

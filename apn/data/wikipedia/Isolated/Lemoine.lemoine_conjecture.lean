@@ -37,3 +37,5 @@ theorem lemoine_conjecture (n : ℕ) (hn : 6 < n) (odd : Odd n) :
   sorry
 
 end Lemoine
+
+theorem Lemoine.lemoine_conjecture.disproof : ¬ (type_of% @Lemoine.lemoine_conjecture) := sorry

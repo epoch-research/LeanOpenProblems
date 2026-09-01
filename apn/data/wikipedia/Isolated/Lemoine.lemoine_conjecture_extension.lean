@@ -39,3 +39,5 @@ theorem lemoine_conjecture_extension (n : ℕ) (hn : 8 < n) (odd : Odd n) :
   sorry
 
 end Lemoine
+
+theorem Lemoine.lemoine_conjecture_extension.disproof : ¬ (type_of% @Lemoine.lemoine_conjecture_extension) := sorry

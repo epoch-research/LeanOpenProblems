@@ -56,3 +56,5 @@ theorem home_prime_conjecture : ∀ n : ℕ, 2 ≤ n → ReachesPrime n := by
   sorry
 
 end OeisA37274
+
+theorem OeisA37274.home_prime_conjecture.disproof : ¬ (type_of% @OeisA37274.home_prime_conjecture) := sorry

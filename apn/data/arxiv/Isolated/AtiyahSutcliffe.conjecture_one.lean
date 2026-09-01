@@ -74,3 +74,5 @@ theorem conjecture_one {n : ℕ} (x : Fin n → Point) (hx : Function.Injective 
 end
 
 end AtiyahSutcliffe
+
+theorem AtiyahSutcliffe.conjecture_one.disproof : ¬ (type_of% @AtiyahSutcliffe.conjecture_one) := sorry

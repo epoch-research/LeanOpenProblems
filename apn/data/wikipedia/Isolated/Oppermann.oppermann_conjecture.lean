@@ -40,3 +40,5 @@ theorem oppermann_conjecture (x : ℕ) (hx : 2 ≤ x) :
   sorry
 
 end Oppermann
+
+theorem Oppermann.oppermann_conjecture.disproof : ¬ (type_of% @Oppermann.oppermann_conjecture) := sorry

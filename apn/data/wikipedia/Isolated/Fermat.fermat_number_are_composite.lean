@@ -31,3 +31,5 @@ theorem fermat_number_are_composite : ∀ n > 4, ¬Prime n.fermatNumber := by
   sorry
 
 end Fermat
+
+theorem Fermat.fermat_number_are_composite.disproof : ¬ (type_of% @Fermat.fermat_number_are_composite) := sorry

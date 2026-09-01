@@ -56,3 +56,5 @@ theorem volume_frontier_mandelbrotSet_eq_zero : volume (frontier mandelbrotSet) 
   sorry
 
 end Mandelbrot
+
+theorem Mandelbrot.volume_frontier_mandelbrotSet_eq_zero.disproof : ¬ (type_of% @Mandelbrot.volume_frontier_mandelbrotSet_eq_zero) := sorry

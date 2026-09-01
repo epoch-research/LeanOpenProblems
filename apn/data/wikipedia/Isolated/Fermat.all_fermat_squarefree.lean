@@ -31,3 +31,5 @@ theorem all_fermat_squarefree : ∀ n : ℕ, Squarefree n.fermatNumber := by
   sorry
 
 end Fermat
+
+theorem Fermat.all_fermat_squarefree.disproof : ¬ (type_of% @Fermat.all_fermat_squarefree) := sorry

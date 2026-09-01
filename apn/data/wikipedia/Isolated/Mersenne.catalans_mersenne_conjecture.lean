@@ -76,3 +76,5 @@ theorem catalans_mersenne_conjecture :
   sorry
 
 end Mersenne
+
+theorem Mersenne.catalans_mersenne_conjecture.disproof : ¬ (type_of% @Mersenne.catalans_mersenne_conjecture) := sorry

@@ -56,3 +56,5 @@ theorem agrawal_conjecture :
   sorry
 
 end AgrawalConjecture
+
+theorem AgrawalConjecture.agrawal_conjecture.disproof : ¬ (type_of% @AgrawalConjecture.agrawal_conjecture) := sorry

@@ -60,3 +60,5 @@ theorem isSpectral_right_of_product_three_dimensional :
   sorry
 
 end SpectralSetProduct
+
+theorem SpectralSetProduct.isSpectral_right_of_product_three_dimensional.disproof : ¬ (type_of% @SpectralSetProduct.isSpectral_right_of_product_three_dimensional) := sorry

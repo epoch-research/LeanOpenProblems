@@ -39,3 +39,5 @@ theorem irrational_e_times_pi :
   sorry
 
 end Irrational
+
+theorem Irrational.irrational_e_times_pi.disproof : ¬ (type_of% @Irrational.irrational_e_times_pi) := sorry

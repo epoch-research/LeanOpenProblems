@@ -50,3 +50,5 @@ theorem collatz_conjecture (n : ℕ) (hn : n > 0) : ∃ m, collatzStep^[m] n = 1
   sorry
 
 end CollatzConjecture
+
+theorem CollatzConjecture.collatz_conjecture.disproof : ¬ (type_of% @CollatzConjecture.collatz_conjecture) := sorry

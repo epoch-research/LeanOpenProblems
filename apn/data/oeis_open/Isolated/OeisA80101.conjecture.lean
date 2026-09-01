@@ -43,3 +43,5 @@ theorem conjecture (n : ℕ) : a n ≤ 2 := by
   sorry
 
 end OeisA80101
+
+theorem OeisA80101.conjecture.disproof : ¬ (type_of% @OeisA80101.conjecture) := sorry

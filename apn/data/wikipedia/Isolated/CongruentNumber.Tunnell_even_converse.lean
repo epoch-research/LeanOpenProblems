@@ -63,3 +63,5 @@ theorem Tunnell_even_converse (n : ℕ) (hsqf : Squarefree n) (heven : Even n) :
   sorry
 
 end CongruentNumber
+
+theorem CongruentNumber.Tunnell_even_converse.disproof : ¬ (type_of% @CongruentNumber.Tunnell_even_converse) := sorry

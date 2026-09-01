@@ -54,3 +54,5 @@ theorem agrawal_conjecture.variants.popovych :
   sorry
 
 end AgrawalConjecture
+
+theorem AgrawalConjecture.agrawal_conjecture.variants.popovych.disproof : ¬ (type_of% @AgrawalConjecture.agrawal_conjecture.variants.popovych) := sorry

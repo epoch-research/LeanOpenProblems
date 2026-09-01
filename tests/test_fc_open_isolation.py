@@ -44,7 +44,7 @@ from scripts.isolation import (
     planned_survivors,
     theorem_command_decls,
 )
-from tests.lean_sandbox import compile_all, extract, generate_env
+from tests.lean_sandbox import certify, compile_all, extract, generate_env
 
 
 @dataclass
@@ -53,6 +53,7 @@ class IsoData:
 
     src_ranges: dict[str, dict[str, Any]]  # extractor records for Sources/, by relpath
     iso_ranges: dict[str, dict[str, Any]]  # extractor records for Isolated/, by stem
+    cert_verdicts: dict[str, dict[str, Any]]  # certify_disproof verdicts, by stem
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
@@ -106,10 +107,12 @@ async def iso_data() -> dict[str, IsoData]:
             )
             iso_files = sorted(cfg.dataset_dir / r.statement_path for r in rows)
             iso = await extract(env, iso_files, util_module)
+            cert = await certify(env, iso_files, util_module)
             failures = await compile_all(env, iso_files)
             data[name] = IsoData(
                 src_ranges={fr["file"]: fr for fr in src},
                 iso_ranges={fr["file"][: -len(".lean")]: fr for fr in iso},
+                cert_verdicts={v["file"][: -len(".lean")]: v for v in cert},
                 compile_failures=failures,
             )
     return data
@@ -158,9 +161,12 @@ async def test_isolated_files_are_structurally_correct(iso_data: dict[str, IsoDa
                 )
                 continue
             remaining = sorted(d["name"] for d in thms)
-            if remaining != planned:
+            # The committed spec is the cut's prediction plus the appended
+            # `.disproof` declaration (comparator-migration-plan.md §4).
+            expected = sorted(planned + [f"{row.decl_name}.disproof"])
+            if remaining != expected:
                 failures.append(
-                    f"{ds_name}/{name}: surviving theorems {remaining} != planned {planned}"
+                    f"{ds_name}/{name}: surviving theorems {remaining} != expected {expected}"
                 )
                 continue
             form = _source_form(name, cfg, rel, data.src_ranges[rel])
@@ -193,6 +199,29 @@ async def test_no_example_commands_survive(iso_data: dict[str, IsoData]) -> None
             if any(is_example_command(src, c) for c in fr["commands"]):
                 offenders.append(f"{ds_name}/{row.id}")
     assert not offenders, f"example commands survived isolation in: {offenders}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_disproof_declarations_certified(iso_data: dict[str, IsoData]) -> None:
+    """Every spec declares exactly its target plus ``<target>.disproof``, and
+    the certifier's independent ``mkNot`` recomputation confirms the disproof's
+    elaborated type is the target statement's negation (plan §4)."""
+    failures: list[str] = []
+    for ds_name, cfg in sorted(DATASETS.items()):
+        data = iso_data[ds_name]
+        for row in kept_rows(cfg):
+            stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
+            v = data.cert_verdicts.get(stem)
+            if v is None:
+                failures.append(f"{ds_name}/{row.id}: no certifier verdict")
+            elif not v["ok"]:
+                failures.append(f"{ds_name}/{row.id}: {v['error']}")
+            elif v["target"] != row.decl_name or v["disproof"] != f"{row.decl_name}.disproof":
+                failures.append(
+                    f"{ds_name}/{row.id}: certified pair ({v['target']}, {v['disproof']}) "
+                    f"does not match the manifest decl name {row.decl_name}"
+                )
+    assert not failures, "disproof certification failed:\n  " + "\n  ".join(failures)
 
 
 @pytest.mark.asyncio(loop_scope="module")

@@ -24,6 +24,7 @@ from apn.dataset import (
 )
 from scripts.fc_open_isolation import DATASETS, FCOpenDataset
 from scripts.fc_statements import strip_comments
+from scripts.isolation import disproof_declaration
 
 _SORRY_RE = re.compile(r"\bsorry\b")
 
@@ -130,14 +131,28 @@ def test_sketches_have_no_example_commands(name: str) -> None:
 
 @pytest.mark.parametrize("name", CASES)
 def test_sketches_sorry_count(name: str) -> None:
-    # Exactly one `sorry` per sketch -- the target's proof -- except in the
-    # allowlisted files (a kept definition depending on a sorry'd helper),
-    # which may carry more.
+    # Exactly two `sorry`s per sketch -- the target's proof and the appended
+    # `.disproof` declaration's -- except in the allowlisted files (a kept
+    # definition depending on a sorry'd helper), which may carry more.
     cfg: FCOpenDataset = DATASETS[name]
     for sample in _dataset(name):
         assert sample.metadata is not None
         n = len(_SORRY_RE.findall(strip_comments(sample.metadata["sketch"])))
         if sample.metadata["source"].removeprefix("Sources/") in cfg.sorry_allowlist_files:
-            assert n >= 1, f"{sample.id}: {n} sorries"
+            assert n >= 2, f"{sample.id}: {n} sorries"
         else:
-            assert n == 1, f"{sample.id}: {n} sorries"
+            assert n == 2, f"{sample.id}: {n} sorries"
+
+
+@pytest.mark.parametrize("name", CASES)
+def test_sketches_end_with_disproof_declaration(name: str) -> None:
+    # Every spec's final declaration is the derived `.disproof` line for its
+    # target's fully-qualified name (comparator-migration-plan.md §4); the
+    # container-side certifier in tests/test_fc_open_isolation.py proves its
+    # elaborated type is the negation.
+    cfg = DATASETS[name]
+    for row in load_manifest(cfg.dataset_dir):
+        if row.excluded is not None:
+            continue
+        text = (cfg.dataset_dir / row.statement_path).read_text()
+        assert text.rstrip().endswith(disproof_declaration(row.decl_name)), row.id

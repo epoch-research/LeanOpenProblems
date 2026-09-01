@@ -44,3 +44,5 @@ theorem erdos_moser_conjecture :
   sorry
 
 end ErdosMoser
+
+theorem ErdosMoser.erdos_moser_conjecture.disproof : ¬ (type_of% @ErdosMoser.erdos_moser_conjecture) := sorry

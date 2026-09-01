@@ -40,3 +40,5 @@ theorem conjecture (n : ℕ) : (a n).Prime := by
   sorry
 
 end OeisA7013
+
+theorem OeisA7013.conjecture.disproof : ¬ (type_of% @OeisA7013.conjecture) := sorry

@@ -52,3 +52,5 @@ theorem odd_perfect_number_conjecture (n : ℕ) (hn : Perfect n) : Even n := by
   sorry
 
 end PerfectNumbers
+
+theorem PerfectNumbers.odd_perfect_number_conjecture.disproof : ¬ (type_of% @PerfectNumbers.odd_perfect_number_conjecture) := sorry

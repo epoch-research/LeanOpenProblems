@@ -47,3 +47,5 @@ theorem determinantal_conjecture
   sorry
 
 end DeterminantalConjecture
+
+theorem DeterminantalConjecture.determinantal_conjecture.disproof : ¬ (type_of% @DeterminantalConjecture.determinantal_conjecture) := sorry

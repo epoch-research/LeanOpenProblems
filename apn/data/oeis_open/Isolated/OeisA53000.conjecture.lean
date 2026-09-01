@@ -39,3 +39,5 @@ theorem conjecture (n : ℕ) (hn : 0 < n) : a n ≤ 1 + n.totient := by
   sorry
 
 end OeisA53000
+
+theorem OeisA53000.conjecture.disproof : ¬ (type_of% @OeisA53000.conjecture) := sorry

@@ -72,3 +72,5 @@ theorem isParallelogramAtOrigin_of_volume_lpSum_eq :
   sorry
 
 end Arxiv.«2607.03582»
+
+theorem Arxiv.«2607.03582».isParallelogramAtOrigin_of_volume_lpSum_eq.disproof : ¬ (type_of% @Arxiv.«2607.03582».isParallelogramAtOrigin_of_volume_lpSum_eq) := sorry

@@ -37,3 +37,5 @@ theorem conjecture (n : ℕ) (hn : 2 ≤ n) : ∃ k > 0, (2 * n ^ k - 1).Prime :
   sorry
 
 end OeisA119591
+
+theorem OeisA119591.conjecture.disproof : ¬ (type_of% @OeisA119591.conjecture) := sorry

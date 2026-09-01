@@ -36,3 +36,5 @@ theorem oppermann_conjecture.parts.i (x : ℕ) (hx : 2 ≤ x) :
   sorry
 
 end Oppermann
+
+theorem Oppermann.oppermann_conjecture.parts.i.disproof : ¬ (type_of% @Oppermann.oppermann_conjecture.parts.i) := sorry

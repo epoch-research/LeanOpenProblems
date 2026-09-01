@@ -71,3 +71,5 @@ theorem conjecture4 (m : ℤ) (hm : m ≠ 1 ∧ m ≠ 3 ∧ m ≠ 6 ∧ m ≠ 16
   sorry
 
 end OeisA153330
+
+theorem OeisA153330.conjecture4.disproof : ¬ (type_of% @OeisA153330.conjecture4) := sorry

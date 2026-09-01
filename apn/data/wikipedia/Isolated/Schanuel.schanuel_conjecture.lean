@@ -37,3 +37,5 @@ theorem schanuel_conjecture (n : ℕ) (z : Fin n → ℂ) (h : LinearIndependent
   sorry
 
 end Schanuel
+
+theorem Schanuel.schanuel_conjecture.disproof : ¬ (type_of% @Schanuel.schanuel_conjecture) := sorry

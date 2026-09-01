@@ -65,3 +65,5 @@ theorem DiscreteTopology.of_t2_of_torontoSpace [T2Space X] [TorontoSpace X] :
 -- TODO: Add implication that this holds under the GCH
 
 end Toronto
+
+theorem Toronto.DiscreteTopology.of_t2_of_torontoSpace.disproof : ¬ (type_of% @Toronto.DiscreteTopology.of_t2_of_torontoSpace) := sorry

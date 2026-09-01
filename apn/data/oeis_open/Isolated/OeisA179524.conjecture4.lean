@@ -42,3 +42,5 @@ theorem conjecture4 (n : ℕ) (hn : 1 ≤ n) :
   sorry
 
 end OeisA179524
+
+theorem OeisA179524.conjecture4.disproof : ¬ (type_of% @OeisA179524.conjecture4) := sorry

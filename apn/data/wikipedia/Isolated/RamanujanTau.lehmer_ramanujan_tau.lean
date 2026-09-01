@@ -43,3 +43,5 @@ theorem lehmer_ramanujan_tau : ∀ n > 0, τ n ≠ 0 := by
   sorry
 
 end RamanujanTau
+
+theorem RamanujanTau.lehmer_ramanujan_tau.disproof : ¬ (type_of% @RamanujanTau.lehmer_ramanujan_tau) := sorry

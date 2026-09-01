@@ -45,3 +45,5 @@ theorem conjecture (n : ℕ) (hn : 0 < n) : a n = 0 ↔ n = 4 := by
   sorry
 
 end OeisA78729
+
+theorem OeisA78729.conjecture.disproof : ¬ (type_of% @OeisA78729.conjecture) := sorry

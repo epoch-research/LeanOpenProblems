@@ -84,3 +84,5 @@ def fermatFactors (n : ℕ) : ℕ := n.fermatNumber.primeFactors.card
 end FermatNumbers
 
 end Selfridge
+
+theorem Selfridge.selfridge_conjecture.disproof : ¬ (type_of% @Selfridge.selfridge_conjecture) := sorry

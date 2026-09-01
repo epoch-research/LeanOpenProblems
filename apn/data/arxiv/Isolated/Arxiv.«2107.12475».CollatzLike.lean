@@ -45,3 +45,5 @@ theorem CollatzLike (n : ℕ) (hn : 8 < n) : 2 ∈ Nat.digits 3 (2^n) := by
   sorry
 
 end Arxiv.«2107.12475»
+
+theorem Arxiv.«2107.12475».CollatzLike.disproof : ¬ (type_of% @Arxiv.«2107.12475».CollatzLike) := sorry

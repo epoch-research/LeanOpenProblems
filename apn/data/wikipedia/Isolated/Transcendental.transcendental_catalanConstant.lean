@@ -33,3 +33,5 @@ theorem transcendental_catalanConstant : Transcendental ℚ catalanConstant := b
   sorry
 
 end Transcendental
+
+theorem Transcendental.transcendental_catalanConstant.disproof : ¬ (type_of% @Transcendental.transcendental_catalanConstant) := sorry

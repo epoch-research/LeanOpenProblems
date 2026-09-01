@@ -70,3 +70,5 @@ theorem taxicab_for_5_2_n : ∃ n : ℕ, n ≥ 2 ∧ (∃ x : ℕ, IsTaxicabFor 
   := by sorry
 
 end Taxicab
+
+theorem Taxicab.taxicab_for_5_2_n.disproof : ¬ (type_of% @Taxicab.taxicab_for_5_2_n) := sorry

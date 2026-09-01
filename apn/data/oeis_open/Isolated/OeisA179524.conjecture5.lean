@@ -43,3 +43,5 @@ theorem conjecture5 (p : ℕ) [hp : Fact p.Prime] (_hp2 : p ≠ 2) :
   sorry
 
 end OeisA179524
+
+theorem OeisA179524.conjecture5.disproof : ¬ (type_of% @OeisA179524.conjecture5) := sorry

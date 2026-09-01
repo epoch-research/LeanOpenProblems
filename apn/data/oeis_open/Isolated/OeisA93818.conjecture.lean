@@ -37,3 +37,5 @@ theorem conjecture (p : ℕ) (hp : p.Prime) (hp_odd : p ≠ 2) : ∃ n > 0, a n 
   sorry
 
 end OeisA93818
+
+theorem OeisA93818.conjecture.disproof : ¬ (type_of% @OeisA93818.conjecture) := sorry

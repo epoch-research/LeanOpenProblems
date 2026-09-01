@@ -71,3 +71,5 @@ def H12 : Matrix (Fin 12) (Fin 12) ℝ :=
      1,  1, -1,   1,  1, -1,  -1,  1, -1,   1, -1, -1 ]
 
 end Hadamard
+
+theorem Hadamard.HadamardConjecture.disproof : ¬ (type_of% @Hadamard.HadamardConjecture) := sorry

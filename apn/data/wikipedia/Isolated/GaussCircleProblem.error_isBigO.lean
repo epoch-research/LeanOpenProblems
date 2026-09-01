@@ -67,3 +67,5 @@ theorem error_isBigO : ∃ (o : ℝ → ℝ) (_ : Tendsto o atTop (𝓝 0)),
   sorry
 
 end GaussCircleProblem
+
+theorem GaussCircleProblem.error_isBigO.disproof : ¬ (type_of% @GaussCircleProblem.error_isBigO) := sorry

@@ -45,3 +45,5 @@ theorem conjecture (p : ℕ) (hp : p.Prime) (hp_twin : ¬ (p - 2).Prime) : a (p 
   sorry
 
 end OeisA135508
+
+theorem OeisA135508.conjecture.disproof : ¬ (type_of% @OeisA135508.conjecture) := sorry

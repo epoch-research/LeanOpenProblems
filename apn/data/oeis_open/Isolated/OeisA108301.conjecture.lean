@@ -38,3 +38,5 @@ theorem conjecture : ∃ n > 11, (a n).Prime := by
   sorry
 
 end OeisA108301
+
+theorem OeisA108301.conjecture.disproof : ¬ (type_of% @OeisA108301.conjecture) := sorry

@@ -37,3 +37,5 @@ theorem conjecture (k : ℕ) (h : a k = 0) : ∃ m : ℕ, k = (2 * m) ^ 2 := by
   sorry
 
 end OeisA84046
+
+theorem OeisA84046.conjecture.disproof : ¬ (type_of% @OeisA84046.conjecture) := sorry

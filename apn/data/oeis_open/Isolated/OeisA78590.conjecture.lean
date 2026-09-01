@@ -39,3 +39,5 @@ theorem conjecture (n : ℕ) (hn : 3 ≤ n) : a (n - 2) ∣ 2 ^ a (n - 1) + 1 :=
   sorry
 
 end OeisA78590
+
+theorem OeisA78590.conjecture.disproof : ¬ (type_of% @OeisA78590.conjecture) := sorry

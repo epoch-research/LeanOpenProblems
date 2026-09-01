@@ -80,3 +80,5 @@ pole of the tangent rather than a large value, and is counted in, reading $|x_n|
 def exceptional : Set ℕ := {n | 5 ≤ n ∧ (A n = 0 ∨ ((n : ℚ) / 2 + 1 < |x n|))}
 
 end Arxiv.«2607.05739»
+
+theorem Arxiv.«2607.05739».tan_arctan_sum_not_integer.disproof : ¬ (type_of% @Arxiv.«2607.05739».tan_arctan_sum_not_integer) := sorry

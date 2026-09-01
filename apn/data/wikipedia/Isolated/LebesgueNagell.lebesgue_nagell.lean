@@ -46,3 +46,5 @@ theorem lebesgue_nagell (p : ℕ) (hp : p.Prime) (hodd : Odd p) (x y : ℤ) :
   sorry
 
 end LebesgueNagell
+
+theorem LebesgueNagell.lebesgue_nagell.disproof : ¬ (type_of% @LebesgueNagell.lebesgue_nagell) := sorry

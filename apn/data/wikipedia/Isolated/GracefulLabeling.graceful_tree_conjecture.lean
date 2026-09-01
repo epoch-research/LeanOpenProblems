@@ -49,3 +49,5 @@ theorem graceful_tree_conjecture {V : Type*} [Fintype V] [DecidableEq V]
   sorry
 
 end GracefulLabeling
+
+theorem GracefulLabeling.graceful_tree_conjecture.disproof : ¬ (type_of% @GracefulLabeling.graceful_tree_conjecture) := sorry

@@ -43,3 +43,5 @@ theorem hall_conjecture : HallConjectureExp 2⁻¹ := by
   sorry
 
 end Hall
+
+theorem Hall.hall_conjecture.disproof : ¬ (type_of% @Hall.hall_conjecture) := sorry

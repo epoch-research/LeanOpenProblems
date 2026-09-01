@@ -146,3 +146,5 @@ theorem rank_elkies28 : finrank ℤ elkies28⟮ℚ⟯ = 28 := by
 end WeierstrassCurve
 
 end EllipticCurveRank
+
+theorem EllipticCurveRank.WeierstrassCurve.rank_elkies28.disproof : ¬ (type_of% @EllipticCurveRank.WeierstrassCurve.rank_elkies28) := sorry

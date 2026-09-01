@@ -43,3 +43,5 @@ theorem FugledeConjecture.variants.dim_2 :
   sorry
 
 end Fuglede
+
+theorem Fuglede.FugledeConjecture.variants.dim_2.disproof : ¬ (type_of% @Fuglede.FugledeConjecture.variants.dim_2) := sorry

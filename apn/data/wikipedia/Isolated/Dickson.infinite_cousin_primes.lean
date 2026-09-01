@@ -51,3 +51,5 @@ theorem infinite_cousin_primes :
 -/
 
 end Dickson
+
+theorem Dickson.infinite_cousin_primes.disproof : ¬ (type_of% @Dickson.infinite_cousin_primes) := sorry

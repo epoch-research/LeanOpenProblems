@@ -57,3 +57,5 @@ theorem conjecture : ∀ (x : ℝ), x > 1 →
   sorry
 
 end OeisA111291
+
+theorem OeisA111291.conjecture.disproof : ¬ (type_of% @OeisA111291.conjecture) := sorry

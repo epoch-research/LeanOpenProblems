@@ -87,3 +87,5 @@ theorem conjecture_1 {m n : ℕ} (hm2 : 2 ≤ m) (hn2 : 2 ≤ n) (hmn : n ≤ m)
   sorry
 
 end Arxiv.«2605.12342»
+
+theorem Arxiv.«2605.12342».conjecture_1.disproof : ¬ (type_of% @Arxiv.«2605.12342».conjecture_1) := sorry

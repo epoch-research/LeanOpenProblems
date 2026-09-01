@@ -43,3 +43,5 @@ theorem conjecture (n : ℕ) (hn : 3 ≤ n) (hodd : Odd n) :
   sorry
 
 end OeisA5153
+
+theorem OeisA5153.conjecture.disproof : ¬ (type_of% @OeisA5153.conjecture) := sorry

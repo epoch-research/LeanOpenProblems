@@ -65,3 +65,5 @@ theorem beck_fiala_conjecture :
   sorry
 
 end BeckFiala
+
+theorem BeckFiala.beck_fiala_conjecture.disproof : ¬ (type_of% @BeckFiala.beck_fiala_conjecture) := sorry

@@ -78,3 +78,5 @@ noncomputable def landauConstant : ℝ :=
     ∃ x, ball x B ⊆ f '' (ball 0 1)}
 
 end Bloch
+
+theorem Bloch.blochConstant_exact_value.disproof : ¬ (type_of% @Bloch.blochConstant_exact_value) := sorry

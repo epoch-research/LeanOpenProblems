@@ -45,3 +45,5 @@ theorem conjecture2 (k : ℕ) (hk : 3 ≤ k) :
   sorry
 
 end OeisA159829
+
+theorem OeisA159829.conjecture2.disproof : ¬ (type_of% @OeisA159829.conjecture2) := sorry

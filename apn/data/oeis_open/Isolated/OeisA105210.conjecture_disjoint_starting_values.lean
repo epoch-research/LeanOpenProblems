@@ -74,3 +74,5 @@ theorem conjecture_disjoint_starting_values :
   sorry
 
 end OeisA105210
+
+theorem OeisA105210.conjecture_disjoint_starting_values.disproof : ¬ (type_of% @OeisA105210.conjecture_disjoint_starting_values) := sorry

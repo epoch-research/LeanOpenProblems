@@ -44,3 +44,5 @@ theorem irrational_algebraic_absolutely_normal :
   sorry
 
 end AlgebraicNormality
+
+theorem AlgebraicNormality.irrational_algebraic_absolutely_normal.disproof : ¬ (type_of% @AlgebraicNormality.irrational_algebraic_absolutely_normal) := sorry

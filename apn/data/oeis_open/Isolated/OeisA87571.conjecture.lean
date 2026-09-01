@@ -51,3 +51,5 @@ theorem conjecture (M : ℕ) : ∃ n > M, 1 < n ∧ ¬ n.Prime ∧ a n ≠ 0 := 
   sorry
 
 end OeisA87571
+
+theorem OeisA87571.conjecture.disproof : ¬ (type_of% @OeisA87571.conjecture) := sorry

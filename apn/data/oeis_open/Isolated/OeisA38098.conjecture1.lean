@@ -40,3 +40,5 @@ theorem conjecture1 (k : ℕ) (hk : 2 < k) (n : ℕ) (hn : 2 ≤ n) :
   sorry
 
 end OeisA38098
+
+theorem OeisA38098.conjecture1.disproof : ¬ (type_of% @OeisA38098.conjecture1) := sorry

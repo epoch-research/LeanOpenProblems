@@ -41,3 +41,5 @@ theorem conjecture (n : ℕ) : ∃ k : ℕ, (a^[k]) n = 0 := by
   sorry
 
 end OeisA87207
+
+theorem OeisA87207.conjecture.disproof : ¬ (type_of% @OeisA87207.conjecture) := sorry

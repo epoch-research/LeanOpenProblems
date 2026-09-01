@@ -59,3 +59,5 @@ theorem cerny_conjecture :
   sorry
 
 end CernyConjecture
+
+theorem CernyConjecture.cerny_conjecture.disproof : ¬ (type_of% @CernyConjecture.cerny_conjecture) := sorry

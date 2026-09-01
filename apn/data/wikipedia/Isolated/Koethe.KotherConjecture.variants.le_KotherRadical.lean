@@ -56,3 +56,5 @@ Sanity check that the current mathlib definition is what I want.
 -/
 
 end Koethe
+
+theorem Koethe.KotherConjecture.variants.le_KotherRadical.disproof : ¬ (type_of% @Koethe.KotherConjecture.variants.le_KotherRadical) := sorry

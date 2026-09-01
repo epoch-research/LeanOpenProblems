@@ -37,3 +37,5 @@ theorem kummer_vandiver (p : ℕ+) (hp : p.Prime) :
   sorry
 
 end KummerVandiver
+
+theorem KummerVandiver.kummer_vandiver.disproof : ¬ (type_of% @KummerVandiver.kummer_vandiver) := sorry

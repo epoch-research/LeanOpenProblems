@@ -48,3 +48,5 @@ theorem conjecture (n k p : ℕ) (hn : 0 < n) (hk : 0 < k) (hp : p.Prime) (hp_ge
   sorry
 
 end OeisA3161
+
+theorem OeisA3161.conjecture.disproof : ¬ (type_of% @OeisA3161.conjecture) := sorry

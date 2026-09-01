@@ -98,3 +98,5 @@ theorem conjecture (m : ℕ) (hm : 1 ≤ m) :
   sorry
 
 end OeisA103885
+
+theorem OeisA103885.conjecture.disproof : ¬ (type_of% @OeisA103885.conjecture) := sorry

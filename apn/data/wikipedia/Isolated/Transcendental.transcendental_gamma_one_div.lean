@@ -33,3 +33,5 @@ theorem transcendental_gamma_one_div (n : ℕ) (hn : 2 ≤ n) : Transcendental �
   sorry
 
 end Transcendental
+
+theorem Transcendental.transcendental_gamma_one_div.disproof : ¬ (type_of% @Transcendental.transcendental_gamma_one_div) := sorry

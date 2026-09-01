@@ -57,3 +57,5 @@ theorem pollock_tetrahedral.salzer_levine :
   sorry
 
 end PollocksConjecture
+
+theorem PollocksConjecture.pollock_tetrahedral.salzer_levine.disproof : ¬ (type_of% @PollocksConjecture.pollock_tetrahedral.salzer_levine) := sorry

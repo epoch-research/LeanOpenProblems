@@ -52,3 +52,5 @@ theorem dickson_conjecture (fs : Finset ℤ[X]) (hfs : ∀ f ∈ fs, f.degree = 
 -/
 
 end Dickson
+
+theorem Dickson.dickson_conjecture.disproof : ¬ (type_of% @Dickson.dickson_conjecture) := sorry

@@ -39,3 +39,5 @@ theorem pi_pow_pi_pow_pi_pow_pi_not_integer : ¬ ∃ (n : ℤ), π ^ π ^ π ^ �
   sorry
 
 end Transcendental
+
+theorem Transcendental.pi_pow_pi_pow_pi_pow_pi_not_integer.disproof : ¬ (type_of% @Transcendental.pi_pow_pi_pow_pi_pow_pi_not_integer) := sorry

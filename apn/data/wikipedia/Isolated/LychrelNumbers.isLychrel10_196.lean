@@ -68,3 +68,5 @@ theorem isLychrel10_196 : IsLychrel10 196 := by
   sorry
 
 end LychrelNumbers
+
+theorem LychrelNumbers.isLychrel10_196.disproof : ¬ (type_of% @LychrelNumbers.isLychrel10_196) := sorry

@@ -57,3 +57,5 @@ theorem pollock_tetrahedral (N : ℕ) :
   sorry
 
 end PollocksConjecture
+
+theorem PollocksConjecture.pollock_tetrahedral.disproof : ¬ (type_of% @PollocksConjecture.pollock_tetrahedral) := sorry

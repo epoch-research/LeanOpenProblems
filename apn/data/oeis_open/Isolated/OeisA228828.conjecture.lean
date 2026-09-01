@@ -39,3 +39,5 @@ theorem conjecture : {a n | n}.Infinite := by
   sorry
 
 end OeisA228828
+
+theorem OeisA228828.conjecture.disproof : ¬ (type_of% @OeisA228828.conjecture) := sorry

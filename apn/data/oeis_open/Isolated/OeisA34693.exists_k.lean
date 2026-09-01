@@ -35,3 +35,5 @@ theorem exists_k {n : ℕ} (hn : 1 < n) : ∃ k < n, (n * k + 1).Prime := by
   sorry
 
 end OeisA34693
+
+theorem OeisA34693.exists_k.disproof : ¬ (type_of% @OeisA34693.exists_k) := sorry

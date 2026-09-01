@@ -33,3 +33,5 @@ theorem transcendental_gompertzConstant : Transcendental ℚ gompertzConstant :=
   sorry
 
 end Transcendental
+
+theorem Transcendental.transcendental_gompertzConstant.disproof : ¬ (type_of% @Transcendental.transcendental_gompertzConstant) := sorry

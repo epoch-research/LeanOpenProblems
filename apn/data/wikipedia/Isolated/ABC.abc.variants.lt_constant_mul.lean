@@ -43,3 +43,5 @@ theorem abc.variants.lt_constant_mul (ε : ℝ) (hε : 0 < ε) : ∃ K,
   sorry
 
 end ABC
+
+theorem ABC.abc.variants.lt_constant_mul.disproof : ¬ (type_of% @ABC.abc.variants.lt_constant_mul) := sorry

@@ -95,3 +95,5 @@ def fano_plane : S(2, 3, 7) :=
    by native_decide, by native_decide⟩
 
 end SteinerSystems
+
+theorem SteinerSystems.large_steiner_systems.disproof : ¬ (type_of% @SteinerSystems.large_steiner_systems) := sorry

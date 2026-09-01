@@ -57,3 +57,5 @@ theorem conjecture3 (p : ℕ) (hp : p.Prime) (n k : ℕ) (hn : 0 < n) (hk : 0 < 
   sorry
 
 end OeisA185895
+
+theorem OeisA185895.conjecture3.disproof : ¬ (type_of% @OeisA185895.conjecture3) := sorry

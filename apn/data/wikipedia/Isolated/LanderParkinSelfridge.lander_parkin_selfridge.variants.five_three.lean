@@ -38,3 +38,5 @@ theorem lander_parkin_selfridge.variants.five_three :
   sorry
 
 end LanderParkinSelfridge
+
+theorem LanderParkinSelfridge.lander_parkin_selfridge.variants.five_three.disproof : ¬ (type_of% @LanderParkinSelfridge.lander_parkin_selfridge.variants.five_three) := sorry

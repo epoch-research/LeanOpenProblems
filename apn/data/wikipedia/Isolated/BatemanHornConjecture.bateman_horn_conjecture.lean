@@ -80,3 +80,5 @@ theorem bateman_horn_conjecture
   sorry
 
 end BatemanHornConjecture
+
+theorem BatemanHornConjecture.bateman_horn_conjecture.disproof : ¬ (type_of% @BatemanHornConjecture.bateman_horn_conjecture) := sorry

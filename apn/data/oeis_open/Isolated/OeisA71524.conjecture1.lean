@@ -56,3 +56,5 @@ theorem conjecture1 (n : ℕ) (hn : 28 < n) : a n ≠ 0 := by
   sorry
 
 end OeisA71524
+
+theorem OeisA71524.conjecture1.disproof : ¬ (type_of% @OeisA71524.conjecture1) := sorry

@@ -34,3 +34,5 @@ theorem bounded_burnside_problem :
   sorry
 
 end BoundedBurnsideProblem
+
+theorem BoundedBurnsideProblem.bounded_burnside_problem.disproof : ¬ (type_of% @BoundedBurnsideProblem.bounded_burnside_problem) := sorry

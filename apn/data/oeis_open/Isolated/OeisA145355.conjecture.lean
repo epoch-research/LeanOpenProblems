@@ -49,3 +49,5 @@ theorem conjecture : ∃ C : ℕ, ∀ n : ℕ, 2 ≤ n → a n ≤ C := by
   sorry
 
 end OeisA145355
+
+theorem OeisA145355.conjecture.disproof : ¬ (type_of% @OeisA145355.conjecture) := sorry

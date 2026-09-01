@@ -46,3 +46,5 @@ theorem conjecture : {n : ℕ | n > 0 ∧ a n = 0} = {1, 6, 30, 54} := by
   sorry
 
 end OeisA109905
+
+theorem OeisA109905.conjecture.disproof : ¬ (type_of% @OeisA109905.conjecture) := sorry

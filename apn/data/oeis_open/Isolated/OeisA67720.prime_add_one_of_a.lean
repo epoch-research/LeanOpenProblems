@@ -41,3 +41,5 @@ theorem prime_add_one_of_a {k : ℕ} (h : A k) (hne : k ≠ 8) : (k + 1).Prime :
   sorry
 
 end OeisA67720
+
+theorem OeisA67720.prime_add_one_of_a.disproof : ¬ (type_of% @OeisA67720.prime_add_one_of_a) := sorry

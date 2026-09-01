@@ -55,3 +55,5 @@ theorem conjecture2 (m : ℕ) (hm : m > 2) (n : ℕ) :
   sorry
 
 end OeisA160324
+
+theorem OeisA160324.conjecture2.disproof : ¬ (type_of% @OeisA160324.conjecture2) := sorry

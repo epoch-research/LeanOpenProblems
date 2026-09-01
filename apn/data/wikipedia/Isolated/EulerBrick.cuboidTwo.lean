@@ -100,3 +100,5 @@ def CuboidThree : Prop := ∀ ⦃a b c : ℤ⦄, gcd a (gcd b c) = 1 → 0 < a �
 end Cuboid
 
 end EulerBrick
+
+theorem EulerBrick.cuboidTwo.disproof : ¬ (type_of% @EulerBrick.cuboidTwo) := sorry

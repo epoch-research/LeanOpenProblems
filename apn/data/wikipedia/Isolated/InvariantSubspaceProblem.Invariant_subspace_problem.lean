@@ -47,3 +47,5 @@ theorem Invariant_subspace_problem [InnerProductSpace ℂ H] [TopologicalSpace.S
   sorry
 
 end InvariantSubspaceProblem
+
+theorem InvariantSubspaceProblem.Invariant_subspace_problem.disproof : ¬ (type_of% @InvariantSubspaceProblem.Invariant_subspace_problem) := sorry

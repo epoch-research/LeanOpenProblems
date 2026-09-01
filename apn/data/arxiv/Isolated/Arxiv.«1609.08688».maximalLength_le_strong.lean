@@ -84,3 +84,5 @@ theorem maximalLength_le_strong (n : ℕ) : F n ≤ Real.sqrt n ^ 3 := by
   sorry
 
 end Arxiv.«1609.08688»
+
+theorem Arxiv.«1609.08688».maximalLength_le_strong.disproof : ¬ (type_of% @Arxiv.«1609.08688».maximalLength_le_strong) := sorry

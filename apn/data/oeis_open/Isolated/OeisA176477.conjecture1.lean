@@ -49,3 +49,5 @@ theorem conjecture1 (n : ℕ) (hn : 1 ≤ n) : (a n).den = 1 ∧ 0 < a n := by
   sorry
 
 end OeisA176477
+
+theorem OeisA176477.conjecture1.disproof : ¬ (type_of% @OeisA176477.conjecture1) := sorry

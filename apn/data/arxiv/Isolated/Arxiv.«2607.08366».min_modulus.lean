@@ -64,3 +64,5 @@ theorem min_modulus :
   sorry
 
 end Arxiv.«2607.08366»
+
+theorem Arxiv.«2607.08366».min_modulus.disproof : ¬ (type_of% @Arxiv.«2607.08366».min_modulus) := sorry

@@ -52,3 +52,5 @@ theorem conjecture_1_1 (k : ℕ) (hprim : k.Prime) (hodd : Odd k) : 0 < S k := b
   sorry
 
 end Arxiv.«2501.03234»
+
+theorem Arxiv.«2501.03234».conjecture_1_1.disproof : ¬ (type_of% @Arxiv.«2501.03234».conjecture_1_1) := sorry

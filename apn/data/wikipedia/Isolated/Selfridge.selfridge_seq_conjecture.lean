@@ -83,3 +83,5 @@ theorem selfridge_seq_conjecture : ¬ Monotone fermatFactors := by
 end FermatNumbers
 
 end Selfridge
+
+theorem Selfridge.selfridge_seq_conjecture.disproof : ¬ (type_of% @Selfridge.selfridge_seq_conjecture) := sorry

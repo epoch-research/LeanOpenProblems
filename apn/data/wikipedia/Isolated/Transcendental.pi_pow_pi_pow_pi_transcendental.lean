@@ -33,3 +33,5 @@ theorem pi_pow_pi_pow_pi_transcendental : Transcendental ℚ (π ^ (π ^ π)) :=
   sorry
 
 end Transcendental
+
+theorem Transcendental.pi_pow_pi_pow_pi_transcendental.disproof : ¬ (type_of% @Transcendental.pi_pow_pi_pow_pi_transcendental) := sorry

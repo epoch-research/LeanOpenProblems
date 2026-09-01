@@ -41,3 +41,5 @@ theorem conjecture (k : ℕ) (N : ℕ) : ∃ i : ℕ, i > N ∧ a i = k := by
   sorry
 
 end OeisA96535
+
+theorem OeisA96535.conjecture.disproof : ¬ (type_of% @OeisA96535.conjecture) := sorry

@@ -48,3 +48,5 @@ theorem comesFromPrimeQuadruple_of_a {n : ℕ} (h : A n) : ComesFromPrimeQuadrup
   sorry
 
 end OeisA56777
+
+theorem OeisA56777.comesFromPrimeQuadruple_of_a.disproof : ¬ (type_of% @OeisA56777.comesFromPrimeQuadruple_of_a) := sorry

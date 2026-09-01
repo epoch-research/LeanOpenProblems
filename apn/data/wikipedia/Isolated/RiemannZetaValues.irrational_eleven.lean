@@ -31,3 +31,5 @@ theorem irrational_eleven : ∃ x, Irrational x ∧ riemannZeta 11 = x := by
   sorry
 
 end RiemannZetaValues
+
+theorem RiemannZetaValues.irrational_eleven.disproof : ¬ (type_of% @RiemannZetaValues.irrational_eleven) := sorry

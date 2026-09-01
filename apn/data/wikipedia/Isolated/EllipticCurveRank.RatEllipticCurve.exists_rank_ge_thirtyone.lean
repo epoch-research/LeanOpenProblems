@@ -148,3 +148,5 @@ instance : elkies28.IsElliptic where
 end WeierstrassCurve
 
 end EllipticCurveRank
+
+theorem EllipticCurveRank.RatEllipticCurve.exists_rank_ge_thirtyone.disproof : ¬ (type_of% @EllipticCurveRank.RatEllipticCurve.exists_rank_ge_thirtyone) := sorry

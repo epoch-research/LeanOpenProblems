@@ -48,3 +48,5 @@ theorem conjecture (n : ℕ) (hn : 0 < n) : 1 ≤ a n := by
   sorry
 
 end OeisA69923
+
+theorem OeisA69923.conjecture.disproof : ¬ (type_of% @OeisA69923.conjecture) := sorry

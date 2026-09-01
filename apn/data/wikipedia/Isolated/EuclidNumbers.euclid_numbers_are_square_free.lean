@@ -36,3 +36,5 @@ theorem euclid_numbers_are_square_free : (∀ n, Squarefree (Euclid n)) := by
   sorry
 
 end EuclidNumbers
+
+theorem EuclidNumbers.euclid_numbers_are_square_free.disproof : ¬ (type_of% @EuclidNumbers.euclid_numbers_are_square_free) := sorry

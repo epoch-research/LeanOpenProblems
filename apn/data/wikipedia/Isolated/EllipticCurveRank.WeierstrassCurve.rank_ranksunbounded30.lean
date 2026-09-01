@@ -146,3 +146,5 @@ instance : elkies28.IsElliptic where
 end WeierstrassCurve
 
 end EllipticCurveRank
+
+theorem EllipticCurveRank.WeierstrassCurve.rank_ranksunbounded30.disproof : ¬ (type_of% @EllipticCurveRank.WeierstrassCurve.rank_ranksunbounded30) := sorry

@@ -42,3 +42,5 @@ theorem conjecture2 (n : ℕ) : ∃ p q : ℕ, p.Prime ∧ q.Prime ∧ a n = p *
   sorry
 
 end OeisA38771
+
+theorem OeisA38771.conjecture2.disproof : ¬ (type_of% @OeisA38771.conjecture2) := sorry

@@ -20,8 +20,10 @@ keeps its file's definitions + the single target theorem and cuts every other
 standalone ``theorem``/``lemma`` and FC's anonymous ``example`` sanity checks.
 All ``answer(...) ↔`` statement forms are rewritten to plain ``P`` (see
 ``scripts/fc_statements.py`` for the rewrite and its re-elaboration
-certificate; ``tests/test_fc_open_isolation.py`` runs the certificate), and
-every kept declaration's ``@[category ...]`` classification list is dropped.
+certificate; ``tests/test_fc_open_isolation.py`` runs the certificate), every
+kept declaration's ``@[category ...]`` classification list is dropped, and the
+derived ``<target>.disproof`` declaration is appended for Comparator scoring
+(certified container-side like erdos's).
 The per-row ``answer_form`` lands in the manifest for tooling and tests;
 ``apn/dataset.py`` deliberately keeps it out of sample metadata.
 
@@ -73,6 +75,7 @@ from scripts.fc_statements import (
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     BAKED_EXE,
+    append_disproof,
     dependency_closure,
     host_to_container,
     isolate,
@@ -243,6 +246,10 @@ def generate(cfg: FCOpenDataset, container: str, exe: str, jobs: int) -> None:
             row["answer_form"] = form
             text, n = strip_category_attrs(text)
             n_category += n
+            # Append the derived disproof declaration (comparator plan §4);
+            # the id IS the fully-qualified name, so no decl_name override
+            # can arise.
+            text, _ = append_disproof(text, decl["name"], decl["name"])
             n_seen = casefold_seen[decl["name"].casefold()] = (
                 casefold_seen.get(decl["name"].casefold(), 0) + 1
             )

@@ -55,3 +55,5 @@ theorem unique_primitive_108 {n : ℕ} (h : IsPrimitiveTerm n) : n = 108 := by
   sorry
 
 end OeisA63880
+
+theorem OeisA63880.unique_primitive_108.disproof : ¬ (type_of% @OeisA63880.unique_primitive_108) := sorry

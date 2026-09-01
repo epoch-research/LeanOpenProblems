@@ -55,3 +55,5 @@ theorem prime_sierpinski_problem :
   sorry
 
 end SierpinskiNumber
+
+theorem SierpinskiNumber.prime_sierpinski_problem.disproof : ¬ (type_of% @SierpinskiNumber.prime_sierpinski_problem) := sorry

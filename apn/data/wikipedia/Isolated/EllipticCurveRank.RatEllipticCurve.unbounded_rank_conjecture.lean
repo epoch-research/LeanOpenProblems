@@ -147,3 +147,5 @@ instance : elkies28.IsElliptic where
 end WeierstrassCurve
 
 end EllipticCurveRank
+
+theorem EllipticCurveRank.RatEllipticCurve.unbounded_rank_conjecture.disproof : ¬ (type_of% @EllipticCurveRank.RatEllipticCurve.unbounded_rank_conjecture) := sorry

@@ -46,3 +46,5 @@ theorem exists_almost_perfect_not_power_of_two :
   sorry
 
 end AlmostPerfectNumbers
+
+theorem AlmostPerfectNumbers.exists_almost_perfect_not_power_of_two.disproof : ¬ (type_of% @AlmostPerfectNumbers.exists_almost_perfect_not_power_of_two) := sorry

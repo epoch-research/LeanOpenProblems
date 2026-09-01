@@ -56,3 +56,5 @@ theorem komlos_conjecture :
   sorry
 
 end KomlosConjecture
+
+theorem KomlosConjecture.komlos_conjecture.disproof : ¬ (type_of% @KomlosConjecture.komlos_conjecture) := sorry

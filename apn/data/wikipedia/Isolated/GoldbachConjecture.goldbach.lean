@@ -38,3 +38,5 @@ end GoldbachConjecture
 namespace TernaryGoldbachConjecture
 
 end TernaryGoldbachConjecture
+
+theorem GoldbachConjecture.goldbach.disproof : ¬ (type_of% @GoldbachConjecture.goldbach) := sorry

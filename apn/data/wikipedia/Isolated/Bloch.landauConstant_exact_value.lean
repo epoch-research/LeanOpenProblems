@@ -77,3 +77,5 @@ theorem landauConstant_exact_value :
   sorry
 
 end Bloch
+
+theorem Bloch.landauConstant_exact_value.disproof : ¬ (type_of% @Bloch.landauConstant_exact_value) := sorry

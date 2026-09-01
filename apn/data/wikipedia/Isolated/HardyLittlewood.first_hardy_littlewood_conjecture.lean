@@ -89,3 +89,5 @@ def SecondHardyLittlewoodConjectureFor (x y : ℕ) : Prop :=
   π (x + y) ≤ π x + π y
 
 end HardyLittlewood
+
+theorem HardyLittlewood.first_hardy_littlewood_conjecture.disproof : ¬ (type_of% @HardyLittlewood.first_hardy_littlewood_conjecture) := sorry

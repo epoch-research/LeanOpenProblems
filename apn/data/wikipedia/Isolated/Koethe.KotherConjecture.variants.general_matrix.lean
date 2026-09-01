@@ -58,3 +58,5 @@ Sanity check that the current mathlib definition is what I want.
 -/
 
 end Koethe
+
+theorem Koethe.KotherConjecture.variants.general_matrix.disproof : ¬ (type_of% @Koethe.KotherConjecture.variants.general_matrix) := sorry

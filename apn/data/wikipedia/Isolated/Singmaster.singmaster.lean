@@ -47,3 +47,5 @@ theorem singmaster: ∃ (C : ℕ), ∀ (t : ℕ), t > 1 →
   sorry
 
 end Singmaster
+
+theorem Singmaster.singmaster.disproof : ¬ (type_of% @Singmaster.singmaster) := sorry

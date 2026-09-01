@@ -51,3 +51,5 @@ theorem conjecture : Set.Infinite {n : ℕ | (a n).Prime} := by
   sorry
 
 end OeisA109845
+
+theorem OeisA109845.conjecture.disproof : ¬ (type_of% @OeisA109845.conjecture) := sorry

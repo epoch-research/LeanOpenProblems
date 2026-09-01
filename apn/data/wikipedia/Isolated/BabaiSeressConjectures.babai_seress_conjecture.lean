@@ -72,3 +72,5 @@ theorem babai_seress_conjecture :
   sorry
 
 end BabaiSeressConjectures
+
+theorem BabaiSeressConjectures.babai_seress_conjecture.disproof : ¬ (type_of% @BabaiSeressConjectures.babai_seress_conjecture) := sorry

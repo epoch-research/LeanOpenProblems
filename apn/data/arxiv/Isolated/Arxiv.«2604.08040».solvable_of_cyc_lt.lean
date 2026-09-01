@@ -73,3 +73,5 @@ theorem solvable_of_cyc_lt :
 /- ## Sharpness & Test cases -/
 
 end Arxiv.«2604.08040»
+
+theorem Arxiv.«2604.08040».solvable_of_cyc_lt.disproof : ¬ (type_of% @Arxiv.«2604.08040».solvable_of_cyc_lt) := sorry

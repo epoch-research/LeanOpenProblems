@@ -31,3 +31,5 @@ theorem infinite_fermat_composite : Infinite {n : ℕ | ¬Prime n.fermatNumber} 
   sorry
 
 end Fermat
+
+theorem Fermat.infinite_fermat_composite.disproof : ¬ (type_of% @Fermat.infinite_fermat_composite) := sorry

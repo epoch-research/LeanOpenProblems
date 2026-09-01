@@ -69,3 +69,5 @@ theorem gottschalk_surjunctivity_conjecture (G : Type) [Group G] :
   sorry
 
 end GottschalkSurjunctivity
+
+theorem GottschalkSurjunctivity.gottschalk_surjunctivity_conjecture.disproof : ¬ (type_of% @GottschalkSurjunctivity.gottschalk_surjunctivity_conjecture) := sorry

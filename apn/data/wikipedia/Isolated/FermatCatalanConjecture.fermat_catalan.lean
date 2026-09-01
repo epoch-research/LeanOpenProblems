@@ -55,3 +55,5 @@ theorem fermat_catalan : fermatCatalanConjecture := by
   sorry
 
 end FermatCatalanConjecture
+
+theorem FermatCatalanConjecture.fermat_catalan.disproof : ¬ (type_of% @FermatCatalanConjecture.fermat_catalan) := sorry

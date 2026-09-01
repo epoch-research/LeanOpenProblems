@@ -149,3 +149,5 @@ instance : elkies28.IsElliptic where
 end WeierstrassCurve
 
 end EllipticCurveRank
+
+theorem EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic.disproof : ¬ (type_of% @EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic) := sorry

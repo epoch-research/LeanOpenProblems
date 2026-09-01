@@ -35,3 +35,5 @@ theorem balanced_primes :
   sorry
 
 end BalancedPrimes
+
+theorem BalancedPrimes.balanced_primes.disproof : ¬ (type_of% @BalancedPrimes.balanced_primes) := sorry

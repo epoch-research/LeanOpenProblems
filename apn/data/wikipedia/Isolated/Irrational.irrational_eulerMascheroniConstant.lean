@@ -39,3 +39,5 @@ theorem irrational_eulerMascheroniConstant :
   sorry
 
 end Irrational
+
+theorem Irrational.irrational_eulerMascheroniConstant.disproof : ¬ (type_of% @Irrational.irrational_eulerMascheroniConstant) := sorry

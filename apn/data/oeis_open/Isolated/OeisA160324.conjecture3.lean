@@ -52,3 +52,5 @@ theorem conjecture3 (k : ℕ) (hk : 0 < k) : ∃ n : ℕ, a n = k := by
   sorry
 
 end OeisA160324
+
+theorem OeisA160324.conjecture3.disproof : ¬ (type_of% @OeisA160324.conjecture3) := sorry

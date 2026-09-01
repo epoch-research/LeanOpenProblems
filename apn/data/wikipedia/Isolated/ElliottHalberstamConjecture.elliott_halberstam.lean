@@ -56,3 +56,5 @@ theorem elliott_halberstam (θ : ℝ) (hθ : θ < 1) (A : ℝ) (hA : 0 < A) :
   sorry
 
 end ElliottHalberstamConjecture
+
+theorem ElliottHalberstamConjecture.elliott_halberstam.disproof : ¬ (type_of% @ElliottHalberstamConjecture.elliott_halberstam) := sorry

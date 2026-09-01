@@ -87,3 +87,5 @@ theorem conjecture3 (n : ℕ) : g n + a n = b n := by
   sorry
 
 end OeisA100434
+
+theorem OeisA100434.conjecture3.disproof : ¬ (type_of% @OeisA100434.conjecture3) := sorry

@@ -33,3 +33,5 @@ theorem rlog_pi_transcendental : Transcendental ℚ (log π) := by
   sorry
 
 end Transcendental
+
+theorem Transcendental.rlog_pi_transcendental.disproof : ¬ (type_of% @Transcendental.rlog_pi_transcendental) := sorry

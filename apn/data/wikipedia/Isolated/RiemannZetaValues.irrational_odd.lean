@@ -32,3 +32,5 @@ theorem irrational_odd (n : ℕ) (hn : 0 < n) :
   sorry
 
 end RiemannZetaValues
+
+theorem RiemannZetaValues.irrational_odd.disproof : ¬ (type_of% @RiemannZetaValues.irrational_odd) := sorry

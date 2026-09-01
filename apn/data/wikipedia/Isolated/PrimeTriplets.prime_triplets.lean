@@ -32,3 +32,5 @@ theorem prime_triplets :
   sorry
 
 end PrimeTriplets
+
+theorem PrimeTriplets.prime_triplets.disproof : ¬ (type_of% @PrimeTriplets.prime_triplets) := sorry

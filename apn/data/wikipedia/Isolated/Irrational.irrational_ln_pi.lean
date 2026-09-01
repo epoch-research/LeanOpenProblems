@@ -39,3 +39,5 @@ theorem irrational_ln_pi :
   sorry
 
 end Irrational
+
+theorem Irrational.irrational_ln_pi.disproof : ¬ (type_of% @Irrational.irrational_ln_pi) := sorry

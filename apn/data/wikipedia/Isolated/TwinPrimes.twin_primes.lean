@@ -34,3 +34,5 @@ theorem twin_primes :
   sorry
 
 end TwinPrimes
+
+theorem TwinPrimes.twin_primes.disproof : ¬ (type_of% @TwinPrimes.twin_primes) := sorry

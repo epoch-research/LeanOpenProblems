@@ -32,3 +32,5 @@ theorem infinite_prime_sq_add_one :
   sorry
 
 end PrimesAndPerfectSquares
+
+theorem PrimesAndPerfectSquares.infinite_prime_sq_add_one.disproof : ¬ (type_of% @PrimesAndPerfectSquares.infinite_prime_sq_add_one) := sorry

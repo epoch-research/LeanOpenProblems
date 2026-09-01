@@ -150,3 +150,5 @@ instance : elkies28.IsElliptic where
 end WeierstrassCurve
 
 end EllipticCurveRank
+
+theorem EllipticCurveRank.RatEllipticCurve.half_rank_zero_and_half_rank_one.disproof : ¬ (type_of% @EllipticCurveRank.RatEllipticCurve.half_rank_zero_and_half_rank_one) := sorry

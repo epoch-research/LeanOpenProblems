@@ -39,3 +39,5 @@ theorem flint_hills_series_converges :
   sorry
 
 end FlintCooksonHills
+
+theorem FlintCooksonHills.flint_hills_series_converges.disproof : ¬ (type_of% @FlintCooksonHills.flint_hills_series_converges) := sorry

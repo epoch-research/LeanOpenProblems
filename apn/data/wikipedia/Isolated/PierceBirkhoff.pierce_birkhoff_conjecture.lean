@@ -90,3 +90,5 @@ theorem pierce_birkhoff_conjecture {n : ℕ} (f : (Fin n → ℝ) → ℝ)
   sorry
 
 end PierceBirkhoff
+
+theorem PierceBirkhoff.pierce_birkhoff_conjecture.disproof : ¬ (type_of% @PierceBirkhoff.pierce_birkhoff_conjecture) := sorry

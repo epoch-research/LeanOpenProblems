@@ -64,3 +64,5 @@ theorem infinite_isWallSunSunPrime_of_disc_eq {D : ℤ} (hD : IsFundamentalDiscr
   sorry
 
 end WallSunSun
+
+theorem WallSunSun.infinite_isWallSunSunPrime_of_disc_eq.disproof : ¬ (type_of% @WallSunSun.infinite_isWallSunSunPrime_of_disc_eq) := sorry

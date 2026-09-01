@@ -57,3 +57,5 @@ theorem infinite_isWallSunSunPrime : {p : ℕ | IsWallSunSunPrime p}.Infinite :=
   sorry
 
 end WallSunSun
+
+theorem WallSunSun.infinite_isWallSunSunPrime.disproof : ¬ (type_of% @WallSunSun.infinite_isWallSunSunPrime) := sorry

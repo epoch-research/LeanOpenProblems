@@ -49,3 +49,5 @@ theorem dean_conjecture :
   sorry
 
 end Arxiv.«2605.02731»
+
+theorem Arxiv.«2605.02731».dean_conjecture.disproof : ¬ (type_of% @Arxiv.«2605.02731».dean_conjecture) := sorry

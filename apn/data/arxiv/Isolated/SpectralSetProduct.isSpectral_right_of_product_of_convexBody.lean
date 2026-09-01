@@ -61,3 +61,5 @@ theorem isSpectral_right_of_product_of_convexBody :
   sorry
 
 end SpectralSetProduct
+
+theorem SpectralSetProduct.isSpectral_right_of_product_of_convexBody.disproof : ¬ (type_of% @SpectralSetProduct.isSpectral_right_of_product_of_convexBody) := sorry

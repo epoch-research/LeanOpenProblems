@@ -48,3 +48,5 @@ theorem banach_mazur_rotation_problem :
   sorry
 
 end Arxiv.«math.0110202»
+
+theorem Arxiv.«math.0110202».banach_mazur_rotation_problem.disproof : ¬ (type_of% @Arxiv.«math.0110202».banach_mazur_rotation_problem) := sorry

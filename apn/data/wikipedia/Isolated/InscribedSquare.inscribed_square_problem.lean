@@ -56,3 +56,5 @@ theorem inscribed_square_problem :
   sorry
 
 end InscribedSquare
+
+theorem InscribedSquare.inscribed_square_problem.disproof : ¬ (type_of% @InscribedSquare.inscribed_square_problem) := sorry

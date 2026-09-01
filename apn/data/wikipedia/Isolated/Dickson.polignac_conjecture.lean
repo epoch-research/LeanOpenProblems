@@ -51,3 +51,5 @@ theorem polignac_conjecture (k : ℕ) :
 -/
 
 end Dickson
+
+theorem Dickson.polignac_conjecture.disproof : ¬ (type_of% @Dickson.polignac_conjecture) := sorry

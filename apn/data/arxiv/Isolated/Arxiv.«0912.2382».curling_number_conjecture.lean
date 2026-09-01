@@ -54,3 +54,5 @@ theorem curling_number_conjecture (S₀ : List ℤ) (h : S₀ ≠ []) : ∃ m, k
   sorry
 
 end Arxiv.«0912.2382»
+
+theorem Arxiv.«0912.2382».curling_number_conjecture.disproof : ¬ (type_of% @Arxiv.«0912.2382».curling_number_conjecture) := sorry

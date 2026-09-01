@@ -39,3 +39,5 @@ theorem conjecture : ∀ n : ℕ, a n = 0 → n = 4 := by
   sorry
 
 end OeisA24356
+
+theorem OeisA24356.conjecture.disproof : ¬ (type_of% @OeisA24356.conjecture) := sorry

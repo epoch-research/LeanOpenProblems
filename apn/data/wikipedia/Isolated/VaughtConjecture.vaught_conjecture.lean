@@ -43,3 +43,5 @@ theorem vaught_conjecture {L : FirstOrder.Language} (hL : Countable L.Symbols)
   := by sorry
 
 end VaughtConjecture
+
+theorem VaughtConjecture.vaught_conjecture.disproof : ¬ (type_of% @VaughtConjecture.vaught_conjecture) := sorry

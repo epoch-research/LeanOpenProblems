@@ -42,3 +42,5 @@ theorem rational_distance_problem :
   sorry
 
 end RationalDistanceProblem
+
+theorem RationalDistanceProblem.rational_distance_problem.disproof : ¬ (type_of% @RationalDistanceProblem.rational_distance_problem) := sorry

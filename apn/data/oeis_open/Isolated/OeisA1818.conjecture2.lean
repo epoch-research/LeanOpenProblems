@@ -58,3 +58,5 @@ theorem conjecture2 {p : ℕ} (hp : p.Prime) (h_odd : p ≠ 2) :
   sorry
 
 end OeisA1818
+
+theorem OeisA1818.conjecture2.disproof : ¬ (type_of% @OeisA1818.conjecture2) := sorry

@@ -59,3 +59,5 @@ theorem density_of_hyperbolicity_general_exponent {n : ℕ} (hn : 2 ≤ n) :
   sorry
 
 end Mandelbrot
+
+theorem Mandelbrot.density_of_hyperbolicity_general_exponent.disproof : ¬ (type_of% @Mandelbrot.density_of_hyperbolicity_general_exponent) := sorry

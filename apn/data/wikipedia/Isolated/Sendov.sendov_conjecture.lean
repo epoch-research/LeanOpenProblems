@@ -52,3 +52,5 @@ theorem sendov_conjecture (n : ℕ) (hn : 2 ≤ n) : n.SatisfiesSendovConjecture
   sorry
 
 end Sendov
+
+theorem Sendov.sendov_conjecture.disproof : ¬ (type_of% @Sendov.sendov_conjecture) := sorry

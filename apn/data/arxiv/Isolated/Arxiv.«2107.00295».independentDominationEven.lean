@@ -39,3 +39,5 @@ theorem independentDominationEven (hIso : 0 < G.minDegree) (hEven : Even G.maxDe
   sorry
 
 end Arxiv.«2107.00295»
+
+theorem Arxiv.«2107.00295».independentDominationEven.disproof : ¬ (type_of% @Arxiv.«2107.00295».independentDominationEven) := sorry

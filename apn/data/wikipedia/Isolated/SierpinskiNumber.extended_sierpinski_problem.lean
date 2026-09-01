@@ -58,3 +58,5 @@ theorem extended_sierpinski_problem :
   sorry
 
 end SierpinskiNumber
+
+theorem SierpinskiNumber.extended_sierpinski_problem.disproof : ¬ (type_of% @SierpinskiNumber.extended_sierpinski_problem) := sorry

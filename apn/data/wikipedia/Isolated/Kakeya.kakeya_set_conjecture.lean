@@ -57,3 +57,5 @@ def IsKakeyaFinite {F : Type*} [Field F] [Fintype F] {n : ℕ} (S : Finset (Fin 
   ∀ v, v ≠ 0 → ∃ a, ∀ t : F, a + t • v ∈ S
 
 end Kakeya
+
+theorem Kakeya.kakeya_set_conjecture.disproof : ¬ (type_of% @Kakeya.kakeya_set_conjecture) := sorry

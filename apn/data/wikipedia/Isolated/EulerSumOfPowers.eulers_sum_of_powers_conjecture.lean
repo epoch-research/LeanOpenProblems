@@ -37,3 +37,5 @@ theorem eulers_sum_of_powers_conjecture (n k b : ℕ) (hn : 1 < n) (hk : 5 < k) 
   sorry
 
 end EulerSumOfPowers
+
+theorem EulerSumOfPowers.eulers_sum_of_powers_conjecture.disproof : ¬ (type_of% @EulerSumOfPowers.eulers_sum_of_powers_conjecture) := sorry

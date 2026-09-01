@@ -71,3 +71,5 @@ theorem count_words_in_x_is_a_shifted (n : ℕ) :
   sorry
 
 end OeisA108081
+
+theorem OeisA108081.count_words_in_x_is_a_shifted.disproof : ¬ (type_of% @OeisA108081.count_words_in_x_is_a_shifted) := sorry

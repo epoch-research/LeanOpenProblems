@@ -42,3 +42,5 @@ theorem conjecture (j k j' k' : ℕ)
   sorry
 
 end OeisA38107
+
+theorem OeisA38107.conjecture.disproof : ¬ (type_of% @OeisA38107.conjecture) := sorry

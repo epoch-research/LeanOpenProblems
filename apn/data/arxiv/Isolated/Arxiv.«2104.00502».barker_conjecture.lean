@@ -47,3 +47,5 @@ theorem barker_conjecture (a : List ℤ) (ha : IsBarkerSequence a) : a.length �
   sorry
 
 end Arxiv.«2104.00502»
+
+theorem Arxiv.«2104.00502».barker_conjecture.disproof : ¬ (type_of% @Arxiv.«2104.00502».barker_conjecture) := sorry

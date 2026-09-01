@@ -49,3 +49,5 @@ theorem union_closed
   sorry
 
 end UnionClosed
+
+theorem UnionClosed.union_closed.disproof : ¬ (type_of% @UnionClosed.union_closed) := sorry

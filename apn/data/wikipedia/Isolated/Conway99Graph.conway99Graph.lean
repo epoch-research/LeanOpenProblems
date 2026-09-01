@@ -60,3 +60,5 @@ and it is also isomorphic to it and to the Paley graph and the graph of the
 def Conway9 := (completeGraph (Fin 3)) □ (completeGraph (Fin 3))
 
 end Conway99Graph
+
+theorem Conway99Graph.conway99Graph.disproof : ¬ (type_of% @Conway99Graph.conway99Graph) := sorry

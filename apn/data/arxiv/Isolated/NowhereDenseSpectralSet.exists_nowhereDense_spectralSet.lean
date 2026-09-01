@@ -61,3 +61,5 @@ def spectralProductImpliesRightSpectral (n m : ℕ) : Prop :=
       isSpectral (productSet (A : Set (Fin n → ℝ)) B) → isSpectral B
 
 end SpectralSetProduct
+
+theorem NowhereDenseSpectralSet.exists_nowhereDense_spectralSet.disproof : ¬ (type_of% @NowhereDenseSpectralSet.exists_nowhereDense_spectralSet) := sorry

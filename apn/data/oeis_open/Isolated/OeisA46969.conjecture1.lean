@@ -48,3 +48,5 @@ theorem conjecture1 (n : ℕ) (hn : 2 < n) : (a (a005382 n) / 12).Prime := by
   sorry
 
 end OeisA46969
+
+theorem OeisA46969.conjecture1.disproof : ¬ (type_of% @OeisA46969.conjecture1) := sorry

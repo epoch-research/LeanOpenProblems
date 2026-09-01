@@ -65,3 +65,5 @@ theorem infinitely_many_firstKind_chains (k : ℕ) (hk : 0 < k) :
   sorry
 
 end CunninghamChain
+
+theorem CunninghamChain.infinitely_many_firstKind_chains.disproof : ¬ (type_of% @CunninghamChain.infinitely_many_firstKind_chains) := sorry

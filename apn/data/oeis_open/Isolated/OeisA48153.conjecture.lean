@@ -34,3 +34,5 @@ theorem conjecture (n : ℕ) (hn : 1 ≤ n) : a n ≤ (n ^ 2 - 1) / 2 := by
   sorry
 
 end OeisA48153
+
+theorem OeisA48153.conjecture.disproof : ¬ (type_of% @OeisA48153.conjecture) := sorry

@@ -31,3 +31,5 @@ theorem fib_primes_infinite.variant : {n : ℕ | n.fib.Prime}.Infinite := by
   sorry
 
 end FibonacciPrimes
+
+theorem FibonacciPrimes.fib_primes_infinite.variant.disproof : ¬ (type_of% @FibonacciPrimes.fib_primes_infinite.variant) := sorry

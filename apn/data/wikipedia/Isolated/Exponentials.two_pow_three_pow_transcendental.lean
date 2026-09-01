@@ -35,3 +35,5 @@ theorem two_pow_three_pow_transcendental (t : ℝ) (h : Irrational t) :
   sorry
 
 end Exponentials
+
+theorem Exponentials.two_pow_three_pow_transcendental.disproof : ¬ (type_of% @Exponentials.two_pow_three_pow_transcendental) := sorry

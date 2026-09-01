@@ -46,3 +46,5 @@ theorem conjecture : {n : ℕ | a n = primorial n}.Infinite := by
   sorry
 
 end OeisA80326
+
+theorem OeisA80326.conjecture.disproof : ¬ (type_of% @OeisA80326.conjecture) := sorry

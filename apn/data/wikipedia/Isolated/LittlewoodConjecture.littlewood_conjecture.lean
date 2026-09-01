@@ -43,3 +43,5 @@ theorem littlewood_conjecture (α β : ℝ) :
   sorry
 
 end LittlewoodConjecture
+
+theorem LittlewoodConjecture.littlewood_conjecture.disproof : ¬ (type_of% @LittlewoodConjecture.littlewood_conjecture) := sorry

@@ -39,3 +39,5 @@ theorem infinitely_many_factorial_primes :
   sorry
 
 end FactorialPrime
+
+theorem FactorialPrime.infinitely_many_factorial_primes.disproof : ¬ (type_of% @FactorialPrime.infinitely_many_factorial_primes) := sorry

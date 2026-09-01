@@ -46,3 +46,5 @@ theorem conjecture2 (ha : ∀ n > 0, a n ≠ 0) :
   sorry
 
 end OeisA167918
+
+theorem OeisA167918.conjecture2.disproof : ¬ (type_of% @OeisA167918.conjecture2) := sorry

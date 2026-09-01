@@ -35,3 +35,5 @@ theorem andrica_conjecture (n : ℕ) :
   sorry
 
 end Andrica
+
+theorem Andrica.andrica_conjecture.disproof : ¬ (type_of% @Andrica.andrica_conjecture) := sorry

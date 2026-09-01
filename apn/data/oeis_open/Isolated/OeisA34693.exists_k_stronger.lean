@@ -37,3 +37,5 @@ theorem exists_k_stronger {n : ℕ} (hn : 0 < n) : ∃ k : ℕ,
   sorry
 
 end OeisA34693
+
+theorem OeisA34693.exists_k_stronger.disproof : ¬ (type_of% @OeisA34693.exists_k_stronger) := sorry

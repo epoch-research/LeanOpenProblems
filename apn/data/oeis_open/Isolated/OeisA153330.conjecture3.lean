@@ -69,3 +69,5 @@ theorem conjecture3 (n : ℕ) (v : ℤ) (hn : 0 < n) (ha : a n = some v)
   sorry
 
 end OeisA153330
+
+theorem OeisA153330.conjecture3.disproof : ¬ (type_of% @OeisA153330.conjecture3) := sorry

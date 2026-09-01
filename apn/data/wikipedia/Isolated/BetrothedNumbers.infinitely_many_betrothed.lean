@@ -48,3 +48,5 @@ theorem infinitely_many_betrothed :
   sorry
 
 end BetrothedNumbers
+
+theorem BetrothedNumbers.infinitely_many_betrothed.disproof : ¬ (type_of% @BetrothedNumbers.infinitely_many_betrothed) := sorry

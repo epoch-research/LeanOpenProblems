@@ -62,3 +62,5 @@ theorem error_term_improvement :
   sorry
 
 end PowerfulNumbersDensity
+
+theorem PowerfulNumbersDensity.error_term_improvement.disproof : ¬ (type_of% @PowerfulNumbersDensity.error_term_improvement) := sorry

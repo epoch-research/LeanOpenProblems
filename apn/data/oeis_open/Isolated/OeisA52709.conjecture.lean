@@ -69,3 +69,5 @@ theorem conjecture (n : ℕ) (hn : 0 < n) [Fintype (sequencesCountedByA052709 n)
   sorry
 
 end OeisA52709
+
+theorem OeisA52709.conjecture.disproof : ¬ (type_of% @OeisA52709.conjecture) := sorry

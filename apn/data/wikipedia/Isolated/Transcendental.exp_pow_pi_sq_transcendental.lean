@@ -33,3 +33,5 @@ theorem exp_pow_pi_sq_transcendental : Transcendental ℚ (exp (π ^ 2)) := by
   sorry
 
 end Transcendental
+
+theorem Transcendental.exp_pow_pi_sq_transcendental.disproof : ¬ (type_of% @Transcendental.exp_pow_pi_sq_transcendental) := sorry

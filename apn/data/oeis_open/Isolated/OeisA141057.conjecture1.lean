@@ -54,3 +54,5 @@ def aInt (n : ℤ) : ℤ :=
       ∑ j ∈ Finset.range (k + 1), ((k.choose j : ℤ) ^ 3)
 
 end OeisA141057
+
+theorem OeisA141057.conjecture1.disproof : ¬ (type_of% @OeisA141057.conjecture1) := sorry

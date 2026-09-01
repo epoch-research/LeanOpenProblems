@@ -31,3 +31,5 @@ theorem irrational_nine : ∃ x, Irrational x ∧ riemannZeta 9 = x := by
   sorry
 
 end RiemannZetaValues
+
+theorem RiemannZetaValues.irrational_nine.disproof : ¬ (type_of% @RiemannZetaValues.irrational_nine) := sorry

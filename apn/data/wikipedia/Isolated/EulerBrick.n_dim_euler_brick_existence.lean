@@ -103,3 +103,5 @@ def CuboidThree : Prop := ∀ ⦃a b c : ℤ⦄, gcd a (gcd b c) = 1 → 0 < a �
 end Cuboid
 
 end EulerBrick
+
+theorem EulerBrick.n_dim_euler_brick_existence.disproof : ¬ (type_of% @EulerBrick.n_dim_euler_brick_existence) := sorry

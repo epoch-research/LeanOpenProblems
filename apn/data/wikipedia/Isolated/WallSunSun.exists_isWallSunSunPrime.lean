@@ -57,3 +57,5 @@ theorem exists_isWallSunSunPrime : ∃ p, IsWallSunSunPrime p := by
   sorry
 
 end WallSunSun
+
+theorem WallSunSun.exists_isWallSunSunPrime.disproof : ¬ (type_of% @WallSunSun.exists_isWallSunSunPrime) := sorry

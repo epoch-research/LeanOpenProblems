@@ -63,3 +63,5 @@ theorem conjecture (R : ℕ) (hR : 5 < R) (hrec : IsDifferenceRecord R) :
   sorry
 
 end OeisA166944
+
+theorem OeisA166944.conjecture.disproof : ¬ (type_of% @OeisA166944.conjecture) := sorry

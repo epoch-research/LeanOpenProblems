@@ -46,3 +46,5 @@ theorem conjecture : ∀ n, 0 < n → Even (a n) := by
   sorry
 
 end OeisA108569
+
+theorem OeisA108569.conjecture.disproof : ¬ (type_of% @OeisA108569.conjecture) := sorry

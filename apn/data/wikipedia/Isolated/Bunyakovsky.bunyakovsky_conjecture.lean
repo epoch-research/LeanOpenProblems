@@ -35,3 +35,5 @@ theorem bunyakovsky_conjecture (f : ℤ[X]) :
   sorry
 
 end Bunyakovsky
+
+theorem Bunyakovsky.bunyakovsky_conjecture.disproof : ¬ (type_of% @Bunyakovsky.bunyakovsky_conjecture) := sorry

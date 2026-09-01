@@ -46,3 +46,5 @@ theorem conjecture5 : Set.Infinite {n : ℕ | a n < 0} := by
   sorry
 
 end OeisA92243
+
+theorem OeisA92243.conjecture5.disproof : ¬ (type_of% @OeisA92243.conjecture5) := sorry

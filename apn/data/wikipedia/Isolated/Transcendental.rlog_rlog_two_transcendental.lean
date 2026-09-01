@@ -33,3 +33,5 @@ theorem rlog_rlog_two_transcendental : Transcendental ℚ ((2 : ℝ).log.log) :=
   sorry
 
 end Transcendental
+
+theorem Transcendental.rlog_rlog_two_transcendental.disproof : ¬ (type_of% @Transcendental.rlog_rlog_two_transcendental) := sorry

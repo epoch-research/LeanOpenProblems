@@ -44,3 +44,5 @@ theorem scholz_conjecture :
 -- TODO(eyang07): add solved variants. See Wikipedia reference.
 
 end ScholzConjecture
+
+theorem ScholzConjecture.scholz_conjecture.disproof : ¬ (type_of% @ScholzConjecture.scholz_conjecture) := sorry

@@ -47,3 +47,5 @@ theorem conjecture (n : ℕ) : A n := by
   sorry
 
 end OeisA281976
+
+theorem OeisA281976.conjecture.disproof : ¬ (type_of% @OeisA281976.conjecture) := sorry

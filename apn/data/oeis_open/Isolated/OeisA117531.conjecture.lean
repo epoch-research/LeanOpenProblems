@@ -38,3 +38,5 @@ theorem conjecture (n : ℕ) (h : n > 13) : a n < n := by
   sorry
 
 end OeisA117531
+
+theorem OeisA117531.conjecture.disproof : ¬ (type_of% @OeisA117531.conjecture) := sorry

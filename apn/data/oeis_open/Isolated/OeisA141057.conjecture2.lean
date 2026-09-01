@@ -57,3 +57,5 @@ theorem conjecture2 (p k : ℕ) (n : ℤ) (hp : p.Prime) (h_p_ge_5 : 5 ≤ p) (h
   sorry
 
 end OeisA141057
+
+theorem OeisA141057.conjecture2.disproof : ¬ (type_of% @OeisA141057.conjecture2) := sorry

@@ -44,3 +44,5 @@ theorem exists_quasiperfect :
   sorry
 
 end QuasiperfectNumbers
+
+theorem QuasiperfectNumbers.exists_quasiperfect.disproof : ¬ (type_of% @QuasiperfectNumbers.exists_quasiperfect) := sorry

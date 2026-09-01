@@ -78,3 +78,5 @@ def IsStrongGiuga (n : ℕ) : Prop :=
     n.Composite ∧ n ∣ 1 + ∑ i ∈ Finset.Ioo 0 n, i ^ (n - 1)
 
 end AgohGiuga
+
+theorem AgohGiuga.agoh_giuga.disproof : ¬ (type_of% @AgohGiuga.agoh_giuga) := sorry

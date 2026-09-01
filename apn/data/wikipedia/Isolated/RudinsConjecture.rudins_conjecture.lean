@@ -55,3 +55,5 @@ theorem rudins_conjecture :
   sorry
 
 end RudinsConjecture
+
+theorem RudinsConjecture.rudins_conjecture.disproof : ¬ (type_of% @RudinsConjecture.rudins_conjecture) := sorry

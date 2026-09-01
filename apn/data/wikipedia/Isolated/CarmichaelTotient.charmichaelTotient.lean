@@ -45,3 +45,5 @@ theorem charmichaelTotient :
   sorry
 
 end CarmichaelTotient
+
+theorem CarmichaelTotient.charmichaelTotient.disproof : ¬ (type_of% @CarmichaelTotient.charmichaelTotient) := sorry

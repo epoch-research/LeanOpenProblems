@@ -58,3 +58,5 @@ theorem volume_frontier_multibrotSet_eq_zero {n : ℕ} : volume (frontier (multi
   sorry
 
 end Mandelbrot
+
+theorem Mandelbrot.volume_frontier_multibrotSet_eq_zero.disproof : ¬ (type_of% @Mandelbrot.volume_frontier_multibrotSet_eq_zero) := sorry

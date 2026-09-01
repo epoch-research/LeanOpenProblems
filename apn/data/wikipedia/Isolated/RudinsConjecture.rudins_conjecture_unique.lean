@@ -55,3 +55,5 @@ theorem rudins_conjecture_unique (N : ℕ) (hN : 6 ≤ N) (q a : ℕ)
   sorry
 
 end RudinsConjecture
+
+theorem RudinsConjecture.rudins_conjecture_unique.disproof : ¬ (type_of% @RudinsConjecture.rudins_conjecture_unique) := sorry

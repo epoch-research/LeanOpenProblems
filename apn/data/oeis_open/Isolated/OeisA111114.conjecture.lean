@@ -47,3 +47,5 @@ theorem conjecture : ∃ᶠ n in atTop, a n > a (n + 1) := by
   sorry
 
 end OeisA111114
+
+theorem OeisA111114.conjecture.disproof : ¬ (type_of% @OeisA111114.conjecture) := sorry

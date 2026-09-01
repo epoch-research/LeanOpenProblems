@@ -63,3 +63,5 @@ theorem bondy_conjecture :
   sorry
 
 end Arxiv.«2606.03696»
+
+theorem Arxiv.«2606.03696».bondy_conjecture.disproof : ¬ (type_of% @Arxiv.«2606.03696».bondy_conjecture) := sorry

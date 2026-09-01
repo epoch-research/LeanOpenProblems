@@ -41,3 +41,5 @@ theorem buchi_problem_M5 : IsBuchi 5 := by
   sorry
 
 end Buchi
+
+theorem Buchi.buchi_problem_M5.disproof : ¬ (type_of% @Buchi.buchi_problem_M5) := sorry

@@ -31,3 +31,5 @@ theorem irrational_seven : ∃ x, Irrational x ∧ riemannZeta 7 = x := by
   sorry
 
 end RiemannZetaValues
+
+theorem RiemannZetaValues.irrational_seven.disproof : ¬ (type_of% @RiemannZetaValues.irrational_seven) := sorry

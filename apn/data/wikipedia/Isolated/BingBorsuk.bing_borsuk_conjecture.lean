@@ -49,3 +49,5 @@ theorem bing_borsuk_conjecture : ∀ n : ℕ, ∀ (X : Type) [TopologicalSpace X
   sorry
 
 end BingBorsuk
+
+theorem BingBorsuk.bing_borsuk_conjecture.disproof : ¬ (type_of% @BingBorsuk.bing_borsuk_conjecture) := sorry

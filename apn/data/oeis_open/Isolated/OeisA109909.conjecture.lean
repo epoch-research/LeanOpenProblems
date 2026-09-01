@@ -43,3 +43,5 @@ theorem conjecture : ∀ n > 3, a n > 0 := by
   sorry
 
 end OeisA109909
+
+theorem OeisA109909.conjecture.disproof : ¬ (type_of% @OeisA109909.conjecture) := sorry

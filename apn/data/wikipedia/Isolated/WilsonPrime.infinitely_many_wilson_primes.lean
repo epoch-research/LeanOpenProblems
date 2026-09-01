@@ -40,3 +40,5 @@ theorem infinitely_many_wilson_primes : Set.Infinite {p : ℕ | IsWilsonPrime p}
   sorry
 
 end WilsonPrime
+
+theorem WilsonPrime.infinitely_many_wilson_primes.disproof : ¬ (type_of% @WilsonPrime.infinitely_many_wilson_primes) := sorry

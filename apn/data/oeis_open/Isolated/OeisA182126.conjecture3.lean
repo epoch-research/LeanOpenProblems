@@ -53,3 +53,5 @@ theorem conjecture3 (n : ℕ) (hn : 0 < n) :
   sorry
 
 end OeisA182126
+
+theorem OeisA182126.conjecture3.disproof : ¬ (type_of% @OeisA182126.conjecture3) := sorry

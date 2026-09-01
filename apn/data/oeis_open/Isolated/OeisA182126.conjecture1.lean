@@ -52,3 +52,5 @@ theorem conjecture1 (x : ℕ) (hx : 10 ^ 9 < x) (v₀ : ℕ) (hv : IsMostFrequen
   sorry
 
 end OeisA182126
+
+theorem OeisA182126.conjecture1.disproof : ¬ (type_of% @OeisA182126.conjecture1) := sorry

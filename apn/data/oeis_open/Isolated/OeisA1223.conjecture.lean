@@ -45,3 +45,5 @@ theorem conjecture (n m : ℕ) (hn : n ≥ 3) :
   sorry
 
 end OeisA1223
+
+theorem OeisA1223.conjecture.disproof : ¬ (type_of% @OeisA1223.conjecture) := sorry

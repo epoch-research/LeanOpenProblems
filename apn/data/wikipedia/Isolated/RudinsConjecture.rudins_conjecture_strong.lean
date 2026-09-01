@@ -53,3 +53,5 @@ theorem rudins_conjecture_strong (N : ℕ) (hN : 6 ≤ N) : Q N 24 1 = Qmax N :=
   sorry
 
 end RudinsConjecture
+
+theorem RudinsConjecture.rudins_conjecture_strong.disproof : ¬ (type_of% @RudinsConjecture.rudins_conjecture_strong) := sorry

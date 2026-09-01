@@ -43,3 +43,5 @@ theorem abc (ε : ℝ) (hε : 0 < ε) :
   sorry
 
 end ABC
+
+theorem ABC.abc.disproof : ¬ (type_of% @ABC.abc) := sorry

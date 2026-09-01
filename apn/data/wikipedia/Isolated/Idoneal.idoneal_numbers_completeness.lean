@@ -62,3 +62,5 @@ theorem idoneal_numbers_completeness :
   sorry
 
 end Idoneal
+
+theorem Idoneal.idoneal_numbers_completeness.disproof : ¬ (type_of% @Idoneal.idoneal_numbers_completeness) := sorry

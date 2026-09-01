@@ -46,3 +46,5 @@ theorem conjecture3 : ∃ B : ℤ, ∀ n : ℕ, a n ≤ B := by
   sorry
 
 end OeisA92243
+
+theorem OeisA92243.conjecture3.disproof : ¬ (type_of% @OeisA92243.conjecture3) := sorry

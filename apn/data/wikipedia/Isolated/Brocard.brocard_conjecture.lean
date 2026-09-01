@@ -40,3 +40,5 @@ theorem brocard_conjecture (n : ℕ) (hn : 1 ≤ n) :
   sorry
 
 end Brocard
+
+theorem Brocard.brocard_conjecture.disproof : ¬ (type_of% @Brocard.brocard_conjecture) := sorry

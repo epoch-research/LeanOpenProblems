@@ -60,3 +60,5 @@ theorem brennan_universalSpectrum :
   sorry
 
 end BrennanConjecture
+
+theorem BrennanConjecture.brennan_universalSpectrum.disproof : ¬ (type_of% @BrennanConjecture.brennan_universalSpectrum) := sorry

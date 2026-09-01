@@ -48,3 +48,5 @@ theorem conjecture1 (n : ℕ) (hn : 0 < n) :
   sorry
 
 end OeisA7918
+
+theorem OeisA7918.conjecture1.disproof : ¬ (type_of% @OeisA7918.conjecture1) := sorry

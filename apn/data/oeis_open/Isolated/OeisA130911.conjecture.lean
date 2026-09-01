@@ -41,3 +41,5 @@ theorem conjecture (n : ℕ) (hn : 3 < n) : a n ≥ 0 := by
   sorry
 
 end OeisA130911
+
+theorem OeisA130911.conjecture.disproof : ¬ (type_of% @OeisA130911.conjecture) := sorry

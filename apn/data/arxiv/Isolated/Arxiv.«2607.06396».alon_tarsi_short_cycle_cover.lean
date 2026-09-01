@@ -55,3 +55,5 @@ theorem alon_tarsi_short_cycle_cover :
   sorry
 
 end Arxiv.«2607.06396»
+
+theorem Arxiv.«2607.06396».alon_tarsi_short_cycle_cover.disproof : ¬ (type_of% @Arxiv.«2607.06396».alon_tarsi_short_cycle_cover) := sorry

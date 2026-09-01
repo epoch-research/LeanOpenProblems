@@ -40,3 +40,5 @@ theorem conjecture : ∀ n : ℕ, a n = n ∧ n > 0 → n = 1 ∨ n = 32 := by
   sorry
 
 end OeisA113010
+
+theorem OeisA113010.conjecture.disproof : ¬ (type_of% @OeisA113010.conjecture) := sorry

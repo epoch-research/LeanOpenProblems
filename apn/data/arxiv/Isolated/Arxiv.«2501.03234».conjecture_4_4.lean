@@ -52,3 +52,5 @@ theorem conjecture_4_4 (n : ℕ) : ∀ᶠ (k : ℕ) in Filter.atTop, k.Prime →
   sorry
 
 end Arxiv.«2501.03234»
+
+theorem Arxiv.«2501.03234».conjecture_4_4.disproof : ¬ (type_of% @Arxiv.«2501.03234».conjecture_4_4) := sorry

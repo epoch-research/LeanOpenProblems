@@ -47,3 +47,5 @@ theorem conjecture (n : ℕ) (p : ℕ) (hp : p.Prime) (hpn : p ≤ n)
   sorry
 
 end OeisA60957
+
+theorem OeisA60957.conjecture.disproof : ¬ (type_of% @OeisA60957.conjecture) := sorry

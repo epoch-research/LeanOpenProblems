@@ -52,3 +52,5 @@ theorem regularprime_conjecture : RegularPrimeConjecture := by
   sorry
 
 end RegularPrimes
+
+theorem RegularPrimes.regularprime_conjecture.disproof : ¬ (type_of% @RegularPrimes.regularprime_conjecture) := sorry

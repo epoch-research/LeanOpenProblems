@@ -60,3 +60,5 @@ theorem conjecture : ∀ (n : ℕ), n ≠ 0 → a n ≠ 0 := by
   sorry
 
 end OeisA100800
+
+theorem OeisA100800.conjecture.disproof : ¬ (type_of% @OeisA100800.conjecture) := sorry

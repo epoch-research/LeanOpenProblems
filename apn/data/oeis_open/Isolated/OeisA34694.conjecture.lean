@@ -36,3 +36,5 @@ theorem conjecture (n : ℕ) (hn : 1 < n) : a n < n ^ 2 := by
   sorry
 
 end OeisA34694
+
+theorem OeisA34694.conjecture.disproof : ¬ (type_of% @OeisA34694.conjecture) := sorry

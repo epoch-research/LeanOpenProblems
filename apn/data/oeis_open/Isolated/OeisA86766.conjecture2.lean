@@ -48,3 +48,5 @@ theorem conjecture2 (n : ℕ) (hn : 0 < n) (h : ∀ m : ℕ, n ≠ 10 ^ m) : a n
   sorry
 
 end OeisA86766
+
+theorem OeisA86766.conjecture2.disproof : ¬ (type_of% @OeisA86766.conjecture2) := sorry

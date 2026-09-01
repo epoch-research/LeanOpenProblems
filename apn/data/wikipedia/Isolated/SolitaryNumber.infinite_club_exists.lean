@@ -50,3 +50,5 @@ theorem infinite_club_exists :
   sorry
 
 end SolitaryNumber
+
+theorem SolitaryNumber.infinite_club_exists.disproof : ¬ (type_of% @SolitaryNumber.infinite_club_exists) := sorry

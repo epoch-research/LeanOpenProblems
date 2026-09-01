@@ -51,3 +51,5 @@ theorem conjecture1 (n : ℕ) : 0 < a n := by
   sorry
 
 end OeisA160324
+
+theorem OeisA160324.conjecture1.disproof : ¬ (type_of% @OeisA160324.conjecture1) := sorry

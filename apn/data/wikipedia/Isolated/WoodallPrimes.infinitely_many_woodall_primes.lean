@@ -31,3 +31,5 @@ theorem infinitely_many_woodall_primes : {k : ℕ | 1 < k ∧ (k * 2 ^ k - 1).Pr
   sorry
 
 end WoodallPrimes
+
+theorem WoodallPrimes.infinitely_many_woodall_primes.disproof : ¬ (type_of% @WoodallPrimes.infinitely_many_woodall_primes) := sorry

@@ -38,3 +38,5 @@ theorem class_number_problem :
   sorry
 
 end ClassNumberProblem
+
+theorem ClassNumberProblem.class_number_problem.disproof : ¬ (type_of% @ClassNumberProblem.class_number_problem) := sorry

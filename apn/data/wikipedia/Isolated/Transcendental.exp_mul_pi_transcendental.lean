@@ -33,3 +33,5 @@ theorem exp_mul_pi_transcendental : Transcendental ℚ (exp 1 * π) := by
   sorry
 
 end Transcendental
+
+theorem Transcendental.exp_mul_pi_transcendental.disproof : ¬ (type_of% @Transcendental.exp_mul_pi_transcendental) := sorry

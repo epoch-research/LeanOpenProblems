@@ -61,3 +61,5 @@ theorem conjecture (n : ℕ) (h_pos : n ≥ 1) :
   sorry
 
 end OeisA109074
+
+theorem OeisA109074.conjecture.disproof : ¬ (type_of% @OeisA109074.conjecture) := sorry

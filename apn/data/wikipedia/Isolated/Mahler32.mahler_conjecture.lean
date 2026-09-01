@@ -39,3 +39,5 @@ theorem mahler_conjecture (x : ℝ) (hx : IsZNumber x) : False := by
   sorry
 
 end Mahler32
+
+theorem Mahler32.mahler_conjecture.disproof : ¬ (type_of% @Mahler32.mahler_conjecture) := sorry

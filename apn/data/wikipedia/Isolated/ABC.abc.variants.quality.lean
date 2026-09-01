@@ -43,3 +43,5 @@ theorem abc.variants.quality (ε : ℝ) (hε : 0 < ε) :
   sorry
 
 end ABC
+
+theorem ABC.abc.variants.quality.disproof : ¬ (type_of% @ABC.abc.variants.quality) := sorry

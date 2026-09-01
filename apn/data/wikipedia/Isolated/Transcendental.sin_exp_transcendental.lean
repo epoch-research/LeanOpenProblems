@@ -33,3 +33,5 @@ theorem sin_exp_transcendental : Transcendental ℚ (Real.sin (exp 1)) := by
   sorry
 
 end Transcendental
+
+theorem Transcendental.sin_exp_transcendental.disproof : ¬ (type_of% @Transcendental.sin_exp_transcendental) := sorry

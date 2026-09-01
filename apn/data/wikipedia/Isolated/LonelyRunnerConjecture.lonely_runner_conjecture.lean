@@ -60,3 +60,5 @@ noncomputable def deltaGap (n : ℕ) : ℝ :=
   sInf { d : ℝ | ∃ v : Fin n ↪ ℤ, (∀ i : Fin n, v i ≠ 0) ∧ d = deltaTuple v }
 
 end LonelyRunnerConjecture
+
+theorem LonelyRunnerConjecture.lonely_runner_conjecture.disproof : ¬ (type_of% @LonelyRunnerConjecture.lonely_runner_conjecture) := sorry

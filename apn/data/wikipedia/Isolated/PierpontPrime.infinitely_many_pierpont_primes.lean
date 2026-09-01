@@ -39,3 +39,5 @@ theorem infinitely_many_pierpont_primes :
   sorry
 
 end PierpontPrime
+
+theorem PierpontPrime.infinitely_many_pierpont_primes.disproof : ¬ (type_of% @PierpontPrime.infinitely_many_pierpont_primes) := sorry

@@ -32,3 +32,5 @@ theorem feit_thompson_primes (p q : ℕ) (hp : p.Prime) (hq : q.Prime) (h : p < 
   sorry
 
 end FeitThompsonPrimeConjecture
+
+theorem FeitThompsonPrimeConjecture.feit_thompson_primes.disproof : ¬ (type_of% @FeitThompsonPrimeConjecture.feit_thompson_primes) := sorry

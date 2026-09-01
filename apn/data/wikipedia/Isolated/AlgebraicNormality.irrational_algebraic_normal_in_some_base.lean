@@ -46,3 +46,5 @@ theorem irrational_algebraic_normal_in_some_base :
   sorry
 
 end AlgebraicNormality
+
+theorem AlgebraicNormality.irrational_algebraic_normal_in_some_base.disproof : ¬ (type_of% @AlgebraicNormality.irrational_algebraic_normal_in_some_base) := sorry

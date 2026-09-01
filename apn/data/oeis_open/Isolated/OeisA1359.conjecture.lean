@@ -50,3 +50,5 @@ theorem conjecture (k : ℕ) (hk : k > 1) :
   sorry
 
 end OeisA1359
+
+theorem OeisA1359.conjecture.disproof : ¬ (type_of% @OeisA1359.conjecture) := sorry

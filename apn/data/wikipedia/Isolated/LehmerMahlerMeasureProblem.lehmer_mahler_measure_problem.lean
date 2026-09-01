@@ -52,3 +52,5 @@ def Polynomial.HasOddCoeffs (f : Polynomial ℤ) : Prop :=
   ∀ i ≤ f.natDegree, Odd (f.coeff i)
 
 end LehmerMahlerMeasureProblem
+
+theorem LehmerMahlerMeasureProblem.lehmer_mahler_measure_problem.disproof : ¬ (type_of% @LehmerMahlerMeasureProblem.lehmer_mahler_measure_problem) := sorry

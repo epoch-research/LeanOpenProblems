@@ -48,3 +48,5 @@ theorem goormaghtigh_conjecture (N : ℕ) (hN : IsGoormaghtighNumber N) :
   sorry
 
 end Goormaghtigh
+
+theorem Goormaghtigh.goormaghtigh_conjecture.disproof : ¬ (type_of% @Goormaghtigh.goormaghtigh_conjecture) := sorry

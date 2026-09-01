@@ -59,3 +59,5 @@ theorem conjecture : ∃ N : ℕ, ∀ n : ℕ, n > N → a n = 0 := by
   sorry
 
 end OeisA103662
+
+theorem OeisA103662.conjecture.disproof : ¬ (type_of% @OeisA103662.conjecture) := sorry

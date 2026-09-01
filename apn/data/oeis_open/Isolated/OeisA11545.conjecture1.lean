@@ -39,3 +39,5 @@ theorem conjecture1 : ∀ n, ¬ IsSquare (a n) := by
   sorry
 
 end OeisA11545
+
+theorem OeisA11545.conjecture1.disproof : ¬ (type_of% @OeisA11545.conjecture1) := sorry

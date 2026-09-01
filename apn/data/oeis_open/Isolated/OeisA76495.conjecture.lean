@@ -47,3 +47,5 @@ theorem conjecture : a 5 = 0 := by
   sorry
 
 end OeisA76495
+
+theorem OeisA76495.conjecture.disproof : ¬ (type_of% @OeisA76495.conjecture) := sorry

@@ -74,3 +74,5 @@ theorem infinitely_many_mersenne_primes :
     sorry
 
 end Mersenne
+
+theorem Mersenne.infinitely_many_mersenne_primes.disproof : ¬ (type_of% @Mersenne.infinitely_many_mersenne_primes) := sorry

@@ -46,3 +46,5 @@ theorem zariski_cancellation_problem {k : Type*} [Field k]
   sorry
 
 end Arxiv.«2208.14736»
+
+theorem Arxiv.«2208.14736».zariski_cancellation_problem.disproof : ¬ (type_of% @Arxiv.«2208.14736».zariski_cancellation_problem) := sorry

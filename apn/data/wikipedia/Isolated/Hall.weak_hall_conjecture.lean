@@ -43,3 +43,5 @@ theorem weak_hall_conjecture (ε : ℝ) (hε : ε > 0) : HallConjectureExp (2⁻
   sorry
 
 end Hall
+
+theorem Hall.weak_hall_conjecture.disproof : ¬ (type_of% @Hall.weak_hall_conjecture) := sorry

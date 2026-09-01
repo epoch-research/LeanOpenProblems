@@ -41,3 +41,5 @@ theorem twoFivePerfect : ¬ ∃ n, PerfectFor n 2 5 := by
   sorry
 
 end Superperfect
+
+theorem Superperfect.twoFivePerfect.disproof : ¬ (type_of% @Superperfect.twoFivePerfect) := sorry

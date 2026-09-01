@@ -65,3 +65,5 @@ theorem infinitely_many_secondKind_chains (k : ℕ) (hk : 0 < k) :
   sorry
 
 end CunninghamChain
+
+theorem CunninghamChain.infinitely_many_secondKind_chains.disproof : ¬ (type_of% @CunninghamChain.infinitely_many_secondKind_chains) := sorry

@@ -33,3 +33,5 @@ theorem lehmer_totient :
   sorry
 
 end LehmerTotient
+
+theorem LehmerTotient.lehmer_totient.disproof : ¬ (type_of% @LehmerTotient.lehmer_totient) := sorry

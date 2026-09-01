@@ -59,3 +59,5 @@ theorem infinitely_many_leinster_groups :
   sorry
 
 end LeinsterGroup
+
+theorem LeinsterGroup.infinitely_many_leinster_groups.disproof : ¬ (type_of% @LeinsterGroup.infinitely_many_leinster_groups) := sorry

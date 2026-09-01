@@ -43,3 +43,5 @@ theorem firoozbakht_conjecture (n : ℕ) :
   sorry
 
 end Firoozbakht
+
+theorem Firoozbakht.firoozbakht_conjecture.disproof : ¬ (type_of% @Firoozbakht.firoozbakht_conjecture) := sorry

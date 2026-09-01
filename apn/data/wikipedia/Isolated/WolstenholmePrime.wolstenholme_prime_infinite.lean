@@ -40,3 +40,5 @@ theorem wolstenholme_prime_infinite :
   sorry
 
 end WolstenholmePrime
+
+theorem WolstenholmePrime.wolstenholme_prime_infinite.disproof : ¬ (type_of% @WolstenholmePrime.wolstenholme_prime_infinite) := sorry

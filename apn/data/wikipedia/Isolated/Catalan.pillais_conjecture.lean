@@ -43,3 +43,5 @@ end Catalan
 namespace LebesgueNagell
 
 end LebesgueNagell
+
+theorem Catalan.pillais_conjecture.disproof : ¬ (type_of% @Catalan.pillais_conjecture) := sorry

@@ -71,3 +71,5 @@ theorem HadamardConjecture.variants.«167» : ∃ M, IsHadamard (n := 4 * 167) M
   sorry
 
 end Hadamard
+
+theorem Hadamard.HadamardConjecture.variants.«167».disproof : ¬ (type_of% @Hadamard.HadamardConjecture.variants.«167») := sorry

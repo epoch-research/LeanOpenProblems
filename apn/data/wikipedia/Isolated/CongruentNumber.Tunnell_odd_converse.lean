@@ -63,3 +63,5 @@ theorem Tunnell_odd_converse (n : ℕ) (hsqf : Squarefree n) (hodd : Odd n) :
   sorry
 
 end CongruentNumber
+
+theorem CongruentNumber.Tunnell_odd_converse.disproof : ¬ (type_of% @CongruentNumber.Tunnell_odd_converse) := sorry

@@ -48,3 +48,5 @@ theorem is_ten_solitary : IsSolitary 10 := by
   sorry
 
 end SolitaryNumber
+
+theorem SolitaryNumber.is_ten_solitary.disproof : ¬ (type_of% @SolitaryNumber.is_ten_solitary) := sorry

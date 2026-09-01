@@ -56,3 +56,5 @@ theorem conjecture4 (m : ℕ) (hm : 2 < m) (n : ℕ) :
   sorry
 
 end OeisA160324
+
+theorem OeisA160324.conjecture4.disproof : ¬ (type_of% @OeisA160324.conjecture4) := sorry

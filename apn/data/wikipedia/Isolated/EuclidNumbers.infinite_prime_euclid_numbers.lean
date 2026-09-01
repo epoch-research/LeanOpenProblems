@@ -36,3 +36,5 @@ theorem infinite_prime_euclid_numbers : {n | (Euclid n).Prime}.Infinite := by
   sorry
 
 end EuclidNumbers
+
+theorem EuclidNumbers.infinite_prime_euclid_numbers.disproof : ¬ (type_of% @EuclidNumbers.infinite_prime_euclid_numbers) := sorry

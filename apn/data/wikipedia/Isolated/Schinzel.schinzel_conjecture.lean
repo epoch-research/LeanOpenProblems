@@ -34,3 +34,5 @@ theorem schinzel_conjecture (fs : Finset ℤ[X]) (hfs : ∀ f ∈ fs, Bunyakovsk
   sorry
 
 end Schinzel
+
+theorem Schinzel.schinzel_conjecture.disproof : ¬ (type_of% @Schinzel.schinzel_conjecture) := sorry

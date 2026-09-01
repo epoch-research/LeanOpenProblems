@@ -47,3 +47,5 @@ lemma mean_value_problem (p : Polynomial ℂ) (hp : 2 ≤ p.degree) (z : ℂ) (K
   sorry
 
 end MeanValueProblem
+
+theorem MeanValueProblem.mean_value_problem.disproof : ¬ (type_of% @MeanValueProblem.mean_value_problem) := sorry

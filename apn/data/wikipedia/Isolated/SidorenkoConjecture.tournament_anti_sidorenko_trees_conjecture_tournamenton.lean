@@ -89,3 +89,5 @@ def IsSpider234 {V : Type*} [Fintype V] [DecidableEq V] (T : SimpleGraph V) [Dec
 /- ## Sidorenko for trees: auxiliary lemmas -/
 
 end SidorenkoConjecture
+
+theorem SidorenkoConjecture.tournament_anti_sidorenko_trees_conjecture_tournamenton.disproof : ¬ (type_of% @SidorenkoConjecture.tournament_anti_sidorenko_trees_conjecture_tournamenton) := sorry

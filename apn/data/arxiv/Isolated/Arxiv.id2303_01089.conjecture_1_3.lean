@@ -78,3 +78,5 @@ theorem conjecture_1_3 {p q : ℕ} (hp : 2 <= p) (hq : 2 <= q) (hpq : Multiplica
   sorry
 
 end Arxiv.id2303_01089
+
+theorem Arxiv.id2303_01089.conjecture_1_3.disproof : ¬ (type_of% @Arxiv.id2303_01089.conjecture_1_3) := sorry

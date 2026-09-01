@@ -37,3 +37,5 @@ theorem four_exponentials_conjecture (x : Fin 2 → ℂ) (y : Fin 2 → ℂ)
   sorry
 
 end Exponentials
+
+theorem Exponentials.four_exponentials_conjecture.disproof : ¬ (type_of% @Exponentials.four_exponentials_conjecture) := sorry

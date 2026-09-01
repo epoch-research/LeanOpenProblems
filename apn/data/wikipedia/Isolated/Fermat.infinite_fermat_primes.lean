@@ -31,3 +31,5 @@ theorem infinite_fermat_primes : Infinite {n : ℕ | Prime n.fermatNumber} := by
   sorry
 
 end Fermat
+
+theorem Fermat.infinite_fermat_primes.disproof : ¬ (type_of% @Fermat.infinite_fermat_primes) := sorry

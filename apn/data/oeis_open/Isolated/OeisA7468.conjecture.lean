@@ -42,3 +42,5 @@ theorem conjecture (n : ℕ) (hn : 0 < n) (hsq : IsSquare (a n)) : n = 38 := by
   sorry
 
 end OeisA7468
+
+theorem OeisA7468.conjecture.disproof : ¬ (type_of% @OeisA7468.conjecture) := sorry

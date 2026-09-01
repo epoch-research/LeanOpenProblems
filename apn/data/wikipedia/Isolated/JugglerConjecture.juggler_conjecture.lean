@@ -42,3 +42,5 @@ theorem juggler_conjecture (n : ℕ) (hn : n > 0) : ∃ m, jugglerStep^[m] n = 1
   sorry
 
 end JugglerConjecture
+
+theorem JugglerConjecture.juggler_conjecture.disproof : ¬ (type_of% @JugglerConjecture.juggler_conjecture) := sorry

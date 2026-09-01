@@ -91,3 +91,5 @@ theorem pebbling_number_conjecture {W : Type} [Fintype V] [Fintype W] [Decidable
   sorry
 
 end PebblingNumberConjecture
+
+theorem PebblingNumberConjecture.pebbling_number_conjecture.disproof : ¬ (type_of% @PebblingNumberConjecture.pebbling_number_conjecture) := sorry

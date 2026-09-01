@@ -119,3 +119,5 @@ theorem rational_7_tuple :
   sorry
 
 end DiophantineTuple
+
+theorem DiophantineTuple.rational_7_tuple.disproof : ¬ (type_of% @DiophantineTuple.rational_7_tuple) := sorry

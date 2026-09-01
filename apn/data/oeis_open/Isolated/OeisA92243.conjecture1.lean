@@ -46,3 +46,5 @@ theorem conjecture1 : ∃ n > 250000, a n > 0 := by
   sorry
 
 end OeisA92243
+
+theorem OeisA92243.conjecture1.disproof : ¬ (type_of% @OeisA92243.conjecture1) := sorry

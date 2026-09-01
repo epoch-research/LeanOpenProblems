@@ -36,3 +36,5 @@ theorem beal_conjecture : bealConjecture := by
   sorry
 
 end BealConjecture
+
+theorem BealConjecture.beal_conjecture.disproof : ¬ (type_of% @BealConjecture.beal_conjecture) := sorry

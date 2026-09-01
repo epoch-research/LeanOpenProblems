@@ -40,3 +40,5 @@ theorem conjecture1 (n : ℕ) (hn : 2 < n) : 0 < a n := by
   sorry
 
 end OeisA71532
+
+theorem OeisA71532.conjecture1.disproof : ¬ (type_of% @OeisA71532.conjecture1) := sorry

@@ -44,3 +44,5 @@ theorem conjecture4 (p : ℕ) [Fact p.Prime] (_hp7 : p ≠ 7) :
   sorry
 
 end OeisA179537
+
+theorem OeisA179537.conjecture4.disproof : ¬ (type_of% @OeisA179537.conjecture4) := sorry

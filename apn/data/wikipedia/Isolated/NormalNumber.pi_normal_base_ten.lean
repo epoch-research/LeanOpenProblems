@@ -40,3 +40,5 @@ theorem pi_normal_base_ten : IsNormalInBase 10 π := by
   sorry
 
 end NormalNumber
+
+theorem NormalNumber.pi_normal_base_ten.disproof : ¬ (type_of% @NormalNumber.pi_normal_base_ten) := sorry

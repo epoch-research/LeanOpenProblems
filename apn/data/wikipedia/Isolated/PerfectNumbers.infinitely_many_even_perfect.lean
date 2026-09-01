@@ -57,3 +57,5 @@ theorem infinitely_many_even_perfect :
   sorry
 
 end PerfectNumbers
+
+theorem PerfectNumbers.infinitely_many_even_perfect.disproof : ¬ (type_of% @PerfectNumbers.infinitely_many_even_perfect) := sorry

@@ -37,3 +37,5 @@ theorem grimm_conjecture (n k : ℕ) (hn : 1 ≤ n) (hk : 1 ≤ k)
   sorry
 
 end Grimm
+
+theorem Grimm.grimm_conjecture.disproof : ¬ (type_of% @Grimm.grimm_conjecture) := sorry

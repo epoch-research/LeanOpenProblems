@@ -51,3 +51,5 @@ theorem conjecture :
   sorry
 
 end OeisA110854
+
+theorem OeisA110854.conjecture.disproof : ¬ (type_of% @OeisA110854.conjecture) := sorry

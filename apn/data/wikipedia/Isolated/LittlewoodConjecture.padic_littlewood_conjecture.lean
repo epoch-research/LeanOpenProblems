@@ -43,3 +43,5 @@ theorem padic_littlewood_conjecture (α : ℝ) (p : ℕ) (hp : p.Prime) :
   sorry
 
 end LittlewoodConjecture
+
+theorem LittlewoodConjecture.padic_littlewood_conjecture.disproof : ¬ (type_of% @LittlewoodConjecture.padic_littlewood_conjecture) := sorry

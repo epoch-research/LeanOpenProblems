@@ -43,3 +43,5 @@ theorem dean_conjecture.variants.five :
   sorry
 
 end Arxiv.«2605.02731»
+
+theorem Arxiv.«2605.02731».dean_conjecture.variants.five.disproof : ¬ (type_of% @Arxiv.«2605.02731».dean_conjecture.variants.five) := sorry
