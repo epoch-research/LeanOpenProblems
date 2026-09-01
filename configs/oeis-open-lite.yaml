@@ -4,7 +4,6 @@
 # 100-conjecture random draw from the 492 OEIS Open Problems
 # (apn/data/oeis/subsets/lite.json), run with the basic agent (react, no
 # subagents, no literature snapshot).
-retry_attempts: 5
 name: oeis-open-lite
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
@@ -15,7 +14,6 @@ tasks:
           subset: lite
           agent_type: react
           literature: false
-epochs: 1
 models:
   - package: git+https://github.com/epoch-research/benchmarks
     name: epoch
@@ -23,17 +21,10 @@ models:
       - name: gpt-5.6-sol
         args:
           config:
-            reasoning_effort: "medium"
-            max_retries: 7
-            max_connections: 40
-      - name: claude-fable-5
-        args:
-          config:
-            reasoning_effort: "high"
             max_retries: 7
             max_connections: 40
 
-# 2 models x 100 samples x $200/sample cap = $40,000 max; gated runs sit near max.
+# 1 model x 100 samples x $200/sample cap = $20,000 max; gated runs sit near max.
 cost_limit: 200.0
 working_limit: 259_200  # 72 * 60 * 60
 
@@ -44,11 +35,6 @@ model_cost_config:
     output: 30.0
     input_cache_read: 0.5
     input_cache_write: 6.25
-  epoch/claude-fable-5:
-    input: 10.0
-    output: 50.0
-    input_cache_read: 1.0
-    input_cache_write: 12.5
 
 secrets:
   - name: ANTHROPIC_API_KEY

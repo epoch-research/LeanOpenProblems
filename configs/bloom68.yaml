@@ -3,7 +3,6 @@
 # bloom68: the canonical run of Thomas Bloom's Erdős problem selection -- the
 # two bloom_selection subsets (50 + 18 samples), run with all affordances:
 # deep agent (subagents) + the offline literature snapshot (agreed 2026-08-28).
-retry_attempts: 5
 name: bloom68
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
@@ -19,7 +18,6 @@ tasks:
           subset: bloom_selection
           agent_type: deep
           literature: true
-epochs: 1
 models:
   - package: git+https://github.com/epoch-research/benchmarks
     name: epoch
@@ -27,17 +25,13 @@ models:
       - name: gpt-5.6-sol
         args:
           config:
-            reasoning_effort: "medium"
-            max_retries: 7
-            max_connections: 40
-      - name: claude-fable-5
-        args:
-          config:
-            reasoning_effort: "high"
+            # Our policy is to use the highest reasoning effort the model
+            # supports (thinking_settings in benchmarks bench/model/epoch/models.yaml).
+            reasoning_effort: "max"
             max_retries: 7
             max_connections: 40
 
-# 2 models x 68 samples x $200/sample cap = $27,200 max; gated runs sit near max.
+# 1 model x 68 samples x $200/sample cap = $13,600 max; gated runs sit near max.
 cost_limit: 200.0
 working_limit: 259_200  # 72 * 60 * 60
 
@@ -48,11 +42,6 @@ model_cost_config:
     output: 30.0
     input_cache_read: 0.5
     input_cache_write: 6.25
-  epoch/claude-fable-5:
-    input: 10.0
-    output: 50.0
-    input_cache_read: 1.0
-    input_cache_write: 12.5
 
 secrets:
   - name: ANTHROPIC_API_KEY
