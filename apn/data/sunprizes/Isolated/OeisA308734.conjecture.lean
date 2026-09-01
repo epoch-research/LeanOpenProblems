@@ -50,3 +50,5 @@ theorem conjecture (n : ℕ) (hn : 1 < n) : IsSumOfFourSquaresWithPowers n := by
   sorry
 
 end OeisA308734
+
+theorem OeisA308734.conjecture.disproof : ¬ (type_of% @OeisA308734.conjecture) := sorry

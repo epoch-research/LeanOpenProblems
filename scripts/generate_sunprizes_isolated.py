@@ -8,8 +8,10 @@ For each target this reads its recorded ``Sources/`` file, keeps that file's
 definitions + the single target theorem, and cuts every other standalone
 ``theorem``/``lemma`` (FC's ``@[category test]`` sanity lemmas) and any
 anonymous ``example`` commands; the targets' ``@[category ...]``
-classification lists are dropped. All 8 statements are plain ``research
-open`` conjectures -- generation asserts no ``answer(`` occurs anywhere.
+classification lists are dropped, and the mechanically derived
+``<target>.disproof`` declaration is appended. All 8 statements are plain
+``research open`` conjectures -- generation asserts no ``answer(`` occurs
+anywhere.
 
 This is a *vendor-time* dev tool, not imported at runtime; ``apn/dataset.py``
 reads the committed manifest + ``Isolated/`` directly. The committed files are
@@ -38,7 +40,7 @@ import argparse
 import re
 import sys
 
-from apn.dataset import load_manifest
+from apn.dataset import fc_commit, fc_profile, load_manifest
 from scripts.sunprizes_isolation import (
     ISOLATED_DIR,
     SOURCES_DIR,
@@ -52,6 +54,7 @@ from scripts.fc_statements import (
 from scripts.isolation import (
     DEFAULT_CONTAINER,
     BAKED_EXE,
+    append_disproof,
     dependency_closure,
     host_to_container,
     isolate,
@@ -65,12 +68,12 @@ from scripts.isolation import (
 _SORRY_RE = re.compile(rb"\bsorry\b")
 
 
-def extract_sources(container: str, exe: str) -> dict[str, dict]:
+def extract_sources(container: str, exe: str, util_module: str) -> dict[str, dict]:
     """Extractor records for every vendored source file, keyed by *relative*
     path under ``Sources/`` (flat here, so relpath == basename)."""
     rels = sorted(str(p.relative_to(SOURCES_DIR)) for p in SOURCES_DIR.rglob("*.lean"))
     print(f"Extracting decl ranges from {len(rels)} source files...", flush=True)
-    ranges = run_extractor([SOURCES_DIR / rel for rel in rels], container, exe)
+    ranges = run_extractor([SOURCES_DIR / rel for rel in rels], container, exe, util_module)
     prefix = host_to_container(SOURCES_DIR) + "/"
     by_rel: dict[str, dict] = {}
     for fr in ranges:
@@ -106,7 +109,9 @@ def main() -> None:
     args = ap.parse_args()
 
     rows = load_manifest(SUNPRIZES_DIR)
-    by_rel = extract_sources(args.container, args.exe)
+    by_rel = extract_sources(
+        args.container, args.exe, fc_profile(fc_commit(SUNPRIZES_DIR)).util_module
+    )
 
     unused = sorted(set(by_rel) - {r.source.removeprefix("Sources/") for r in rows})
     if unused:
@@ -142,6 +147,11 @@ def main() -> None:
             raise SystemExit(f"{name}: unexpected answer( in isolated spec")
         text, n = strip_category_attrs(text)
         n_category += n
+        # Append the derived disproof declaration (plan §4); this dataset's ids
+        # are the fully-qualified names, so no decl_name override can arise.
+        text, decl_name = append_disproof(text, name, target["name"])
+        if decl_name != name:
+            raise SystemExit(f"{name}: target declaration is {decl_name}, not the id")
         (ISOLATED_DIR / f"{name}.lean").write_text(text)
 
     # The census: one classification list per target theorem (the cut removed

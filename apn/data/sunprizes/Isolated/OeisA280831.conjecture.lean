@@ -45,3 +45,5 @@ theorem conjecture (n : ℕ) : HasSquareCondition n := by
   sorry
 
 end OeisA280831
+
+theorem OeisA280831.conjecture.disproof : ¬ (type_of% @OeisA280831.conjecture) := sorry

@@ -10,8 +10,12 @@ The gates (all over the committed files, recomputing independently what
 
 * **Structural** -- re-extract each isolated file and confirm the target theorem
   is present exactly once and the surviving theorem/lemma commands are exactly
-  the ones the cut predicts (target + its definitional-dependency lemmas,
-  nothing else).
+  the ones the cut predicts (target + its definitional-dependency lemmas + the
+  appended ``.disproof`` declaration, nothing else).
+* **Disproof certification** -- every spec declares exactly its target plus
+  ``<target>.disproof``, whose elaborated type an independent metaprogram
+  (``certify_disproof``, recomputing via ``mkNot``) certifies as exactly the
+  target statement's negation (comparator-migration-plan.md §4).
 * **Statement certificate** -- the target's *elaborated* statement must equal
   the vendored source's (up to hygiene normalization); all 8 members are plain
   statements, so no ``answer(...)`` rewrite forms are involved.
@@ -31,7 +35,7 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
-from apn.dataset import SUNPRIZES_DIR, fc_commit, load_manifest
+from apn.dataset import SUNPRIZES_DIR, fc_commit, fc_profile, load_manifest
 from scripts.sunprizes_isolation import (
     ISOLATED_DIR,
     SOURCES_DIR,
@@ -42,7 +46,7 @@ from scripts.isolation import (
     planned_survivors,
     theorem_command_decls,
 )
-from tests.lean_sandbox import compile_all, extract, generate_env
+from tests.lean_sandbox import certify, compile_all, extract, generate_env
 
 
 # --------------------------------------------------------------------------- #
@@ -54,16 +58,19 @@ class IsoData:
 
     src_ranges: dict[str, dict[str, Any]]  # extractor records for Sources/, by relpath
     iso_ranges: dict[str, dict[str, Any]]  # extractor records for Isolated/, by stem (= name)
+    cert_verdicts: dict[str, dict[str, Any]]  # certify_disproof verdicts, by stem
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
 
 @pytest.fixture(scope="session")
 def mapping() -> list[tuple[str, str]]:
     # The manifest rows (the 8 prized conjectures, none excluded) as
-    # (id, source relpath) pairs.
+    # (id, source relpath) pairs. This dataset's ids are the fully-qualified
+    # decl names (no manifest decl_name overrides).
     rows = load_manifest(SUNPRIZES_DIR)
     assert len(rows) == 8
     assert all(r.excluded is None for r in rows)
+    assert all(r.decl_name == r.id for r in rows)
     return [(r.id, r.source.removeprefix("Sources/")) for r in rows]
 
 
@@ -77,15 +84,19 @@ async def iso_data(mapping: list[tuple[str, str]]) -> IsoData:
     arrangement as ``tests/test_fc100_isolation.py::iso_data``, for the same
     reasons.
     """
-    async with generate_env("pytest_sunprizes_isolation", fc_commit(SUNPRIZES_DIR)) as env:
+    pin = fc_commit(SUNPRIZES_DIR)
+    util_module = fc_profile(pin).util_module
+    async with generate_env("pytest_sunprizes_isolation", pin) as env:
         rels = sorted({rel for _, rel in mapping})
-        src = await extract(env, [SOURCES_DIR / rel for rel in rels], arcnames=rels)
+        src = await extract(env, [SOURCES_DIR / rel for rel in rels], util_module, arcnames=rels)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
-        iso = await extract(env, iso_files)
+        iso = await extract(env, iso_files, util_module)
+        cert = await certify(env, iso_files, util_module)
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},
         iso_ranges={fr["file"][: -len(".lean")]: fr for fr in iso},
+        cert_verdicts={v["file"][: -len(".lean")]: v for v in cert},
         compile_failures=failures,
     )
 
@@ -118,8 +129,11 @@ async def test_isolated_files_are_structurally_correct(
             )
             continue
         remaining = sorted(d["name"] for d in thms)
-        if remaining != planned:
-            failures.append(f"{name}: surviving theorems {remaining} != planned {planned}")
+        # The committed spec is the cut's prediction plus the appended
+        # `.disproof` declaration (comparator-migration-plan.md §4).
+        expected = sorted(planned + [f"{name}.disproof"])
+        if remaining != expected:
+            failures.append(f"{name}: surviving theorems {remaining} != expected {expected}")
             continue
         if normalize_hygiene(target_hits[0]["type"]) != src_type:
             failures.append(f"{name}: target statement changed during isolation")
@@ -140,6 +154,28 @@ async def test_no_example_commands_survive(
         if any(is_example_command(src, c) for c in fr["commands"]):
             offenders.append(name)
     assert not offenders, f"example commands survived isolation in: {offenders}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_disproof_declarations_certified(
+    mapping: list[tuple[str, str]], iso_data: IsoData
+) -> None:
+    """Every spec declares exactly its target plus ``<target>.disproof``, and
+    the certifier's independent ``mkNot`` recomputation confirms the disproof's
+    elaborated type is the target statement's negation (plan §4)."""
+    failures: list[str] = []
+    for name, _ in mapping:
+        v = iso_data.cert_verdicts.get(name)
+        if v is None:
+            failures.append(f"{name}: no certifier verdict")
+        elif not v["ok"]:
+            failures.append(f"{name}: {v['error']}")
+        elif v["target"] != name or v["disproof"] != f"{name}.disproof":
+            failures.append(
+                f"{name}: certified pair ({v['target']}, {v['disproof']}) does not "
+                f"match the id"
+            )
+    assert not failures, "disproof certification failed:\n  " + "\n  ".join(failures)
 
 
 @pytest.mark.asyncio(loop_scope="module")

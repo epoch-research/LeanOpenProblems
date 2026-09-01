@@ -43,3 +43,5 @@ theorem conjecture (n : ℕ) (hn : 1 < n) : PrimeCondition n := by
   sorry
 
 end OeisA231201
+
+theorem OeisA231201.conjecture.disproof : ¬ (type_of% @OeisA231201.conjecture) := sorry

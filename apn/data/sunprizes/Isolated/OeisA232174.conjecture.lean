@@ -47,3 +47,5 @@ theorem conjecture (n : ℕ) (hn : 1 < n) : HasPrimeRepresentation n := by
   sorry
 
 end OeisA232174
+
+theorem OeisA232174.conjecture.disproof : ¬ (type_of% @OeisA232174.conjecture) := sorry

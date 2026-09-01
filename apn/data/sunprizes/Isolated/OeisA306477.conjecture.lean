@@ -46,3 +46,5 @@ theorem conjecture (n : ℕ) (hn : 0 < n) : IsSumOfBinomials n := by
   sorry
 
 end OeisA306477
+
+theorem OeisA306477.conjecture.disproof : ¬ (type_of% @OeisA306477.conjecture) := sorry

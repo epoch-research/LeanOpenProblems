@@ -20,6 +20,7 @@ from apn.dataset import (
     sunprizes_dataset,
 )
 from scripts.fc_statements import strip_comments
+from scripts.isolation import disproof_declaration
 
 # A top-level theorem/lemma declaration in an isolated spec (column 0).
 _DECL_RE = re.compile(r"(?m)^(?:theorem|lemma)\b")
@@ -136,12 +137,16 @@ def test_sketches_have_no_example_commands() -> None:
         assert not re.search(r"(?m)^example\b", stripped), sample.id
 
 
-def test_sketches_sorry_count_and_single_theorem() -> None:
-    # Exactly one `sorry` (the target's proof) and exactly one theorem/lemma
-    # declaration per sketch -- every test lemma was cut, and no target here
-    # has theorem-typed dependencies.
-    for sample in sunprizes_dataset():
-        assert sample.metadata is not None
-        stripped = strip_comments(sample.metadata["sketch"])
-        assert len(_SORRY_RE.findall(stripped)) == 1, sample.id
-        assert len(_DECL_RE.findall(sample.metadata["sketch"])) == 1, sample.id
+def test_sketches_sorry_count_and_theorem_pair() -> None:
+    # Exactly two `sorry`s (the target's proof and its `.disproof`'s) and
+    # exactly two theorem/lemma declarations per sketch: the target plus the
+    # derived `.disproof` the sketch ends with -- every test lemma was cut,
+    # and no target here has theorem-typed dependencies. The deeper Lean
+    # guarantee (the disproof type certified as the negation) is enforced in
+    # a container by tests/test_sunprizes_isolation.py.
+    for row in load_manifest(SUNPRIZES_DIR):
+        text = (SUNPRIZES_DIR / row.statement_path).read_text()
+        stripped = strip_comments(text)
+        assert len(_SORRY_RE.findall(stripped)) == 2, row.id
+        assert len(_DECL_RE.findall(text)) == 2, row.id
+        assert text.rstrip().endswith(disproof_declaration(row.decl_name)), row.id
