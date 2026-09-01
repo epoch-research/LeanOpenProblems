@@ -1,9 +1,7 @@
 # Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
 #
-# oeis-open-lite: the canonical run of the OEIS Open Lite subset -- the
-# 100-conjecture random draw from the 492 OEIS Open Problems
-# (apn/data/oeis/subsets/lite.json), run with the basic agent (react, no
-# subagents, no literature snapshot).
+# oeis-open-lite: canonical run of the OEIS Open Lite subset -- 100 random
+# conjectures from the 492 OEIS Open Problems, with the basic agent.
 name: oeis-open-lite
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git

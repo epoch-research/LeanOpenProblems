@@ -25,8 +25,7 @@ models:
       - name: gpt-5.6-sol
         args:
           config:
-            # Our policy is to use the highest reasoning effort the model
-            # supports (thinking_settings in benchmarks bench/model/epoch/models.yaml).
+            # Policy: use the highest reasoning effort the model supports.
             reasoning_effort: "max"
             max_retries: 7
             max_connections: 40
