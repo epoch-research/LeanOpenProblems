@@ -52,6 +52,21 @@ SandboxBackend = Literal["docker", "k8s"]
 AGENT_MEMORY_GIB = 32
 COMPARATOR_MEMORY_GIB = 32
 
+# Both backends' long-lived main process, wrapped in a reaping PID 1. A bare
+# `tail -f /dev/null` never calls wait(), so every process a sandbox exec
+# orphans is reparented to PID 1 and stays a zombie holding its process slot
+# for the life of the container, until fork() returns EAGAIN and every later
+# command in the sample fails. Local Docker is immune (`init: true` below puts
+# docker-init above tail), but Kubernetes has no init equivalent and the
+# agent-env chart's default command is exactly that bare `tail`, so on the k8s
+# backend tini must be the command itself. tini exists only to reap; `-s`
+# (subreaper) keeps it correct where it is not PID 1 -- the local-docker case.
+#
+# This is a workaround. TODO: remove this (and the tini install in
+# apn/lean/Dockerfile's base stage) if it is fixed upstream:
+# https://github.com/UKGovernmentBEIS/inspect_k8s_sandbox/issues/251
+SANDBOX_COMMAND = ["/usr/bin/tini", "-s", "--", "tail", "-f", "/dev/null"]
+
 
 def _docker_tag_component(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]", "_", value)
@@ -94,7 +109,7 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
                 "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image(agent_kind, fc_commit)}",
                 "build": _build_section(agent_kind, fc_commit),
                 "init": True,
-                "entrypoint": "tail -f /dev/null",
+                "entrypoint": list(SANDBOX_COMMAND),
                 "mem_limit": f"{AGENT_MEMORY_GIB}g",
                 "network_mode": "none",
             },
@@ -102,7 +117,7 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
                 "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image('comparator', fc_commit)}",
                 "build": _build_section("comparator", fc_commit),
                 "init": True,
-                "entrypoint": "tail -f /dev/null",
+                "entrypoint": list(SANDBOX_COMMAND),
                 "mem_limit": f"{COMPARATOR_MEMORY_GIB}g",
                 "network_mode": "none",
             },
@@ -141,12 +156,16 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
         "services": {
             "default": {
                 "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
+                # Without this the chart defaults to a bare `tail -f /dev/null`
+                # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
+                "command": list(SANDBOX_COMMAND),
                 "networkIsolated": True,
                 "dnsRecord": True,
                 "resources": resources(AGENT_MEMORY_GIB),
             },
             "comparator": {
                 "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
+                "command": list(SANDBOX_COMMAND),
                 "runtimeClassName": "CLUSTER_DEFAULT",
                 "networkIsolated": True,
                 "dnsRecord": True,

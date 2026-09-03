@@ -182,10 +182,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Runtime libs for the Lean toolchain, plus the build tools the derived images
 # need (the agent builds PyPantograph; the comparator image builds lean4export)
 # and python3 (the agent uses it to drive PyPantograph and as a numerical
-# scratchpad).
+# scratchpad). tini belongs HERE, in base: every service image (agent,
+# agent_corpus, comparator, generate) builds FROM this stage, and the sandbox
+# entrypoint/command is shared (apn.task.SANDBOX_COMMAND), so a service whose
+# image lacked tini would fail to start at all. It exists only to run as a
+# reaping PID 1 (see the SANDBOX_COMMAND comment in apn/task.py). TODO:
+# remove it if the upstream issue is fixed:
+# https://github.com/UKGovernmentBEIS/inspect_k8s_sandbox/issues/251
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
-        python3 python3-pip \
+        python3 python3-pip tini \
     && rm -rf /var/lib/apt/lists/*
 
 # The Lean/lake toolchain (binaries + the project toolchain). The image ENV PATH
