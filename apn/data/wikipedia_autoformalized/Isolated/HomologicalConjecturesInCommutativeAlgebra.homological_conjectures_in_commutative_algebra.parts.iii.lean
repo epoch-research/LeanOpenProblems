@@ -1,0 +1,226 @@
+/-
+Copyright 2026 The Formal Conjectures Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-/
+
+import FormalConjecturesUtil
+
+/-!
+# Homological conjectures in commutative algebra
+
+The homological conjectures are a web of interrelated conjectures in commutative algebra.
+They relate homological properties of a commutative ring to its internal structure, in
+particular to its Krull dimension and depth. This file formalises the list given by
+Melvin Hochster, as reproduced on Wikipedia.
+
+Throughout, $A$, $R$ and $S$ are Noetherian commutative rings, $R$ is a local ring with maximal
+ideal $\mathfrak m_R$ (except where stated otherwise), and $M$ and $N$ are finitely generated
+$R$-modules.
+
+Mathlib does not yet have depth, Cohen–Macaulay rings, regular (local) rings, systems of
+parameters or Koszul complexes. This file defines them, in the local Noetherian setting of the
+conjectures. The Koszul complex of $x_1, \ldots, x_d$ is built as the exterior algebra
+$\bigwedge^\bullet R^d$ with the differential given by contraction against the linear form
+$e_i \mapsto x_i$.
+
+*References:*
+- [Wikipedia, Homological conjectures in commutative algebra](https://en.wikipedia.org/wiki/Homological_conjectures_in_commutative_algebra)
+- [Wikipedia, List of unsolved problems in mathematics](https://en.wikipedia.org/wiki/List_of_unsolved_problems_in_mathematics)
+- [Ho07] Hochster, M. "Homological conjectures, old and new." _Illinois J. Math._ 51 (2007),
+  151–169.
+- [An18] André, Y. "La conjecture du facteur direct." _Publ. Math. IHÉS_ 127 (2018), 71–93.
+  [arXiv:1609.00345](https://arxiv.org/abs/1609.00345)
+-/
+
+open CategoryTheory IsLocalRing RingTheory.Sequence
+open scoped TensorProduct
+
+universe u
+
+namespace HomologicalConjecturesInCommutativeAlgebra
+
+/- ### Koszul complexes -/
+
+section Koszul
+
+variable {R : Type u} [CommRing R] {M : Type*} [AddCommGroup M] [Module R M]
+
+/-- Contraction against a linear form lowers the exterior degree by one: it maps
+$\bigwedge^{n+1} M$ into $\bigwedge^n M$. -/
+lemma contractLeft_mem_exteriorPower (φ : Module.Dual R M) (n : ℕ) :
+    ∀ v ∈ ⋀[R]^(n + 1) M, CliffordAlgebra.contractLeft (Q := 0) φ v ∈ ⋀[R]^n M := by
+  induction n with
+  | zero =>
+    intro v hv
+    rw [ExteriorAlgebra.exteriorPower, pow_one] at hv
+    obtain ⟨m, rfl⟩ := hv
+    rw [CliffordAlgebra.contractLeft_ι, ExteriorAlgebra.exteriorPower, pow_zero]
+    exact Submodule.algebraMap_mem _
+  | succ n ih =>
+    intro v hv
+    rw [ExteriorAlgebra.exteriorPower, pow_succ'] at hv
+    refine Submodule.mul_induction_on hv (fun a ha b hb => ?_) (fun x y hx hy => ?_)
+    · obtain ⟨m, rfl⟩ := ha
+      rw [CliffordAlgebra.contractLeft_ι_mul]
+      refine Submodule.sub_mem _ (Submodule.smul_mem _ _ hb) ?_
+      rw [ExteriorAlgebra.exteriorPower, pow_succ']
+      exact Submodule.mul_mem_mul (LinearMap.mem_range_self _ m) (ih b hb)
+    · rw [map_add]
+      exact Submodule.add_mem _ hx hy
+
+/-- The Koszul differential $\bigwedge^{n+1} M \to \bigwedge^n M$ attached to a linear form
+$\varphi$ on $M$: contraction against $\varphi$, so that
+$m_0 \wedge \cdots \wedge m_n \mapsto \sum_i (-1)^i \varphi(m_i)\,
+m_0 \wedge \cdots \wedge \widehat{m_i} \wedge \cdots \wedge m_n$. -/
+noncomputable def koszulD (φ : Module.Dual R M) (n : ℕ) :
+    ⋀[R]^(n + 1) M →ₗ[R] ⋀[R]^n M :=
+  (CliffordAlgebra.contractLeft (Q := 0) φ).restrict (contractLeft_mem_exteriorPower φ n)
+
+/-- The Koszul differential squares to zero. -/
+lemma koszulD_comp_koszulD (φ : Module.Dual R M) (n : ℕ) :
+    koszulD φ n ∘ₗ koszulD φ (n + 1) = 0 := by
+  ext v
+  simp [koszulD, LinearMap.restrict_apply, CliffordAlgebra.contractLeft_contractLeft]
+
+/-- The Koszul complex $K_\bullet(x_1, \ldots, x_d; R)$ of the ring $R$ with respect to
+$x_1, \ldots, x_d \in R$: the chain complex with $K_n = \bigwedge^n R^d$ (so $K_0 = R$,
+$K_d \cong R$ and $K_n = 0$ for $n > d$), and with differential the contraction against the
+linear form $R^d \to R$, $e_i \mapsto x_i$. -/
+noncomputable def koszulComplex {d : ℕ} (x : Fin d → R) : ChainComplex (ModuleCat.{u} R) ℕ :=
+  ChainComplex.of (fun n => ModuleCat.of R (⋀[R]^n (Fin d → R)))
+    (fun n => ModuleCat.ofHom (koszulD (Fintype.linearCombination R x) n))
+    (fun n => by
+      rw [← ModuleCat.ofHom_comp, koszulD_comp_koszulD]
+      rfl)
+
+end Koszul
+
+/- ### Systems of parameters, depth, Cohen–Macaulay and regular rings -/
+
+section Definitions
+
+variable (R : Type*) [CommRing R]
+
+/-- A **regular local ring**: a Noetherian local ring $R$ whose maximal ideal can be generated by
+$\dim R$ elements. -/
+structure IsRegularLocalRing : Prop extends IsNoetherianRing R, IsLocalRing R where
+  exists_finset_span_eq_maximalIdeal :
+    ∃ s : Finset R,
+      (s.card : WithBot ℕ∞) = ringKrullDim R ∧ Ideal.span (s : Set R) = maximalIdeal R
+
+/-- A **regular ring**: a Noetherian ring all of whose localisations at prime ideals are regular
+local rings. -/
+structure IsRegularRing : Prop extends IsNoetherianRing R where
+  isRegularLocalRing_localization :
+    ∀ p : PrimeSpectrum R, IsRegularLocalRing (Localization.AtPrime p.asIdeal)
+
+section LocalRing
+
+variable [IsLocalRing R]
+
+/-- A list $x_1, \ldots, x_n$ of elements of a local ring $R$ is a **system of parameters** if
+$n = \dim R$, all $x_i$ lie in the maximal ideal $\mathfrak m_R$, and the ideal
+$(x_1, \ldots, x_n)$ is $\mathfrak m_R$-primary, i.e. $\mathfrak m_R \subseteq
+\sqrt{(x_1, \ldots, x_n)}$. -/
+def IsSystemOfParameters (rs : List R) : Prop :=
+  (rs.length : WithBot ℕ∞) = ringKrullDim R ∧ (∀ r ∈ rs, r ∈ maximalIdeal R) ∧
+    maximalIdeal R ≤ (Ideal.ofList rs).radical
+
+/-- The **depth** of a module $M$ over a local ring $R$: the supremum of the lengths of the
+$M$-regular sequences contained in the maximal ideal $\mathfrak m_R$. -/
+noncomputable def depth (M : Type*) [AddCommGroup M] [Module R M] : ℕ∞ :=
+  ⨆ (rs : List R) (_ : ∀ r ∈ rs, r ∈ maximalIdeal R) (_ : IsRegular M rs),
+    (rs.length : ℕ∞)
+
+/-- A (not necessarily finitely generated) module $W$ over a local ring $R$ is a
+**balanced big Cohen–Macaulay module** if $\mathfrak m_R W \neq W$ and every system of
+parameters $x_1, \ldots, x_d$ of $R$ is a regular sequence on $W$, i.e. each $x_i$ is a
+nonzerodivisor on $W / (x_1, \ldots, x_{i-1}) W$ (as $\mathfrak m_R W \neq W$, this is the same
+as `IsRegular`). Applied to an $R$-algebra $B$, this is the notion of a balanced big
+Cohen–Macaulay algebra. -/
+def IsBalancedBigCohenMacaulay (W : Type*) [AddCommGroup W] [Module R W] : Prop :=
+  maximalIdeal R • (⊤ : Submodule R W) ≠ ⊤ ∧
+    ∀ rs : List R, IsSystemOfParameters R rs → IsWeaklyRegular W rs
+
+end LocalRing
+
+/-- A **Cohen–Macaulay local ring**: a Noetherian local ring $R$ with
+$\operatorname{depth} R = \dim R$. -/
+structure IsCohenMacaulayLocalRing : Prop extends IsNoetherianRing R, IsLocalRing R where
+  depth_eq : (depth R R : WithBot ℕ∞) = ringKrullDim R
+
+/-- A **Cohen–Macaulay ring**: a Noetherian ring all of whose localisations at maximal ideals are
+Cohen–Macaulay local rings. -/
+structure IsCohenMacaulayRing : Prop extends IsNoetherianRing R where
+  isCohenMacaulayLocalRing_localization :
+    ∀ m : MaximalSpectrum R, IsCohenMacaulayLocalRing (Localization.AtPrime m.asIdeal)
+
+end Definitions
+
+section Serre
+
+variable (R : Type u) [CommRing R]
+
+/-- Serre's intersection multiplicity
+$$\chi(M, N) = \sum_{i = 0}^{d} (-1)^i \,\ell\bigl(\operatorname{Tor}_i^R(M, N)\bigr)$$
+of two finitely generated modules $M$, $N$ over a regular local ring $R$ of dimension $d$. Over
+such a ring $\operatorname{Tor}_i^R(M, N) = 0$ for $i > d$, so this is the full alternating sum,
+and when $M \otimes_R N$ has finite length so does every $\operatorname{Tor}_i^R(M, N)$, so
+that the conversion `ENat.toNat` of the lengths is lossless. -/
+noncomputable def serreMultiplicity (d : ℕ) (M N : Type u) [AddCommGroup M] [Module R M]
+    [AddCommGroup N] [Module R N] : ℤ :=
+  ∑ i ∈ Finset.range (d + 1), (-1 : ℤ) ^ i *
+    ((Module.length R (((Tor (ModuleCat.{u} R) i).obj (ModuleCat.of R M)).obj
+      (ModuleCat.of R N))).toNat : ℤ)
+
+end Serre
+
+/- ### The conjectures -/
+
+section LocalConjectures
+
+variable {R : Type u} [CommRing R] [IsNoetherianRing R] [IsLocalRing R]
+
+/--
+**The Intersection Theorem.** Let $R$ be a Noetherian local ring and $M$, $N$ finitely generated
+$R$-modules such that $M \otimes_R N \neq 0$ has finite length. Then the Krull dimension of $N$,
+i.e. $\dim R / \operatorname{Ann}_R N$, is at most the projective dimension of $M$ (the bound
+is vacuous if $M$ has infinite projective dimension).
+
+Proved by Peskine–Szpiro and Roberts.
+-/
+theorem homological_conjectures_in_commutative_algebra.parts.iii
+    (M N : Type u) [AddCommGroup M] [Module R M] [Module.Finite R M]
+    [AddCommGroup N] [Module R N] [Module.Finite R N]
+    (hMN : Nontrivial (M ⊗[R] N)) (hMN' : IsFiniteLength R (M ⊗[R] N)) :
+    ringKrullDim (R ⧸ Module.annihilator R N) ≤ projectiveDimension (ModuleCat.of R M) := by
+  sorry
+
+end LocalConjectures
+
+section LocalConjectures
+
+variable {R : Type u} [CommRing R] [IsNoetherianRing R] [IsLocalRing R]
+
+end LocalConjectures
+
+section LocalConjectures
+
+variable {R : Type u} [CommRing R] [IsNoetherianRing R] [IsLocalRing R]
+
+end LocalConjectures
+
+end HomologicalConjecturesInCommutativeAlgebra
+
+theorem HomologicalConjecturesInCommutativeAlgebra.homological_conjectures_in_commutative_algebra.parts.iii.disproof : ¬ (type_of% @HomologicalConjecturesInCommutativeAlgebra.homological_conjectures_in_commutative_algebra.parts.iii) := sorry

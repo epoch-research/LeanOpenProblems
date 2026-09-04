@@ -12,6 +12,7 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
+WIKIPEDIA_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "wikipedia_autoformalized"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -324,3 +325,18 @@ def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDatase
     ``<target>.disproof`` declaration. See
     ``apn/data/erdos_autoformalized/NOTICE.md``."""
     return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
+
+
+def wikipedia_autoformalized_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The Wikipedia *List of unsolved problems in mathematics* entries our own
+    autoformalization pipeline formalized (the accepted final files of one run;
+    see ``apn/data/wikipedia_autoformalized/NOTICE.md``). One sample per
+    non-excluded manifest row -- the run's adjudicated statements plus the
+    formalizers' additional research variants and known-result statements that
+    share their files (the ``adjudicated_open`` subset keeps the former, open
+    ones). Each sketch ends with the derived ``<target>.disproof`` declaration.
+    The manifest's ``slot``/``category``/``formalized``/``adjudicator_confidence``
+    fields exist for tooling and do not reach sample metadata."""
+    return build_dataset(
+        WIKIPEDIA_AUTOFORMALIZED_DIR, "wikipedia_autoformalized", (), names
+    )

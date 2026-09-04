@@ -12,6 +12,7 @@ from inspect_ai._util import registry as util_registry
         "apn/apn_fc100open",
         "apn/apn_erdos",
         "apn/apn_erdos_autoformalized",
+        "apn/apn_wikipedia_autoformalized",
         "apn/apn_redteam_collatz",
     ],
 )

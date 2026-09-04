@@ -17,6 +17,7 @@ from apn.dataset import (
     ERDOS_DIR,
     FC100_DIR,
     OEIS_DIR,
+    WIKIPEDIA_AUTOFORMALIZED_DIR,
     erdos_autoformalized_dataset,
     erdos_dataset,
     fc100open_dataset,
@@ -24,6 +25,7 @@ from apn.dataset import (
     fc_profile,
     load_subset,
     oeis_dataset,
+    wikipedia_autoformalized_dataset,
 )
 from apn.scorer import proof_scorer
 
@@ -291,6 +293,39 @@ def apn_erdos_autoformalized(
     pin = fc_commit(ERDOS_AUTOFORMALIZED_DIR)
     return Task(
         dataset=erdos_autoformalized_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+    )
+
+
+@task
+def apn_wikipedia_autoformalized(
+    subset: str | None = "adjudicated_open",
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+    sandbox_backend: SandboxBackend = "docker",
+) -> Task:
+    """The Wikipedia unsolved-problems entries our own autoformalization
+    pipeline formalized.
+
+    The default ``adjudicated_open`` subset runs the statements the run's
+    adjudicator accepted as faithful formalizations of the decomposed
+    sub-questions, classified research open with no recorded verdict;
+    ``subset=None`` runs the full manifest (adds the formalizers' additional
+    research variants and the known results stated alongside)."""
+    name_list = (
+        load_subset(WIKIPEDIA_AUTOFORMALIZED_DIR, subset) if subset is not None else None
+    )
+    pin = fc_commit(WIKIPEDIA_AUTOFORMALIZED_DIR)
+    return Task(
+        dataset=wikipedia_autoformalized_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,
