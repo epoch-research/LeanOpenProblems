@@ -18,7 +18,9 @@ carrying a complete in-file proof become ``excluded`` rows.
 Two callers import this module: ``scripts/generate_erdos_isolated.py`` (the
 vendor-time tool that produces ``samples.jsonl`` + ``Isolated/``) and
 ``tests/test_erdos_isolation.py`` (the authoritative validation of the
-committed files).
+committed files). The autoformalized datasets' generators (our own pipeline's
+output, stated in the same FC conventions) reuse the census helpers and the
+exclusion reasons.
 """
 
 from __future__ import annotations

@@ -12,6 +12,7 @@ from apn.dataset import (
     ERDOS_DIR,
     FC100_DIR,
     OEIS_DIR,
+    WIKIPEDIA_AUTOFORMALIZED_DIR,
     fc_commit,
     fc_profile,
 )
@@ -22,6 +23,7 @@ DATASET_DIRS = {
     "erdos_autoformalized": ERDOS_AUTOFORMALIZED_DIR,
     "fc100open": FC100_DIR,
     "oeis": OEIS_DIR,
+    "wikipedia_autoformalized": WIKIPEDIA_AUTOFORMALIZED_DIR,
 }
 
 

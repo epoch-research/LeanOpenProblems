@@ -1,0 +1,187 @@
+/-
+Copyright 2026 The Formal Conjectures Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-/
+
+import FormalConjecturesUtil
+
+/-!
+# Connes embedding problem
+
+Connes' embedding problem asks whether every type II₁ factor on a separable Hilbert space can be
+embedded into an ultrapower $R^\omega$ of the hyperfinite II₁ factor $R$.
+
+*References:*
+- [Wikipedia, Connes embedding problem](https://en.wikipedia.org/wiki/Connes_embedding_problem)
+- [Wikipedia, List of unsolved problems in
+  mathematics](https://en.wikipedia.org/wiki/List_of_unsolved_problems_in_mathematics)
+- Z. Ji, A. Natarajan, T. Vidick, J. Wright, H. Yuen, *MIP\* = RE*,
+  [arXiv:2001.04383](https://arxiv.org/abs/2001.04383)
+- V. Capraro, *A Survey on Connes' Embedding Conjecture*,
+  [arXiv:1003.2076](https://arxiv.org/abs/1003.2076)
+-/
+
+namespace ConnesEmbeddingProblem
+
+open Filter Topology
+open scoped BoundedContinuousFunction ComplexOrder
+
+section TracialState
+
+variable {A : Type*} [Ring A] [StarRing A] [Algebra ℂ A]
+
+/-- A linear functional $\tau \colon A \to \mathbb{C}$ on a complex $*$-algebra $A$ is a
+*faithful tracial state* if it is unital ($\tau(1) = 1$), positive ($\tau(x^* x) \geq 0$),
+tracial ($\tau(xy) = \tau(yx)$) and faithful ($\tau(x^* x) = 0$ only for $x = 0$). -/
+class IsFaithfulTracialState (τ : A →ₗ[ℂ] ℂ) : Prop where
+  map_one : τ 1 = 1
+  nonneg : ∀ x, 0 ≤ τ (star x * x)
+  tracial : ∀ x y, τ (x * y) = τ (y * x)
+  faithful : ∀ x, τ (star x * x) = 0 → x = 0
+
+/-- The identity functional on $\mathbb{C}$ is a faithful tracial state. -/
+@[category test, AMS 46]
+lemma isFaithfulTracialState_id : IsFaithfulTracialState (LinearMap.id : ℂ →ₗ[ℂ] ℂ) where
+  map_one := rfl
+  nonneg x := star_mul_self_nonneg x
+  tracial x y := mul_comm x y
+  faithful x hx := by simpa using hx
+
+end TracialState
+
+section Factor
+
+variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+
+/-- A von Neumann algebra $M$ is a *type II₁ factor* if it is a factor (its center consists of the
+scalar multiples of the identity), it is infinite-dimensional, and it admits a faithful tracial
+state.
+
+A factor with a faithful tracial state is finite, and an infinite-dimensional finite factor is of
+type II₁; conversely every II₁ factor has a faithful normal tracial state. A factor has at most one
+tracial state (Dixmier), so normality of the state need not be required. -/
+structure IsTypeII₁Factor (M : VonNeumannAlgebra H) : Prop where
+  center_eq_bot : Subalgebra.center ℂ M.toStarSubalgebra = ⊥
+  not_finiteDimensional : ¬ FiniteDimensional ℂ M.toStarSubalgebra
+  exists_isFaithfulTracialState : ∃ τ : M.toStarSubalgebra →ₗ[ℂ] ℂ, IsFaithfulTracialState τ
+
+/-- A von Neumann algebra $M$ is *hyperfinite* if there is an increasing sequence
+$A_0 \subseteq A_1 \subseteq \cdots$ of finite-dimensional $*$-subalgebras of $B(H)$ whose union
+generates $M$ as a von Neumann algebra, i.e. the double commutant of $\bigcup_n A_n$ is $M$
+(equivalently, by the bicommutant theorem, $\bigcup_n A_n$ is a weakly dense $*$-subalgebra of
+$M$). -/
+def IsHyperfinite (M : VonNeumannAlgebra H) : Prop :=
+  ∃ A : ℕ → StarSubalgebra ℂ (H →L[ℂ] H), Monotone A ∧ (∀ n, FiniteDimensional ℂ (A n)) ∧
+    Set.centralizer (Set.centralizer (⋃ n, (A n : Set (H →L[ℂ] H)))) = M
+
+/-- A finite-dimensional von Neumann algebra is not a type II₁ factor. -/
+@[category test, AMS 46]
+theorem not_isTypeII₁Factor_of_finiteDimensional (M : VonNeumannAlgebra H)
+    [FiniteDimensional ℂ M.toStarSubalgebra] : ¬ IsTypeII₁Factor M :=
+  fun h => h.not_finiteDimensional inferInstance
+
+/-- A finite-dimensional von Neumann algebra is hyperfinite. -/
+@[category test, AMS 46]
+theorem IsHyperfinite.of_finiteDimensional (M : VonNeumannAlgebra H)
+    [FiniteDimensional ℂ M.toStarSubalgebra] : IsHyperfinite M :=
+  ⟨fun _ => M.toStarSubalgebra, monotone_const, fun _ => inferInstance, by
+    simp [Set.iUnion_const]⟩
+
+end Factor
+
+section Ultrapower
+
+variable {A : Type*} [NormedRing A] [StarRing A] [NormedAlgebra ℂ A]
+
+/-- Two norm-bounded sequences $x, y \in \ell^\infty(A)$ (realised as bounded functions
+`ℕ →ᵇ A` on the discrete space $\mathbb{N}$) are identified in the tracial ultrapower along
+$\omega$ when $\lim_{n \to \omega} \tau((x_n - y_n)^*(x_n - y_n)) = 0$, i.e. when
+$x - y \in I_\omega = \{(x_n) \in \ell^\infty(A) : \lim_{n \to \omega} \tau(x_n^* x_n)^{1/2} = 0\}$.
+-/
+def TracialUltrapowerRel (τ : A →ₗ[ℂ] ℂ) (ω : Ultrafilter ℕ) (x y : ℕ →ᵇ A) : Prop :=
+  Tendsto (fun n => τ (star (x n - y n) * (x n - y n))) ω (𝓝 0)
+
+@[category API, AMS 46]
+lemma TracialUltrapowerRel.refl (τ : A →ₗ[ℂ] ℂ) (ω : Ultrafilter ℕ) (x : ℕ →ᵇ A) :
+    TracialUltrapowerRel τ ω x x := by
+  simp [TracialUltrapowerRel]
+
+@[category API, AMS 46]
+lemma TracialUltrapowerRel.symm {τ : A →ₗ[ℂ] ℂ} {ω : Ultrafilter ℕ} {x y : ℕ →ᵇ A}
+    (h : TracialUltrapowerRel τ ω x y) : TracialUltrapowerRel τ ω y x := by
+  unfold TracialUltrapowerRel at h ⊢
+  convert h using 2 with n
+  rw [← neg_sub, star_neg, neg_mul_neg]
+
+variable [NormedStarGroup A]
+
+/-- The *tracial ultrapower* $A^\omega = \ell^\infty(A) / I_\omega$ of a normed $*$-algebra $A$
+with a faithful tracial state $\tau$ along an ultrafilter $\omega$ on $\mathbb{N}$, where
+$\ell^\infty(A)$ is the algebra of norm-bounded sequences in $A$ and
+$I_\omega = \{(x_n) \in \ell^\infty(A) : \lim_{n \to \omega} \tau(x_n^* x_n)^{1/2} = 0\}$.
+Since $I_\omega$ is a two-sided ideal, the ring congruence generated by `TracialUltrapowerRel τ ω`
+is the relation $x - y \in I_\omega$ itself, so this is the quotient ring
+$\ell^\infty(A) / I_\omega$. -/
+def TracialUltrapower (τ : A →ₗ[ℂ] ℂ) (ω : Ultrafilter ℕ) : Type _ :=
+  RingQuot (TracialUltrapowerRel τ ω)
+
+variable {τ : A →ₗ[ℂ] ℂ} {ω : Ultrafilter ℕ}
+
+instance : Ring (TracialUltrapower τ ω) :=
+  inferInstanceAs (Ring (RingQuot (TracialUltrapowerRel τ ω)))
+
+instance : Algebra ℂ (TracialUltrapower τ ω) :=
+  inferInstanceAs (Algebra ℂ (RingQuot (TracialUltrapowerRel τ ω)))
+
+/-- The involution on the tracial ultrapower, induced by the pointwise involution on
+$\ell^\infty(A)$. It is well defined because $\tau$ is tracial, so that $I_\omega$ is a
+self-adjoint ideal. -/
+noncomputable instance [IsFaithfulTracialState τ] : StarRing (TracialUltrapower τ ω) :=
+  RingQuot.starRing (TracialUltrapowerRel τ ω) fun a b h => by
+    unfold TracialUltrapowerRel at h ⊢
+    convert h using 2 with n
+    rw [BoundedContinuousFunction.star_apply, BoundedContinuousFunction.star_apply, ← star_sub,
+      star_star, IsFaithfulTracialState.tracial (τ := τ)]
+
+end Ultrapower
+
+/--
+**Connes' embedding problem.** Can every type II₁ factor $M$ on a separable Hilbert space be
+embedded into an ultrapower $R^\omega$ of the hyperfinite II₁ factor $R$, for some free
+ultrafilter $\omega$ on $\mathbb{N}$?
+
+Here $R$ is any hyperfinite II₁ factor on a separable Hilbert space (all of these are isomorphic
+by Murray–von Neumann) together with its faithful tracial state $\tau$ (which is unique),
+$R^\omega = \ell^\infty(R) / I_\omega$ is the tracial ultrapower, an ultrafilter on $\mathbb{N}$
+is free if it contains the cofinite filter, and an embedding is an injective unital
+$*$-homomorphism $M \to R^\omega$ (such a map is automatically trace-preserving and normal).
+
+Ji, Natarajan, Vidick, Wright and Yuen (*MIP\* = RE*, 2020) announced a negative answer: there is
+a type II₁ factor on a separable Hilbert space which does not embed into any $R^\omega$. The
+Wikipedia list of unsolved problems still records the problem as open.
+-/
+@[category research open, AMS 46]
+theorem connes_embedding_problem :
+    answer(False) ↔
+      ∀ (H₀ : Type*) [NormedAddCommGroup H₀] [InnerProductSpace ℂ H₀] [CompleteSpace H₀]
+        [TopologicalSpace.SeparableSpace H₀]
+        (R : VonNeumannAlgebra H₀) (τ : R.toStarSubalgebra →ₗ[ℂ] ℂ)
+        [IsFaithfulTracialState τ], IsTypeII₁Factor R → IsHyperfinite R →
+      ∀ (H : Type*) [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+        [TopologicalSpace.SeparableSpace H] (M : VonNeumannAlgebra H), IsTypeII₁Factor M →
+      ∃ ω : Ultrafilter ℕ, (ω : Filter ℕ) ≤ cofinite ∧
+        ∃ f : M.toStarSubalgebra →⋆ₐ[ℂ] TracialUltrapower τ ω, Function.Injective f := by
+  sorry
+
+end ConnesEmbeddingProblem

@@ -1,0 +1,48 @@
+{
+  "eval_set_id": "autoformalize-full-r8zuxgce3jf7ppre",
+  "log": "2026-09-03T22-06-33-00-00_autoformalize_4wrvrFMDSTmrLHnx8e7zPg.eval",
+  "run_id": "kNNp3wjn2ZaPa3dygqg7D8",
+  "task": "autoformalization/autoformalize",
+  "model": "epoch/claude-fable-5-1",
+  "task_args": {
+    "sources": "wikipedia",
+    "problems": null,
+    "generators": "epoch/claude-fable-5-1,epoch/gpt-5.6-sol",
+    "generate_epochs": 4,
+    "formalize_attempts": 2,
+    "formalize_message_limit": 360,
+    "decompose_message_limit": 90,
+    "adjudicator_model": null,
+    "adjudicate_message_limit": 240,
+    "probe": true,
+    "probe_model": "epoch/gpt-5.6-sol",
+    "probe_time_limit": 3600,
+    "probe_message_limit": 900,
+    "compile_timeout": 1800,
+    "sandbox_backend": "k8s"
+  },
+  "created": "2026-09-03T22:06:33+00:00",
+  "status": "error",
+  "fc_commit": "9cbe1d3c12998c786b7c2cd99ce28a21b6631f66",
+  "selection": {
+    "formalized": [
+      "C",
+      "P"
+    ],
+    "min_confidence": 0.8
+  },
+  "counts": {
+    "samples": 335,
+    "formalized": {
+      "C": 249,
+      "I": 4,
+      "N": 70,
+      "None": 1,
+      "P": 11
+    },
+    "selected": 248,
+    "vendored": 243,
+    "not_vendored": 5,
+    "kept_slots_vendored": 356
+  }
+}
