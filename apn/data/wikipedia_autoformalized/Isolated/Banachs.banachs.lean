@@ -1,0 +1,105 @@
+/-
+Copyright 2026 The Formal Conjectures Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-/
+
+import FormalConjecturesUtil
+
+/-!
+# Banach's problem
+
+Is there an ergodic system with simple Lebesgue spectrum?
+
+The problem goes back to Banach and is recorded in Ulam's *A Collection of Mathematical
+Problems*: does there exist a square integrable function $f$ and a measure-preserving
+transformation $T$ such that the functions $f \circ T^n$ form a complete orthonormal system?
+
+In its modern form the question asks whether there is an ergodic automorphism $T$ of a standard
+probability space $(X, \mu)$ whose Koopman operator $U_T f = f \circ T$, restricted to the
+orthocomplement $L^2_0(\mu)$ of the constants, has simple Lebesgue spectrum, i.e. its maximal
+spectral type is Lebesgue measure on the circle and its multiplicity is one. Equivalently, the
+restriction of $U_T$ to $L^2_0(\mu)$ is unitarily equivalent to multiplication by $z$ on
+$L^2(\mathbb{T}, \mathrm{Leb})$, i.e. there is $f \in L^2_0(\mu)$ such that
+$\{U_T^n f : n \in \mathbb{Z}\}$ is an orthonormal basis of $L^2_0(\mu)$.
+
+*References:*
+- [Wikipedia, List of unsolved problems in mathematics](https://en.wikipedia.org/wiki/List_of_unsolved_problems_in_mathematics)
+- [Wikipedia, Stefan Banach](https://en.wikipedia.org/wiki/Stefan_Banach)
+- S. M. Ulam, *A Collection of Mathematical Problems*, Interscience Publishers, New York, 1960.
+- M. Lemańczyk, *Spectral theory of dynamical systems*, in: Encyclopedia of Complexity and
+  Systems Science, Springer, 2009.
+-/
+
+open MeasureTheory
+
+namespace Banachs
+
+variable {X : Type*} [MeasurableSpace X] {μ : Measure X}
+
+/-- The **Koopman operator** `f ↦ f ∘ T` on `L²(μ)` associated to a measure-preserving
+measurable equivalence `T`, as a unitary operator (a linear isometric equivalence). Its inverse
+is `f ↦ f ∘ T⁻¹`. -/
+noncomputable def koopman (T : X ≃ᵐ X) (hT : MeasurePreserving T μ μ) :
+    Lp ℂ 2 μ ≃ₗᵢ[ℂ] Lp ℂ 2 μ where
+  toLinearEquiv :=
+    { Lp.compMeasurePreservingₗ ℂ T hT with
+      invFun := Lp.compMeasurePreservingₗ ℂ T.symm hT.symm
+      left_inv := fun f => Lp.ext <|
+        (Lp.coeFn_compMeasurePreserving _ hT.symm).trans <|
+          (hT.symm.quasiMeasurePreserving.ae_eq_comp
+            (Lp.coeFn_compMeasurePreserving f hT)).trans <|
+          Filter.EventuallyEq.of_eq <| by
+            rw [Function.comp_assoc, MeasurableEquiv.self_comp_symm, Function.comp_id]
+      right_inv := fun f => Lp.ext <|
+        (Lp.coeFn_compMeasurePreserving _ hT).trans <|
+          (hT.quasiMeasurePreserving.ae_eq_comp
+            (Lp.coeFn_compMeasurePreserving f hT.symm)).trans <|
+          Filter.EventuallyEq.of_eq <| by
+            rw [Function.comp_assoc, MeasurableEquiv.symm_comp_self, Function.comp_id] }
+  norm_map' f := Lp.norm_compMeasurePreserving f hT
+
+/-- A measure-preserving measurable equivalence `T` of a finite measure space `(X, μ)` has
+**simple Lebesgue spectrum** (on the orthocomplement of the constants) if there is
+`f ∈ L²(μ)` such that the two-sided orbit `{U_T ^ n f : n ∈ ℤ}` of `f` under the Koopman
+operator `U_T` is an orthonormal basis of the closed subspace `L²₀(μ) = {1}ᗮ` of `L²(μ)`
+orthogonal to the constant functions (necessarily `f ∈ L²₀(μ)`). This is equivalent to the
+restriction of `U_T` to `L²₀(μ)` being unitarily equivalent to the bilateral shift, i.e. to
+multiplication by `z` on `L²(𝕋, Leb)`: its maximal spectral type is Lebesgue measure and its
+spectral multiplicity is one. -/
+def HasSimpleLebesgueSpectrum [IsFiniteMeasure μ] (T : X ≃ᵐ X)
+    (hT : MeasurePreserving T μ μ) : Prop :=
+  ∃ f : Lp ℂ 2 μ,
+    Orthonormal ℂ (fun n : ℤ => (koopman T hT ^ n) f) ∧
+    (Submodule.span ℂ (Set.range fun n : ℤ => (koopman T hT ^ n) f)).topologicalClosure =
+      (ℂ ∙ Lp.const 2 μ (1 : ℂ))ᗮ
+
+/-- **Banach's problem.** Is there an ergodic system with simple Lebesgue spectrum?
+
+That is, is there an ergodic invertible measure-preserving transformation `T` of a standard
+Borel probability space `(X, μ)` whose Koopman operator `U_T f = f ∘ T`, restricted to the
+orthocomplement `L²₀(μ)` of the constants, has simple Lebesgue spectrum: there is
+`f ∈ L²₀(μ)` such that `{f ∘ Tⁿ : n ∈ ℤ}` is an orthonormal basis of `L²₀(μ)`?
+
+The spectrum is taken on `L²₀(μ)` because the constant functions are always eigenfunctions of
+`U_T` with eigenvalue `1`, so `U_T` itself never has Lebesgue spectrum on all of `L²(μ)`. -/
+theorem banachs :
+    
+      ∃ (X : Type) (_ : MeasurableSpace X) (_ : StandardBorelSpace X) (μ : Measure X)
+        (_ : IsProbabilityMeasure μ) (T : X ≃ᵐ X) (hT : Ergodic T μ),
+        HasSimpleLebesgueSpectrum T hT.toMeasurePreserving := by
+  sorry
+
+end Banachs
+
+theorem Banachs.banachs.disproof : ¬ (type_of% @Banachs.banachs) := sorry
