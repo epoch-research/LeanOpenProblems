@@ -103,19 +103,45 @@ def declExprs : ConstantInfo → Array Expr
   | .recInfo v => #[v.type]
   | .quotInfo v => #[v.type]
 
-/-- The file-local constants `ci` references (defined earlier in this file, hence
-present in `after`'s local constant map `map₂`), excluding itself. Lean forbids
-forward references, so a declaration's local dependencies are always already in
-`map₂` when it is elaborated. -/
-def localDeps (after : Environment) (name : Name) (ci : ConstantInfo) : Array String := Id.run do
-  let mut seen : Std.HashSet Name := {}
-  let mut out : Array String := #[]
-  for e in declExprs ci do
-    for c in e.getUsedConstants do
-      if c != name && !seen.contains c && (after.constants.map₂.find? c).isSome then
-        seen := seen.insert c
-        out := out.push c.toString
-  return out
+/-- Worklist for `localDeps`: `work` holds constants whose references are still
+to be scanned, `seen` every file-local constant already met. -/
+partial def localDepsGo (after : Environment) (name : Name) :
+    List ConstantInfo → Std.HashSet Name → Array String → MetaM (Array String)
+  | [], _, out => return out
+  | c :: rest, seen, out => do
+    let mut seen := seen
+    let mut out := out
+    let mut work := rest
+    for e in declExprs c do
+      for d in e.getUsedConstants do
+        if d != name && !seen.contains d then
+          match after.constants.map₂.find? d with
+          | none => pure ()  -- imported (Mathlib/FC): not file-local
+          | some dci =>
+            seen := seen.insert d
+            if (← findDeclarationRanges? d).isSome then
+              out := out.push d.toString
+            else
+              -- An elaborator auxiliary: look through it (see `localDeps`).
+              work := dci :: work
+    localDepsGo after name work seen out
+
+/-- The *source-ranged* file-local constants `ci` depends on, excluding itself:
+those its type/value reference directly, plus -- looking through every
+file-local constant that is NOT source-ranged, i.e. the elaborator's
+auxiliaries (`_proof_N` abstractions of a definition's proof arguments,
+`match_N` matchers, well-founded-recursion helpers) -- the source-ranged
+constants those reference, transitively. Without the look-through a
+definition's dependency on a lemma used only inside a proof argument (a
+`Quotient.lift` congruence proof, a `Finset.sup'` nonemptiness proof) is
+invisible: Lean lifts such proofs into auxiliary theorems that carry no
+declaration range, so they are not decls the cut can see, and the isolation
+cut would remove the lemma from under the definition (40 wikipedia_autoformalized
+specs failed to compile that way). File-local constants are those in `after`'s
+local constant map `map₂`; Lean forbids forward references, so a declaration's
+local dependencies are always already there when it is elaborated. -/
+def localDeps (after : Environment) (name : Name) (ci : ConstantInfo) : MetaM (Array String) :=
+  localDepsGo after name [ci] {} #[]
 
 /-- The new, source-ranged declarations introduced going from `before` to
 `after`. A constant is "new" if it is in `after`'s local constant map but not
@@ -134,7 +160,7 @@ def newRangedDecls (before after : Environment) (fileName : String) (fileMap : F
         -- candidates), so we only pay for them there.
         let isInstance ← if kind == "theorem" then Lean.Meta.isInstance name else pure false
         let type := if kind == "theorem" then toString ci.type else ""
-        let deps := localDeps after name ci
+        let deps ← localDeps after name ci
         return acc.push { name := name.toString, kind, isInstance, deps, type }
       | none => return acc
   let result ← (metaM.run' |>.run' { fileName, fileMap } { env := after }).toBaseIO

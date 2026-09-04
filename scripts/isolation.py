@@ -32,6 +32,7 @@ from __future__ import annotations
 import bisect
 import json
 import re
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -113,6 +114,13 @@ def dependency_closure(filerec: dict, target_decl_name: str) -> set[str]:
     a ``theorem``/``lemma`` that a kept definition uses -- e.g. a nonemptiness
     proof passed to ``Finset.min'`` -- is pulled in and survives. Only theorems
     nothing kept depends on (sibling conjectures, sanity/test lemmas) are cut.
+
+    ``deps`` lists source-ranged declarations only: the extractor looks
+    through the elaborator's unranged auxiliaries (a definition's ``_proof_N``
+    abstractions, matchers, well-founded-recursion helpers) to the
+    declarations *they* use, so a lemma referenced only inside a definition's
+    proof argument still counts as that definition's dependency (see
+    ``localDeps`` in ``apn/lean/extract_ranges/ExtractRanges.lean``).
     """
     deps = {d["name"]: d["deps"] for c in filerec["commands"] for d in c["decls"]}
     seed: set[str] = {
@@ -523,6 +531,41 @@ def parse_extractor_output(stdout: str) -> list[dict]:
     raise RuntimeError(f"no JSON in extractor stdout:\n{stdout[-2000:]}")
 
 
+def lake_env_command(
+    exe: str, *args: str, stdout: str | None = None, gzip: bool = False
+) -> list[str]:
+    """The argv running ``lake env <exe> <args>`` in a container, with the
+    process's stack limit lifted first and, if ``stdout`` is given, the exe's
+    standard output written to that in-container path -- gzip-compressed when
+    ``gzip`` is set. (The isolation suites read the JSON back as a file:
+    Inspect caps an exec's captured stdout at 10 MiB and a ``read_file`` at
+    100 MiB, and the extractor's elaborated statement types can exceed both
+    uncompressed -- see ``tests/lean_sandbox.py``.)
+
+    The extractor and certifier elaborate whole source files on their main
+    thread, whose default 8 MiB stack Lean's interpreter can exhaust on a
+    ``decide +native`` sanity check over a large finite search ("deep
+    recursion was detected at 'interpreter'" -- wikipedia_autoformalized's
+    VizingsConjecture.lean computes domination numbers of small graph
+    products by brute force in its ``example``\\ s). ``lean`` itself elaborates
+    on a thread with a larger stack, so the same file compiles under the
+    scorer's ``lake env lean``; the exes get the equivalent from an unlimited
+    soft stack limit (the containers run as root with an unlimited hard
+    limit). The compile gate (:data:`COMPILE_SCRIPT`) deliberately does NOT
+    lift it: it must mirror the scorer's conditions.
+    """
+    if stdout is None:
+        script = 'ulimit -s unlimited; exec lake env "$@"'
+    elif gzip:
+        script = (
+            'ulimit -s unlimited; set -o pipefail; lake env "$@" | gzip -c > '
+            + shlex.quote(stdout)
+        )
+    else:
+        script = f'ulimit -s unlimited; exec lake env "$@" > {shlex.quote(stdout)}'
+    return ["bash", "-c", script, "lake-env", exe, *args]
+
+
 def run_extractor(files: list[Path], container: str, exe: str, util_module: str) -> list[dict]:
     """Run ``extract_ranges`` over ``files`` (under ``lake env``) and parse JSON.
 
@@ -533,7 +576,7 @@ def run_extractor(files: list[Path], container: str, exe: str, util_module: str)
     cpaths = [host_to_container(p) for p in files]
     cmd = [
         "docker", "exec", "-w", CONTAINER_PROJECT, container,
-        "lake", "env", exe, "--util-module", util_module, *cpaths,
+        *lake_env_command(exe, "--util-module", util_module, *cpaths),
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:

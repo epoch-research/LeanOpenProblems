@@ -18,11 +18,14 @@ via `type_of%` -- and asserts the declared disproof type is BEq-identical.
 
 Universe polymorphism: `type_of% @foo` instantiates `foo` at fresh universe
 metavariables which declaration elaboration re-generalizes, so the disproof's
-`levelParams` correspond to the target's positionally but may be *named*
-differently. The check therefore first asserts equal `levelParams` arity, then
-instantiates both sides' parameters positionally with the same fresh canonical
-levels before comparing -- names are treated as binders; arity/order/type
-mismatches still fail.
+`levelParams` are the target's up to a *renaming* -- named differently, and
+(a three-universe Fujita-conjecture statement showed) possibly in a different
+order, since the re-generalization orders them by occurrence. The check
+therefore first asserts equal `levelParams` arity, then instantiates the
+target's parameters with fresh canonical levels and accepts the disproof if
+*some* ordering of its parameters, instantiated with the same canonical
+levels, yields the identical term -- parameter names and order are treated as
+binders; arity/type mismatches still fail.
 
 mdata: lean4export strips mdata, so Comparator's runtime BEq sees mdata-free
 terms; the in-process comparison here strips mdata recursively from both sides
@@ -119,9 +122,24 @@ def findPair (env : Environment) (fileName : String) (fileMap : FileMap) :
   | .ok r => return r
   | .error e => throw <| IO.userError (← e.toMessageData.toString)
 
+/-- `x` inserted at position `i` of a list (appended when `i` is past the end). -/
+def insertAt (x : α) : Nat → List α → List α
+  | 0, l => x :: l
+  | _ + 1, [] => [x]
+  | n + 1, y :: ys => y :: insertAt x n ys
+
+/-- Every ordering of a list. Only ever applied to a statement's universe
+parameters (a handful), so the factorial size is immaterial. -/
+def permutations : List α → List (List α)
+  | [] => [[]]
+  | x :: xs =>
+    (permutations xs).foldr
+      (fun p acc => ((List.range (p.length + 1)).map fun i => insertAt x i p) ++ acc) []
+
 /-- The certification proper: `disproof.type` must be BEq-identical to
-`mkNot target.type.cleanupAnnotations` after positional universe-parameter
-canonicalization and recursive mdata erasure. -/
+`mkNot target.type.cleanupAnnotations` after universe-parameter
+canonicalization (the target's parameters positionally; the disproof's in
+whichever order matches -- see the header) and recursive mdata erasure. -/
 def certify (targetInfo disproofInfo : TheoremVal) : Except String Unit := do
   if targetInfo.levelParams.length != disproofInfo.levelParams.length then
     throw s!"universe parameter arity mismatch: target has \
@@ -132,11 +150,12 @@ def certify (targetInfo disproofInfo : TheoremVal) : Except String Unit := do
   let expected := eraseMData <|
     (mkNot targetInfo.type.cleanupAnnotations).instantiateLevelParams
       targetInfo.levelParams canonical
-  let actual := eraseMData <|
-    disproofInfo.type.instantiateLevelParams disproofInfo.levelParams canonical
-  if expected != actual then
-    throw s!"disproof type is not the target's negation:\n  \
-      expected: {expected}\n  actual:   {actual}"
+  let actualFor (params : List Name) : Expr :=
+    eraseMData <| disproofInfo.type.instantiateLevelParams params canonical
+  if !(permutations disproofInfo.levelParams).any (fun perm => actualFor perm == expected) then
+    throw s!"disproof type is not the target's negation (under every ordering of its \
+      universe parameters):\n  expected: {expected}\n  \
+      actual (declared order): {actualFor disproofInfo.levelParams}"
 
 def verdictFor (baseEnv : Environment) (path : String) : IO FileVerdict := do
   let content ← IO.FS.readFile path

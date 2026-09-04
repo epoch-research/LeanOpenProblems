@@ -21,6 +21,8 @@ suites via ``scripts/isolation.py``.)
 
 from __future__ import annotations
 
+import asyncio
+import gzip
 import io
 import tarfile
 import tempfile
@@ -44,7 +46,13 @@ from apn.task import (
     _docker_tag_component,
     get_identifier_for_image,
 )
-from scripts.isolation import BAKED_EXE, CONTAINER_PROJECT, COMPILE_SCRIPT, parse_extractor_output
+from scripts.isolation import (
+    BAKED_EXE,
+    CONTAINER_PROJECT,
+    COMPILE_SCRIPT,
+    lake_env_command,
+    parse_extractor_output,
+)
 
 # The disproof-declaration certifier baked next to the extractor (the
 # Dockerfile `generate` stage builds both exes of apn/lean/extract_ranges).
@@ -148,13 +156,64 @@ async def stage(
     return [f"{_STAGE_DIR}/{arc}" for arc in arcnames]
 
 
+# The JSON tools (extractor, certifier) run over the staged files in batches
+# of at most JSON_BATCH, a few batches concurrently (each batch is one Lean
+# process that loads Mathlib once, so this also parallelizes elaboration), and
+# gzip their output to a file that is read back through ``read_file``. The
+# extractor prints every theorem's elaborated type as a raw ``Expr`` string,
+# which for statements over schemes, Hecke algebras or von Neumann algebras
+# runs to megabytes per declaration: Inspect caps an exec's captured stdout at
+# 10 MiB (one call over all 243 wikipedia_autoformalized sources blew through
+# it) and a ``read_file`` at 100 MiB (so did one 25-file batch:
+# KazhdanLusztigConjectures.lean's 16 theorems alone print to 242 MB). The
+# strings are extremely repetitive -- that batch gzips to 4.4 MB -- so the
+# compressed file is always far under the cap, and the small batch bounds the
+# decompressed JSON parsed per batch.
+JSON_BATCH = 10
+JSON_CONCURRENCY = 6
+_JSON_OUT_PREFIX = "/tmp/apn_iso_out"
+
+
+async def _run_json_exe(
+    env: DockerSandboxEnvironment, exe: str, util_module: str, cpaths: list[str]
+) -> list[dict[str, Any]]:
+    """Run a lake-env JSON tool over ``cpaths`` (already staged) in batches;
+    the concatenated records, in the tool's per-batch order."""
+    semaphore = asyncio.Semaphore(JSON_CONCURRENCY)
+
+    async def one(index: int, batch: list[str]) -> list[dict[str, Any]]:
+        out = f"{_JSON_OUT_PREFIX}_{index}.json.gz"
+        async with semaphore:
+            res = await env.exec(
+                lake_env_command(
+                    exe, "--util-module", util_module, *batch, stdout=out, gzip=True
+                ),
+                cwd=CONTAINER_PROJECT,
+            )
+            if not res.success:
+                raise RuntimeError(
+                    f"{Path(exe).name} failed (rc={res.returncode}) on batch {index}:\n"
+                    f"{res.stderr[-3000:]}"
+                )
+            compressed = await env.read_file(out, text=False)
+        records: list[dict[str, Any]] = parse_extractor_output(
+            gzip.decompress(compressed).decode("utf-8")
+        )
+        return records
+
+    batches = [cpaths[i : i + JSON_BATCH] for i in range(0, len(cpaths), JSON_BATCH)]
+    results = await asyncio.gather(*(one(i, b) for i, b in enumerate(batches)))
+    return [rec for recs in results for rec in recs]
+
+
 async def extract(
     env: DockerSandboxEnvironment,
     files: list[Path],
     util_module: str,
     arcnames: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Run ``extract_ranges`` over ``files`` (under ``lake env``) in the sandbox.
+    """Run ``extract_ranges`` over ``files`` (under ``lake env``, stack limit
+    lifted -- see ``scripts.isolation.lake_env_command``) in the sandbox.
 
     ``util_module`` is the dataset pin's FC util module
     (``apn.dataset.fc_profile(...).util_module``) -- required, no default, so
@@ -164,17 +223,12 @@ async def extract(
     named the staged files.
     """
     cpaths = await stage(env, files, arcnames)
-    res = await env.exec(
-        ["lake", "env", BAKED_EXE, "--util-module", util_module, *cpaths],
-        cwd=CONTAINER_PROJECT,
-    )
-    if not res.success:
-        raise RuntimeError(f"extractor failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
-    records: list[dict[str, Any]] = parse_extractor_output(res.stdout)
+    records = await _run_json_exe(env, BAKED_EXE, util_module, cpaths)
     prefix = f"{_STAGE_DIR}/"
     for fr in records:
         assert fr["file"].startswith(prefix), fr["file"]
         fr["file"] = fr["file"][len(prefix):]
+    assert len(records) == len(cpaths), (len(records), len(cpaths))
     return records
 
 
@@ -192,13 +246,7 @@ async def certify(
     ``file`` is rewritten to its arcname, mirroring :func:`extract`.
     """
     cpaths = await stage(env, files, arcnames)
-    res = await env.exec(
-        ["lake", "env", CERTIFY_EXE, "--util-module", util_module, *cpaths],
-        cwd=CONTAINER_PROJECT,
-    )
-    if not res.success:
-        raise RuntimeError(f"certifier failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
-    verdicts: list[dict[str, Any]] = parse_extractor_output(res.stdout)
+    verdicts = await _run_json_exe(env, CERTIFY_EXE, util_module, cpaths)
     prefix = f"{_STAGE_DIR}/"
     for v in verdicts:
         assert v["file"].startswith(prefix), v["file"]
