@@ -30,6 +30,7 @@ from apn.dataset import (
     oeis_dataset,
     oeis_open_dataset,
     wikipedia_dataset,
+    with_attachments,
 )
 from apn.scorer import proof_scorer
 
@@ -209,6 +210,7 @@ def apn_oeis(
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
+    attachments: str | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
 
@@ -220,12 +222,13 @@ def apn_oeis(
     pin = fc_commit(OEIS_DIR)
 
     return Task(
-        dataset=oeis_dataset(names=name_list),
+        dataset=with_attachments(oeis_dataset(names=name_list), attachments),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+            attachments=attachments is not None,
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
@@ -239,16 +242,18 @@ def apn_fc100open(
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
+    attachments: str | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
     pin = fc_commit(FC100_DIR)
     return Task(
-        dataset=fc100open_dataset(names=name_list),
+        dataset=with_attachments(fc100open_dataset(names=name_list), attachments),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+            attachments=attachments is not None,
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
@@ -262,17 +267,19 @@ def apn_erdos(
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
+    attachments: str | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
     pin = fc_commit(ERDOS_DIR)
     return Task(
-        dataset=erdos_dataset(names=name_list),
+        dataset=with_attachments(erdos_dataset(names=name_list), attachments),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+            attachments=attachments is not None,
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
@@ -286,17 +293,19 @@ def apn_wikipedia(
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
+    attachments: str | None = None,
 ) -> Task:
     """The FC ``Wikipedia`` conjectures tagged ``research open`` at the pin."""
     name_list = load_subset(WIKIPEDIA_DIR, subset) if subset is not None else None
     pin = fc_commit(WIKIPEDIA_DIR)
     return Task(
-        dataset=wikipedia_dataset(names=name_list),
+        dataset=with_attachments(wikipedia_dataset(names=name_list), attachments),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+            attachments=attachments is not None,
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
@@ -310,17 +319,19 @@ def apn_arxiv(
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
+    attachments: str | None = None,
 ) -> Task:
     """The FC ``Arxiv`` conjectures tagged ``research open`` at the pin."""
     name_list = load_subset(ARXIV_DIR, subset) if subset is not None else None
     pin = fc_commit(ARXIV_DIR)
     return Task(
-        dataset=arxiv_dataset(names=name_list),
+        dataset=with_attachments(arxiv_dataset(names=name_list), attachments),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+            attachments=attachments is not None,
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
@@ -334,18 +345,20 @@ def apn_oeis_open(
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
+    attachments: str | None = None,
 ) -> Task:
     """The FC ``OEIS`` conjectures tagged ``research open`` at the pin
     (unrelated to ``apn_oeis``, the autoformalized Tsoukalas-paper corpus)."""
     name_list = load_subset(OEIS_OPEN_DIR, subset) if subset is not None else None
     pin = fc_commit(OEIS_OPEN_DIR)
     return Task(
-        dataset=oeis_open_dataset(names=name_list),
+        dataset=with_attachments(oeis_open_dataset(names=name_list), attachments),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+            attachments=attachments is not None,
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
@@ -359,6 +372,7 @@ def apn_erdos_autoformalized(
     literature: bool = False,
     agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
+    attachments: str | None = None,
 ) -> Task:
     """The Erdős problems our own autoformalization pipeline formalized.
 
@@ -369,12 +383,13 @@ def apn_erdos_autoformalized(
     )
     pin = fc_commit(ERDOS_AUTOFORMALIZED_DIR)
     return Task(
-        dataset=erdos_autoformalized_dataset(names=name_list),
+        dataset=with_attachments(erdos_autoformalized_dataset(names=name_list), attachments),
         solver=lean_prover(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+            attachments=attachments is not None,
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),

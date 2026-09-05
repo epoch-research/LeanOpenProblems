@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from apn.checker import PERMITTED_AXIOMS
+from apn.layout import ATTACHMENTS_DIR
 
 
 def literature_prompt() -> str:
@@ -13,6 +14,14 @@ def literature_prompt() -> str:
         f"`/corpus`. It has two parts:\n"
         f"- `/corpus/metadata.jsonl` -- one JSON record per paper\n"
         f"- `/corpus/src/<id>/` -- a paper's LaTeX source files."
+    )
+
+
+def attachments_prompt() -> str:
+    return (
+        f"Supplementary material has been placed at `{ATTACHMENTS_DIR}` (start "
+        f"with the `README.md` files there). It is provided as-is: judge for "
+        f"yourself what, if anything, in it is useful for this problem."
     )
 
 
@@ -28,7 +37,13 @@ Advice about this task:
 """
 
 
-def user_prompt(path: str, token_limit: int | None, literature: bool, util_module: str) -> str:
+def user_prompt(
+    path: str,
+    token_limit: int | None,
+    literature: bool,
+    util_module: str,
+    attachments: bool = False,
+) -> str:
     parts = []
 
     PYTHON_LIBS = ["sympy", "mpmath", "numpy", "pantograph"]
@@ -61,6 +76,9 @@ Blindly searching for counterexamples using numerics is rarely a good approach.
 
     if literature:
         parts.append(literature_prompt())
+
+    if attachments:
+        parts.append(attachments_prompt())
 
     parts.append(encouragement_prompt())
 

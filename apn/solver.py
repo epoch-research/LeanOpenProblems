@@ -151,6 +151,7 @@ def lean_prover(
     gated: bool,
     literature: bool,
     util_module: str,
+    attachments: bool = False,
 ) -> Solver:
     """
     Args:
@@ -160,6 +161,9 @@ def lean_prover(
         util_module: The dataset pin's FC util module
             (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
             import-integrity rule.
+        attachments: Whether the sample ships supplementary material at
+            ``ATTACHMENTS_DIR`` (``apn.dataset.with_attachments``), so the
+            prompt points the agent at it.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
@@ -205,7 +209,13 @@ def lean_prover(
         )
         state.messages = [
             ChatMessageUser(
-                content=user_prompt(ENTRY_PATH, state.token_limit, literature, util_module),
+                content=user_prompt(
+                    ENTRY_PATH,
+                    state.token_limit,
+                    literature,
+                    util_module,
+                    attachments=attachments,
+                ),
                 source="input",
             )
         ]

@@ -8,6 +8,8 @@ from typing import Any, Iterable
 
 from inspect_ai.dataset import MemoryDataset, Sample
 
+from apn.layout import ATTACHMENTS_DIR
+
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
@@ -15,6 +17,7 @@ ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalize
 WIKIPEDIA_DIR = Path(__file__).parent / "data" / "wikipedia"
 ARXIV_DIR = Path(__file__).parent / "data" / "arxiv"
 OEIS_OPEN_DIR = Path(__file__).parent / "data" / "oeis_open"
+ATTACHMENTS_ROOT = Path(__file__).parent / "data" / "attachments"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -349,3 +352,39 @@ def oeis_open_dataset(names: list[str] | None = None) -> MemoryDataset:
     which vendors the Tsoukalas-paper autoformalized OEIS corpus at an older
     pin. See ``apn/data/oeis_open/NOTICE.md``."""
     return build_dataset(OEIS_OPEN_DIR, "oeis_open", (), names)
+
+
+def available_attachments() -> list[str]:
+    """Names of the shippable attachments (one ``apn/data/attachments/<name>/`` each)."""
+    if not ATTACHMENTS_ROOT.is_dir():
+        return []
+    return sorted(p.name for p in ATTACHMENTS_ROOT.iterdir() if p.is_dir())
+
+
+def attachment_dir(name: str) -> Path:
+    """The local directory of the named attachment (see
+    ``apn/data/attachments/README.md``). Fails loudly at task construction for
+    an unknown name, before any sandbox is started."""
+    path = ATTACHMENTS_ROOT / name
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or not path.is_dir():
+        raise ValueError(
+            f"Unknown attachment {name!r}; available: {available_attachments()}"
+        )
+    return path
+
+
+def with_attachments(dataset: MemoryDataset, name: str | None) -> MemoryDataset:
+    """Ship the named attachment to every sample's agent sandbox.
+
+    Each sample's ``files`` maps :data:`ATTACHMENTS_DIR` to the attachment's
+    local directory; Inspect expands the directory recursively and writes the
+    files into the *default* sandbox (the agent's) before the solver runs --
+    the comparator never sees them. ``None`` is the plain, attachment-free
+    dataset (the default run condition).
+    """
+    if name is None:
+        return dataset
+    directory = str(attachment_dir(name))
+    for sample in dataset:
+        sample.files = {**(sample.files or {}), ATTACHMENTS_DIR: directory}
+    return dataset

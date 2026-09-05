@@ -1,0 +1,90 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# The abc conjecture (wikipedia dataset, subset `abc` = the single sample
+# ABC.abc), with the `n_conjecture_strong` attachment shipped into the agent's
+# sandbox at /workspace/attachments: a copy of the n-conjecture-strong
+# repository's archive/ (the two AI-written refutations of the strong
+# n-conjecture's n = 4 case, from the 2026-09-04 wikipedia-vega run), minus
+# its info.json files. See apn/data/attachments/README.md.
+#
+# Agent setup: vega-alpha (OpenAI pre-deployment), deep agent, the offline
+# literature corpus, $1000/sample, 10 epochs (10 independent attempts at the
+# one target). vega-alpha handling identical to bloom68-vega-roe.yaml:
+# - The OPENAI_API_KEY secret must carry the pre-release key (the
+#   OPENAI_API_KEY_PREDEP value from .env). Set that value when launching!
+# - The benchmarks model package is pinned to the 2026-08-28 @main commit that
+#   defines vega-alpha (pre-release definitions may not survive on @main).
+# - reasoning_effort "max" is the highest value in vega-alpha's
+#   thinking_settings at the pinned commit.
+#
+# Task package pins the abc-n-conjecture-archive branch (the `attachments`
+# task argument and the `abc` subset are not on main). The dataset's FC pin
+# (9cbe1d3c) is the wikipedia-dataset branch's, whose sandbox images (incl.
+# agent_corpus for the literature condition) were built 2026-08-31; the
+# attachment is shipped per sample, so no image rebuild.
+retry_attempts: 5
+retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
+name: abc-n-conjecture-archive-vega
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@abc-n-conjecture-archive
+    name: apn
+    items:
+      - name: apn_wikipedia
+        args:
+          subset: abc
+          agent_type: deep
+          literature: true
+          attachments: n_conjecture_strong
+epochs: 10
+models:
+  # Pinned to the leaderboard run's commit (see header); inspect-ai pin below
+  # verified to match this commit's pyproject (==0.3.259).
+  - package: git+https://github.com/epoch-research/benchmarks@022febc49f522e6bfeb53fe34dbcd63df15c0c2c
+    name: epoch
+    items:
+      - name: vega-alpha
+        args:
+          config:
+            reasoning_effort: "max"
+            max_retries: 7
+            max_connections: 40
+
+# 1 model x 1 problem x 10 epochs = 10 samples x $1000/sample cap = $10,000
+# max; gated runs on an open conjecture sit near max.
+cost_limit: 1000.0
+working_limit: 345_600  # 4 * 24 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+# vega-alpha has no published prices (models.yaml lists it at $0, which would
+# neuter the per-sample cost gate) -- we bill it at gpt-5.6-sol prices as a
+# stand-in (same decision as for ultima-alpha, 2026-08-28).
+model_cost_config:
+  epoch/vega-alpha:
+    input: 5.0
+    output: 30.0
+    input_cache_read: 0.5
+    input_cache_write: 6.25
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+    description: "MUST carry the pre-release key (the OPENAI_API_KEY_PREDEP value from .env), not the regular OpenAI key"
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Must match the inspect-ai pin of the benchmarks commit used in models[]
+  # above (its pyproject pins the exact version).
+  - inspect-ai==0.3.259

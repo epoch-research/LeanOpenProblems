@@ -1,0 +1,6 @@
+{
+  "description": "The abc conjecture itself (FormalConjectures/Wikipedia/ABC.lean's `abc`), without its two `abc.variants.*` restatements.",
+  "ids": [
+    "ABC.abc"
+  ]
+}
