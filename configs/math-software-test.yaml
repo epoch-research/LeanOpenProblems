@@ -55,8 +55,10 @@ secrets:
   - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
     description: "The ECR repo containing the LeanOpenProblems sandbox images"
 
+# The runner only orchestrates 12 samples (sandboxes are their own pods); the
+# 200Gi used by the large proving runs sat unschedulable for an hour.
 runner:
-  memory: 200Gi
+  memory: 32Gi
   environment:
     # TODO: Remove once default in Hawk
     INSPECT_LOG_CONDENSE: "true"
