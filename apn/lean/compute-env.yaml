@@ -1,0 +1,54 @@
+# The agent's compute environment: one locked conda-forge env at /opt/env
+# (created by the Dockerfile's `compute_build` stage; /opt/env/bin is first on
+# the agent's PATH, so this env's python IS the agent's `python3`).
+#
+# Every tool the agent is promised is listed here EXPLICITLY with an exact
+# pin, even where it would arrive anyway as a sage dependency (pari, gap,
+# maxima, singular, ecm, nauty, ...): the roster must not depend on what sage
+# happens to pull. Transitive dependencies not listed here resolve at image
+# build time. Version bumps are deliberate edits to this file. The solve is
+# verified for linux-64 and linux-aarch64 (local dev on Apple silicon); when
+# bumping a pin, keep versions that exist for both platforms.
+#
+# pip-layer packages (python-sat, cvc5 bindings, ortools, snappy) are
+# installed into this same env by the Dockerfile, pinned there.
+name: compute
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13.15
+  - pip=26.2.1
+  # computer algebra systems and their engines
+  - sage=10.9
+  - pari=2.17.3          # PARI/GP: the `gp` binary + libpari
+  - gap-defaults=4.15.1  # GAP: computational group theory
+  - maxima=5.49.0
+  - singular=4.4.1.p5
+  # python stack
+  - numpy=2.5.2
+  - scipy=1.18.0
+  - sympy=1.14.0
+  - mpmath=1.4.1
+  - pandas=3.0.5
+  - networkx=3.6.1
+  - python-igraph=0.11.9
+  - python-flint=0.8.0
+  - highspy=1.15.1
+  # solvers (binary + python bindings)
+  - z3-solver=5.1.0.0
+  - glpk=5.0
+  - clingo=5.8.2         # ASP: clingo binary + python module
+  - cvxpy=1.9.2          # convex-optimization modeling front end
+  - clarabel=0.11.1
+  # lattice reduction
+  - fpylll=0.6.4
+  # number theory CLI tools
+  - primesieve=12.13
+  - primecount=8.2
+  - ecm=7.0.6            # GMP-ECM factorization
+  # graph / discrete geometry / algebra CLI tools
+  - nauty=2.9.3
+  - cliquer=1.23
+  - normaliz=3.11.0
+  - 4ti2=1.6.15
+  - lrslib=73.a

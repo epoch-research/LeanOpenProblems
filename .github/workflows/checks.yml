@@ -66,6 +66,7 @@ jobs:
               --ignore=tests/test_lean_vuln_e2e.py
               --ignore=tests/test_comparator_security.py
               --ignore=tests/test_comparator_primitives.py
+              --ignore=tests/test_agent_image.py
           - suite: comparator-tests
             args: >-
               tests/test_singlefile_proof.py
@@ -80,6 +81,10 @@ jobs:
               tests/test_fc100_isolation.py
           - suite: gold-proofs
             args: tests/test_gold_proofs.py
+          # Contract test for the agent image's declared compute stack (builds
+          # the agent image in-test, like the other container suites).
+          - suite: agent-image
+            args: tests/test_agent_image.py
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

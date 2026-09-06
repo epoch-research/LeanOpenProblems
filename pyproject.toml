@@ -1,6 +1,6 @@
 [project]
 name = "apn"
-version = "0.1.9"
+version = "0.1.10rc3"
 description = "An Inspect implementation of the AlphaProof Nexus formal proof-search framework"
 license = "MIT AND Apache-2.0"
 license-files = ["LICENSE"]
@@ -48,8 +48,6 @@ files = ["apn", "tests"]
 # tests/ is a namespace package (no __init__.py); tests import shared plumbing
 # as `tests.lean_sandbox`, so pin the repo root as the package base.
 explicit_package_bases = true
-# Vendored third-party docs/examples, not our code.
-exclude = 'pypantograph-docs'
 strict = true
 # Inspect ships py.typed; lean on its annotations.
 warn_unused_configs = true
