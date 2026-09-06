@@ -1,0 +1,68 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# math-software-test-astra: the math-software-test run with gpt-6-astra
+# (same task pin and limits; reasoning effort left at the provider default,
+# as in the canonical gpt-6-astra configs).
+#
+# math-software-test: an agent exercises the agent image's advertised math
+# software, one tool group per sample (apn.software_test.GROUPS, 6 samples),
+# and reports what is broken/missing/slow. Nothing is proved; the deliverable
+# is the report in each sample's score explanation. Pinned to the branch commit
+# that adds the task; the images are the 0.1.10rc3 agent images that the
+# branch's build-docker-images run pushed.
+retry_attempts: 3
+name: math-software-test-astra
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@c7f086495f2b6d0b6a9da5309ae2bd69b0d5e78b
+    name: apn
+    items:
+      - name: apn_math_software_test
+epochs: 1
+models:
+  - package: git+https://github.com/epoch-research/benchmarks
+    name: epoch
+    items:
+      - name: gpt-6-astra
+        args:
+          config:
+            max_retries: 7
+            max_connections: 40
+
+# 1 model x 6 samples x $50/sample cap = $300 max.
+cost_limit: 50.0
+working_limit: 14_400  # 4 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  # gpt-6-astra standard rates ($10/$1/$50; cache write $12.50 per OpenAI,
+  # 2026-09-03), as in tsoukalas-lean's oeis-open-lite-gpt6astra config.
+  epoch/gpt-6-astra:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+# The runner only orchestrates (sandboxes are scheduled as their own pods); the
+# 200Gi used by the large proving runs sat unschedulable for an hour.
+runner:
+  memory: 64Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with epoch-research/benchmarks@main.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.259
