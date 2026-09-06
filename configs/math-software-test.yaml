@@ -1,0 +1,72 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# math-software-test: an agent exercises the agent image's advertised math
+# software, one tool group per sample (apn.software_test.GROUPS, 6 samples),
+# and reports what is broken/missing/slow. Nothing is proved; the deliverable
+# is the report in each sample's score explanation. Pinned to the branch commit
+# that adds the task; the images are the 0.1.10rc3 agent images that the
+# branch's build-docker-images run pushed.
+retry_attempts: 3
+name: math-software-test
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@c7f086495f2b6d0b6a9da5309ae2bd69b0d5e78b
+    name: apn
+    items:
+      - name: apn_math_software_test
+epochs: 1
+models:
+  - package: git+https://github.com/epoch-research/benchmarks
+    name: epoch
+    items:
+      - name: gpt-5.6-sol
+        args:
+          config:
+            reasoning_effort: "medium"
+            max_retries: 7
+            max_connections: 40
+      - name: claude-fable-5
+        args:
+          config:
+            reasoning_effort: "high"
+            max_retries: 7
+            max_connections: 40
+
+# 2 models x 6 samples x $50/sample cap = $600 max.
+cost_limit: 50.0
+working_limit: 14_400  # 4 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  epoch/gpt-5.6-sol:
+    input: 5.0
+    output: 30.0
+    input_cache_read: 0.5
+    input_cache_write: 6.25
+  epoch/claude-fable-5:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with epoch-research/benchmarks@main.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.259
