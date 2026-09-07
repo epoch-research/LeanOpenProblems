@@ -224,6 +224,18 @@ async def _bash(
 async def test_binary_on_path(agent_env: SandboxEnvironment, binary: str) -> None:
     code, stdout, stderr = await _bash(agent_env, f"command -v {binary}")
     assert code == 0, f"binary {binary!r} not on the agent's login-shell PATH"
+    # Present is not runnable: a binary whose shared libraries do not resolve
+    # passes `command -v` and dies on start (breakid shipped that way once --
+    # its executable wanted a libbreakid.so that never left the build stage).
+    # `ldd` on a script or a static binary exits non-zero and reports nothing
+    # "not found", so this is a no-op for those. readlink -f: java and julia
+    # are reached via symlinks and locate their libraries by an $ORIGIN rpath,
+    # which ldd resolves from the path it is given, not the real file.
+    code, stdout, stderr = await _bash(
+        agent_env,
+        f'ldd "$(readlink -f "$(command -v {binary})")" 2>/dev/null | grep "not found" || true',
+    )
+    assert stdout.strip() == "", f"binary {binary!r} has unresolved shared libraries:\n{stdout}"
 
 
 @pytest.mark.asyncio(loop_scope="module")

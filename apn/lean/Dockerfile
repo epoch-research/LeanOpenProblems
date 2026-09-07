@@ -415,10 +415,15 @@ RUN curl -sSfL "https://github.com/tanyongkiam/cake_lpr/archive/${CAKE_LPR_COMMI
     && rm -rf /tmp/cake_lpr-*
 
 # BreakID: static CNF symmetry breaking (preprocessor for SAT searches).
+# BUILD_SHARED_LIBS=OFF: upstream defaults to a shared libbreakid that the
+# executable then needs at runtime; only the executable ships, so link the
+# library in (the binary still links libstdc++/libc dynamically, per the
+# stage contract).
 ARG BREAKID_VERSION
 RUN git clone --depth 1 --branch "release/${BREAKID_VERSION}" \
         https://github.com/meelgroup/breakid /tmp/breakid \
     && cmake -S /tmp/breakid -B /tmp/breakid/build -DCMAKE_BUILD_TYPE=Release \
+         -DBUILD_SHARED_LIBS=OFF \
     && cmake --build /tmp/breakid/build -j"$(nproc)" \
     && install -m 755 /tmp/breakid/build/breakid /out/bin/breakid \
     && rm -rf /tmp/breakid
