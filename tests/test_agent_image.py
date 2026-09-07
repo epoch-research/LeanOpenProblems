@@ -239,8 +239,8 @@ async def test_x86_binary_on_path(agent_env: SandboxEnvironment, binary: str) ->
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_walnut_launcher_present(agent_env: SandboxEnvironment) -> None:
-    # Walnut is a tree at /opt/walnut, not a PATH binary; the prompt advertises
-    # its upstream launcher path verbatim.
+    # Walnut is a tree at /opt/walnut, not a PATH binary; the prompt names the
+    # location and Walnut's own README documents running ./walnut.sh from it.
     code, stdout, _ = await _bash(agent_env, "test -x /opt/walnut/walnut.sh")
     assert code == 0, "/opt/walnut/walnut.sh missing or not executable"
 

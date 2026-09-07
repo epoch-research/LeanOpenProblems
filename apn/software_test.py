@@ -123,7 +123,7 @@ convert to LRAT and check with `lrat-check` and with `cake_lpr` (the verified ch
 to enumerate small graphs with a property (read `/opt/docs/sms`).
 * SMT: `z3` and `cvc5` binaries on SMT-LIB2 input across logics (QF_LIA, QF_NRA, QF_BV, quantified), \
 with model and proof/unsat-core production.
-* First-order: `vampire` (refutation of a TPTP problem; finite-model building with `--mode fmb`), \
+* First-order: `vampire` (refutation of a TPTP problem; finite-model building), \
 `eprover`, `prover9` and `mace4` (a prover run and a countermodel), `interpformat`, `prooftrans`.
 * Constraint / ASP: `clingo` (the binary: a small combinatorial enumeration), `minizinc` (list the installed solver \
 backends with `minizinc --solvers`, solve a model with each that is present), `berkeley-abc` (read/write an AIG or BLIF, run a \
@@ -144,7 +144,7 @@ try `-q` quick mode). Cross-check results with `gp`'s `factor`.
 * The special-form primality toolchain, present on x86_64 images (report their absence only on x86_64): \
 `srsieve2` (sieve a k*b^n+-c candidate grid), `sllr64` (LLR: prove a modest Proth or Riesel prime), \
 `pfgw64` (OpenPFGW: PRP and proof on the same candidates, `-f` factoring, `-t` proofs). Cross-check with `gp`'s `isprime`.
-* `/opt/walnut/walnut.sh` (Walnut, decides first-order statements about automatic sequences): run its documented \
+* Walnut, installed at `/opt/walnut` (decides first-order statements about automatic sequences): run its documented \
 examples on Thue-Morse and Fibonacci words (read `/opt/docs/walnut`), define a new automaton, and check that its results \
 directory is writable and that Java starts without warnings.
 * Cross-check a few classic values across tools: `gp`, `sage`, `python-flint`, `sympy`, and `mpmath` on \
