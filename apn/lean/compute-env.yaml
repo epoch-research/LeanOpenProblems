@@ -33,12 +33,15 @@ dependencies:
   - networkx=3.6.1
   - python-igraph=0.11.9
   - python-flint=0.8.0
-  - highspy=1.15.1
   # solvers (binary + python bindings)
   - z3-solver=5.1.0.0
   - glpk=5.0
   - clingo=5.8.2         # ASP: clingo binary + python module
-  - cvxpy=1.9.2          # convex-optimization modeling front end
+  # cvxpy-base, not the `cvxpy` metapackage: that one hard-depends on highspy,
+  # whose libhighs clashes with the one the ortools wheel bundles (whichever
+  # imports second fails; cvxpy's GLOP/PDLP backends die the same way). LP/MIP
+  # stay covered by scipy's built-in HiGHS (linprog/milp) and OR-Tools' own.
+  - cvxpy-base=1.9.2     # convex-optimization modeling front end
   - clarabel=0.11.1
   # lattice reduction
   - fpylll=0.6.4

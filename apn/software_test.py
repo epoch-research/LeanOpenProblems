@@ -103,7 +103,7 @@ Confirm `python3` is `/opt/env/bin/python3` in a login shell, then import and ex
 `numpy`, `scipy` (linalg, optimize, integrate, sparse, special), `sympy` (solve, integrate, series, number theory, `nsimplify`), \
 `mpmath` (high-precision evaluation, `identify`, `pslq`, `findpoly`), `pandas`, `networkx`, `igraph` (`python-igraph`), \
 `flint` (`python-flint`: `fmpz`, `fmpq_poly`, `nmod_poly`, `arb`, `acb`, factoring, `fmpz_mat` LLL), \
-`highspy` (LP and MIP), `cvxpy` with the Clarabel solver (also list `cvxpy.installed_solvers()`), \
+`cvxpy` with the Clarabel solver (also list `cvxpy.installed_solvers()`), \
 `pyscipopt` (SCIP: a MIP, an MIQCP, a nonconvex MINLP), `clingo` (the python module: ground and solve a small ASP program), \
 `graphillion` (ZDD set families), `libsemigroups_pybind11`, `pymanopt`, `pysindy`, `hypothesis`, \
 `z3` (the python API: integer, real, bitvector, quantifier problems, unsat cores), `cvc5` (the python API), \

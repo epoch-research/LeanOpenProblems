@@ -132,7 +132,6 @@ PYTHON_MODULES = [
     "networkx",
     "igraph",
     "flint",  # python-flint
-    "highspy",
     "fpylll",
     "z3",
     "cvc5",
@@ -315,6 +314,31 @@ async def test_cpsat_solves_trivial_model(agent_env: SandboxEnvironment) -> None
         agent_env, f"python3 - <<'EOF'\n{script}EOF", timeout=300
     )
     assert code == 0, f"CP-SAT smoke failed:\n{stderr[-2000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_ortools_and_cvxpy_coexist(agent_env: SandboxEnvironment) -> None:
+    """CP-SAT plus a cvxpy solve through OR-Tools' GLOP, in one interpreter.
+
+    Regression-pins the libhighs clash: with conda highspy installed, whichever
+    of highspy/ortools imported second failed on an undefined symbol, and
+    cvxpy's GLOP/PDLP backends (which load ortools) failed the same way. The
+    spec pins cvxpy-base and no highspy so nothing else preloads a libhighs."""
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "python3 -c '"
+        "from ortools.sat.python import cp_model\n"
+        "import cvxpy as cp\n"
+        "m = cp_model.CpModel(); v = m.NewIntVar(0, 5, \"v\"); m.Add(v >= 3)\n"
+        "s = cp_model.CpSolver(); assert s.StatusName(s.Solve(m)) == \"OPTIMAL\"\n"
+        "x = cp.Variable(); p = cp.Problem(cp.Minimize(x), [x >= 1])\n"
+        "for solver in (\"GLOP\", \"PDLP\", \"CLARABEL\"):\n"
+        "    p.solve(solver=solver); assert abs(x.value - 1) < 1e-6, solver\n"
+        "print(\"ok\")'",
+        timeout=600,
+    )
+    assert code == 0, f"ortools+cvxpy failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert "ok" in stdout
 
 
 @pytest.mark.asyncio(loop_scope="module")
