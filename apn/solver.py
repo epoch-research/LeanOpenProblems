@@ -134,7 +134,7 @@ def build_agent(
         # deepagent() defaults to [research(), plan(), general()]. Only
         # general() inherits the parent's tools (text_editor, bash, resources);
         # research() and plan() default to read-only sandbox tools (read_file,
-        # list_files, grep), so they cannot run Lean. Offer general() alone.
+        # list_files, grep), and this is not made clear to agents.
         loop_kwargs["subagents"] = [general()]
     elif agent_type == "react":
         constructor = react
