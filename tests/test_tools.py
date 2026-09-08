@@ -21,10 +21,14 @@ def test_user_prompt_references_path() -> None:
     assert PROOF_PATH in rendered
 
 
-def test_user_prompt_mentions_lean_and_pypantograph() -> None:
+def test_user_prompt_mentions_lean_and_python_stack() -> None:
     rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
     assert "Lean 4" in rendered
-    assert "pantograph" in rendered.lower()
+    assert "sympy" in rendered
+    # The Lean REPL bridge is gone from the agent image (it pinned the image to
+    # one Lean toolchain); the prompt must not advertise it or its docs.
+    assert "pantograph" not in rendered.lower()
+    assert "/opt/" not in rendered
     # Statement-integrity rule must still be present (it's the one substantive
     # constraint the agent gets from the prompt rather than from the verifier).
     assert "statement" in rendered
