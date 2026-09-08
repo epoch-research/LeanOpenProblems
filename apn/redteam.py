@@ -111,19 +111,19 @@ Rules of engagement:
 
 Be persistent and methodical: when one approach fails, understand why from the
 codebase and try another. You have a Lean toolchain, `git`, `rg`, `jq`, `python`
-(sympy/mpmath/numpy/pantograph), and `sage` available.
+(sympy/mpmath/numpy), and `sage` available.
 """
 
 
 def _apn_codebase_tar() -> bytes:
     """A gzip tar of the installed `apn` package's *source* (the verification
-    architecture), excluding the heavy dataset, caches, and vendored doc trees --
-    what an adversary needs to understand how scoring works."""
+    architecture), excluding the heavy dataset and caches -- what an adversary
+    needs to understand how scoring works."""
     import apn
 
     root = Path(apn.__file__).parent
     skip_top = {"data", "__pycache__"}
-    skip_any = {"__pycache__", "pantograph-docs", "pypantograph-docs"}
+    skip_any = {"__pycache__"}
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tf:
         for p in sorted(root.rglob("*")):

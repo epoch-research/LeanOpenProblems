@@ -31,7 +31,7 @@ Advice about this task:
 def user_prompt(path: str, token_limit: int | None, literature: bool, util_module: str) -> str:
     parts = []
 
-    PYTHON_LIBS = ["sympy", "mpmath", "numpy", "pantograph"]
+    PYTHON_LIBS = ["sympy", "mpmath", "numpy"]
 
     PROOF_PATH = "/workspace/leanproject/Submission/Spec.lean"
 
@@ -54,7 +54,6 @@ Your environment has the following available:
 * `git`, `rg`, and `jq`
 * The `sage` computer algebra system
 * `python` with the following libraries: {', '.join(f'`{lib}`' for lib in PYTHON_LIBS)}.
-* Documentation for libraries is available at `/opt/`
 
 Blindly searching for counterexamples using numerics is rarely a good approach.
 """)
