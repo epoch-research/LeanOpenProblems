@@ -9,9 +9,9 @@
 #                   rename -- the builder detects which from the checkout)
 #                   compiles. Shared by the two service images; not a service
 #                   itself.
-#   - agent      -- the agent's workspace: base + PyPantograph + numerical
-#                   Python libs. Deliberately contains NO verifier tooling (no
-#                   comparator, no lean4export, no landrun).
+#   - agent      -- the agent's workspace: base + the numerical/symbolic
+#                   Python stack (Sage, sympy, ...). Deliberately contains NO
+#                   verifier tooling (no comparator, no lean4export, no landrun).
 #   - comparator -- the trusted verifier: base + the Comparator binary + the
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
@@ -25,8 +25,7 @@
 #
 #   - The FC project (statements, Mathlib, oleans) is pinned by the dataset's
 #     FC_COMMIT and builds with its own lean-toolchain (v4.27.0 today). This is
-#     dataset identity; PyPantograph's repl must match it (oleans load only
-#     under the toolchain that built them).
+#     dataset identity (oleans load only under the toolchain that built them).
 #   - The lean4export *binary* (the runtime exporter) `importModules`-loads the
 #     project's oleans in-process, so it MUST be built at the project
 #     toolchain. Upstream's rev at that toolchain emits an export format the
@@ -42,7 +41,7 @@
 #     comparator tip only, so its pin tracks the newest tag, not the project
 #     toolchain (plan §2.1).
 #
-# On an FC-pin bump: PyPantograph and the exporter's toolchain move with it.
+# On an FC-pin bump: the exporter's toolchain moves with it.
 # On a comparator bump: move LEAN4EXPORT_COMMIT to the rev in comparator's
 # lake-manifest.json, re-verify the toolchain-override build, and re-run the
 # primitive-constants check (plan §2.3; the gold-proof suite exercises it).
@@ -180,18 +179,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APN_LEAN_PROJECT=/workspace/leanproject
 
 # Runtime libs for the Lean toolchain, plus the build tools the derived images
-# need (the agent builds PyPantograph; the comparator image builds lean4export)
-# and python3 (the agent uses it to drive PyPantograph and as a numerical
-# scratchpad).
+# need (the comparator image builds lean4export) and python3 (the agent's
+# numerical scratchpad).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
-        python3 python3-pip \
+        python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # The Lean/lake toolchain (binaries + the project toolchain). The image ENV PATH
-# above covers non-login execs (how ``sandbox().exec`` and the agent's PyPantograph
-# subprocess run); add a profile snippet so *login* shells (e.g. ``bash -lc``)
-# also find lake/lean.
+# above covers non-login execs (how ``sandbox().exec`` runs); add a profile
+# snippet so *login* shells (e.g. ``bash -lc``) also find lake/lean.
 COPY --from=builder /root/.elan /root/.elan
 RUN echo 'export PATH=/root/.elan/bin:$PATH' > /etc/profile.d/elan.sh
 
@@ -221,27 +218,6 @@ CMD ["sleep", "infinity"]
 # agent: the agent's workspace.                                                #
 # --------------------------------------------------------------------------- #
 FROM base AS agent
-
-# PyPantograph commit b8608f3 pins Pantograph v0.3.13, whose repl targets Lean
-# v4.27.0 -- matching this track's Mathlib + FormalConjectures oleans. (The repl
-# must be built with the same toolchain that produced the oleans it loads.)
-# The clone is removed after install so the only importable `pantograph` is the
-# installed package (a lingering source tree would shadow it for any python
-# started inside /opt/PyPantograph, and the source tree lacks the built repl).
-ARG PYPANTOGRAPH_COMMIT=b8608f3
-RUN git clone https://github.com/lenianiva/PyPantograph.git /opt/PyPantograph \
-    && cd /opt/PyPantograph \
-    && git checkout "${PYPANTOGRAPH_COMMIT}" \
-    && git submodule update --init --recursive \
-    && pip3 install --break-system-packages --no-cache-dir . \
-    && cd / && rm -rf /opt/PyPantograph
-
-# In-sandbox references for the agent (the sandbox has no network), vendored
-# version-matched to the installed package: PyPantograph docs + examples at the
-# pinned commit, and Pantograph's repl protocol reference at the submodule
-# commit that pin builds.
-COPY pypantograph-docs /opt/pypantograph-docs
-COPY pantograph-docs /opt/pantograph-docs
 
 # Numerical/symbolic scratchpad for the agent (the `bash` tool runs python3 in
 # this image). The sandbox has no network, so everything is baked in here.
