@@ -83,7 +83,9 @@ network access fails fast rather than hanging), `python3` (which one is first on
 from inside Sage (e.g. `gap('SymmetricGroup(4)')`, `pari('factor(2^128+1)')`, `singular.ring(...)`, `maxima('integrate(...)')`, \
 elliptic curves, `graphs.nauty_geng`, integer factorization, number fields, modular forms, `sage -python`, `sage -c`, \
 `sage -t`-style doctests on a scratch file, Cython compilation via `cython(...)` or `%cython`, and `sage --pip`/`sage -sh`). \
-Note optional Sage packages that are missing when a documented feature needs them.
+Exercise the installed optional backends and databases too: the Normaliz polyhedron backend (`Polyhedron(..., backend="normaliz")`), \
+Groebner bases and integration via Giac, the CryptoMiniSat and picosat SAT backends, symengine, the GAP packages GRAPE/GUAVA/HAP/Design/QPA/QuaGroup through `libgap`, \
+and the Cremona, Jones, KnotInfo, matroid, cubic Hecke and Odlyzko zeta-zero databases; compare `sage.features.all.all_features()` against what the docs say Sage can do.
 * `gp` (PARI/GP 2.17) directly: `factor`, `bnfinit`, `polgalois`, `ellinit`, `qfbclassno`, large-degree polynomial factoring, `\\p` precision changes; scripts via `gp -q -f`.
 * `gap` directly: `SmallGroup`, `CharacterTable`, `TransitiveGroup`, the packages it reports as loaded (`SmallGrp`, `CTblLib`, `TransGrp`, `PrimGrp`, `AtlasRep`, `GRAPE`, `Digraphs`, ...), and note which documented packages fail to load.
 * `Singular`: ideals, Groebner bases, primary decomposition, `LIB` loading (e.g. `LIB "primdec.lib";`).

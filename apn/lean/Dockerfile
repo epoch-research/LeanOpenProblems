@@ -255,17 +255,22 @@ CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
 # compute_build: the agent's conda-forge compute env at /opt/env (python +     #
-# Sage + the python stack + solver binaries; spec: compute-env.yaml). Built    #
-# in its own stage so the multi-GB env is one cached layer COPY'd into agent,  #
-# re-run only when the spec or the pip pins change. The pip layer installs     #
-# into the SAME env (no second python): PyPI-only packages, pinned here.       #
+# Sage + the python stack + solver binaries; spec: compute-env.yaml, whose     #
+# `pip:` section micromamba installs into the SAME env -- one declaration, no  #
+# second python). Built in its own stage so the multi-GB env is one cached     #
+# layer COPY'd into agent, re-run only when the spec changes. Sage's optional   #
+# backends that exist as no package at all follow, each from its upstream's    #
+# own distribution: sagemath-giac (release tarball, meson build), GAP packages  #
+# (GAP's own packages tarball, built the way GAP's BuildPackages does), and    #
+# Sage's database tarballs (installed per Sage's build/pkgs recipes).          #
 # --------------------------------------------------------------------------- #
 FROM debian:bookworm-slim AS compute_build
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# build-essential: graphillion has no cp313 wheel, so its pip install below
-# compiles the sdist (stage-local; the compiler does not ship).
+# build-essential: graphillion has no cp313 wheel, so its pip install
+# compiles the sdist; sagemath-giac and the compiled GAP packages build here
+# too (stage-local; the compiler does not ship).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates bzip2 build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -279,23 +284,72 @@ RUN arch="$(uname -m)" \
 COPY compute-env.yaml /tmp/compute-env.yaml
 RUN micromamba create -y -p /opt/env -f /tmp/compute-env.yaml \
     && micromamba clean -afy
+# The env's tools (meson, cython, gac, ...) drive the builds below, as they
+# would in the agent's login shell (the agent stage puts /opt/env/bin first).
+ENV PATH=/opt/env/bin:$PATH
 
-# PyPI-only packages, into the same env. snappy is SnapPy (3-manifold
-# topology), not the compression lib. pyscipopt's wheel bundles libscip
-# (SCIP via conda is impossible: every scip/soplex build wants a boost newer
-# than the sage stack's pin). graphillion compiles from sdist (no cp313
-# wheel; verified clean on py3.13, both arches).
-RUN /opt/env/bin/pip install --no-cache-dir \
-        python-sat==1.9.dev15 \
-        cvc5==1.3.4 \
-        ortools==9.15.6755 \
-        snappy==3.3.2 \
-        pysindy==2.1.0 \
-        hypothesis==6.165.10 \
-        libsemigroups_pybind11==1.4.4 \
-        pymanopt==2.2.1 \
-        graphillion==2.1 \
-        pyscipopt==6.2.1 \
+# sagemath-giac: Sage's Giac backend (Groebner bases via giac, giac as an
+# integration engine), split out of sagelib upstream and distributed only as
+# a GitHub release. Built with meson against the env's giac headers; no build
+# isolation because its build-requires include sagemath-standard, which IS
+# the installed sage (meson-python is pinned in compute-env.yaml).
+ARG SAGEMATH_GIAC_VERSION=0.1.4
+RUN curl -sSfL -o /tmp/sagemath-giac.tar.gz \
+        "https://github.com/sagemath/sagemath-giac/archive/refs/tags/${SAGEMATH_GIAC_VERSION}.tar.gz" \
+    && echo "44b8bfc406d3272d634509d50a00208b4a96b7f81641cdb6db455e5e0f860a4b  /tmp/sagemath-giac.tar.gz" | sha256sum -c - \
+    && tar xzf /tmp/sagemath-giac.tar.gz -C /tmp \
+    && /opt/env/bin/pip install --no-cache-dir --no-build-isolation /tmp/sagemath-giac-* \
+    && rm -rf /tmp/sagemath-giac*
+
+# GAP packages Sage uses as optional backends (its `gap_packages` spkg list,
+# plus grape/guava and hap's dependency nq), taken from GAP's own packages
+# tarball for the installed GAP release (must match compute-env.yaml
+# gap-defaults=4.15.1) -- the set GAP ships as mutually compatible -- into
+# the env's GAP root, the compiled three built as GAP's BuildPackages does.
+# packagemanager is in conda GAP's default PackagesToLoad but not shipped,
+# hence the '#I packagemanager package is not available' on every startup
+# without it.
+ARG GAP_PACKAGES_VERSION=v4.15.1
+RUN curl -sSfL -o /tmp/gap-packages.tar.gz \
+        "https://github.com/gap-system/gap/releases/download/${GAP_PACKAGES_VERSION}/packages-${GAP_PACKAGES_VERSION}.tar.gz" \
+    && echo "c62234ca31685145737e9e66e1dc20424cbd114dcef3e89a5839670561a2a2e6  /tmp/gap-packages.tar.gz" | sha256sum -c - \
+    && tar xzf /tmp/gap-packages.tar.gz -C /opt/env/share/gap/pkg \
+        ./grape ./guava ./nq ./hap ./design ./qpa ./gbnp ./quagroup \
+        ./aclib ./crystcat ./cryst ./polymaking ./sonata ./packagemanager \
+        ./autodoc ./corelg ./crime ./genss ./hapcryst ./hecke ./images \
+        ./liealgdb ./liepring ./liering ./lins ./loops ./mapclass ./repsn \
+        ./singular ./sla ./toric \
+    && rm /tmp/gap-packages.tar.gz \
+    && cd /opt/env/share/gap/pkg \
+    && for p in grape guava nq; do \
+         ( cd "$p" \
+           && ( ./configure /opt/env/lib/gap || ./configure --with-gaproot=/opt/env/lib/gap ) \
+           && make -j"$(nproc)" ) || exit 1; \
+       done
+
+# Sage's optional databases, from Sage's own upstream tarballs (versions and
+# sha256s from sage 10.9's build/pkgs/<name>/checksums.ini), installed where
+# sage.features.databases looks (SAGE_SHARE=/opt/env/share) per each spkg's
+# install recipe. Cremona: the full elliptic-curve tables (conductor <
+# 500000; conda sage ships only cremona_mini). Jones: number fields of small
+# degree with restricted ramification. Odlyzko: 2M zeta zeros, pickled by
+# sage as its recipe does. polytopes_db_4d (9.2 GB) is deliberately NOT
+# installed. KnotInfo/matroid/cubic-Hecke databases are pip packages (spec).
+RUN set -e; M=https://mirrors.mit.edu/sage/spkg/upstream; cd /tmp \
+    && curl -sSfL -o cremona.tar.bz2 "$M/database_cremona_ellcurve/database_cremona_ellcurve-20190911.tar.bz2" \
+    && echo "5d1d6aa35a95f9df123c87c1894791580d067444e1145bbd6ec20b4840f22053  cremona.tar.bz2" | sha256sum -c - \
+    && mkdir -p /opt/env/share/cremona \
+    && tar xjf cremona.tar.bz2 -C /opt/env/share/cremona --strip-components=1 \
+    && curl -sSfL -o jones.tar.gz "$M/database_jones_numfield/database_jones_numfield-4.tar.gz" \
+    && echo "704d70101bc504bbdd2d7ac5847cb3bbc43e017c0ee163a9b4ab3ed2e572a001  jones.tar.gz" | sha256sum -c - \
+    && mkdir -p /opt/env/share/jones \
+    && tar xzf jones.tar.gz -C /opt/env/share/jones --strip-components=1 \
+    && curl -sSfL -o odlyzko.tar.bz2 "$M/database_odlyzko_zeta/database_odlyzko_zeta-20061209.tar.bz2" \
+    && echo "8919f01992718b9bf5c0602dbf16dd9d6f58b141b25f67f5cfd59f6cd0f9a0d4  odlyzko.tar.bz2" | sha256sum -c - \
+    && mkdir -p odlyzko && tar xjf odlyzko.tar.bz2 -C odlyzko --strip-components=1 \
+    && mkdir -p /opt/env/share/odlyzko \
+    && /opt/env/bin/python3 -c "from sage.all import save; save([float(x) for x in open('odlyzko/zeros6')], '/opt/env/share/odlyzko/zeros.sobj')" \
+    && rm -rf /tmp/cremona.tar.bz2 /tmp/jones.tar.gz /tmp/odlyzko.tar.bz2 /tmp/odlyzko \
     && find /opt/env -name '__pycache__' -type d -prune -exec rm -rf {} +
 
 # --------------------------------------------------------------------------- #

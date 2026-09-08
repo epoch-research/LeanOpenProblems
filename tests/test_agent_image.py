@@ -133,6 +133,15 @@ PYTHON_MODULES = [
     "igraph",
     "flint",  # python-flint
     "fpylll",
+    # sage's optional backends / databases (see compute-env.yaml + compute_build)
+    "PyNormaliz",
+    "pycryptosat",
+    "pycosat",
+    "symengine",
+    "sagemath_giac",
+    "database_knotinfo",
+    "matroid_database",
+    "database_cubic_hecke",
     "z3",
     "cvc5",
     "ortools",
@@ -314,6 +323,73 @@ async def test_cpsat_solves_trivial_model(agent_env: SandboxEnvironment) -> None
         agent_env, f"python3 - <<'EOF'\n{script}EOF", timeout=300
     )
     assert code == 0, f"CP-SAT smoke failed:\n{stderr[-2000:]}"
+
+
+# Sage optional features the image declares (sage.features names). Sage's own
+# detection is the contract: each must report present in the agent's sage.
+SAGE_OPTIONAL_FEATURES = [
+    "pynormaliz",
+    "sage.libs.giac",
+    "pycryptosat",
+    "pycosat",
+    "symengine_py",
+    "gap_package_grape",
+    "gap_package_guava",
+    "gap_package_hap",
+    "gap_package_design",
+    "gap_package_qpa",
+    "gap_package_quagroup",
+    "database_cremona_ellcurve",
+    "database_jones_numfield",
+    "database_knotinfo",
+    "matroid_database",
+    "database_cubic_hecke",
+]
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_sage_optional_features_present(agent_env: SandboxEnvironment) -> None:
+    """Every declared Sage optional backend/database is detected by Sage itself."""
+    names = ",".join(SAGE_OPTIONAL_FEATURES)
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "sage -c '"
+        "from sage.features.all import all_features\n"
+        f"want = set(\"{names}\".split(\",\"))\n"
+        "feats = {f.name: f for f in all_features()}\n"
+        "unknown = sorted(want - set(feats))\n"
+        "missing = sorted(n for n in want & set(feats) if not feats[n].is_present())\n"
+        "print(\"unknown:\", unknown); print(\"missing:\", missing)'",
+        timeout=600,
+    )
+    assert code == 0, f"sage features check failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert "unknown: []" in stdout, stdout
+    assert "missing: []" in stdout, stdout
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_sage_optional_backends_compute(agent_env: SandboxEnvironment) -> None:
+    """The backends do real work through Sage: Normaliz (Ehrhart polynomial),
+    Giac (Groebner basis), CryptoMiniSat (a SAT instance), GRAPE via libgap,
+    and the Cremona and Odlyzko databases."""
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "sage -c '"
+        "P = Polyhedron(vertices=[[0,0],[1,0],[0,1],[1,1]], backend=\"normaliz\")\n"
+        "assert str(P.ehrhart_polynomial(engine=\"normaliz\")) == \"t^2 + 2*t + 1\"\n"
+        "R = PolynomialRing(QQ, \"x,y\"); x, y = R.gens()\n"
+        "assert R.ideal([x^2 - y, y^2 - x]).groebner_basis(algorithm=\"giac\") == [x^2 - y, y^2 - x]\n"
+        "from sage.sat.solvers import CryptoMiniSat\n"
+        "s = CryptoMiniSat(); s.add_clause((1, 2)); s.add_clause((-1,)); assert s()[2] is True\n"
+        "libgap.eval(\"LoadPackage(\\\"grape\\\")\")\n"
+        "assert str(libgap.eval(\"GlobalParameters(JohnsonGraph(5,2))\")) == \"[ [ 0, 0, 6 ], [ 1, 3, 2 ], [ 4, 2, 0 ] ]\"\n"
+        "assert CremonaDatabase().largest_conductor() == 499998\n"
+        "assert abs(float(zeta_zeros()[0]) - 14.134725142) < 1e-8\n"
+        "print(\"ok\")'",
+        timeout=900,
+    )
+    assert code == 0, f"sage backends smoke failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert "ok" in stdout
 
 
 @pytest.mark.asyncio(loop_scope="module")
