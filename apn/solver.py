@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Literal, Sequence
+from typing import Any, Callable, Literal, Sequence
 
 from inspect_ai.agent import (
     Agent,
@@ -10,6 +10,7 @@ from inspect_ai.agent import (
     AgentSubmit,
     as_solver,
     deepagent,
+    general,
     react,
 )
 from inspect_ai.model import (
@@ -123,11 +124,18 @@ def build_agent(
     """Construct the configured agent loop.
 
     Only exposes functionality common to ``deepagent`` and ``react`` so the two
-    behave identically apart from the loop itself
+    behave identically apart from the loop itself. The one ``deepagent``-only
+    setting is the subagent roster, restricted to ``general()``.
     """
     constructor: Callable[..., Agent]
+    loop_kwargs: dict[str, Any] = {}
     if agent_type == "deep":
         constructor = deepagent
+        # deepagent() defaults to [research(), plan(), general()]. Only
+        # general() inherits the parent's tools (text_editor, bash, resources);
+        # research() and plan() default to read-only sandbox tools (read_file,
+        # list_files, grep), and this is not made clear to agents.
+        loop_kwargs["subagents"] = [general()]
     elif agent_type == "react":
         constructor = react
     else:
@@ -142,6 +150,7 @@ def build_agent(
         submit=submit,
         on_continue=on_continue,
         compaction=compaction,
+        **loop_kwargs,
     )
 
 
