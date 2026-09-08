@@ -12,6 +12,7 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
+MARCZINZIK_DIR = Path(__file__).parent / "data" / "marczinzik"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -330,3 +331,12 @@ def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDatase
     ``<target>.disproof`` declaration. See
     ``apn/data/erdos_autoformalized/NOTICE.md``."""
     return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
+
+
+def marczinzik_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The homological conjectures for finite-dimensional algebras contributed
+    by René Marczinzik and Bernhard Böhmler (the finitistic dimension
+    conjecture and the Nakayama conjecture; 2 samples). Each sketch ends with
+    the derived ``<target>.disproof`` declaration. See
+    ``apn/data/marczinzik/NOTICE.md``."""
+    return build_dataset(MARCZINZIK_DIR, "marczinzik", (), names)
