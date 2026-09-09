@@ -70,9 +70,9 @@ on small examples. Check that a file with an error reports it with a sensible ex
 * `loogle`, the Mathlib type-pattern search CLI, invoked from the project as \
 `lake env loogle --module Mathlib "<query>"`. Try name queries, type-pattern queries with metavariables, \
 queries combining several patterns, and queries that should return nothing; time them; \
-read its docs at `/opt/docs/loogle`.
+read its README at `/usr/local/share/doc/loogle`.
 * `git`, `rg` (ripgrep), `jq`, `gcc`, `make`, `curl` (the sandbox is offline; confirm that failing \
-network access fails fast rather than hanging), `python3` (which one is first on PATH and where it lives).
+network access fails fast rather than hanging), `python3` (where a login shell resolves it and which env it belongs to).
 """,
     ),
     "cas": (
@@ -81,8 +81,8 @@ network access fails fast rather than hanging), `python3` (which one is first on
 * `sage` (Sage 10). Beyond basic arithmetic, exercise its interfaces to its bundled engines -- \
 `gap`, `pari`, `singular`, `maxima`, `giac`, `ecl`/`libgap`, `flint`, `ntl`, `eclib`, `lcalc`, `gfan`, `nauty`, `ecm` -- \
 from inside Sage (e.g. `gap('SymmetricGroup(4)')`, `pari('factor(2^128+1)')`, `singular.ring(...)`, `maxima('integrate(...)')`, \
-elliptic curves, `graphs.nauty_geng`, integer factorization, number fields, modular forms, `sage -python`, `sage -c`, \
-`sage -t`-style doctests on a scratch file, Cython compilation via `cython(...)` or `%cython`, and `sage --pip`/`sage -sh`). \
+elliptic curves, `graphs.nauty_geng`, integer factorization, number fields, modular forms, `sage -c`, `sage <file.py>` and \
+`sage <file.sage>` scripts, and Cython compilation via `cython(...)` or `%cython`). \
 Exercise the installed optional backends and databases too: the Normaliz polyhedron backend (`Polyhedron(..., backend="normaliz")`), \
 Groebner bases and integration via Giac, the CryptoMiniSat and picosat SAT backends, symengine, the GAP packages GRAPE/GUAVA/HAP/Design/QPA/QuaGroup through `libgap`, \
 and the Cremona, Jones, KnotInfo, matroid, cubic Hecke and Odlyzko zeta-zero databases; compare `sage.features.all.all_features()` against what the docs say Sage can do.
@@ -95,13 +95,15 @@ and the Cremona, Jones, KnotInfo, matroid, cubic Hecke and Odlyzko zeta-zero dat
 second run, check nothing tries to precompile or reach the network, then exercise OSCAR's GAP, Singular, and \
 Polymake backends through Julia, and Hecke's number theory (a Galois group of a polynomial of degree at least 12, class groups, \
 unit groups). Try `julia -e` and script files.
-* `regina-python` (Regina, low-dimensional topology): triangulations, normal surfaces, census lookups.
+* Regina (low-dimensional topology), the `regina` module of `python3` (`python3 -c 'import regina'`; its wheel is \
+x86_64-only, so report its absence only on x86_64): triangulations, normal surfaces, census lookups.
 """,
     ),
     "python": (
         "The python stack in the agent's `python3` (the conda env at /opt/env)",
         """\
-Confirm `python3` is `/opt/env/bin/python3` in a login shell, then import and exercise each of: \
+Confirm that a login shell's `python3` is `/usr/local/bin/python3`, a symlink into `/opt/env/bin` (`sys.prefix` is `/opt/env`), \
+then import and exercise each of: \
 `numpy`, `scipy` (linalg, optimize, integrate, sparse, special), `sympy` (solve, integrate, series, number theory, `nsimplify`), \
 `mpmath` (high-precision evaluation, `identify`, `pslq`, `findpoly`), `pandas`, `networkx`, `igraph` (`python-igraph`), \
 `flint` (`python-flint`: `fmpz`, `fmpq_poly`, `nmod_poly`, `arb`, `acb`, factoring, `fmpz_mat` LLL), \
@@ -111,8 +113,9 @@ Confirm `python3` is `/opt/env/bin/python3` in a login shell, then import and ex
 `z3` (the python API: integer, real, bitvector, quantifier problems, unsat cores), `cvc5` (the python API), \
 `ortools` (CP-SAT with a nontrivial model; also the linear solver), `pysat` (`python-sat`: several solver backends, cardinality encodings), \
 `snappy` (SnapPy: a manifold from the census, volume, fundamental group, `identify`), and `fpylll` (LLL/BKZ on a lattice). \
-Also check `pip` behaves sensibly offline, that `sage -python` and `python3` are the same interpreter or that the difference is documented, \
-and that the compiler toolchain in the env (`x86_64-conda-linux-gnu-gcc` or similar) does not shadow or break the system `gcc`.
+Also check that `pip` (it belongs to `python3`) behaves sensibly offline; that Sage's own Python (reached through the `sage` \
+launcher: `sage -c`, `sage <file.py>`; env `/opt/sage`) and `python3` (`/opt/env`) are different interpreters by design, \
+with Sage's backends importing only under `sage`; and that `gcc`/`make` are the system ones (nothing from either env shadows them).
 """,
     ),
     "solvers": (
@@ -122,7 +125,7 @@ and that the compiler toolchain in the env (`x86_64-conda-linux-gnu-gcc` or simi
 e.g. pigeonhole or a small Ramsey encoding you generate); have `kissat` emit a DRAT proof, check it with `drat-trim`, \
 convert to LRAT and check with `lrat-check` and with `cake_lpr` (the verified checker). \
 `breakid` for symmetry breaking on a symmetric CNF; `march_cu` to produce cubes; `smsg` (SAT modulo symmetries) \
-to enumerate small graphs with a property (read `/opt/docs/sms`).
+to enumerate small graphs with a property (read `/usr/local/share/doc/sms`).
 * SMT: `z3` and `cvc5` binaries on SMT-LIB2 input across logics (QF_LIA, QF_NRA, QF_BV, quantified), \
 with model and proof/unsat-core production.
 * First-order: `vampire` (refutation of a TPTP problem; finite-model building), \
@@ -131,7 +134,7 @@ with model and proof/unsat-core production.
 backends with `minizinc --solvers`, solve a model with each that is present), `berkeley-abc` (read/write an AIG or BLIF, run a \
 simple equivalence check).
 * Optimization / algebra: `csdp` (a small SDP in its sparse format), `msolve` (a zero-dimensional polynomial system; \
-read `/opt/docs/msolve`), `glpsol` (GLPK, including `--exact` rational simplex), and the SCIP that ships with `pyscipopt` \
+read `/usr/local/share/doc/msolve`), `glpsol` (GLPK, including `--exact` rational simplex), and the SCIP that ships with `pyscipopt` \
 (from python) on the same instance for cross-checking.
 """,
     ),
@@ -147,7 +150,8 @@ try `-q` quick mode). Cross-check results with `gp`'s `factor`.
 `srsieve2` (sieve a k*b^n+-c candidate grid), `sllr64` (LLR: prove a modest Proth or Riesel prime), \
 `pfgw64` (OpenPFGW: PRP and proof on the same candidates, `-f` factoring, `-t` proofs). Cross-check with `gp`'s `isprime`.
 * Walnut, installed at `/opt/walnut` (decides first-order statements about automatic sequences): run its documented \
-examples on Thue-Morse and Fibonacci words (read `/opt/docs/walnut`), define a new automaton, and check that its results \
+examples on Thue-Morse and Fibonacci words (read `/opt/walnut/README.md` and the command help under \
+`/opt/walnut/Help Documentation/Commands`), define a new automaton, and check that its results \
 directory is writable and that Java starts without warnings.
 * Cross-check a few classic values across tools: `gp`, `sage`, `python-flint`, `sympy`, and `mpmath` on \
 partition numbers, Bernoulli numbers, class numbers, and zeta zeros.
@@ -158,16 +162,16 @@ partition numbers, Bernoulli numbers, class numbers, and zeta zeros.
         """\
 * The nauty suite: `geng` (count graphs on 5-9 vertices with and without constraints; cross-check the counts against OEIS values you know), \
 `genbg`, `gentreeg`, `gentourng`, `vcolg`, `shortg`, `labelg`, `showg`, `amtog`, `dreadnaut`, `pickg`, `countg`, `directg`, `planarg`; \
-piping graph6 between them; reading `/opt/docs/nauty` if present.
-* `plantri` (planar triangulations and other classes; cross-check a count; read `/opt/docs/plantri`).
+piping graph6 between them; reading each program's `-help` output.
+* `plantri` (planar triangulations and other classes; cross-check a count; read `/usr/local/share/doc/plantri`).
 * `polymake` (a polytope from vertices or inequalities, its f-vector, Hilbert basis, a lattice-point count; the perl interface and script mode).
-* `normaliz` (Hilbert bases and Ehrhart series on a cone from an input file; read `/opt/docs/normaliz`), \
-4ti2 (`zsolve`, `hilbert`, `groebner`, `markov`, `circuits` on small systems; read `/opt/docs/4ti2`), \
-`lrs` (vertex enumeration; also `redund` if present; read `/opt/docs/lrslib`), \
-`redumis` (KaMIS: a maximum independent set on a graph in METIS format; read `/opt/docs/kamis`), \
+* `normaliz` (Hilbert bases and Ehrhart series on a cone from an input file; read `normaliz --help`), \
+4ti2 (`zsolve`, `hilbert`, `groebner`, `markov`, `circuits` on small systems; read each program's `--help`), \
+`lrs` (vertex enumeration; also `redund`), \
+`redumis` (KaMIS: a maximum independent set on a graph in METIS format; read `/usr/local/share/doc/kamis`), \
 `topcom-points2triangs` and the other `topcom-*` binaries (triangulations of a small point configuration).
 * `cadabra2` (tensor algebra: a canonicalisation and a substitution in a script), `mpsolve` (certified roots of a high-degree polynomial; cross-check with `gp`'s `polroots`), \
-`gclc` (a Euclidean geometry proof via the area or Wu method; read `/opt/docs/gclc`), `csdp` and `msolve` if not already covered.
+`gclc` (a Euclidean geometry proof via the area or Wu method; read `/usr/local/share/doc/gclc`), `csdp` and `msolve` if not already covered.
 * Cross-check graph counts and invariants between the CLI tools and `networkx`/`igraph`/`sage`.
 """,
     ),
@@ -196,8 +200,9 @@ are available to you for cross-checking results.
 ## The tools to test
 
 {tools}
-Documentation for the less famous tools is at `/opt/docs/<tool>` (check that it
-exists, is legible, and matches the installed version where you can tell).
+Documentation, where a tool ships it, is under `/usr/local/share/doc/<tool>`,
+`/usr/share/doc/<package>`, or `man` (check that what exists is legible and
+matches the installed version where you can tell); otherwise `--help`.
 
 ## How to test
 
@@ -214,7 +219,7 @@ For every tool listed above, in this order of priority:
    than hanging or silently returning garbage.
 4. **Integration**: where a tool has a python or Sage interface, or calls another
    tool as a backend, exercise that path as well as the bare binary.
-5. **Docs**: read the relevant `/opt/docs` entries and `--help`; note anything that
+5. **Docs**: read the relevant shipped docs (the locations above) and `--help`; note anything that
    disagrees with the tool's actual behaviour.
 
 Keep commands bounded (`timeout 300 ...` for anything that might run away). If a

@@ -1,18 +1,24 @@
 """Contract test for the agent image's declared compute stack.
 
-The agent image's tool roster is *declared* -- in ``apn/lean/compute-env.yaml``
-plus the explicit install lines of the Dockerfile's ``compute_build``/
-``solvers_build``/``agent`` stages -- and advertised to the agent by
-``apn.prompts.user_prompt``. This suite is the hardcoded contract between the
-two: every advertised binary resolves, every advertised python module imports,
-a handful of end-to-end smokes prove the big tools actually run (a present
-binary with a broken runtime, e.g. a Sage missing its GAP, would pass a bare
-``command -v``), and the vendored docs directories exist. If an install line is
-dropped or a conda pin stops shipping a binary, this fails before an eval does.
+The agent image's tool roster is *declared* -- in ``apn/lean/sage.yaml`` and
+``apn/lean/conda.yaml`` (the two conda-forge envs), the per-tool scripts under
+``apn/lean`` (``unpackaged/*.sh``, ``sage/*.sh``, ``walnut.sh``, ``julia.sh``),
+the ``agent`` stage's apt line, and the exposure list ``apn/lean/agent-commands``
+-- and advertised to the agent by ``apn.prompts.user_prompt``. This suite is
+the hardcoded contract between the two: every advertised binary resolves, every
+advertised python module imports in the interpreter that owns it (the agent's
+``python3``, or Sage's own via ``sage -c``), a handful of end-to-end smokes prove
+the big tools actually run (a present binary with a broken runtime, e.g. a Sage
+missing its GAP, would pass a bare ``command -v``), the shipped docs directories
+exist, and the assembly invariants the Dockerfile leaves to tests hold: every
+``agent-commands`` entry is what its name resolves to, the cvc5 binary and
+wheel agree, the two pythons are distinct. If an install line is dropped or a
+conda pin stops shipping a binary, this fails before an eval does.
 
 Every exec runs through ``bash --login -c`` -- exactly how the agent's bash
-tool executes (``apn.tools``) -- so the PATH plumbing (/opt/env/bin first, via
-/etc/profile.d) is itself under test.
+tool executes (``apn.tools``) -- so the exposure mechanism (symlinks in
+/usr/local/bin, which a login shell's PATH puts ahead of /usr/bin) is itself
+under test.
 
 The agent (``default``) sandbox is brought up **once for the whole module**
 through Inspect's lifecycle from the production compose
@@ -26,6 +32,7 @@ from __future__ import annotations
 import platform
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import pytest
 import pytest_asyncio
@@ -36,27 +43,29 @@ from inspect_ai.util._sandbox.context import (
 )
 from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
+import apn
 from apn.dataset import OEIS_DIR, fc_commit
 from apn.task import get_compose_file
 
 # --------------------------------------------------------------------------- #
 # The contract: hardcoded rosters (no manifest machinery by design -- these    #
-# lists and the Dockerfile install lines are maintained together by hand).     #
+# lists and the image's declarations are maintained together by hand).        #
 # --------------------------------------------------------------------------- #
 
 # Binaries, by provenance:
 BINARIES = [
-    # lean layer (base) + loogle_build
+    # lean layer (base) + loogle
     "lake",
     "lean",
     "loogle",
-    # conda env (/opt/env/bin; spec: compute-env.yaml)
-    "python3",
+    # the sage env (/opt/sage; spec: sage.yaml), via agent-commands
     "sage",
     "gp",
     "gap",
     "Singular",
     "maxima",
+    # the conda env (/opt/env; spec: conda.yaml), via agent-commands
+    "python3",
     "z3",
     "clingo",
     "primesieve",
@@ -74,7 +83,7 @@ BINARIES = [
     "normaliz",
     "zsolve",
     "lrs",
-    # solvers_build (/usr/local/bin)
+    # unpackaged (/usr/local/bin; recipes: unpackaged/<tool>.sh)
     "kissat",
     "plantri",
     "cvc5",
@@ -91,12 +100,11 @@ BINARIES = [
     "msieve",
     "redumis",
     "gclc",
-    # julia_build
+    # julia (julia.sh), via agent-commands
     "julia",
     # apt (bookworm)
     "polymake",
     "M2",
-    "regina-python",
     "cryptominisat",
     "csdp",
     "topcom-points2triangs",
@@ -133,15 +141,6 @@ PYTHON_MODULES = [
     "igraph",
     "flint",  # python-flint
     "fpylll",
-    # sage's optional backends / databases (see compute-env.yaml + compute_build)
-    "PyNormaliz",
-    "pycryptosat",
-    "pycosat",
-    "symengine",
-    "sagemath_giac",
-    "database_knotinfo",
-    "matroid_database",
-    "database_cubic_hecke",
     "z3",
     "cvc5",
     "ortools",
@@ -155,31 +154,56 @@ PYTHON_MODULES = [
     "pymanopt",
     "pysindy",
     "hypothesis",
-    "sage.all",
 ]
 
-# Docs directories, downloaded at image build from pinned upstream sources
-# (Dockerfile `docs_fetch` stage -> /opt/docs/<tool>).
-DOCS_DIRS = [
-    "loogle",
-    "plantri",
-    "normaliz",
-    "4ti2",
-    "lrslib",
-    "msolve",
-    "csdp",
+# Regina's wheels are x86-64 only (conda.yaml's environment marker), like the
+# primality binaries above.
+PYTHON_MODULES_X86_ONLY = [
     "regina",
-    "snappy",
-    "python-flint",
-    "sms",
-    "graphillion",
-    "breakid",
+]
+
+# Python modules importable from Sage's own python (the /opt/sage env, reached
+# through the `sage` launcher: `sage -c`, `sage <file.py>`): sage itself and its
+# optional backends/databases (sage.yaml plus the sage/*.sh scripts).
+# Deliberately NOT in the agent's `python3`.
+SAGE_PYTHON_MODULES = [
+    "sage.all",
+    "PyNormaliz",
+    "pycryptosat",
+    "pycosat",
+    "symengine",
+    "sagemath_giac",
+    "database_knotinfo",
+    "matroid_database",
+    "database_cubic_hecke",
+]
+
+# Docs shipped alongside the unpackaged tools (each recipe installs them from
+# the archive it builds) and Loogle's README, at /usr/local/share/doc/<tool>.
+DOCS_DIRS = [
+    "kissat",
+    "plantri",
+    "prover9",
+    "msolve",
     "drat-trim",
     "cake_lpr",
+    "breakid",
+    "sms",
+    "march_cu",
+    "msieve",
     "kamis",
     "gclc",
-    "msieve",
-    "walnut",
+    "loogle",
+]
+
+# The exposure list the agent stage symlinks into /usr/local/bin, one absolute
+# path per line (see the Dockerfile's agent stage).
+AGENT_COMMANDS = [
+    line
+    for line in (Path(apn.__file__).parent / "lean" / "agent-commands")
+    .read_text()
+    .splitlines()
+    if line
 ]
 
 
@@ -235,9 +259,11 @@ async def test_binary_on_path(agent_env: SandboxEnvironment, binary: str) -> Non
     # Present is not runnable: a binary whose shared libraries do not resolve
     # passes `command -v` and dies on start (breakid shipped that way once --
     # its executable wanted a libbreakid.so that never left the build stage).
-    # `ldd` on a script or a static binary exits non-zero and reports nothing
-    # "not found", so this is a no-op for those. readlink -f: java and julia
-    # are reached via symlinks and locate their libraries by an $ORIGIN rpath,
+    # This is also what holds the unpackaged recipes to their contract of
+    # linking only what the bookworm userland provides. `ldd` on a script or a
+    # static binary exits non-zero and reports nothing "not found", so this is
+    # a no-op for those. readlink -f: the env launchers, java and julia are
+    # reached via symlinks and locate their libraries by an $ORIGIN rpath,
     # which ldd resolves from the path it is given, not the real file.
     code, stdout, stderr = await _bash(
         agent_env,
@@ -258,6 +284,24 @@ async def test_x86_binary_on_path(agent_env: SandboxEnvironment, binary: str) ->
 
 
 @pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize(
+    "path", AGENT_COMMANDS, ids=[p.rsplit("/", 1)[1] for p in AGENT_COMMANDS]
+)
+async def test_agent_command_resolves(agent_env: SandboxEnvironment, path: str) -> None:
+    """Every agent-commands entry exists, is executable, and is what its bare
+    name resolves to in a login shell. The agent stage's `ln -s` makes a
+    dangling link out of a typo without complaint; this is where that shows."""
+    name = path.rsplit("/", 1)[1]
+    code, stdout, stderr = await _bash(
+        agent_env,
+        f'test -x "{path}" && readlink -f "{path}" && readlink -f "$(command -v {name})"',
+    )
+    assert code == 0, f"{path} missing or not executable:\n{stderr[-2000:]}"
+    listed, resolved = stdout.split()
+    assert resolved == listed, f"{name} resolves to {resolved}, not the listed {path}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
 async def test_walnut_launcher_present(agent_env: SandboxEnvironment) -> None:
     # Walnut is a tree at /opt/walnut, not a PATH binary; the prompt names the
     # location and Walnut's own README documents running ./walnut.sh from it.
@@ -270,7 +314,7 @@ async def test_walnut_launcher_present(agent_env: SandboxEnvironment) -> None:
 async def test_python_module_imports(
     agent_env: SandboxEnvironment, module: str
 ) -> None:
-    # Sage-adjacent imports (sage.all, ore_algebra, snappy) are slow cold.
+    # snappy and the solver bindings are slow cold.
     code, stdout, stderr = await _bash(
         agent_env, f"python3 -c 'import {module}'", timeout=300
     )
@@ -278,11 +322,76 @@ async def test_python_module_imports(
 
 
 @pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("module", PYTHON_MODULES_X86_ONLY)
+@pytest.mark.skipif(
+    platform.machine() in ("arm64", "aarch64"),
+    reason="x86-64-only wheels; the sandbox is built for the host arch",
+)
+async def test_x86_python_module_imports(
+    agent_env: SandboxEnvironment, module: str
+) -> None:
+    code, stdout, stderr = await _bash(
+        agent_env, f"python3 -c 'import {module}'", timeout=300
+    )
+    assert code == 0, f"import {module} failed:\n{stderr[-2000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("module", SAGE_PYTHON_MODULES)
+async def test_sage_python_module_imports(
+    agent_env: SandboxEnvironment, module: str
+) -> None:
+    # `sage -c` runs in Sage's interpreter (after loading sage.all; slow cold).
+    code, stdout, stderr = await _bash(
+        agent_env, f"sage -c 'import {module}'", timeout=600
+    )
+    assert code == 0, f"sage -c: import {module} failed:\n{stderr[-2000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_two_pythons_are_distinct(agent_env: SandboxEnvironment) -> None:
+    """The agent's `python3` is the conda env's; Sage's is reached only through
+    the `sage` launcher; `pip` belongs to the agent's; and Sage is invisible to
+    the agent's python3 (the split is what frees the python stack's pins from
+    Sage's)."""
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "python3 -c 'import sys; print(sys.prefix)'"
+        " && sage -c 'import sys; print(sys.prefix)'"
+        ' && readlink -f "$(command -v pip)"',
+        timeout=300,
+    )
+    assert code == 0, f"interpreter probe failed:\n{stderr[-2000:]}"
+    agent_prefix, sage_prefix, pip = stdout.split()
+    assert agent_prefix == "/opt/env", stdout
+    assert sage_prefix == "/opt/sage", stdout
+    assert pip.startswith("/opt/env/"), stdout
+    code, _, _ = await _bash(agent_env, "python3 -c 'import sage'")
+    assert code != 0, "the agent's python3 must not see Sage"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_cvc5_binary_matches_bindings(agent_env: SandboxEnvironment) -> None:
+    """The one cross-chunk version agreement: the cvc5 binary
+    (unpackaged/cvc5.sh) and the cvc5 wheel (conda.yaml) are pinned
+    separately and must be the same release."""
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "cvc5 --version | head -1 | awk '{print $2}'"
+        " && python3 -c 'import cvc5; print(cvc5.__version__)'",
+        timeout=300,
+    )
+    assert code == 0, f"cvc5 version probe failed:\n{stderr[-2000:]}"
+    binary, wheel = stdout.split()
+    assert binary == wheel, f"cvc5 binary {binary} vs python bindings {wheel}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
 @pytest.mark.parametrize("tool", DOCS_DIRS)
 async def test_docs_dir_present(agent_env: SandboxEnvironment, tool: str) -> None:
     # Non-empty, not merely present.
-    code, stdout, _ = await _bash(agent_env, f"ls /opt/docs/{tool} | head -1")
-    assert code == 0 and stdout.strip(), f"/opt/docs/{tool} missing or empty"
+    code, stdout, _ = await _bash(agent_env, f"ls /usr/local/share/doc/{tool} | head -1")
+    assert code == 0 and stdout.strip(), f"/usr/local/share/doc/{tool} missing or empty"
 
 
 # --------------------------------------------------------------------------- #
@@ -297,6 +406,31 @@ async def test_sage_factors(agent_env: SandboxEnvironment) -> None:
     )
     assert code == 0, f"sage failed:\n{stderr[-2000:]}"
     assert stdout.strip() == "193707721 * 761838257287"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_gp_arithmetic(agent_env: SandboxEnvironment) -> None:
+    code, stdout, stderr = await _bash(agent_env, "echo 'print(1+1); quit' | gp -q")
+    assert code == 0, f"gp failed:\n{stderr[-2000:]}"
+    assert stdout.strip() == "2"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_singular_arithmetic(agent_env: SandboxEnvironment) -> None:
+    code, stdout, stderr = await _bash(agent_env, "Singular -q -c 'print(2+2); quit;'")
+    assert code == 0, f"Singular failed:\n{stderr[-2000:]}"
+    assert stdout.strip() == "4"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_maxima_integrates(agent_env: SandboxEnvironment) -> None:
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "maxima --very-quiet --batch-string='display2d:false$ print(integrate(x^2,x))$'",
+        timeout=300,
+    )
+    assert code == 0, f"maxima failed:\n{stderr[-2000:]}"
+    assert "x^3/3" in stdout, stdout[-2000:]
 
 
 @pytest.mark.asyncio(loop_scope="module")
@@ -489,7 +623,8 @@ async def test_walnut_decides_trivial_property(agent_env: SandboxEnvironment) ->
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_julia_oscar_loads(agent_env: SandboxEnvironment) -> None:
-    # The baked depot must load offline with no re-precompilation surprises.
+    # The baked depot (at Julia's default /root/.julia) must load offline with
+    # no re-precompilation surprises.
     code, stdout, stderr = await _bash(
         agent_env,
         "julia -e 'using Oscar; println(order(symmetric_group(4)))'",
@@ -501,10 +636,11 @@ async def test_julia_oscar_loads(agent_env: SandboxEnvironment) -> None:
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_loogle_finds_nat_prime(agent_env: SandboxEnvironment) -> None:
-    # Upstream's documented invocation (vendored at /opt/docs/loogle): from
-    # the project, via `lake env`. The Mathlib index is prebuilt in the image,
-    # so this must not fall into the slow index-construction path -- but cold
-    # start still imports Mathlib, hence the generous timeout.
+    # Upstream's documented invocation (its README ships at
+    # /usr/local/share/doc/loogle): from the project, via `lake env`. The
+    # Mathlib index is prebuilt in the image, so this must not fall into the
+    # slow index-construction path -- but cold start still imports Mathlib,
+    # hence the generous timeout.
     code, stdout, stderr = await _bash(
         agent_env,
         "cd /workspace/leanproject && lake env loogle --module Mathlib 'Nat.Prime'",

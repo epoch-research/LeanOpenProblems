@@ -1,0 +1,69 @@
+# The agent's python and every CLI tool that has a conda-forge or PyPI package:
+# one locked conda-forge env at /opt/env (the Dockerfile's `conda` stage). The
+# agent reaches it only through the commands listed in agent-commands, linked
+# into /usr/local/bin; `python3` is this env's python. Sage lives in its own
+# env (sage.yaml) and shares nothing with this one.
+#
+# Every tool is listed EXPLICITLY with an exact pin; transitive dependencies
+# not listed here resolve at image build time. Version bumps are deliberate
+# edits to this file. The solve is verified for linux-64 and linux-aarch64
+# (local dev on Apple silicon); when bumping a pin, keep versions that exist
+# for both platforms.
+#
+# The `pip:` section holds the PyPI-only packages (no conda-forge build for
+# both platforms); micromamba installs them into this same env right after the
+# conda solve, so this file is the whole declaration of the agent's python.
+# Rule: conda-forge when a both-platform pin exists, pip otherwise.
+name: env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13.15
+  - pip=26.2.1
+  # python stack
+  - numpy=2.5.2
+  - scipy=1.18.0
+  - sympy=1.14.0
+  - mpmath=1.4.1
+  - pandas=3.0.5
+  - networkx=3.6.1
+  - python-igraph=0.11.9
+  - python-flint=0.8.0
+  - hypothesis=6.167.1
+  - libsemigroups_pybind11=1.4.4
+  - fpylll=0.6.4         # lattice reduction
+  # solvers (binary + python bindings)
+  - z3-solver=5.1.0.0    # python bindings; pulls libz3, which owns the `z3` binary
+  - glpk=5.0             # `glpsol`
+  - clingo=5.8.2         # ASP: clingo binary + python module
+  # cvxpy-base, not the `cvxpy` metapackage: that one hard-depends on highspy,
+  # whose libhighs clashes with the one the ortools wheel bundles (whichever
+  # imports second fails; cvxpy's GLOP/PDLP backends die the same way). LP/MIP
+  # stay covered by scipy's built-in HiGHS (linprog/milp) and OR-Tools' own.
+  - cvxpy-base=1.9.2     # convex-optimization modeling front end
+  - clarabel=0.11.1
+  # number theory CLI tools
+  - primesieve=12.13
+  - primecount=8.2
+  - ecm=7.0.6            # GMP-ECM factorization
+  # graph / discrete geometry / algebra CLI tools
+  - nauty=2.9.3
+  - normaliz=3.11.0
+  - 4ti2=1.6.15
+  - lrslib=73.a
+  # PyPI-only (see header). snappy is SnapPy (3-manifolds), not the compression
+  # lib. pyscipopt's wheel bundles libscip. graphillion compiles from sdist (no
+  # cp313 wheel). cvc5 is the python API only; the binary is
+  # unpackaged/cvc5.sh (the contract test asserts the two versions agree).
+  # regina's wheels exist for x86_64 only, hence the marker: arm64 dev images
+  # lack it, like the x86-only primality binaries.
+  - pip:
+    - python-sat==1.9.dev15
+    - cvc5==1.3.4
+    - ortools==9.15.6755
+    - snappy==3.3.2
+    - pysindy==2.1.0
+    - pymanopt==2.2.1
+    - graphillion==2.1
+    - pyscipopt==6.2.1
+    - regina==7.4.1; platform_machine == "x86_64"
