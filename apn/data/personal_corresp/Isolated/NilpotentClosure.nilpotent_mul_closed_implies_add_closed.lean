@@ -20,9 +20,7 @@ The question was asked by Janez Šter (University of Ljubljana). The Lean statem
 contributed by Pace Nielsen (Brigham Young University), who sent it to Tom Adamczewski in
 September 2026 and offered it for contribution to formal-conjectures.
 
-*References:*
-- [Št16] Šter, J., *Rings in which nilpotents form a subring*, Carpathian J. Math. 32 (2016),
-  251--258, [arXiv:1510.07523](https://arxiv.org/abs/1510.07523).
+TODO: add a reference for where Janez Šter posed the question.
 -/
 
 namespace NilpotentClosure
