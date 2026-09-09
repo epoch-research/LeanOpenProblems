@@ -1,11 +1,11 @@
 # type: ignore
-"""Generate the Marczinzik–Böhmler ring-theory universe:
-``apn/data/marczinzik/samples.jsonl`` (the manifest) plus the per-target
-isolated specs in ``apn/data/marczinzik/Isolated/``.
+"""Generate the personal-correspondence universe:
+``apn/data/personal_corresp/samples.jsonl`` (the manifest) plus the per-target
+isolated specs in ``apn/data/personal_corresp/Isolated/``.
 
 Membership is *defined* by the vendored sources, so this script computes it:
 every ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
-attribute in ``Sources/`` (see ``apn/data/marczinzik/NOTICE.md``) is a
+attribute in ``Sources/`` (see ``apn/data/personal_corresp/NOTICE.md``) is a
 universe member. Each member's spec keeps its file's definitions + the single
 target theorem and cuts every other standalone ``theorem``/``lemma`` (the
 ``@[category API]`` restatement lemmas included), then drops the target's
@@ -21,7 +21,7 @@ becoming an excluded row.
 
 This is a *vendor-time* dev tool, not imported at runtime; ``apn/dataset.py``
 reads the committed manifest + ``Isolated/`` directly. The committed files are
-validated by ``tests/test_marczinzik_isolation.py`` -- re-extraction
+validated by ``tests/test_personal_corresp_isolation.py`` -- re-extraction
 structural checks and the authoritative ``lake env lean -o`` compile gate --
 which run the Lean toolchain in a container. After regenerating, run those
 tests to confirm the output is sound.
@@ -31,13 +31,13 @@ container with the repo mounted; the baked extractor of the Dockerfile's
 ``generate`` stage is the default ``--exe``:
 
     docker build --target generate -t apn-generate \\
-        --build-arg FC_COMMIT="$(cat apn/data/marczinzik/fc_commit)" apn/lean
+        --build-arg FC_COMMIT="$(cat apn/data/personal_corresp/fc_commit)" apn/lean
     docker run -d --name apn-isolate-dev -v "$PWD":/repo -w /repo \\
         apn-generate sleep infinity
 
 Then generate:
 
-    python scripts/generate_marczinzik_isolated.py
+    python scripts/generate_personal_corresp_isolated.py
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ from scripts.isolation import (
     run_extractor,
     tidy,
 )
-from scripts.marczinzik_isolation import ISOLATED_DIR, MARCZINZIK_DIR, SOURCES_DIR
+from scripts.personal_corresp_isolation import ISOLATED_DIR, PERSONAL_CORRESP_DIR, SOURCES_DIR
 
 _SORRY_RE = re.compile(rb"\bsorry\b")
 
@@ -88,8 +88,8 @@ def proof_is_bare_sorry(src: bytes, filerec: dict, decl_name: str) -> bool:
 
 def extract_sources(container: str, exe: str, util_module: str) -> dict[str, dict]:
     """Extractor records for every vendored source file, keyed by *relative*
-    path under ``Sources/`` (flat, so relpath == basename). The tree is two
-    files, so one extractor process covers it."""
+    path under ``Sources/`` (flat, so relpath == basename). The tree is a
+    handful of files, so one extractor process covers it."""
     rels = sorted(str(p.relative_to(SOURCES_DIR)) for p in SOURCES_DIR.rglob("*.lean"))
     print(f"Extracting decl ranges from {len(rels)} source files...", flush=True)
     ranges = run_extractor([SOURCES_DIR / r for r in rels], container, exe, util_module)
@@ -135,7 +135,7 @@ def main() -> None:
     args = ap.parse_args()
 
     by_rel = extract_sources(
-        args.container, args.exe, fc_profile(fc_commit(MARCZINZIK_DIR)).util_module
+        args.container, args.exe, fc_profile(fc_commit(PERSONAL_CORRESP_DIR)).util_module
     )
 
     ISOLATED_DIR.mkdir(exist_ok=True)
@@ -205,11 +205,11 @@ def main() -> None:
     if problems:
         raise SystemExit(f"{len(problems)} problem(s):\n" + "\n".join(problems))
 
-    write_manifest(MARCZINZIK_DIR, rows)
+    write_manifest(PERSONAL_CORRESP_DIR, rows)
     print(
         f"Wrote {len(rows)} manifest rows and {len(rows)} isolated files to "
         f"{ISOLATED_DIR}.\nCategory lists stripped: {n_category_stripped}\n"
-        "Validate with: pytest tests/test_marczinzik_isolation.py"
+        "Validate with: pytest tests/test_personal_corresp_isolation.py"
     )
 
 

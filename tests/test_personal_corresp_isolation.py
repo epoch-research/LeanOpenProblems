@@ -1,7 +1,7 @@
 """Authoritative validation of the committed
-``apn/data/marczinzik/Isolated/`` specs.
+``apn/data/personal_corresp/Isolated/`` specs.
 
-``scripts/generate_marczinzik_isolated.py`` only *writes* the
+``scripts/generate_personal_corresp_isolated.py`` only *writes* the
 isolated files; the checks that prove they are sound live here, running the
 Lean toolchain in a container via the shared plumbing in
 ``tests/lean_sandbox.py`` (see its docstring for the sandbox lifecycle).
@@ -37,13 +37,13 @@ import pytest
 import pytest_asyncio
 
 from apn.dataset import (
-    MARCZINZIK_DIR,
+    PERSONAL_CORRESP_DIR,
     SampleRow,
     fc_commit,
     fc_profile,
     load_manifest,
 )
-from scripts.marczinzik_isolation import ISOLATED_DIR, SOURCES_DIR
+from scripts.personal_corresp_isolation import ISOLATED_DIR, SOURCES_DIR
 from scripts.fc_statements import (
     answer_certified,
     detect_answer_form,
@@ -77,7 +77,7 @@ class IsoData:
 def rows() -> list[SampleRow]:
     # Every manifest row has an isolated spec: this dataset ships no excluded
     # members (generation fails loudly instead -- see the generator).
-    manifest = load_manifest(MARCZINZIK_DIR)
+    manifest = load_manifest(PERSONAL_CORRESP_DIR)
     assert all(r.excluded is None for r in manifest)
     return manifest
 
@@ -92,9 +92,9 @@ async def iso_data(rows: list[SampleRow]) -> IsoData:
     loop-scope arrangement as ``tests/test_erdos_isolation.py::iso_data``, for
     the same reasons.
     """
-    pin = fc_commit(MARCZINZIK_DIR)
+    pin = fc_commit(PERSONAL_CORRESP_DIR)
     util_module = fc_profile(pin).util_module
-    async with generate_env("pytest_marczinzik_isolation", pin) as env:
+    async with generate_env("pytest_personal_corresp_isolation", pin) as env:
         rels = sorted({r.source.removeprefix("Sources/") for r in rows})
         src = await extract(
             env, [SOURCES_DIR / rel for rel in rels], util_module, arcnames=rels
@@ -183,7 +183,7 @@ async def test_no_example_commands_survive(
     call. The vendored sources ship none; the isolated files must not either."""
     offenders = []
     for row in rows:
-        src = (MARCZINZIK_DIR / row.statement_path).read_bytes()
+        src = (PERSONAL_CORRESP_DIR / row.statement_path).read_bytes()
         stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
         fr = iso_data.iso_ranges[stem]
         if any(is_example_command(src, c) for c in fr["commands"]):
