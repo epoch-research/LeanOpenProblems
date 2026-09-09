@@ -16,6 +16,7 @@ from apn.dataset import (
     ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
+    MARCZINZIK_DIR,
     OEIS_DIR,
     erdos_autoformalized_dataset,
     erdos_dataset,
@@ -23,6 +24,7 @@ from apn.dataset import (
     fc_commit,
     fc_profile,
     load_subset,
+    marczinzik_dataset,
     oeis_dataset,
 )
 from apn.scorer import proof_scorer
@@ -291,6 +293,32 @@ def apn_erdos_autoformalized(
     pin = fc_commit(ERDOS_AUTOFORMALIZED_DIR)
     return Task(
         dataset=erdos_autoformalized_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+    )
+
+
+@task
+def apn_marczinzik(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+    sandbox_backend: SandboxBackend = "docker",
+) -> Task:
+    """The Marczinzik–Böhmler homological conjectures for finite-dimensional
+    algebras (the finitistic dimension conjecture and the Nakayama conjecture).
+    No predefined subsets; the default runs the full manifest."""
+    name_list = load_subset(MARCZINZIK_DIR, subset) if subset is not None else None
+    pin = fc_commit(MARCZINZIK_DIR)
+    return Task(
+        dataset=marczinzik_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,

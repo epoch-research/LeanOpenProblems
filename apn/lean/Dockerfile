@@ -25,10 +25,14 @@
 # artifacts, deliberately NOT all on one toolchain:
 #
 #   - The FC project (statements, Mathlib, oleans) is pinned by the dataset's
-#     FC_COMMIT and builds with its own lean-toolchain (v4.27.0 today). This is
-#     dataset identity; anything that importModules-loads oleans (lean4export,
-#     Loogle) must be built at this toolchain (oleans load only under the
-#     toolchain that built them).
+#     FC_COMMIT and builds with its own lean-toolchain, which the builder reads
+#     from the checkout and installs (v4.27.0 for pins up to 2026-08-22,
+#     v4.33.1 after upstream's bump on 2026-08-23; both tracks are live across
+#     the datasets' pins). This is dataset identity (oleans load only under the
+#     toolchain that built them). Every stage that compiles against the
+#     project's oleans -- lean4export, Loogle, the extract_ranges tooling --
+#     builds at that same toolchain, taken from the checkout, never from a
+#     constant here.
 #   - The lean4export *binary* (the runtime exporter) `importModules`-loads the
 #     project's oleans in-process, so it MUST be built at the project
 #     toolchain. Upstream's rev at that toolchain emits an export format the
@@ -44,9 +48,11 @@
 #     comparator tip only, so its pin tracks the newest tag, not the project
 #     toolchain (plan §2.1).
 #
-# On an FC-pin bump: the exporter's and Loogle's builds move with it (Loogle
-# is dependency-free and merely rebuilt at the pin's toolchain, with its
-# Mathlib search index rebaked; see `loogle`).
+# On an FC-pin bump: nothing here changes -- the project toolchain follows the
+# checkout's lean-toolchain, and the exporter's, Loogle's and the extractor's
+# toolchains follow the project's (Loogle's Mathlib search index is rebaked;
+# see `loogle`). Register the pin's layout in apn.dataset._FC_PROFILES (the
+# host side has no checkout to detect it from).
 # On a comparator bump: move LEAN4EXPORT_COMMIT to the rev in comparator's
 # lake-manifest.json, re-verify the toolchain-override build, and re-run the
 # primitive-constants check (plan §2.3; the gold-proof suite exercises it).
@@ -114,11 +120,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
     && rm -rf /var/lib/apt/lists/*
 
-ARG LEAN_VERSION=v4.27.0
+# elan only; the toolchain itself is installed below, from the FC checkout's
+# lean-toolchain, so one Dockerfile serves pins on different Lean tracks.
 ARG ELAN_VERSION=v4.2.3
 RUN curl -sSfL "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-$(uname -m)-unknown-linux-gnu.tar.gz" \
         | tar xz -C /tmp \
-    && /tmp/elan-init -y --default-toolchain "leanprover/lean4:${LEAN_VERSION}" \
+    && /tmp/elan-init -y --default-toolchain none \
     && rm /tmp/elan-init
 
 # The dataset's FC pin (apn/data/<dataset>/fc_commit). Required: there is
@@ -130,12 +137,21 @@ RUN git clone --filter=blob:none \
 
 WORKDIR /workspace/leanproject
 
-# Every dataset's FC pin must be on this track's Lean toolchain (see the header
-# comment); fail the build outright if the checkout disagrees, instead of
-# producing an image whose repl/lean4export/extract_ranges toolchains mismatch
-# the oleans.
-RUN test "$(cat lean-toolchain)" = "leanprover/lean4:${LEAN_VERSION}" \
-    || { echo "FC pin ${FC_COMMIT} uses $(cat lean-toolchain), not leanprover/lean4:${LEAN_VERSION}" >&2; exit 1; }
+# Install the pin's Lean toolchain (the checkout's lean-toolchain) and make it
+# elan's default, so a `lake` run from a directory without its own
+# lean-toolchain file (the extractor project, an in-tree dev build) resolves to
+# the project toolchain rather than fetching another. The `project` symlink
+# gives later stages a toolchain-version-independent path to its binaries (the
+# comparator stage puts it on PATH to bypass the elan shims).
+RUN TOOLCHAIN="$(cat lean-toolchain)" \
+    && case "$TOOLCHAIN" in leanprover/lean4:v*) ;; *) \
+           echo "FC pin ${FC_COMMIT} has unexpected lean-toolchain ${TOOLCHAIN}" >&2; exit 1;; esac \
+    && elan toolchain install "$TOOLCHAIN" \
+    && elan default "$TOOLCHAIN" \
+    && ln -s "/root/.elan/toolchains/$(echo "$TOOLCHAIN" | sed 's#/#--#; s#:#---#')" \
+             /root/.elan/toolchains/project \
+    && test -x /root/.elan/toolchains/project/bin/lean \
+    && lean --version
 
 # Register the comparator's Challenge/Solution scratch libraries BEFORE any
 # lake invocation, so lake's workspace configuration (which hashes the
@@ -680,9 +696,8 @@ FROM base AS comparator
 # shims: the shims may want to touch elan state (e.g. gc bookkeeping) under
 # /root on dispatch, which the non-privileged runtime user cannot write. The
 # elan-managed install is still what ships the toolchain; only PATH resolution
-# changes.
-ARG LEAN_VERSION=v4.27.0
-ENV PATH=/root/.elan/toolchains/leanprover--lean4---${LEAN_VERSION}/bin:$PATH
+# changes. `project` is the builder's symlink to the pin's toolchain dir.
+ENV PATH=/root/.elan/toolchains/project/bin:$PATH
 
 # The comparator binary + its own toolchain (merged into /root/.elan alongside
 # the project's -- the binary's RPATH points into this path).
@@ -769,7 +784,10 @@ CMD ["sleep", "infinity"]
 # --------------------------------------------------------------------------- #
 FROM base AS generate
 
-COPY extract_ranges/lakefile.lean extract_ranges/lean-toolchain \
+# No lean-toolchain file of its own: the tooling `importModules`-loads the
+# project's oleans, so it must build at the project toolchain -- elan's default
+# in this image (set by the builder from the checkout's lean-toolchain).
+COPY extract_ranges/lakefile.lean \
      extract_ranges/ExtractRanges.lean extract_ranges/CertifyDisproof.lean \
      /opt/apn/extract_ranges/
 RUN cd /opt/apn/extract_ranges && lake build extract_ranges certify_disproof

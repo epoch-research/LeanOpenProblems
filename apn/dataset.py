@@ -12,6 +12,7 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
+MARCZINZIK_DIR = Path(__file__).parent / "data" / "marczinzik"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -55,6 +56,11 @@ _FC_PROFILES = {
         util_module="FormalConjecturesUtil"
     ),
     "9cbe1d3c12998c786b7c2cd99ce28a21b6631f66": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+    # Lean v4.33.1 track (upstream bumped from v4.27.0 on 2026-08-23); FC main
+    # as of 2026-09-08.
+    "d33e35a5f45386a173b31159ae6598b1968bc463": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
 }
@@ -324,3 +330,12 @@ def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDatase
     ``<target>.disproof`` declaration. See
     ``apn/data/erdos_autoformalized/NOTICE.md``."""
     return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
+
+
+def marczinzik_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The homological conjectures for finite-dimensional algebras contributed
+    by René Marczinzik and Bernhard Böhmler (the finitistic dimension
+    conjecture and the Nakayama conjecture; 2 samples). Each sketch ends with
+    the derived ``<target>.disproof`` declaration. See
+    ``apn/data/marczinzik/NOTICE.md``."""
+    return build_dataset(MARCZINZIK_DIR, "marczinzik", (), names)
