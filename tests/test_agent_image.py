@@ -336,14 +336,18 @@ async def test_sage_subprocess_interfaces(agent_env: SandboxEnvironment) -> None
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_sage_cython_compiles(agent_env: SandboxEnvironment) -> None:
-    # cython() needs pkg-config on Sage's PATH and setuptools (distutils) in
-    # Sage's env (sage.yaml).
+    # Compiling Cython needs pkg-config on Sage's PATH and setuptools
+    # (distutils) in Sage's env (sage.yaml). The file-based cython_import is
+    # used because the string form, cython("..."), compiles into the REPL's
+    # user globals, which `sage -c` never initializes.
     code, stdout, stderr = await _bash(
         agent_env,
-        "sage -c 'cython(\"cpdef int seven(): return 7\"); print(seven())'",
+        "printf 'cpdef int seven():\\n    return 7\\n' > /tmp/seven.pyx && "
+        "sage -c 'from sage.misc.cython import cython_import; "
+        "print(cython_import(\"/tmp/seven.pyx\").seven())'",
         timeout=900,
     )
-    assert code == 0, f"cython() failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert code == 0, f"cython_import failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
     assert stdout.strip().splitlines()[-1] == "7", stdout[-2000:]
 
 
