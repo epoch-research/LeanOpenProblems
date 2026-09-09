@@ -43,10 +43,11 @@
 #     format by construction.
 #   - The Comparator binary never loads project oleans (it parses lean4export's
 #     *text* output and replays it through its embedded kernel), so it is built
-#     at its own pinned toolchain (v4.34.0-rc2 today) and merely needs that
-#     toolchain's shared libraries present at runtime. Soundness fixes land at
-#     comparator tip only, so its pin tracks the newest tag, not the project
-#     toolchain (plan §2.1).
+#     at its own pinned toolchain (v4.34.0-rc2 today: the comparator repo's
+#     lean-toolchain at COMPARATOR_COMMIT). It is statically linked, so that
+#     toolchain is a build-time fact only; no image carries it. Soundness fixes
+#     land at comparator tip only, so its pin tracks the newest tag, not the
+#     project toolchain (plan §2.1).
 #
 # On an FC-pin bump: nothing here changes -- the project toolchain follows the
 # checkout's lean-toolchain, and the exporter's, Loogle's and the extractor's
@@ -627,8 +628,9 @@ RUN git clone https://github.com/Zouuup/landrun.git /src/landrun \
 # (v4.34.0-rc2 today; see the header's version story). `lake build` resolves   #
 # `Export.Parse` from comparator's lake-manifest.json -- the same              #
 # LEAN4EXPORT_COMMIT rev the runtime exporter below is built from (the         #
-# coupled-pin invariant, plan §2.3). The build runs under /root/.elan so the   #
-# binary's RPATH points where the runtime image installs the toolchain.        #
+# coupled-pin invariant, plan §2.3). The binary is statically linked (Lake's  #
+# default for a lean_exe without supportInterpreter), so only the binary      #
+# leaves this stage; its toolchain does not ship.                             #
 # --------------------------------------------------------------------------- #
 FROM debian:bookworm-slim AS comparator_build
 
@@ -676,11 +678,10 @@ RUN git clone https://github.com/leanprover/lean4export.git /opt/lean4export \
 
 # --------------------------------------------------------------------------- #
 # comparator: the trusted verifier image (compose service `comparator`).       #
-# Carries TWO toolchains by design (plan §2.3): the project toolchain (from    #
-# base) runs everything at scoring time -- `lake env`, the challenge/solution  #
-# builds, lean4export -- while the comparator binary's own toolchain exists    #
-# solely so that binary's shared-library RPATH resolves. No lake/lean          #
-# invocation ever dispatches to the second toolchain.                          #
+# One toolchain, the project's (from base): it runs everything at scoring    #
+# time -- `lake env`, the challenge/solution builds, lean4export. The        #
+# comparator binary is statically linked and carries its own kernel, so the  #
+# toolchain it was built with (comparator_build) never enters this image.    #
 #                                                                              #
 # Scoring runs as the non-privileged `comparator` user (comparator README      #
 # assumption 6) -- not via a USER directive (the image stays root for          #
@@ -699,13 +700,12 @@ FROM base AS comparator
 # changes. `project` is the builder's symlink to the pin's toolchain dir.
 ENV PATH=/root/.elan/toolchains/project/bin:$PATH
 
-# The comparator binary + its own toolchain (merged into /root/.elan alongside
-# the project's -- the binary's RPATH points into this path).
+# The comparator binary (statically linked: nothing else from comparator_build
+# is needed).
 COPY --from=comparator_build /opt/comparator/.lake/build/bin/comparator \
                              /opt/apn/comparator/bin/comparator
-COPY --from=comparator_build /root/.elan/toolchains /root/.elan/toolchains
 
-# The runtime exporter (project toolchain; RPATH resolves via base's install)
+# The runtime exporter (built at the project toolchain, statically linked)
 # and landrun, installed on PATH where comparator's default resolution finds
 # them (its README's preferred setup) -- no COMPARATOR_* env overrides needed.
 COPY --from=lean4export_build /opt/lean4export/.lake/build/bin/lean4export \
@@ -736,11 +736,10 @@ RUN mkdir -p /opt/pristine \
 
 # The non-privileged runtime user (comparator README assumption 6). It owns
 # exactly the project dir, in which the reset script recreates .lake and the
-# checker recreates run/ per check. Everything else -- binaries, toolchains,
-# /opt/pristine -- stays root-owned and unwritable. The baked toolchains live
-# under /root/.elan (the PATH pin above, and the comparator binary's RPATH),
-# so /root becomes traverse-only (711: x permits path resolution; no listing,
-# no writes).
+# checker recreates run/ per check. Everything else -- binaries, the toolchain,
+# /opt/pristine -- stays root-owned and unwritable. The project toolchain lives
+# under /root/.elan (the PATH pin above), so /root becomes traverse-only (711:
+# x permits path resolution; no listing, no writes).
 RUN useradd --create-home --shell /bin/bash comparator \
     && chown comparator /workspace/leanproject \
     && chmod 711 /root
