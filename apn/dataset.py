@@ -59,8 +59,7 @@ _FC_PROFILES = {
         util_module="FormalConjecturesUtil"
     ),
     # Lean v4.33.1 track (upstream bumped from v4.27.0 on 2026-08-23); FC main
-    # as of 2026-09-08. The sandbox Dockerfile derives the toolchain from the
-    # checkout, so the pin needs no image-side change beyond this entry.
+    # as of 2026-09-08.
     "d33e35a5f45386a173b31159ae6598b1968bc463": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
