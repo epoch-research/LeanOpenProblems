@@ -18,6 +18,7 @@ channels:
 dependencies:
   - python=3.13.*        # sage 10.9 accepts 3.12-3.14; the pip backends below ship cp313 wheels
   - pip=26.2.1
+  - setuptools=84.0.0    # provides distutils for sage.misc.cython (cython(), %cython)
   - sage=10.9
   - pari=2.17.3          # PARI/GP: the `gp` binary + libpari
   - gap-defaults=4.15.1  # GAP; sage/gap-packages.sh adds packages for this release

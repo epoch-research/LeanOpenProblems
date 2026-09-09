@@ -17,8 +17,8 @@ conda pin stops shipping a binary, this fails before an eval does.
 
 Every exec runs through ``bash --login -c`` -- exactly how the agent's bash
 tool executes (``apn.tools``) -- so the exposure mechanism (symlinks in
-/usr/local/bin, which a login shell's PATH puts ahead of /usr/bin) is itself
-under test.
+/usr/local/bin, plus the ``sage`` wrapper, which a login shell's PATH puts
+ahead of /usr/bin) is itself under test.
 
 The agent (``default``) sandbox is brought up **once for the whole module**
 through Inspect's lifecycle from the production compose
@@ -299,6 +299,59 @@ async def test_agent_command_resolves(agent_env: SandboxEnvironment, path: str) 
     assert code == 0, f"{path} missing or not executable:\n{stderr[-2000:]}"
     listed, resolved = stdout.split()
     assert resolved == listed, f"{name} resolves to {resolved}, not the listed {path}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_sage_wrapper_is_the_launcher(agent_env: SandboxEnvironment) -> None:
+    """`sage` is the one exposed command that is a wrapper, not a link: Sage
+    starts helpers by bare name and needs its env's bin on its own PATH
+    (apn/lean/sage/sage)."""
+    code, stdout, stderr = await _bash(
+        agent_env, 'test -x /usr/local/bin/sage && readlink -f "$(command -v sage)"'
+    )
+    assert code == 0, f"sage wrapper missing:\n{stderr[-2000:]}"
+    assert stdout.strip() == "/usr/local/bin/sage", stdout
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_sage_subprocess_interfaces(agent_env: SandboxEnvironment) -> None:
+    """Sage interfaces that start a separate program (giac, lcalc) find it.
+    This is the route an in-process `import sage.libs.giac` does not cover:
+    with Sage's bin off its PATH, giac() failed to start and lcalc calls
+    returned [] with exit 0."""
+    code, stdout, stderr = await _bash(
+        agent_env, "sage -c 'print(giac(\"1+1\"))'", timeout=600
+    )
+    assert code == 0, f"giac() failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert stdout.strip().splitlines()[-1] == "2", stdout[-2000:]
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "sage -c 'from sage.lfunctions.lcalc import lcalc; print(lcalc.zeros(2))'",
+        timeout=600,
+    )
+    assert code == 0, f"lcalc failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert "14.1347251" in stdout, stdout[-2000:]
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_sage_cython_compiles(agent_env: SandboxEnvironment) -> None:
+    # cython() needs pkg-config on Sage's PATH and setuptools (distutils) in
+    # Sage's env (sage.yaml).
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "sage -c 'cython(\"cpdef int seven(): return 7\"); print(seven())'",
+        timeout=900,
+    )
+    assert code == 0, f"cython() failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert stdout.strip().splitlines()[-1] == "7", stdout[-2000:]
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_env_man_pages_on_manpath(agent_env: SandboxEnvironment) -> None:
+    # The envs' bin dirs are not on PATH, so their man pages need the explicit
+    # manpath entries the agent stage adds.
+    code, stdout, stderr = await _bash(agent_env, "man -w primesieve && man -w Singular")
+    assert code == 0, f"man pages not found:\n{stderr[-2000:]}"
 
 
 @pytest.mark.asyncio(loop_scope="module")

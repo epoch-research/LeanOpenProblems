@@ -66,8 +66,9 @@
 # tied to the FC pin; everything else is Lean-agnostic.
 #
 #   stage       members                            delivers         exposed as
-#   sage        Sage + its optional backends       /opt/sage        sage gp gap
-#               (sage.yaml, sage/*.sh)                              Singular maxima
+#   sage        Sage + its optional backends       /opt/sage        sage (wrapper),
+#               (sage.yaml, sage/*.sh)                              gp gap Singular
+#                                                                   maxima (links)
 #   conda       anything with a conda-forge or     /opt/env         python3, pip and
 #               PyPI package (conda.yaml)                           the CLI tools in
 #                                                                   agent-commands
@@ -95,8 +96,9 @@
 #      a missing or malformed artifact where that is the natural place.
 #   4. Exposure is explicit: agent-commands lists every command the agent
 #      gets from the envs, one absolute path per line, linked into
-#      /usr/local/bin. No PATH edits, /etc/profile.d snippets or depot
-#      variables (base's elan snippet predates this and is Lean-side).
+#      /usr/local/bin (`sage` alone is a wrapper, see the agent stage). No
+#      PATH edits, /etc/profile.d snippets or depot variables (base's elan
+#      snippet predates this and is Lean-side).
 #
 # The builder stage clones the whole formal-conjectures repo and builds the
 # library; base copies in ONLY the toolchain, the lake build artifacts
@@ -306,10 +308,11 @@ RUN arch="$(uname -m)" \
 # sage: Sage and its optional backends, alone in a conda-forge env at         #
 # /opt/sage (spec: sage.yaml). Backends that exist as no package at all       #
 # follow from their upstreams' own distributions, one script each under       #
-# sage/: sagemath-giac, GAP packages, Sage's database tarballs. Only the five #
-# launchers listed in agent-commands reach the agent; Sage's python is        #
-# reached through `sage` itself (`sage -c`, `sage <file.py>`) and is not the  #
-# agent's python3 (the conda stage), so Sage's pins constrain nothing else.   #
+# sage/: sagemath-giac, GAP packages, Sage's database tarballs. Only five     #
+# launchers reach the agent (the `sage` wrapper plus the four links in        #
+# agent-commands); Sage's python is reached through `sage` itself (`sage -c`, #
+# `sage <file.py>`) and is not the agent's python3 (the conda stage), so      #
+# Sage's pins constrain nothing else.                                         #
 # --------------------------------------------------------------------------- #
 FROM conda_base AS sage
 
@@ -544,6 +547,15 @@ COPY --from=loogle \
 # that every link resolves is asserted by tests/test_agent_image.py.
 COPY agent-commands /build/agent-commands
 RUN xargs -I{} ln -s {} /usr/local/bin/ < /build/agent-commands
+
+# `sage` is the one exposed command that is a wrapper rather than a link: Sage
+# starts helpers (giac, lcalc, pkg-config, ...) by bare name and expects its
+# env's bin on PATH, as conda activation would arrange; the wrapper gives Sage's
+# own process exactly that (see sage/sage). The envs' bin dirs are not on PATH,
+# so man's PATH-derived manpath misses their pages; list them explicitly.
+COPY sage/sage /usr/local/bin/sage
+RUN printf 'MANDATORY_MANPATH /opt/env/share/man\nMANDATORY_MANPATH /opt/sage/share/man\n' \
+        >> /etc/manpath.config
 
 CMD ["sleep", "infinity"]
 
