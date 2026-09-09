@@ -30,6 +30,7 @@ dependencies:
   - python-igraph=0.11.9
   - python-flint=0.8.0
   - hypothesis=6.167.1
+  - autograd=1.9.1       # pymanopt's automatic-differentiation backend
   - libsemigroups_pybind11=1.4.4
   - fpylll=0.6.4         # lattice reduction
   # solvers (binary + python bindings)

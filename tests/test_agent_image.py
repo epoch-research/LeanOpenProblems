@@ -152,6 +152,7 @@ PYTHON_MODULES = [
     "graphillion",
     "libsemigroups_pybind11",
     "pymanopt",
+    "autograd",  # pymanopt's autodiff backend
     "pysindy",
     "hypothesis",
 ]
@@ -627,6 +628,42 @@ async def test_gap_small_group(agent_env: SandboxEnvironment) -> None:
     assert code == 0, f"gap failed:\n{stderr[-2000:]}"
     # gap prints informational "#I ..." banner lines before the answer.
     assert stdout.strip().splitlines()[-1] == "64", stdout[-2000:]
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_gap_digraphs_loads(agent_env: SandboxEnvironment) -> None:
+    # Digraphs and its kernel dependencies (io, orb, datastructures) come from
+    # the GAP packages tarball (sage/gap-packages.sh); the conda GAP ships none.
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "gap -q -c 'LoadPackage(\"digraphs\"); "
+        "Print(DigraphNrEdges(CompleteDigraph(5)), \"\\n\"); QUIT;'",
+        timeout=300,
+    )
+    assert code == 0, f"gap failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert stdout.strip().splitlines()[-1] == "20", stdout[-2000:]
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_pymanopt_autograd(agent_env: SandboxEnvironment) -> None:
+    # Minimising x^T diag(1,2,3) x on the unit sphere: the smallest eigenvalue, 1.
+    script = (
+        "import autograd.numpy as anp\n"
+        "import pymanopt\n"
+        "from pymanopt.manifolds import Sphere\n"
+        "from pymanopt.optimizers import SteepestDescent\n"
+        "manifold = Sphere(3)\n"
+        "@pymanopt.function.autograd(manifold)\n"
+        "def cost(x):\n"
+        "    return anp.sum(x**2 * anp.array([1.0, 2.0, 3.0]))\n"
+        "result = SteepestDescent(verbosity=0).run(pymanopt.Problem(manifold, cost))\n"
+        "assert abs(result.cost - 1.0) < 1e-3, result.cost\n"
+        "print('ok')\n"
+    )
+    code, stdout, stderr = await _bash(
+        agent_env, f"python3 - <<'EOF'\n{script}EOF", timeout=300
+    )
+    assert code == 0, f"pymanopt/autograd failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
 
 
 @pytest.mark.asyncio(loop_scope="module")
