@@ -15,6 +15,11 @@ VERSION=v4.15.1
 SHA256=c62234ca31685145737e9e66e1dc20424cbd114dcef3e89a5839670561a2a2e6
 
 export PATH=/opt/sage/bin:$PATH
+# conda's GAP recorded the compilers of conda-forge's build machine in
+# sysinfo.gap, paths that do not exist here; gac (which the io, orb,
+# datastructures and digraphs kernel modules build with) prefers CC/CXX when
+# set. Use the env's own compilers, the ones GAP itself was built with.
+export CC=gcc CXX=g++
 PKG=/opt/sage/share/gap/pkg
 
 cd /tmp
