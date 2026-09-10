@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from apn.checker import PERMITTED_AXIOMS
-from apn.layout import ENTRY_MODULE, ENTRY_PATH, SUBMISSION_DIR
+from apn.layout import ENTRY_MODULE, ENTRY_PATH, PROJECT, SUBMISSION_DIR
 
 
 def literature_prompt() -> str:
@@ -42,7 +42,7 @@ Settle the conjecture in the Lean file `{PROOF_PATH}`. The file states two theor
 
 Keep both theorem declarations in the file and do not alter their statements in any way. When you submit, declare which theorem you proved via the submit tool's `claim` argument ("proof" or "disproof").
 
-Work inside the Lake project at `/workspace/leanproject`. Your submission is the directory `{SUBMISSION_DIR}/`, a Lake library whose entry module is `{PROOF_PATH}` (`{ENTRY_MODULE}`); you may split your proof across further `.lean` files under it. The verifier takes exactly the regular `.lean` files under that directory.
+Work inside the Lake project at `{PROJECT}`. Your submission is the directory `{SUBMISSION_DIR}/`, a Lake library whose entry module is `{PROOF_PATH}` (`{ENTRY_MODULE}`); you may split your proof across further `.lean` files under it. The verifier takes exactly the regular `.lean` files under that directory.
 
 Keep the existing `import` statements in `{PROOF_PATH}`; the `{util_module}` import transitively pulls in all of Mathlib, and other utilities.
 
