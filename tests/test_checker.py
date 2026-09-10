@@ -171,9 +171,20 @@ class FakeSandbox:
         ("./a/./b.lean", "a/b.lean"),
         # A nested Spec.lean is an ordinary helper module, not the entry.
         ("Sub/Spec.lean", "Sub/Spec.lean"),
+        # Names Lake can only import with «» quoting are Lake's business, not
+        # the checker's: they are staged exactly as the agent wrote them.
+        ("my-helpers/Aux.lean", "my-helpers/Aux.lean"),
+        (".hidden/Aux.lean", ".hidden/Aux.lean"),
+        ("Helpers/.Aux.lean", "Helpers/.Aux.lean"),
+        ("Helpers/A.B.lean", "Helpers/A.B.lean"),
+        ("Helpers/A B.lean", "Helpers/A B.lean"),
+        ("Lemmas/Erdős.lean", "Lemmas/Erdős.lean"),
+        ("«weird».lean", "«weird».lean"),
+        # Exactly NAME_MAX bytes in a component.
+        ("x" * 250 + ".lean", "x" * 250 + ".lean"),
     ],
 )
-def test_module_path_accepts_module_files(name: str, expected: str) -> None:
+def test_module_path_accepts_lean_files_inside_the_tree(name: str, expected: str) -> None:
     assert module_path(name) == PurePosixPath(expected)
 
 
@@ -185,27 +196,27 @@ def test_module_path_accepts_module_files(name: str, expected: str) -> None:
         "Spec.LEAN",
         "Spec.lean.bak",
         "Helpers/aux.olean",
-        # Directory-ish names carry no file.
+        # Directory-ish names carry no file; a bare `.lean` is a dotfile.
         "./Helpers/",
         ".",
         "",
-        # Components outside the policy: hyphen, dot (hidden), space, quotes.
-        "my-helpers/Aux.lean",
-        ".hidden/Aux.lean",
-        "Helpers/.Aux.lean",
-        "Helpers/A.B.lean",
-        "Helpers/A B.lean",
-        "«weird».lean",
+        ".lean",
         # Escapes: traversal and absolute paths.
         "../Evil.lean",
         "Helpers/../../Evil.lean",
         "/workspace/leanproject/Submission/Spec.lean",
-        # A component over NAME_MAX, and a path over the cap.
-        "x" * 256 + ".lean",
+        # A NUL would truncate the name at unpack time (here, to `..`).
+        "..\x00/Evil.lean",
+        # Undecodable name bytes (tarfile surrogate-escapes them).
+        "Helpers/\udcff.lean",
+        # A component over NAME_MAX (bytes, so 128 two-byte chars overflow
+        # too), and a path over the cap.
+        "x" * 251 + ".lean",
+        "ő" * 128 + ".lean",
         "/".join(["d"] * 600) + "/f.lean",
     ],
 )
-def test_module_path_rejects_non_modules(name: str) -> None:
+def test_module_path_rejects_non_modules_and_escapes(name: str) -> None:
     assert module_path(name) is None
 
 
@@ -225,17 +236,30 @@ def test_sanitize_keeps_entry_and_helpers_under_normalized_names() -> None:
     }
 
 
-def test_sanitize_drops_non_module_files_and_special_members() -> None:
-    # Notes, backups, files at names outside the module-path policy, and every
-    # non-regular member kind are dropped; only the modules remain.
+def test_sanitize_drops_non_lean_files_and_special_members() -> None:
+    # Notes, backups and every non-regular member kind are dropped; only the
+    # `.lean` files remain.
     tar = _tar_with_special_members({
         "./Spec.lean": "the spec",
         "./notes.md": "scratch",
         "./Spec.lean.bak": "old",
-        "./old-attempts/try1.lean": "hyphenated dir",
-        "./.lake/build/x.lean": "hidden dir",
     })
     assert _members(sanitize_submission(tar)) == {"Spec.lean": b"the spec"}
+
+
+def test_sanitize_keeps_lean_files_at_any_in_tree_name() -> None:
+    # Whether Lake can import a module under its name is decided in the
+    # comparator sandbox exactly as in the agent's; the checker only requires
+    # the file to stay inside the tree.
+    tar = _tar_of({
+        "./Spec.lean": "the spec",
+        "./my-helpers/Aux.lean": "hyphen",
+        "./Lemmas/Erdős.lean": "unicode",
+        "./.scratch/Old.lean": "dotdir",
+    })
+    assert set(_members(sanitize_submission(tar))) == {
+        "Spec.lean", "my-helpers/Aux.lean", "Lemmas/Erdős.lean", ".scratch/Old.lean",
+    }
 
 
 def test_sanitize_passes_content_bytes_verbatim() -> None:

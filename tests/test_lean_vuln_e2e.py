@@ -26,8 +26,9 @@ rather than blind-ported from SafeVerify:
   target's statement closure;
 * **must ACCEPT** -- honest single-file proof, definition reproduction, a
   genuine disproof, an honest proof split across helper modules (with the
-  spec's defs reproduced in a helper), a tree carrying non-module files the
-  checker ignores, and -- new under Comparator's model, where extra imports and
+  spec's defs reproduced in a helper), a tree carrying scratch files (non-Lean
+  files are dropped by the checker, an unimported ``.lean`` file is staged but
+  never built), and -- new under Comparator's model, where extra imports and
   inert unsafe decls are sound because the reachable closure is what gets
   replayed -- an entry module carrying an extra import or an unused ``unsafe``
   constant;
@@ -296,11 +297,12 @@ CASES: list[Case] = [
         secure_accept=True,
     ),
     Case(
-        # Non-module files beside the proof -- notes, a backup, a scratch
-        # file at a name outside the module-path policy -- are ignored by the
-        # checker (apn.checker.module_path), not a reason to reject; and the
-        # wrong-proof text they carry never reaches the build.
-        "ignored_files_beside_proof",
+        # Scratch beside the proof: non-Lean files (notes, a backup) are
+        # dropped by the checker (apn.checker.module_path); a `.lean` file the
+        # entry never imports is staged but never built, since Lake compiles
+        # only the entry's import closure. The wrong-proof text they carry is
+        # inert either way.
+        "scratch_files_beside_proof",
         _spec("2 + 2 = 4"),
         {
             "Spec.lean": _IMPORT + "theorem tgt : 2 + 2 = 4 := by decide\n"

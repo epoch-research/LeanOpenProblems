@@ -39,9 +39,11 @@ plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
   the module-name story (Challenge and the entry module are different modules
   by design, so this confirms a faithful private/generated-name closure still
   matches);
-* a helper at a path outside the module-path policy (``my-helpers/Aux.lean``:
-  a hyphen) is not staged, so an entry importing it fails to build -- the
-  naming rule the prompt states is the one the checker enforces;
+* a helper at a name Lake can only import with ``«»`` quoting
+  (``my-helpers/Aux.lean``, imported as ``Submission.«my-helpers».Aux``) is
+  staged and resolves like any other -- the checker stages every ``.lean``
+  file inside the tree and leaves importability to Lake, which decides it
+  identically in both sandboxes;
 * a missing/renamed entry module, and an empty submission, are rejected as a
   verdict (``entry_missing``), host-side, without touching the sandbox.
 
@@ -311,15 +313,14 @@ async def test_pattern_matching_def_in_entry_is_accepted(
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_helper_outside_module_path_policy_is_not_staged(
+async def test_helper_at_quoted_module_name_is_accepted(
     comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # The naming rule the prompt states (letters, digits, underscores) is the
-    # one the checker enforces (apn.checker.module_path): a helper at
-    # `my-helpers/Aux.lean` is a legal Lean module in the agent's sandbox
-    # (`import Submission.«my-helpers».Aux`) but is not staged, so the entry
-    # fails to build and the submission rejects -- as a comparator verdict, not
-    # an infrastructure error.
+    # The checker stages every `.lean` file inside the tree
+    # (apn.checker.module_path) and leaves importability to Lake: a helper at
+    # `my-helpers/Aux.lean` is the module `Submission.«my-helpers».Aux`, in the
+    # agent's sandbox and in the comparator's alike, so what builds for the
+    # agent builds for the verifier.
     spec = _spec("1 + 1 = 2")
     submission = {
         "Spec.lean": (
@@ -331,8 +332,10 @@ async def test_helper_outside_module_path_policy_is_not_staged(
         "my-helpers/Aux.lean": _IMPORT + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
     }
     outcome = await _check(comparator_env, monkeypatch, spec, submission)
-    assert not outcome.ok, f"an unstaged helper's import must fail the build:\n{outcome.detail[-1500:]}"
-    assert outcome.stage == "comparator"
+    assert outcome.ok, (
+        f"a helper at a quoted module name should be accepted, got "
+        f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+    )
 
 
 @pytest.mark.asyncio(loop_scope="module")

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 import json
-import re
 import tarfile
 from dataclasses import dataclass
 from pathlib import PurePosixPath
@@ -69,17 +68,13 @@ PERMITTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 # verdict.
 MAX_SUBMISSION_BYTES = 100 * 1024 * 1024
 
-# One component of a staged module path -- a directory name or a `.lean` file's
-# stem: the conservative ASCII subset of Lean identifier characters, so every
-# staged path is a plain filename Lake maps to a module name
-# (`Submission/Foo/Bar.lean` <-> `Submission.Foo.Bar`) with nothing to quote
-# or escape anywhere, and `..`, hidden and dotted names are ruled out by
-# construction. NAME_MAX bounds the component; MAX_MODULE_PATH_CHARS keeps the
-# whole relative path well under PATH_MAX with the staging prefix, so
-# unpacking cannot fail on a name accepted here. The prompt states the same
-# naming rule to the agent (apn.prompts).
-_MODULE_COMPONENT_RE = re.compile(r"[A-Za-z0-9_]{1,255}")
-MAX_MODULE_PATH_CHARS = 1024
+# Bounds on a staged path, relative to Submission/, in UTF-8 bytes as the
+# kernel measures them: NAME_MAX per component, and a whole-path bound well
+# under PATH_MAX with the staging prefix, so unpacking cannot fail on a name
+# accepted here (which would surface as an infrastructure error, not a
+# verdict).
+MAX_COMPONENT_BYTES = 255
+MAX_MODULE_PATH_BYTES = 1024
 
 # The entry module's path relative to SUBMISSION_DIR (`Spec.lean`).
 ENTRY_MEMBER = PurePosixPath(ENTRY_PATH).relative_to(SUBMISSION_DIR)
@@ -118,24 +113,34 @@ def module_path(member_name: str) -> PurePosixPath | None:
 
     Members are named relative to ``Submission/`` (``./Spec.lean``,
     ``Helpers/Aux.lean``; a leading ``./`` is dropped). Stageable means a
-    relative path, short enough to unpack, naming a ``.lean`` file whose every
-    component (directories and the file stem) matches
-    ``_MODULE_COMPONENT_RE``. Anything else -- notes, build output, backups,
-    files at names Lake could not map to a module -- is not part of the
-    submission.
+    relative ``.lean`` path that stays inside the tree (no ``..`` component),
+    is valid UTF-8 without NUL, and fits the filesystem's name and path
+    bounds. Nothing more: whether Lake can import the module under that name
+    (``Submission.Helpers.Aux``; ``Submission.«my-helpers».Aux`` for a name
+    that needs quoting) is Lake's call, made identically in the agent's
+    sandbox and the checker's, so what builds for the agent builds for the
+    verifier. Anything else -- notes, build output, backups -- is not part of
+    the submission.
     """
-    if len(member_name) > MAX_MODULE_PATH_CHARS:
+    try:
+        raw = member_name.encode("utf-8")
+    except UnicodeEncodeError:
+        # tarfile surrogate-escapes undecodable name bytes. No Lean module
+        # name maps to such a file, so it is unimportable in both sandboxes.
+        return None
+    # A NUL would truncate the name at unpack time, so it must fail here, not
+    # pass as a component that merely *contains* `..`.
+    if b"\x00" in raw or len(raw) > MAX_MODULE_PATH_BYTES:
         return None
     # PurePosixPath collapses `.` components and repeated slashes; `..` stays
-    # a component and fails the regex below.
+    # a component. A bare `.lean` has no suffix (a dotfile), so it fails too.
     path = PurePosixPath(member_name)
-    if path.is_absolute() or not path.parts:
+    if path.is_absolute() or not path.parts or path.suffix != ".lean":
         return None
-    *dirs, filename = path.parts
-    stem, dot, ext = filename.rpartition(".")
-    if not dot or ext != "lean":
-        return None
-    if not all(_MODULE_COMPONENT_RE.fullmatch(c) for c in (*dirs, stem)):
+    if any(
+        part == ".." or len(part.encode("utf-8")) > MAX_COMPONENT_BYTES
+        for part in path.parts
+    ):
         return None
     return path
 
@@ -149,8 +154,8 @@ def sanitize_submission(submission_tar: bytes) -> bytes:
     so the bytes may be anything. They are parsed here in Python
     (``tarfile``), never with ``tar(1)`` inside the trusted container. Of the
     members, only regular files at a :func:`module_path` are kept;
-    directories, links, devices and files outside the module-path policy are
-    dropped. Each kept member is re-emitted under its normalized name with
+    directories, links, devices and non-``.lean`` files are dropped. Each
+    kept member is re-emitted under its normalized name with
     fixed metadata (mode 0644, root-owned, epoch mtime) and its content
     verbatim -- opaque bytes, never decoded: Lean itself rejects a malformed
     source file, exactly as it would in the agent's sandbox. The result is a
