@@ -45,6 +45,7 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn
 from apn.dataset import OEIS_DIR, fc_commit
+from apn.layout import SUBMISSION_DIR
 from apn.task import get_compose_file
 
 # --------------------------------------------------------------------------- #
@@ -766,3 +767,36 @@ async def test_trace_state_prints_goal(agent_env: SandboxEnvironment) -> None:
     # `sorry` warns but exits 0; the goal state must appear on stdout.
     assert code == 0, f"lake env lean failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
     assert "a + b = b + a" in stdout, f"goal state not printed:\n{stdout[-2000:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_lake_builds_multi_module_submission(agent_env: SandboxEnvironment) -> None:
+    """The multi-file submission contract in the agent image: `Submission` is a
+    registered Lake library (apn/lean/Dockerfile), so a `Spec.lean` importing a
+    helper module beside it builds with `lake build Submission.Spec` -- the
+    command the prompt advertises -- and the helper's olean lands in .lake at
+    the module path Lake derives from the file path."""
+    helper = (
+        "import Mathlib.Tactic\n"
+        "theorem smoke_aux (a b : Nat) : a + b = b + a := by omega\n"
+    )
+    spec = (
+        "import Submission.SmokeHelpers.Aux\n"
+        "theorem smoke_tgt : 1 + 2 = 2 + 1 := smoke_aux 1 2\n"
+    )
+    await agent_env.write_file(f"{SUBMISSION_DIR}/SmokeHelpers/Aux.lean", helper)
+    await agent_env.write_file(f"{SUBMISSION_DIR}/Spec.lean", spec)
+    try:
+        code, stdout, stderr = await _bash(
+            agent_env, "cd /workspace/leanproject && lake build Submission.Spec", timeout=900
+        )
+        assert code == 0, f"lake build Submission.Spec failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+        code, stdout, stderr = await _bash(
+            agent_env,
+            "cd /workspace/leanproject && find .lake/build/lib -path '*/Submission/SmokeHelpers/Aux.olean'",
+        )
+        assert code == 0 and stdout.strip(), f"helper olean not built:\n{stderr[-2000:]}"
+    finally:
+        await agent_env.exec(
+            ["rm", "-rf", f"{SUBMISSION_DIR}/SmokeHelpers", f"{SUBMISSION_DIR}/Spec.lean"]
+        )

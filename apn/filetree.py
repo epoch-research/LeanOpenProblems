@@ -1,16 +1,16 @@
 """Collecting and displaying the agent's ``Submission/`` directory.
 
-The agent's proof is a single ``.lean`` file, ``Submission/Spec.lean``.
+The agent's submission is the Lean module tree under ``Submission/``: the entry
+module ``Submission/Spec.lean`` plus any helper modules it imports (see
+:mod:`apn.checker` for exactly what of the directory counts).
 :func:`read_submission_tar` tars ``Submission/`` from the sandbox and returns the
 bytes.
-
-It tars the directory rather than the one file, so in the future we can allow multi-file proofs.
 
 The tar bytes are used two ways, which must not be conflated:
 
 * For **verification**, the scorer hands the raw bytes to the checker, which
-  unpacks them straight into its own sandbox and builds (see :mod:`apn.checker`).
-  Nothing decodes the tar in Python on that path.
+  sanitizes them host-side into an archive of the submission's Lean modules and
+  unpacks that in its own sandbox (see :mod:`apn.checker`).
 * For **display**, :func:`build_tree_from_tar` turns the bytes into a nested
   :data:`FileTreeForLogViewer` that the scorer sets on
   ``state.metadata["submission_contents"]`` so the Inspect log viewer renders an
@@ -51,7 +51,10 @@ async def read_submission_tar(sb: SandboxEnvironment) -> bytes:
 def build_tree_from_tar(tar_bytes: bytes) -> FileTreeForLogViewer:
     """Build a nested dict of text-file contents from the tar, **for display only**."""
     tree: FileTreeForLogViewer = {}
-    with tarfile.open(fileobj=BytesIO(tar_bytes)) as tf:
+    # "r:" -- uncompressed only, as the checker parses it: the bytes are
+    # agent-controlled, and transparent decompression would let a small
+    # archive expand into gigabytes of headers here.
+    with tarfile.open(fileobj=BytesIO(tar_bytes), mode="r:") as tf:
         for member in tf.getmembers():
             if not member.isfile():
                 continue

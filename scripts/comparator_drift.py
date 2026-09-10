@@ -1,8 +1,8 @@
 """Module-sensitive closure drift analysis (comparator-migration-plan.md §3.3, §7.5).
 
-Comparator builds the ``Challenge`` and ``Solution`` modules under different
-module names and compares the configured target's closure by exact exported
-names. Lean bakes the *source module name* into ``private`` declaration names
+Comparator builds the ``Challenge`` module and the solution module (the agent's
+entry module ``Submission.Spec``) under different module names and compares the
+configured target's closure by exact exported names. Lean bakes the *source module name* into ``private`` declaration names
 and some compiler-generated names (notably anonymous ``instance``s), so
 byte-identical source can elaborate to different closures and a faithful
 submission can be **falsely rejected**. This is fail-closed (invalid proofs are
@@ -34,8 +34,8 @@ The candidate set is a static over-approximation (collision-conditional
 mechanisms usually do NOT fire): the *confirmed* affected set is determined
 empirically by compiling each candidate once as module ``Challenge`` in the
 comparator image and checking for module-embedded constant names reachable
-from the target/`.disproof` closure -- byte-identical source compiled as
-``Solution`` differs in exactly those names. ``tests/test_comparator_drift.py``
+from the target/`.disproof` closure -- byte-identical source compiled as the
+solution module differs in exactly those names. ``tests/test_comparator_drift.py``
 pins ``CANDIDATE_IDS`` so a dataset / Lean / exporter / Comparator bump that
 introduces or removes a candidate fails CI loudly, prompting that scan to be
 re-run.

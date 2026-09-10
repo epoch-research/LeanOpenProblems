@@ -63,14 +63,14 @@ jobs:
               --ignore=tests/test_erdos_autoformalized_isolation.py
               --ignore=tests/test_personal_corresp_isolation.py
               --ignore=tests/test_fc100_isolation.py
-              --ignore=tests/test_singlefile_proof.py
+              --ignore=tests/test_proof_acceptance.py
               --ignore=tests/test_lean_vuln_e2e.py
               --ignore=tests/test_comparator_security.py
               --ignore=tests/test_comparator_primitives.py
               --ignore=tests/test_agent_image.py
           - suite: comparator-tests
             args: >-
-              tests/test_singlefile_proof.py
+              tests/test_proof_acceptance.py
               tests/test_lean_vuln_e2e.py
               tests/test_comparator_security.py
               tests/test_comparator_primitives.py

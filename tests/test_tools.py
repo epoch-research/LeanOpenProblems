@@ -49,6 +49,16 @@ def test_user_prompt_mentions_environment_tools() -> None:
     assert "statement" in rendered
 
 
+def test_user_prompt_describes_multi_file_submission() -> None:
+    # The submission is the Submission/ module tree: the prompt names the entry
+    # module and what the checker stages (the regular `.lean` files;
+    # apn.checker.module_path). The former single-file rule is gone.
+    rendered = user_prompt(PROOF_PATH, token_limit=None, literature=False, util_module=UTIL_MODULE)
+    assert "Submission.Spec" in rendered
+    assert "regular `.lean` files under that directory" in rendered
+    assert "single file" not in rendered
+
+
 def test_user_prompt_explains_disproof_convention() -> None:
     # Under the fill-one-sorry contract (comparator-migration-plan.md §4) the
     # agent must know the file already states both the conjecture and its
