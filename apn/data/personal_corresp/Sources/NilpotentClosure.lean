@@ -16,11 +16,24 @@ whether one of them can hold without the other:
 The statement below is the negative answer: multiplicative closure of the nilpotent elements
 forces additive closure. A counterexample ring disproves it.
 
-The question was asked by Janez Šter (University of Ljubljana). The Lean statement was
-contributed by Pace Nielsen (Brigham Young University), who sent it to Tom Adamczewski in
-September 2026 and offered it for contribution to formal-conjectures.
+The question is due to Janez Šter (University of Ljubljana): it is Question 1 of [Št16], where it
+is phrased through Köthe's conjecture. Theorem 2.1 there shows that the nilpotent elements of a
+ring are additively closed if and only if they are multiplicatively closed and the ring satisfies
+Köthe's conjecture (every nil left ideal is contained in a nil two-sided ideal), and Question 1
+asks whether a ring whose nilpotent elements are multiplicatively closed must satisfy Köthe's
+conjecture -- which, by Theorem 2.1, is equivalent to the statement below. Šter notes that a
+counterexample would in particular settle Köthe's conjecture in the negative. The rings in [Št16]
+need not be unital, but the unital statement below is equivalent: the nilpotent elements of the
+Dorroh extension `ℤ ⊕ S` of a ring `S` are exactly the `(0, s)` with `s` nilpotent in `S`, so
+adjoining a unit changes neither closure property.
 
-TODO: add a reference for where Janez Šter posed the question.
+The Lean statement was contributed by Pace Nielsen (Brigham Young University), who sent it to
+Tom Adamczewski in September 2026 and offered it for contribution to formal-conjectures.
+
+*References:*
+- [Št16] Šter, J., *Rings in which nilpotents form a subring*, Carpathian J. Math. 32 (2016),
+  No. 2, 251--258, [doi:10.37193/CJM.2016.02.13](https://doi.org/10.37193/CJM.2016.02.13),
+  [arXiv:1510.07523](https://arxiv.org/abs/1510.07523).
 -/
 
 namespace NilpotentClosure
