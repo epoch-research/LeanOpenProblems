@@ -42,7 +42,7 @@ Settle the conjecture in the Lean file `{PROOF_PATH}`. The file states two theor
 
 Keep both theorem declarations in the file and do not alter their statements in any way. When you submit, declare which theorem you proved via the submit tool's `claim` argument ("proof" or "disproof").
 
-Work inside the Lake project at `/workspace/leanproject`. Your submission is the directory `{SUBMISSION_DIR}/`, a Lake library whose entry module is `{PROOF_PATH}` (`{ENTRY_MODULE}`); you may split your proof across further `.lean` files under it. The verifier takes exactly the regular `.lean` files under `Submission/` and ignores everything else there (notes, build output, symlinks); scratch files elsewhere in the project are fine.
+Work inside the Lake project at `/workspace/leanproject`. Your submission is the directory `{SUBMISSION_DIR}/`, a Lake library whose entry module is `{PROOF_PATH}` (`{ENTRY_MODULE}`); you may split your proof across further `.lean` files under it. The verifier takes exactly the regular `.lean` files under `Submission/`.
 
 Keep the existing `import` statements in `{PROOF_PATH}`; the `{util_module}` import transitively pulls in all of Mathlib, and other utilities.
 
