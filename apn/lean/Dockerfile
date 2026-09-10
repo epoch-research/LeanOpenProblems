@@ -16,9 +16,9 @@
 #   - comparator -- the trusted verifier: base + the Comparator binary + the
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
-#                   untrusted `lake build Solution` is confined by landrun
-#                   (Landlock) *inside* this container, whose scoring execs
-#                   run as a non-privileged user (comparator README
+#                   untrusted `lake build Submission.Spec` is confined by
+#                   landrun (Landlock) *inside* this container, whose scoring
+#                   execs run as a non-privileged user (comparator README
 #                   assumption 6; the image itself stays root for Inspect).
 #
 # Version story (comparator-migration-plan.md §2). Four version-bearing
@@ -156,16 +156,25 @@ RUN TOOLCHAIN="$(cat lean-toolchain)" \
     && test -x /root/.elan/toolchains/project/bin/lean \
     && lean --version
 
-# Register the comparator's Challenge/Solution scratch libraries BEFORE any
-# lake invocation, so lake's workspace configuration (which hashes the
-# lakefile) is settled exactly once at image build and never re-resolved at
-# scoring time. The stubs import the pin's util module (layout-detected below)
-# so the warm build settles the libs' traces too; at scoring time the checker
-# overwrites run/*.lean with the real challenge/solution and content hashes
-# force the rebuild. FC's style linters (package-level [leanOptions]) are
-# switched off for these libs only: they would spam every check's verifier
-# output with copyright/namespace warnings about files that are not FC
-# contributions.
+# Register the two scratch libraries BEFORE any lake invocation, so lake's
+# workspace configuration (which hashes the lakefile) is settled exactly once
+# at image build and never re-resolved at scoring time:
+#   - `Challenge` (srcDir run/): the comparator checker stages the sample's
+#     committed spec as run/Challenge.lean per check.
+#   - `Submission` (srcDir = the project root, so Submission/Foo/Bar.lean is
+#     the module `Submission.Foo.Bar`): the agent's submission directory. In
+#     the agent image the scaffold creates Submission/Spec.lean at runtime and
+#     the agent may add helper modules beside it (`import Submission.…`); in
+#     the comparator image the checker stages the agent's Submission/ tree at
+#     the same path per check and scores the module `Submission.Spec`. Both
+#     images share this lakefile, so one registration serves the agent's
+#     builds and the checker's, and module names agree by construction.
+# The stubs import the pin's util module (layout-detected below) so the warm
+# build settles the libs' traces too; at scoring time the checker replaces
+# them with the real challenge/submission and content hashes force the
+# rebuild. FC's style linters (package-level [leanOptions]) are switched off
+# for these libs only: they would spam every check's verifier output with
+# copyright/namespace warnings about files that are not FC contributions.
 RUN printf '%s\n' \
         '' \
         '[[lean_lib]]' \
@@ -176,20 +185,19 @@ RUN printf '%s\n' \
         'weak.linter.style.namespace = false' \
         '' \
         '[[lean_lib]]' \
-        'name = "Solution"' \
-        'srcDir = "run"' \
+        'name = "Submission"' \
         '[lean_lib.leanOptions]' \
         'weak.linter.style.copyright.formalConjectures = false' \
         'weak.linter.style.namespace = false' \
         >> lakefile.toml \
-    && mkdir -p run \
+    && mkdir -p run Submission \
     && if [ -f FormalConjecturesUtil.lean ]; then \
            UTIL_MODULE=FormalConjecturesUtil; \
        else \
            UTIL_MODULE=FormalConjectures.Util.ProblemImports; \
        fi \
     && echo "import ${UTIL_MODULE}" > run/Challenge.lean \
-    && echo "import ${UTIL_MODULE}" > run/Solution.lean
+    && echo "import ${UTIL_MODULE}" > Submission/Spec.lean
 
 # Fetch Mathlib's prebuilt oleans, then build only the util-module closure (the
 # FC support modules + FormalConjecturesForMathlib) and the two scratch-lib
@@ -206,7 +214,7 @@ RUN lake exe cache get \
            lake build FormalConjectures.Util.ProblemImports; \
        fi \
     # Stub build: broken scratch-lib plumbing fails here, not at the first check.
-    && lake build Challenge Solution
+    && lake build Challenge Submission.Spec
 
 # `COPY` can't branch on layout, so stage the proving-library SOURCE (the files
 # the agent legitimately proves *with*, imported into every problem's scope
@@ -229,16 +237,18 @@ RUN mkdir /staged \
 # in .lake, so a future lake that adds a third cannot slip past the two COPYs.
 RUN test "$(ls -A .lake | sort | tr '\n' ' ')" = "build packages "
 
-# NOTE: `Submission/` is deliberately NOT registered as a lean_lib. The agent's
-# proof is a single file, `Submission/Spec.lean`; the comparator checker copies
-# exactly that file to `run/Solution.lean` and scores it. An
-# `import Submission.…` of an agent helper module therefore fails to resolve
-# (no such lib is registered) -- with Comparator this single-file layout is a
-# *policy* choice rather than a soundness requirement (the full solution
-# closure is kernel-replayed either way), but do not relax it here; see
-# comparator-migration-plan.md §3.2. The `Submission/` directory and its
-# `Spec.lean` are created at *runtime* by the Python scaffold in the agent
-# sandbox (see apn.solver).
+# NOTE: the `Submission` lean_lib registered above is what lets a submission
+# span several modules: the agent's `Submission/Spec.lean` (the entry module,
+# `Submission.Spec`) may `import Submission.…` helper modules the agent writes
+# beside it, and the checker stages the whole tree and builds the entry, so
+# Lake compiles the helpers it imports. Soundness does not depend on the file
+# count: Comparator kernel-replays the entry's *full* export closure, helpers
+# included, and compares the target's statement closure with the challenge's
+# (the former single-file rule was a policy choice under this model, not a
+# guard; see apn.checker). Neither the stub `Submission/Spec.lean` written
+# above nor any other `Submission/` content ships in an image: the Python
+# scaffold creates the agent's `Submission/Spec.lean` at *runtime* (see
+# apn.solver) and the checker stages the submission per check.
 
 # --------------------------------------------------------------------------- #
 # base: copy in only what runtime needs.                                       #
@@ -292,8 +302,8 @@ RUN ln -s /opt/pristine/packages .lake/packages
 
 # Note: neither the `Submission/` nor the `run/` directory is copied in. They
 # carry no baked content -- the Python scaffold creates the agent's
-# `Submission/Spec.lean` at runtime, and the comparator checker recreates
-# `run/` and stages `run/Challenge.lean`/`run/Solution.lean` per check.
+# `Submission/Spec.lean` at runtime, and the comparator checker recreates both
+# per check, staging `run/Challenge.lean` and the agent's `Submission/` tree.
 
 # The proving-library SOURCE the agent legitimately proves *with* (imported into
 # every problem's scope, like Mathlib), staged by the builder per the checkout's
@@ -753,29 +763,30 @@ RUN chmod 755 /opt/apn/reset-dotlake.sh
 #   /opt/pristine/dot-lake  -- the project .lake minus the packages link (lake
 #                              config cache + the FC build artifacts, tens of
 #                              MB; copied into .lake on every reset). The
-#                              builder's Challenge/Solution stub artifacts ride
-#                              along: staged files hash differently, so lake
-#                              rebuilds them (and reuse on a byte-identical file
-#                              is the same compilation).
+#                              builder's Challenge/Submission.Spec stub
+#                              artifacts ride along: staged files hash
+#                              differently, so lake rebuilds them (and reuse on
+#                              a byte-identical file is the same compilation).
 #   /opt/pristine/packages  -- the heavy Mathlib/dependency artifacts, at this
 #                              path since base; stay root-owned outside .lake
 #                              (and so outside the landrun write grant) and are
 #                              symlinked into the fresh .lake (never copied,
 #                              never writable).
-# Neither .lake nor run/ is recreated here: the reset script rebuilds .lake
-# and the checker rebuilds run/ before every check, so the image need not
-# carry either. The mv is a copy (a rename across image layers cannot be a
-# rename), but only of the small skeleton: the packages never move.
+# Neither .lake, run/ nor Submission/ is recreated here: the reset script
+# rebuilds .lake and the checker rebuilds run/ and Submission/ before every
+# check, so the image need not carry any of them. The mv is a copy (a rename
+# across image layers cannot be a rename), but only of the small skeleton:
+# the packages never move.
 RUN mkdir -p /opt/pristine \
     && mv /workspace/leanproject/.lake /opt/pristine/dot-lake \
     && rm /opt/pristine/dot-lake/packages
 
 # The non-privileged runtime user (comparator README assumption 6). It owns
 # exactly the project dir, in which the reset script recreates .lake and the
-# checker recreates run/ per check. Everything else -- binaries, the toolchain,
-# /opt/pristine -- stays root-owned and unwritable. The project toolchain lives
-# under /root/.elan (the PATH pin above), so /root becomes traverse-only (711:
-# x permits path resolution; no listing, no writes).
+# checker recreates run/ and Submission/ per check. Everything else --
+# binaries, the toolchain, /opt/pristine -- stays root-owned and unwritable.
+# The project toolchain lives under /root/.elan (the PATH pin above), so /root
+# becomes traverse-only (711: x permits path resolution; no listing, no writes).
 RUN useradd --create-home --shell /bin/bash comparator \
     && chown comparator /workspace/leanproject \
     && chmod 711 /root
@@ -797,10 +808,13 @@ RUN git config --system --add safe.directory '*'
 # except the .lake reset, which stays root so its rm can clear permission
 # traps the untrusted build may leave in .lake (see reset-dotlake.sh). All
 # other scoring work runs as `comparator` -- both backends resolve its HOME
-# from the passwd entry (docker exec --user and runuser alike). Staged inputs
-# written as root land 0644, readable by the comparator user; run/ and .lake
-# are (re)created as the comparator user (the reset drops to it for the
-# copy), so it owns everything it must write.
+# from the passwd entry (docker exec --user and runuser alike). The staging
+# directories run/ and Submission/ and everything staged into them are
+# root-owned (0755/0644): readable by the comparator user, but neither
+# writable nor chmod-able by the untrusted build, which runs as that user --
+# so nothing outside .lake can be altered or trapped between checks. .lake
+# alone is (re)created as the comparator user (the reset drops to it for the
+# copy), since the build must write there.
 
 CMD ["sleep", "infinity"]
 
