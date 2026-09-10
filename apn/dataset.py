@@ -12,6 +12,7 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
+PERSONAL_CORRESP_DIR = Path(__file__).parent / "data" / "personal_corresp"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -55,6 +56,11 @@ _FC_PROFILES = {
         util_module="FormalConjecturesUtil"
     ),
     "9cbe1d3c12998c786b7c2cd99ce28a21b6631f66": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+    # Lean v4.33.1 track (upstream bumped from v4.27.0 on 2026-08-23); FC main
+    # as of 2026-09-08.
+    "d33e35a5f45386a173b31159ae6598b1968bc463": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
 }
@@ -324,3 +330,13 @@ def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDatase
     ``<target>.disproof`` declaration. See
     ``apn/data/erdos_autoformalized/NOTICE.md``."""
     return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
+
+
+def personal_corresp_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """Open conjectures sent to us in personal correspondence and formalized
+    by their contributors (the finitistic dimension and Nakayama conjectures
+    from René Marczinzik and Bernhard Böhmler; Janez Šter's nilpotent-closure
+    question, formalized by Pace Nielsen; 3 samples). Each sketch ends with
+    the derived ``<target>.disproof`` declaration. See
+    ``apn/data/personal_corresp/NOTICE.md``."""
+    return build_dataset(PERSONAL_CORRESP_DIR, "personal_corresp", (), names)

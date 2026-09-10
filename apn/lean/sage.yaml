@@ -1,0 +1,37 @@
+# Sage and its optional backends, alone in a conda-forge env at /opt/sage (the
+# Dockerfile's `sage` stage). Only the five launchers listed in agent-commands
+# reach the agent (sage, gp, gap, Singular, maxima); this env's python is
+# reached only through `sage` (`sage -c`, `sage <file.py>`) and is not the
+# agent's `python3` (that is conda.yaml's env), so nothing here constrains, or
+# is constrained by, the agent's python stack. Sage's engines are pinned
+# explicitly even though sage pulls them anyway, so the roster does not depend
+# on what sage happens to pull.
+#
+# The `pip:` section holds backends with no conda-forge build for both
+# platforms; micromamba installs them into this env right after the solve.
+# Backends with no package at all (sagemath-giac, GAP packages, Sage's database
+# tarballs) are installed by the sage/*.sh scripts that run next. The solve is
+# verified for linux-64 and linux-aarch64 (local dev on Apple silicon).
+name: sage
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13.*        # sage 10.9 accepts 3.12-3.14; the pip backends below ship cp313 wheels
+  - pip=26.2.1
+  - setuptools=84.0.0    # provides distutils for sage.misc.cython (cython(), %cython)
+  - sage=10.9
+  - pari=2.17.3          # PARI/GP: the `gp` binary + libpari
+  - gap-defaults=4.15.1  # GAP; sage/gap-packages.sh adds packages for this release
+  - maxima=5.49.0
+  - singular=4.4.1.p5
+  - pycosat=0.6.6        # sage's picosat SAT backend
+  - python-symengine=0.14.1  # sage's symengine_py backend
+  # PyNormaliz's wheel bundles libnormaliz; pycryptosat's bundles
+  # libcryptominisat. The database-* packages are Sage's KnotInfo, matroid and
+  # cubic Hecke databases.
+  - pip:
+    - PyNormaliz==2.24
+    - pycryptosat==5.14.7
+    - database-knotinfo==2026.9.1
+    - matroid-database==0.3
+    - database-cubic-hecke==2022.4.4
