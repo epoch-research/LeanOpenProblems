@@ -9,7 +9,7 @@ is written into the live **agent** sandbox and scored by the **real**
 production path an agent submission travels -- nothing is reimplemented, and the
 verdict is the one a real eval would record.
 
-This is the security counterpart to ``test_singlefile_proof.py`` (which checks
+This is the security counterpart to ``test_proof_acceptance.py`` (which checks
 plumbing/acceptance). Here we assert the *secure* verdict for a battery of
 cheating attempts and honest baselines, re-derived from Comparator's model
 rather than blind-ported from SafeVerify:
@@ -17,12 +17,17 @@ rather than blind-ported from SafeVerify:
 * **must REJECT** -- sorry / native_decide / custom axiom (forbidden axioms), a
   weakened or missing target statement, and a kernel-bypassing constant injected
   into the entry module (caught by comparator's full-closure kernel replay);
-* **must REJECT -- any helper import.** Only Spec.lean becomes
-  ``run/Solution.lean``, so an ``import Submission.…`` of a helper module does
-  not resolve and the solution build fails. This keeps the trusted-helper hole
-  shut: a kernel-invalid constant hidden in a helper can never be imported;
+* **must REJECT -- cheating from a helper module.** The submission is the
+  whole ``Submission/`` module tree, so ``import Submission.…`` helpers are
+  built and imported for real; a kernel-invalid constant, a ``sorry`` or a
+  custom axiom hidden in a helper, or a helper whose copy of a statement def
+  drifts from the spec's, is caught exactly as in the entry module, because
+  comparator replays the entry's full export closure and compares the
+  target's statement closure;
 * **must ACCEPT** -- honest single-file proof, definition reproduction, a
-  genuine disproof, and -- new under Comparator's model, where extra imports and
+  genuine disproof, an honest proof split across helper modules (with the
+  spec's defs reproduced in a helper), a tree carrying non-module files the
+  checker ignores, and -- new under Comparator's model, where extra imports and
   inert unsafe decls are sound because the reachable closure is what gets
   replayed -- an entry module carrying an extra import or an unused ``unsafe``
   constant;
@@ -42,11 +47,12 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
 from inspect_ai.model import ModelName
-from inspect_ai.scorer import CORRECT, Target
+from inspect_ai.scorer import CORRECT, Score, Target
 from inspect_ai.solver import TaskState
 from inspect_ai.util import SandboxEnvironment
 from inspect_ai.util._sandbox.context import (
@@ -87,7 +93,7 @@ INJECT = (
 IMPORT_AUX = "import Submission.Helpers.Aux\n"
 
 # Code-execution attack on the verifier's TCB. The submission is *built*
-# (`lake build Solution`) inside the comparator container -- but under landrun
+# (`lake build Submission.Spec`) inside the comparator container -- but under landrun
 # (writes confined to .lake) and as the non-privileged user (the binary is
 # root-owned). A `#eval` of an IO action runs at elaboration time and tries to
 # overwrite the lean4export binary with a script that exits 0, after which an
@@ -177,26 +183,62 @@ CASES: list[Case] = [
         {"Spec.lean": _IMPORT + "theorem other : True := trivial\n"},
         secure_accept=False,
     ),
+    # ------------------- cheating from a helper module ------------------- #
+    # Helpers are real modules: `import Submission.Helpers.Aux` resolves in the
+    # comparator sandbox exactly as in the agent's, so a helper is built,
+    # imported, and lands in the entry's export closure -- which comparator
+    # kernel-replays and axiom-checks whole. Nothing in a helper is trusted.
     Case(
-        "helper_import_rejected",
+        # A kernel-invalid `fakeFalse : False` hidden in a helper, used from the
+        # entry: the load-bearing soundness case of the multi-file model. The
+        # helper builds (skipKernelTC dodges the elaborator's kernel call), the
+        # entry builds, and the full-closure replay rejects. (Under SafeVerify
+        # this was the trusted-helper hole; the single-file rule closed it by
+        # policy, the replay closes it by construction.)
+        "helper_inject_false_rejected",
+        _spec("False"),
+        {
+            "Helpers/Aux.lean": INJECT,
+            "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : False := fakeFalse\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
+        },
+        secure_accept=False,
+    ),
+    Case(
+        # The entry is sorry-free; the sorry sits in the helper lemma it uses.
+        # sorryAx reaches the target's axiom closure through the import.
+        "helper_sorry_rejected",
         _spec("2 + 2 = 4"),
         {
-            "Helpers/Aux.lean": _IMPORT + "theorem aux : 2 + 2 = 4 := by norm_num\n",
+            "Helpers/Aux.lean": _IMPORT + "theorem aux : 2 + 2 = 4 := by sorry\n",
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
         secure_accept=False,
     ),
     Case(
-        # A kernel-invalid `fakeFalse : False` hidden in a helper, used from the
-        # entry. The helper import cannot resolve, so it never gets built --
-        # rejected at the solution build. (Under SafeVerify this was the closed
-        # trusted-helper hole; here it is an ordinary regression guard.)
-        "helper_inject_false_rejected",
-        _spec("False"),
+        # A custom axiom declared in a helper and used from the entry.
+        "helper_custom_axiom_rejected",
+        _spec("2 + 2 = 4"),
         {
-            "Helpers/Aux.lean": INJECT,
-            "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : False := fakeFalse\n"
+            "Helpers/Aux.lean": _IMPORT + "axiom bad : 2 + 2 = 4\n",
+            "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := bad\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
+        },
+        secure_accept=False,
+    ),
+    Case(
+        # The spec's def reproduced in a helper with a different *body* (`5 + 2`
+        # for `7`: same value, different term). The statement `foo = 7` matches
+        # by name, but comparator compares the statement's constant closure --
+        # `foo`'s ConstantInfo -- between challenge and solution, so a drifted
+        # def in a helper is a mismatch just like one in the entry.
+        "helper_def_drift_rejected",
+        _spec("foo = 7", defs="def foo : Nat := 7"),
+        {
+            "Helpers/Defs.lean": _IMPORT + "def foo : Nat := 5 + 2\n",
+            "Spec.lean": _IMPORT + "import Submission.Helpers.Defs\n"
+            + "theorem tgt : foo = 7 := by decide\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
         secure_accept=False,
@@ -223,6 +265,51 @@ CASES: list[Case] = [
          + "theorem tgt.disproof : ¬ (type_of% @tgt) := by decide\n"},
         secure_accept=True,
         claim="disproof",
+    ),
+    # ------------------- honest multi-module submissions ------------------- #
+    Case(
+        # The proof split across modules: the entry imports a helper that
+        # imports another (a two-level chain), and the helpers do the work.
+        "honest_helper_chain",
+        _spec("2 + 2 = 4"),
+        {
+            "Helpers/Base.lean": _IMPORT + "theorem base : 2 + 2 = 4 := by norm_num\n",
+            "Helpers/Aux.lean": _IMPORT + "import Submission.Helpers.Base\n"
+            + "theorem aux : 2 + 2 = 4 := base\n",
+            "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
+        },
+        secure_accept=True,
+    ),
+    Case(
+        # The spec's def reproduced faithfully in a helper rather than the
+        # entry (the shape an agent organizing a large development would use):
+        # the statement closure matches by constant, not by module.
+        "honest_def_in_helper",
+        _spec("foo = 7", defs="def foo : Nat := 7"),
+        {
+            "Helpers/Defs.lean": _IMPORT + "def foo : Nat := 7\n",
+            "Spec.lean": _IMPORT + "import Submission.Helpers.Defs\n"
+            + "theorem tgt : foo = 7 := by decide\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
+        },
+        secure_accept=True,
+    ),
+    Case(
+        # Non-module files beside the proof -- notes, a backup, a scratch
+        # file at a name outside the module-path policy -- are ignored by the
+        # checker (apn.checker.module_path), not a reason to reject; and the
+        # wrong-proof text they carry never reaches the build.
+        "ignored_files_beside_proof",
+        _spec("2 + 2 = 4"),
+        {
+            "Spec.lean": _IMPORT + "theorem tgt : 2 + 2 = 4 := by decide\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
+            "notes.md": "# scratch notes\n",
+            "Spec.lean.bak": "theorem tgt : False := sorry\n",
+            "old-attempts/try1.lean": "theorem tgt : False := sorry\n",
+        },
+        secure_accept=True,
     ),
     # --- extra import / inert unsafe: now SOUND under Comparator's model --- #
     # Comparator replays the reachable closure and compares the configured
@@ -279,7 +366,7 @@ class _FakeStore:
 async def _sandboxes() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """Bring up the production compose; yield the live ``{name: env}`` dict.
 
-    Same lifecycle as ``test_singlefile_proof._comparator_env``. Exposes the
+    Same lifecycle as ``test_proof_acceptance._comparator_env``. Exposes the
     default (agent) sandbox -- where the submission tree is staged and tarred --
     plus the trusted ``comparator`` sandbox the checker uses. Per-test bring-up
     isolates an OOM/crash (and any compile-time tamper against the read-only
@@ -319,31 +406,42 @@ async def _write_tree(env: SandboxEnvironment, files: dict[str, str]) -> None:
         await env.write_file(f"{SUBMISSION_DIR}/{rel}", content)
 
 
+async def _score(
+    envs: dict[str, SandboxEnvironment],
+    monkeypatch: pytest.MonkeyPatch,
+    label: str,
+    spec: str,
+    claim: Claim,
+) -> Score:
+    """Run the real scorer over whatever is in the agent sandbox's ``Submission/``.
+
+    The scorer reads the tree from the agent (default) sandbox and hands the
+    tar to the checker, which verifies in the trusted `comparator` sandbox.
+    Point the scorer's `sandbox` at the agent env, the checker's at the
+    comparator env, and the store at the declared claim.
+    """
+    monkeypatch.setattr(scorer_mod, "sandbox", lambda *a, **k: envs["default"])
+    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: envs["comparator"])
+    monkeypatch.setattr(scorer_mod, "store", lambda: _FakeStore(claim))
+    state = TaskState(
+        model=ModelName("mockllm/model"),
+        sample_id=label,
+        epoch=1,
+        input=spec,
+        messages=[],
+        metadata={"sketch": spec, "decl_name": "tgt"},
+    )
+    score = await proof_scorer(SandboxComparator())(state, Target(""))
+    assert score is not None
+    return score
+
+
 @pytest.mark.parametrize("case", _params())
 async def test_scorer_verdict(case: Case, monkeypatch: pytest.MonkeyPatch) -> None:
     async with _sandboxes() as envs:
-        agent_env = envs["default"]
-        await _write_tree(agent_env, case.files)
-        # The real scorer reads the tree from the agent (default) sandbox and
-        # hands the tar to the checker, which verifies in the trusted
-        # `comparator` sandbox. Point the scorer's `sandbox` at the agent env,
-        # the checker's at the comparator env, and the store at the declared
-        # claim.
-        monkeypatch.setattr(scorer_mod, "sandbox", lambda *a, **k: agent_env)
-        monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: envs["comparator"])
-        monkeypatch.setattr(scorer_mod, "store", lambda: _FakeStore(case.claim))
+        await _write_tree(envs["default"], case.files)
+        score = await _score(envs, monkeypatch, case.label, case.spec, case.claim)
 
-        state = TaskState(
-            model=ModelName("mockllm/model"),
-            sample_id=case.label,
-            epoch=1,
-            input=case.spec,
-            messages=[],
-            metadata={"sketch": case.spec, "decl_name": "tgt"},
-        )
-        score = await proof_scorer(SandboxComparator())(state, Target(""))
-
-    assert score is not None
     accepted = score.value == CORRECT
     detail = (score.explanation or "")[-800:]
     assert accepted == case.secure_accept, (
@@ -351,3 +449,38 @@ async def test_scorer_verdict(case: Case, monkeypatch: pytest.MonkeyPatch) -> No
         f"behaviour is to {'ACCEPT' if case.secure_accept else 'REJECT'}.\n"
         f"stage={(score.metadata or {}).get('stage')}\n{detail}"
     )
+
+
+async def test_symlinks_are_not_staged(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Symlink members of the agent's ``Submission/`` -- as ``tar(1)`` records
+    them, unfollowed -- are dropped by the sanitizer, whatever they point at: a
+    link to a file outside the tree and an alias of the entry both vanish, the
+    honest single-file proof beside them is accepted, and the comparator
+    sandbox's staged tree holds exactly ``Spec.lean``, root-owned and read-only
+    to the build."""
+    spec = _spec("2 + 2 = 4")
+    honest = (
+        _IMPORT + "theorem tgt : 2 + 2 = 4 := by decide\n"
+        + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+    )
+    async with _sandboxes() as envs:
+        agent_env = envs["default"]
+        await _write_tree(agent_env, {"Spec.lean": honest})
+        for link, target in [
+            (f"{SUBMISSION_DIR}/Passwd.lean", "/etc/passwd"),
+            (f"{SUBMISSION_DIR}/Helpers/Alias.lean", "../Spec.lean"),
+        ]:
+            await agent_env.exec(["mkdir", "-p", str(Path(link).parent)])
+            res = await agent_env.exec(["ln", "-s", target, link])
+            assert res.success, res.stderr
+        score = await _score(envs, monkeypatch, "symlinks", spec, "proof")
+        assert score.value == CORRECT, (
+            f"stage={(score.metadata or {}).get('stage')}\n{(score.explanation or '')[-800:]}"
+        )
+        # What the checker staged: path, owner, mode of everything under
+        # Submission/ in the comparator sandbox.
+        listing = await envs["comparator"].exec(
+            ["find", SUBMISSION_DIR, "-mindepth", "1", "-printf", "%P %u %m\\n"]
+        )
+        assert listing.success, listing.stderr
+    assert sorted(listing.stdout.splitlines()) == ["Spec.lean root 644"]

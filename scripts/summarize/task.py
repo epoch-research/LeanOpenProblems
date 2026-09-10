@@ -35,7 +35,7 @@ from inspect_ai.util import sandbox, store
 
 import apn
 from apn.dataset import OEIS_DIR, fc_commit, load_subset, oeis_dataset
-from apn.layout import ENTRY_PATH
+from apn.layout import ENTRY_PATH, SUBMISSION_DIR
 from apn.task import SANDBOX_FILES_DIR, IMAGE_REPOSITORY, get_identifier_for_image
 from apn.tools import bash
 
@@ -111,7 +111,9 @@ class Conjecture(NamedTuple):
 class Solve(NamedTuple):
     id: str
     oeis_id: str
-    proof: str
+    # The accepted submission's Lean modules, {Submission-relative path: text};
+    # always includes the entry module ``Spec.lean``.
+    files: dict[str, str]
     settlement: Literal["proved", "disproved"]
     directory: Path
 
@@ -231,18 +233,26 @@ def solved_samples(run_dir: Path) -> list[Solve]:
             print(f"warning: no oeis_id for accepted sample {sample_dir.name}", file=sys.stderr)
             continue
 
-        proof_path = sample_dir / "Submission" / "Spec.lean"
+        # The whole module tree the checker scored (extract_plaintext writes
+        # it back under Submission/), not just the entry module.
+        submission_dir = sample_dir / "Submission"
         try:
-            proof = proof_path.read_text()
+            files = {
+                path.relative_to(submission_dir).as_posix(): path.read_text()
+                for path in sorted(submission_dir.rglob("*.lean"))
+            }
         except OSError as exc:
-            print(f"warning: cannot read accepted proof {proof_path}: {exc}", file=sys.stderr)
+            print(f"warning: cannot read accepted proof under {submission_dir}: {exc}", file=sys.stderr)
+            continue
+        if "Spec.lean" not in files:
+            print(f"warning: accepted proof {sample_dir.name} has no Submission/Spec.lean", file=sys.stderr)
             continue
 
         solves.append(
             Solve(
                 id=sample_dir.name,
                 oeis_id=str(oeis_id),
-                proof=proof,
+                files=files,
                 settlement=settlement,
                 directory=sample_dir,
             )
@@ -323,7 +333,9 @@ def proof_prompt(
     instruction = output.instruction.format(noun=noun)
     return f"""\
 An AI agent {solve.settlement} the conjecture {solve.id} about OEIS sequence
-{solve.oeis_id}. The accepted {noun} is in {ENTRY_PATH}.
+{solve.oeis_id}. The accepted {noun} is the Lean module tree under {SUBMISSION_DIR}/:
+its entry module is {ENTRY_PATH}, and any helper modules it imports
+(`import Submission.…`) are beside it.
 
 Call {output.submit_tool} with {instruction}.
 
@@ -422,7 +434,8 @@ def submit_full_proof() -> Tool:
 def summarizer(kind: Literal["sequence", "conjecture", "proof"]) -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         if kind == "proof":
-            await sandbox().write_file(ENTRY_PATH, state.metadata["proof"])
+            for rel, text in state.metadata["files"].items():
+                await sandbox().write_file(f"{SUBMISSION_DIR}/{rel}", text)
             tools = [text_editor(), bash(timeout=300)]
             proof_output = state.metadata["proof_output"]
             if proof_output == "full_proof":
@@ -562,7 +575,7 @@ def summarize_proofs(
                     ),
                     id=f"{solve.id}__{output.name}",
                     metadata={
-                        "proof": solve.proof,
+                        "files": solve.files,
                         "proof_id": solve.id,
                         "oeis_id": solve.oeis_id,
                         "settlement": solve.settlement,

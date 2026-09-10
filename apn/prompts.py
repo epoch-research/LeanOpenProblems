@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from apn.checker import PERMITTED_AXIOMS
+from apn.layout import ENTRY_MODULE, ENTRY_PATH, SUBMISSION_DIR
 
 
 def literature_prompt() -> str:
@@ -31,7 +32,7 @@ Advice about this task:
 def user_prompt(path: str, token_limit: int | None, literature: bool, util_module: str) -> str:
     parts = []
 
-    PROOF_PATH = "/workspace/leanproject/Submission/Spec.lean"
+    PROOF_PATH = ENTRY_PATH
 
     parts.append(f"""\
 Settle the conjecture in the Lean file `{PROOF_PATH}`. The file states two theorems, each with a `sorry` proof: the conjecture itself, and a `.disproof` theorem stating exactly its negation. Replace the `sorry` of exactly one of them with a complete proof:
@@ -41,9 +42,9 @@ Settle the conjecture in the Lean file `{PROOF_PATH}`. The file states two theor
 
 Keep both theorem declarations in the file and do not alter their statements in any way. When you submit, declare which theorem you proved via the submit tool's `claim` argument ("proof" or "disproof").
 
-Work inside the Lake project at `/workspace/leanproject`. Your final proof must be in the single file `{PROOF_PATH}`. You may use other files as you develop your proof.
+Work inside the Lake project at `/workspace/leanproject`. Your submission is the directory `{SUBMISSION_DIR}/`; `{PROOF_PATH}` is its entry module, `{ENTRY_MODULE}`. You may split your proof across further `.lean` files under `{SUBMISSION_DIR}/`: the file `Submission/Foo/Bar.lean` is the module `Submission.Foo.Bar`, which `Spec.lean` or another helper imports as `import Submission.Foo.Bar`. `lake build {ENTRY_MODULE}` builds the whole submission (the helper modules it imports, then `Spec.lean`). Name files and directories under `Submission/` with letters, digits and underscores only: the verifier takes exactly the regular `.lean` files at such paths and ignores everything else there (notes, build output, symlinks). Scratch files elsewhere in the project are fine.
 
-In your final submission file `{PROOF_PATH}`, do not add or remove `import` statements. The `{util_module}` import transitively pulls in all of Mathlib, and other utilities.
+Keep the existing `import` statements in `{PROOF_PATH}`; the `{util_module}` import transitively pulls in all of Mathlib, and other utilities, so the only imports you should need to add are of your own `Submission.…` modules. Helper modules need their own imports (e.g. `import {util_module}`).
 
 Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in PERMITTED_AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.
 
