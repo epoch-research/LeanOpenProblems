@@ -51,6 +51,7 @@ jobs:
           echo "version=$image_version" >> "$GITHUB_OUTPUT"
           commits="$(sort -u apn/data/*/fc_commit)"
           builds=""
+          corpus_builds=""
           while read -r commit; do
             if ! echo "$commit" | grep -qE '^[0-9a-f]{40}$'; then
               echo "Invalid fc_commit entry: '$commit'" >&2
@@ -61,13 +62,20 @@ jobs:
                 --repository-name "${IMAGE_NAME#*/}" \
                 --image-ids "imageTag=LeanOpenProblems_${target}_${image_version}_fc_${commit:0:12}" \
                 >/dev/null 2>&1; then
-                builds="${builds}${target} ${commit}"$'\n'
+                if [ "$target" = agent_corpus ]; then
+                  corpus_builds="${corpus_builds}${target} ${commit}"$'\n'
+                else
+                  builds="${builds}${target} ${commit}"$'\n'
+                fi
               fi
             done
           done <<< "$commits"
           {
             echo "builds<<APN_EOF"
             printf '%s' "$builds"
+            echo "APN_EOF"
+            echo "corpus_builds<<APN_EOF"
+            printf '%s' "$corpus_builds"
             echo "APN_EOF"
           } >> "$GITHUB_OUTPUT"
 
@@ -76,8 +84,10 @@ jobs:
 
       # The targets are stages of one Dockerfile built on one builder, so
       # shared stages (the expensive Lean + Mathlib base) are built once per
-      # FC pin.
-      - name: Build and push images
+      # FC pin. agent_corpus is deferred to its own step below so the slow
+      # corpus fetch/build never delays these images, and the step list shows
+      # when everything except the corpus is done.
+      - name: Build and push images (no corpus)
         if: steps.missing.outputs.builds != ''
         working-directory: apn/lean
         run: |-
@@ -90,3 +100,19 @@ jobs:
               -t "${IMAGE_NAME}:LeanOpenProblems_${target}_${{ steps.missing.outputs.version }}_fc_${commit:0:12}" \
               .
           done <<< "${{ steps.missing.outputs.builds }}"
+
+      # agent_corpus is FROM agent, so on this same builder its base layers are
+      # cache hits from the previous step; only the corpus stages run here.
+      - name: Build and push corpus images
+        if: steps.missing.outputs.corpus_builds != ''
+        working-directory: apn/lean
+        run: |-
+          while read -r target commit; do
+            [ -z "$target" ] && continue
+            docker buildx build \
+              --target "$target" \
+              --build-arg "FC_COMMIT=${commit}" \
+              --push \
+              -t "${IMAGE_NAME}:LeanOpenProblems_${target}_${{ steps.missing.outputs.version }}_fc_${commit:0:12}" \
+              .
+          done <<< "${{ steps.missing.outputs.corpus_builds }}"
