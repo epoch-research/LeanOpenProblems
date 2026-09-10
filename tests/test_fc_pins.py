@@ -11,7 +11,7 @@ from apn.dataset import (
     ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
-    MARCZINZIK_DIR,
+    PERSONAL_CORRESP_DIR,
     OEIS_DIR,
     fc_commit,
     fc_profile,
@@ -22,7 +22,7 @@ DATASET_DIRS = {
     "erdos": ERDOS_DIR,
     "erdos_autoformalized": ERDOS_AUTOFORMALIZED_DIR,
     "fc100open": FC100_DIR,
-    "marczinzik": MARCZINZIK_DIR,
+    "personal_corresp": PERSONAL_CORRESP_DIR,
     "oeis": OEIS_DIR,
 }
 

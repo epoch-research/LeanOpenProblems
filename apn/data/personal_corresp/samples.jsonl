@@ -1,2 +1,3 @@
 {"id": "FinitisticDimension.finitistic_dimension_conjecture", "source": "Sources/FinitisticDimensionConjecture.lean", "category": "research open"}
 {"id": "Nakayama.nakayama_conjecture", "source": "Sources/NakayamaConjecture.lean", "category": "research open"}
+{"id": "NilpotentClosure.nilpotent_mul_closed_implies_add_closed", "source": "Sources/NilpotentClosure.lean", "category": "research open"}

@@ -12,7 +12,7 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
-MARCZINZIK_DIR = Path(__file__).parent / "data" / "marczinzik"
+PERSONAL_CORRESP_DIR = Path(__file__).parent / "data" / "personal_corresp"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -332,10 +332,11 @@ def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDatase
     return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
 
 
-def marczinzik_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The homological conjectures for finite-dimensional algebras contributed
-    by René Marczinzik and Bernhard Böhmler (the finitistic dimension
-    conjecture and the Nakayama conjecture; 2 samples). Each sketch ends with
+def personal_corresp_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """Open conjectures sent to us in personal correspondence and formalized
+    by their contributors (the finitistic dimension and Nakayama conjectures
+    from René Marczinzik and Bernhard Böhmler; Janez Šter's nilpotent-closure
+    question, formalized by Pace Nielsen; 3 samples). Each sketch ends with
     the derived ``<target>.disproof`` declaration. See
-    ``apn/data/marczinzik/NOTICE.md``."""
-    return build_dataset(MARCZINZIK_DIR, "marczinzik", (), names)
+    ``apn/data/personal_corresp/NOTICE.md``."""
+    return build_dataset(PERSONAL_CORRESP_DIR, "personal_corresp", (), names)
