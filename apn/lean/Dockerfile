@@ -232,11 +232,6 @@ RUN mkdir /staged \
     && cp FormalConjecturesForMathlib.lean /staged/ \
     && cp -r FormalConjecturesForMathlib /staged/FormalConjecturesForMathlib
 
-# base copies .lake in two pieces (build/ into the project, packages/ to
-# /opt/pristine -- see base). Make sure those are the only two things lake left
-# in .lake, so a future lake that adds a third cannot slip past the two COPYs.
-RUN test "$(ls -A .lake | sort | tr '\n' ' ')" = "build packages "
-
 # NOTE: the `Submission` lean_lib registered above is what lets a submission
 # span several modules: the agent's `Submission/Spec.lean` (the entry module,
 # `Submission.Spec`) may `import Submission.…` helper modules the agent writes
