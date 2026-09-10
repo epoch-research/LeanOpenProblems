@@ -9,9 +9,10 @@
 #                   rename -- the builder detects which from the checkout)
 #                   compiles. Shared by the two service images; not a service
 #                   itself.
-#   - agent      -- the agent's workspace: base + the numerical/symbolic
-#                   Python stack (Sage, sympy, ...). Deliberately contains NO
-#                   verifier tooling (no comparator, no lean4export, no landrun).
+#   - agent      -- the agent's workspace: base + the compute stack, assembled
+#                   from independent chunks (see "The agent's compute stack"
+#                   below). Deliberately contains NO verifier tooling (no
+#                   comparator, no lean4export, no landrun).
 #   - comparator -- the trusted verifier: base + the Comparator binary + the
 #                   lean4export binary + landrun + the pristine workspace tree.
 #                   Replaces the former `compile` + `scorer` pair: the
@@ -29,8 +30,9 @@
 #     v4.33.1 after upstream's bump on 2026-08-23; both tracks are live across
 #     the datasets' pins). This is dataset identity (oleans load only under the
 #     toolchain that built them). Every stage that compiles against the
-#     project's oleans -- lean4export, the extract_ranges tooling -- builds at
-#     that same toolchain, taken from the checkout, never from a constant here.
+#     project's oleans -- lean4export, Loogle, the extract_ranges tooling --
+#     builds at that same toolchain, taken from the checkout, never from a
+#     constant here.
 #   - The lean4export *binary* (the runtime exporter) `importModules`-loads the
 #     project's oleans in-process, so it MUST be built at the project
 #     toolchain. Upstream's rev at that toolchain emits an export format the
@@ -41,18 +43,62 @@
 #     format by construction.
 #   - The Comparator binary never loads project oleans (it parses lean4export's
 #     *text* output and replays it through its embedded kernel), so it is built
-#     at its own pinned toolchain (v4.34.0-rc2 today) and merely needs that
-#     toolchain's shared libraries present at runtime. Soundness fixes land at
-#     comparator tip only, so its pin tracks the newest tag, not the project
-#     toolchain (plan §2.1).
+#     at its own pinned toolchain (v4.34.0-rc2 today: the comparator repo's
+#     lean-toolchain at COMPARATOR_COMMIT). It is statically linked, so that
+#     toolchain is a build-time fact only; no image carries it. Soundness fixes
+#     land at comparator tip only, so its pin tracks the newest tag, not the
+#     project toolchain (plan §2.1).
 #
 # On an FC-pin bump: nothing here changes -- the project toolchain follows the
-# checkout's lean-toolchain, and the exporter's and extractor's toolchains
-# follow the project's. Register the pin's layout in
-# apn.dataset._FC_PROFILES (the host side has no checkout to detect it from).
+# checkout's lean-toolchain, and the exporter's, Loogle's and the extractor's
+# toolchains follow the project's (Loogle's Mathlib search index is rebaked;
+# see `loogle`). Register the pin's layout in apn.dataset._FC_PROFILES (the
+# host side has no checkout to detect it from).
 # On a comparator bump: move LEAN4EXPORT_COMMIT to the rev in comparator's
 # lake-manifest.json, re-verify the toolchain-override build, and re-run the
 # primitive-constants check (plan §2.3; the gold-proof suite exercises it).
+#
+# The agent's compute stack. Each chunk is built in its own stage(s),
+# independent of the others, and hands `agent` one directory at its final
+# path; `agent` assembles them with COPY --from lines plus one apt line and
+# exposes commands by symlink. tests/test_agent_image.py contract-tests the
+# assembled image and apn/prompts.py advertises it. Loogle is the one chunk
+# tied to the FC pin; everything else is Lean-agnostic.
+#
+#   stage       members                            delivers         exposed as
+#   sage        Sage + its optional backends       /opt/sage        sage (wrapper),
+#               (sage.yaml, sage/*.sh)                              gp gap Singular
+#                                                                   maxima (links)
+#   conda       anything with a conda-forge or     /opt/env         python3, pip and
+#               PyPI package (conda.yaml)                           the CLI tools in
+#                                                                   agent-commands
+#   unpackaged  no conda-forge/apt/PyPI package;   bin/ share/doc/  copied into
+#               one stage per tool (unpackaged/)                    /usr/local
+#   walnut      one product (walnut.sh)            /opt/walnut      the path the
+#                                                                   prompt names
+#   julia       one product (julia.sh)             /opt/julia       julia
+#                                                  /root/.julia
+#   loogle      tied to the FC pin                 binary, index,   loogle; README in
+#                                                  README           /usr/local/share/doc
+#   apt line    bookworm packages conda-forge      in place         on PATH already
+#               lacks
+#
+# Rules of thumb, applied with judgment:
+#   1. Each tool has one authoritative recipe: its version, checksum, build,
+#      install destination and docs live in one script or one env-spec entry.
+#      This file references recipes and does not restate their contents.
+#   2. Each chunk hands over one directory at its final path (julia's two and
+#      loogle's binary + index are the known exceptions).
+#   3. Where two declarations must agree, prefer one declaration; otherwise
+#      assert the agreement somewhere automatic (tests/test_agent_image.py
+#      holds the integration checks: agent-commands resolution, the cvc5
+#      binary/wheel agreement, the ldd sweep). A stage may still fail fast on
+#      a missing or malformed artifact where that is the natural place.
+#   4. Exposure is explicit: agent-commands lists every command the agent
+#      gets from the envs, one absolute path per line, linked into
+#      /usr/local/bin (`sage` alone is a wrapper, see the agent stage). No
+#      PATH edits, /etc/profile.d snippets or depot variables (base's elan
+#      snippet predates this and is Lean-side).
 #
 # The builder stage clones the whole formal-conjectures repo and builds the
 # library; base copies in ONLY the toolchain, the lake build artifacts
@@ -60,6 +106,9 @@
 # problems, the Erdős/Arxiv/etc. sets -- which contain real proofs and
 # axioms), the library test suite, and repo tooling/docs/.git never reach the
 # agent's sandbox, so there is no contamination to strip after the fact.
+
+# micromamba, for the two conda-forge env stages (inherited by `conda_base`).
+ARG MICROMAMBA_VERSION=2.9.0
 
 # --------------------------------------------------------------------------- #
 # Builder: clone + build the FC library (everything here is discarded).        #
@@ -197,16 +246,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APN_LEAN_PROJECT=/workspace/leanproject
 
 # Runtime libs for the Lean toolchain, plus the build tools the derived images
-# need (the comparator image builds lean4export) and python3 (the agent's
-# numerical scratchpad).
+# need (the loogle and lean4export_build stages compile Lean projects) and
+# python3 (loogle reads the baked manifest with it; the `generate` stage drives
+# repo scripts with it). The agent's own python3 is NOT this one: the agent
+# stage links /opt/env's python3 into /usr/local/bin, ahead of /usr/bin on PATH.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl git ca-certificates build-essential libgmp-dev \
-        python3 \
+        python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # The Lean/lake toolchain (binaries + the project toolchain). The image ENV PATH
-# above covers non-login execs (how ``sandbox().exec`` runs); add a profile
-# snippet so *login* shells (e.g. ``bash -lc``) also find lake/lean.
+# above covers non-login execs (plain ``sandbox().exec`` calls); add a profile
+# snippet so *login* shells (``bash --login -c``, how the agent's bash tool
+# execs) also find lake/lean.
 COPY --from=builder /root/.elan /root/.elan
 RUN echo 'export PATH=/root/.elan/bin:$PATH' > /etc/profile.d/elan.sh
 
@@ -233,32 +285,277 @@ COPY --from=builder /staged ./
 CMD ["sleep", "infinity"]
 
 # --------------------------------------------------------------------------- #
-# agent: the agent's workspace.                                                #
+# conda_base: bookworm-slim + micromamba, the shared parent of the two        #
+# conda-forge env stages (sage, conda). build-essential and pkg-config serve  #
+# the builds those stages run inside their envs (sagemath-giac, the compiled  #
+# GAP packages, graphillion's sdist); the compiler does not ship.             #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS conda_base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates bzip2 build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG MICROMAMBA_VERSION
+RUN arch="$(uname -m)" \
+    && case "$arch" in x86_64) plat=linux-64 ;; aarch64) plat=linux-aarch64 ;; *) echo "unsupported arch $arch" >&2; exit 1 ;; esac \
+    && curl -sSfL "https://micro.mamba.pm/api/micromamba/${plat}/${MICROMAMBA_VERSION}" \
+        | tar -xj -C /usr/local bin/micromamba
+
+# --------------------------------------------------------------------------- #
+# sage: Sage and its optional backends, alone in a conda-forge env at         #
+# /opt/sage (spec: sage.yaml). Backends that exist as no package at all       #
+# follow from their upstreams' own distributions, one script each under       #
+# sage/: sagemath-giac, GAP packages, Sage's database tarballs. Only five     #
+# launchers reach the agent (the `sage` wrapper plus the four links in        #
+# agent-commands); Sage's python is reached through `sage` itself (`sage -c`, #
+# `sage <file.py>`) and is not the agent's python3 (the conda stage), so      #
+# Sage's pins constrain nothing else.                                         #
+# --------------------------------------------------------------------------- #
+FROM conda_base AS sage
+
+COPY sage.yaml /build/sage.yaml
+RUN micromamba create -y -p /opt/sage -f /build/sage.yaml \
+    && micromamba clean -afy
+
+COPY sage/giac.sh /build/
+RUN /build/giac.sh
+COPY sage/gap-packages.sh /build/
+RUN /build/gap-packages.sh
+COPY sage/databases.sh /build/
+RUN /build/databases.sh
+
+# --------------------------------------------------------------------------- #
+# conda: the agent's python3 and every CLI tool that has a conda-forge or     #
+# PyPI package, one locked env at /opt/env (spec: conda.yaml, whose `pip:`    #
+# section micromamba installs into the same env). Reached only through the    #
+# commands listed in agent-commands.                                          #
+# --------------------------------------------------------------------------- #
+FROM conda_base AS conda
+
+COPY conda.yaml /build/conda.yaml
+RUN micromamba create -y -p /opt/env -f /build/conda.yaml \
+    && micromamba clean -afy
+
+# --------------------------------------------------------------------------- #
+# unpackaged: tools with no conda-forge, bookworm, or PyPI packaging. Each    #
+# has one script (unpackaged/<tool>.sh: pinned source or official release     #
+# binary, checksum, build, docs from the same archive) and its own stage from #
+# build_base, so scripts cannot interact, an edit rebuilds one tool, BuildKit #
+# builds them concurrently, and `docker build --target <tool> apn/lean`       #
+# builds one alone. Scripts install into /out (bin/, share/doc/<tool>/); the  #
+# scratch collector merges the trees and agent copies the result into         #
+# /usr/local. Binaries link only the libc family, libstdc++, libgomp, zlib,   #
+# gmp and mpfr from the bookworm userland (base's build-essential and         #
+# libgmp-dev bring all but mpfr; the agent apt line adds libmpfr6); the       #
+# contract test's ldd sweep checks this in the assembled image.               #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS build_base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates build-essential unzip m4 \
+        cmake git subversion p7zip perl zlib1g-dev \
+        libboost-graph-dev libboost-program-options-dev \
+        libgmp-dev libmpfr-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir /out
+
+FROM build_base AS kissat
+COPY unpackaged/kissat.sh /build/
+RUN /build/kissat.sh
+
+FROM build_base AS plantri
+COPY unpackaged/plantri.sh /build/
+RUN /build/plantri.sh
+
+FROM build_base AS prover9
+COPY unpackaged/prover9.sh /build/
+RUN /build/prover9.sh
+
+FROM build_base AS msolve
+COPY unpackaged/msolve.sh /build/
+RUN /build/msolve.sh
+
+FROM build_base AS cvc5
+COPY unpackaged/cvc5.sh /build/
+RUN /build/cvc5.sh
+
+FROM build_base AS vampire
+COPY unpackaged/vampire.sh /build/
+RUN /build/vampire.sh
+
+FROM build_base AS drat_trim
+COPY unpackaged/drat-trim.sh /build/
+RUN /build/drat-trim.sh
+
+FROM build_base AS cake_lpr
+COPY unpackaged/cake_lpr.sh /build/
+RUN /build/cake_lpr.sh
+
+FROM build_base AS breakid
+COPY unpackaged/breakid.sh /build/
+RUN /build/breakid.sh
+
+FROM build_base AS sms
+COPY unpackaged/sms.sh /build/
+RUN /build/sms.sh
+
+FROM build_base AS march_cu
+COPY unpackaged/march_cu.sh /build/
+RUN /build/march_cu.sh
+
+FROM build_base AS msieve
+COPY unpackaged/msieve.sh /build/
+RUN /build/msieve.sh
+
+FROM build_base AS kamis
+COPY unpackaged/kamis.sh /build/
+RUN /build/kamis.sh
+
+FROM build_base AS gclc
+COPY unpackaged/gclc.sh /build/
+RUN /build/gclc.sh
+
+FROM build_base AS primality
+COPY unpackaged/primality.sh /build/
+RUN /build/primality.sh
+
+FROM scratch AS unpackaged
+COPY --from=kissat    /out /
+COPY --from=plantri   /out /
+COPY --from=prover9   /out /
+COPY --from=msolve    /out /
+COPY --from=cvc5      /out /
+COPY --from=vampire   /out /
+COPY --from=drat_trim /out /
+COPY --from=cake_lpr  /out /
+COPY --from=breakid   /out /
+COPY --from=sms       /out /
+COPY --from=march_cu  /out /
+COPY --from=msieve    /out /
+COPY --from=kamis     /out /
+COPY --from=gclc      /out /
+COPY --from=primality /out /
+
+# --------------------------------------------------------------------------- #
+# walnut: Walnut, the decision procedure for automatic sequences / base-k     #
+# digit statements (Buechi arithmetic), built by walnut.sh and shipped as the #
+# /opt/walnut tree; run via upstream's launcher /opt/walnut/walnut.sh. The    #
+# JRE it needs comes from the agent stage's apt line (default-jre-headless).  #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS walnut
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates openjdk-17-jdk-headless git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY walnut.sh /build/
+RUN /build/walnut.sh
+
+# --------------------------------------------------------------------------- #
+# julia: Julia + OSCAR/Hecke (computer algebra: Galois groups, number fields, #
+# group theory) as a fully precompiled, offline-usable depot (julia.sh). Two  #
+# directories are handed over: /opt/julia (the release) and /root/.julia (the #
+# depot, at Julia's default location, so the agent image needs no             #
+# JULIA_DEPOT_PATH plumbing). NEVER build this stage under qemu emulation:    #
+# precompilation crashes there (native-only, both arches verified).           #
+# --------------------------------------------------------------------------- #
+FROM debian:bookworm-slim AS julia
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY julia.sh /build/
+RUN /build/julia.sh
+
+# --------------------------------------------------------------------------- #
+# loogle: the Loogle type-pattern Mathlib search CLI. Upstream's "Running     #
+# locally" contract: the binary is dependency-free, must merely be built with #
+# the TARGET project's toolchain, and then searches any Lake project via      #
+# `lake env loogle --module <M> "<query>"` (it reads LEAN_PATH). The first    #
+# query builds a search index cached next to the module's .olean and          #
+# auto-invalidated when the oleans change; running one here bakes that index  #
+# (and smoke-tests the build), so agents get fast queries.                    #
+# --------------------------------------------------------------------------- #
+FROM base AS loogle
+
+ARG LOOGLE_COMMIT=9f11169aaebf1ed1e7dcc4077f2aafe0fcf66fd0
+RUN git clone https://github.com/nomeata/loogle.git /opt/loogle \
+    && git -C /opt/loogle checkout --detach "${LOOGLE_COMMIT}" \
+    && cp /workspace/leanproject/lean-toolchain /opt/loogle/lean-toolchain \
+    && cd /opt/loogle \
+    && lake build \
+    && cd /workspace/leanproject \
+    && lake env /opt/loogle/.lake/build/bin/loogle --module Mathlib "Nat.Prime" > /dev/null
+
+# --------------------------------------------------------------------------- #
+# agent: the agent's workspace, assembled from the chunks above (the header's #
+# stage table). Layer order is big/stable first.                              #
 # --------------------------------------------------------------------------- #
 FROM base AS agent
 
-# Numerical/symbolic scratchpad for the agent (the `bash` tool runs python3 in
-# this image). The sandbox has no network, so everything is baked in here.
-#   - sagemath: a full computer algebra system on the `sage` command, bundling
-#     PARI/GP, FLINT, Maxima, GAP and Singular -- far stronger than sympy for
-#     number theory (factoring, modular arithmetic, elliptic curves, continued
-#     fractions) and the dialect much of OEIS's own reference code is written in.
-#   - python3-{numpy,sympy,mpmath}: importable directly from `python3` (sympy =
-#     exact symbolic, mpmath = arbitrary precision with pslq/identify). Pulled
-#     from apt alongside sagemath so all versions resolve mutually consistent
-#     (a pip --break-system-packages upgrade could outrun what Sage expects).
-# This ~1.5 GB install is its own cached layer.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        sagemath python3-numpy python3-sympy python3-mpmath \
+# bookworm packages conda-forge lacks: polymake (polyhedral geometry), Macaulay2
+# (commutative algebra), cryptominisat (SAT), coinor-csdp (semidefinite
+# programming, `csdp`), topcom (triangulations), cadabra2 (tensor algebra),
+# minizinc (CP modeling), berkeley-abc (Boolean networks), eprover (first-order
+# ATP), mpsolve (certified polynomial roots); default-jre-headless runs Walnut;
+# jq + ripgrep serve the bash tool (git is already in base); man-db + less make
+# the packages' man pages readable; libmpfr6 is msolve's one runtime link the
+# image would otherwise lack (gmp comes with base's libgmp-dev). bookworm-slim
+# configures dpkg to drop /usr/share/doc and man pages; that rule goes first so
+# these packages keep their documentation.
+RUN rm /etc/dpkg/dpkg.cfg.d/docker \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        polymake macaulay2 cryptominisat coinor-csdp \
+        topcom cadabra2 minizinc berkeley-abc eprover mpsolve \
+        default-jre-headless jq ripgrep man-db less libmpfr6 \
     && rm -rf /var/lib/apt/lists/*
 
-# CLI tools for the agent's `bash` tool (git is already in `base`): jq for JSON,
-# ripgrep for fast search (`rg`). In `agent` so both run conditions get them and
-# the agent can be prompted to use `rg` consistently whether or not /corpus is
-# present. A cheap layer kept after the sagemath layer so editing it never busts
-# that cache.
-RUN apt-get update && apt-get install -y --no-install-recommends jq ripgrep \
-    && rm -rf /var/lib/apt/lists/*
+# The chunks, each at its final path. Nothing in the two envs is on PATH; the
+# agent reaches them through the symlinks made below.
+COPY --from=conda      /opt/env     /opt/env
+COPY --from=sage       /opt/sage    /opt/sage
+COPY --from=julia      /opt/julia   /opt/julia
+COPY --from=julia      /root/.julia /root/.julia
+COPY --from=walnut     /opt/walnut  /opt/walnut
+COPY --from=unpackaged /            /usr/local/
+
+# Loogle: the dependency-free binary, its README, and the Mathlib search index
+# it baked next to Mathlib.olean (COPY preserves mtimes, and this stage shares
+# base's layers with loogle, so the index stays valid; were it ever judged
+# stale, loogle transparently rebuilds it).
+COPY --from=loogle /opt/loogle/.lake/build/bin/loogle /usr/local/bin/loogle
+COPY --from=loogle /opt/loogle/README.md /usr/local/share/doc/loogle/README.md
+COPY --from=loogle \
+     /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index \
+     /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index
+
+# Exposure (header rule 4): agent-commands lists every command the agent gets
+# from the envs, one absolute path per line, linked into /usr/local/bin. That
+# directory precedes /usr/bin both in the image's PATH and in the PATH that
+# Debian's /etc/profile resets login shells to (how the bash tool execs), so
+# the links win over Debian's own python3/pip, which are present regardless
+# (base installs python3-pip; cadabra2 depends on python3). `ln -s` refuses a
+# name that already exists, so a collision between chunks fails the build;
+# that every link resolves is asserted by tests/test_agent_image.py.
+COPY agent-commands /build/agent-commands
+RUN xargs -I{} ln -s {} /usr/local/bin/ < /build/agent-commands
+
+# `sage` is the one exposed command that is a wrapper rather than a link: Sage
+# starts helpers (giac, lcalc, pkg-config, ...) by bare name and expects its
+# env's bin on PATH, as conda activation would arrange; the wrapper gives Sage's
+# own process exactly that (see sage/sage). The envs' bin dirs are not on PATH,
+# so man's PATH-derived manpath misses their pages; list them explicitly.
+COPY sage/sage /usr/local/bin/sage
+RUN printf 'MANDATORY_MANPATH /opt/env/share/man\nMANDATORY_MANPATH /opt/sage/share/man\n' \
+        >> /etc/manpath.config
 
 CMD ["sleep", "infinity"]
 
@@ -343,8 +640,9 @@ RUN git clone https://github.com/Zouuup/landrun.git /src/landrun \
 # (v4.34.0-rc2 today; see the header's version story). `lake build` resolves   #
 # `Export.Parse` from comparator's lake-manifest.json -- the same              #
 # LEAN4EXPORT_COMMIT rev the runtime exporter below is built from (the         #
-# coupled-pin invariant, plan §2.3). The build runs under /root/.elan so the   #
-# binary's RPATH points where the runtime image installs the toolchain.        #
+# coupled-pin invariant, plan §2.3). The binary is statically linked (Lake's  #
+# default for a lean_exe without supportInterpreter), so only the binary      #
+# leaves this stage; its toolchain does not ship.                             #
 # --------------------------------------------------------------------------- #
 FROM debian:bookworm-slim AS comparator_build
 
@@ -392,11 +690,10 @@ RUN git clone https://github.com/leanprover/lean4export.git /opt/lean4export \
 
 # --------------------------------------------------------------------------- #
 # comparator: the trusted verifier image (compose service `comparator`).       #
-# Carries TWO toolchains by design (plan §2.3): the project toolchain (from    #
-# base) runs everything at scoring time -- `lake env`, the challenge/solution  #
-# builds, lean4export -- while the comparator binary's own toolchain exists    #
-# solely so that binary's shared-library RPATH resolves. No lake/lean          #
-# invocation ever dispatches to the second toolchain.                          #
+# One toolchain, the project's (from base): it runs everything at scoring    #
+# time -- `lake env`, the challenge/solution builds, lean4export. The        #
+# comparator binary is statically linked and carries its own kernel, so the  #
+# toolchain it was built with (comparator_build) never enters this image.    #
 #                                                                              #
 # Scoring runs as the non-privileged `comparator` user (comparator README      #
 # assumption 6) -- not via a USER directive (the image stays root for          #
@@ -415,13 +712,12 @@ FROM base AS comparator
 # changes. `project` is the builder's symlink to the pin's toolchain dir.
 ENV PATH=/root/.elan/toolchains/project/bin:$PATH
 
-# The comparator binary + its own toolchain (merged into /root/.elan alongside
-# the project's -- the binary's RPATH points into this path).
+# The comparator binary (statically linked: nothing else from comparator_build
+# is needed).
 COPY --from=comparator_build /opt/comparator/.lake/build/bin/comparator \
                              /opt/apn/comparator/bin/comparator
-COPY --from=comparator_build /root/.elan/toolchains /root/.elan/toolchains
 
-# The runtime exporter (project toolchain; RPATH resolves via base's install)
+# The runtime exporter (built at the project toolchain, statically linked)
 # and landrun, installed on PATH where comparator's default resolution finds
 # them (its README's preferred setup) -- no COMPARATOR_* env overrides needed.
 COPY --from=lean4export_build /opt/lean4export/.lake/build/bin/lean4export \
@@ -452,11 +748,10 @@ RUN mkdir -p /opt/pristine \
 
 # The non-privileged runtime user (comparator README assumption 6). It owns
 # exactly the project dir, in which the reset script recreates .lake and the
-# checker recreates run/ per check. Everything else -- binaries, toolchains,
-# /opt/pristine -- stays root-owned and unwritable. The baked toolchains live
-# under /root/.elan (the PATH pin above, and the comparator binary's RPATH),
-# so /root becomes traverse-only (711: x permits path resolution; no listing,
-# no writes).
+# checker recreates run/ per check. Everything else -- binaries, the toolchain,
+# /opt/pristine -- stays root-owned and unwritable. The project toolchain lives
+# under /root/.elan (the PATH pin above), so /root becomes traverse-only (711:
+# x permits path resolution; no listing, no writes).
 RUN useradd --create-home --shell /bin/bash comparator \
     && chown comparator /workspace/leanproject \
     && chmod 711 /root

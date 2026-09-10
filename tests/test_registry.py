@@ -14,6 +14,7 @@ from inspect_ai._util import registry as util_registry
         "apn/apn_erdos_autoformalized",
         "apn/apn_personal_corresp",
         "apn/apn_redteam_collatz",
+        "apn/apn_math_software_test",
     ],
 )
 def test_hawk_task_registry_name(task_name: str) -> None:

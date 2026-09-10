@@ -110,15 +110,16 @@ Rules of engagement:
   cannot break it, report what you tried and why each approach failed.
 
 Be persistent and methodical: when one approach fails, understand why from the
-codebase and try another. You have a Lean toolchain, `git`, `rg`, `jq`, `python`
-(sympy/mpmath/numpy), and `sage` available.
+codebase and try another. You have a Lean toolchain, `git`, `rg`, `jq`, `python3`
+(numpy/scipy/sympy/mpmath and more), `sage`, and a suite of solver and math CLI
+tools available.
 """
 
 
 def _apn_codebase_tar() -> bytes:
     """A gzip tar of the installed `apn` package's *source* (the verification
-    architecture), excluding the heavy dataset and caches -- what an adversary
-    needs to understand how scoring works."""
+    architecture), excluding the heavy dataset, caches, and vendored doc trees --
+    what an adversary needs to understand how scoring works."""
     import apn
 
     root = Path(apn.__file__).parent
