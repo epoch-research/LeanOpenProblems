@@ -274,12 +274,26 @@ RUN echo 'export PATH=/root/.elan/bin:$PATH' > /etc/profile.d/elan.sh
 
 WORKDIR /workspace/leanproject
 
-# Lake project metadata + all build artifacts: the FC library oleans and the full
-# Mathlib/dependency set under .lake/packages. Imports resolve from these oleans.
+# Lake project metadata + the FC library's own build artifacts (.lake/build).
+# Imports resolve from these oleans and from the dependency tree below.
 COPY --from=builder /workspace/leanproject/lakefile.toml \
                     /workspace/leanproject/lean-toolchain \
                     /workspace/leanproject/lake-manifest.json ./
-COPY --from=builder /workspace/leanproject/.lake ./.lake
+COPY --from=builder /workspace/leanproject/.lake/build ./.lake/build
+
+# The dependency tree (Mathlib and friends: ~7 GB of oleans) lives OUTSIDE the
+# project, at /opt/pristine/packages, reached through a symlink at the path
+# lake expects. Lake only needs .lake/packages/<pkg> to resolve to a git
+# checkout at the manifest's rev, which a symlink satisfies -- the comparator
+# has run exactly this layout since its per-check reset existed
+# (reset-dotlake.sh relinks .lake/packages to this very location). Laying it
+# out this way from the start makes the tree ONE layer shared by every image
+# built from base: the comparator stage used to `mv` it out of .lake, and a
+# rename across image layers is a copy, which gave that image a second 7 GB
+# layer on top of the one it inherits from here. The agent sees the same
+# layout, so lake resolves packages identically in both images.
+COPY --from=builder /workspace/leanproject/.lake/packages /opt/pristine/packages
+RUN ln -s /opt/pristine/packages .lake/packages
 
 # Note: neither the `Submission/` nor the `run/` directory is copied in. They
 # carry no baked content -- the Python scaffold creates the agent's
@@ -538,14 +552,17 @@ COPY --from=walnut     /opt/walnut  /opt/walnut
 COPY --from=unpackaged /            /usr/local/
 
 # Loogle: the dependency-free binary, its README, and the Mathlib search index
-# it baked next to Mathlib.olean (COPY preserves mtimes, and this stage shares
-# base's layers with loogle, so the index stays valid; were it ever judged
-# stale, loogle transparently rebuilds it).
+# it baked next to Mathlib.olean -- physically under /opt/pristine/packages,
+# where base keeps the dependency tree (.lake/packages is a symlink to it), so
+# the COPY names that real path on both sides rather than leaning on symlink
+# resolution inside COPY. COPY preserves mtimes, and this stage shares base's
+# layers with loogle, so the index stays valid; were it ever judged stale,
+# loogle transparently rebuilds it.
 COPY --from=loogle /opt/loogle/.lake/build/bin/loogle /usr/local/bin/loogle
 COPY --from=loogle /opt/loogle/README.md /usr/local/share/doc/loogle/README.md
 COPY --from=loogle \
-     /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index \
-     /workspace/leanproject/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index
+     /opt/pristine/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index \
+     /opt/pristine/packages/mathlib/.lake/build/lib/lean/Mathlib.loogle-index
 
 # Exposure (header rule 4): agent-commands lists every command the agent gets
 # from the envs, one absolute path per line, linked into /usr/local/bin. That
@@ -738,23 +755,26 @@ COPY reset-dotlake.sh /opt/apn/reset-dotlake.sh
 RUN chmod 755 /opt/apn/reset-dotlake.sh
 
 # Stage the pristine workspace tree the reset script restores from:
-#   /opt/pristine/dot-lake  -- the project .lake minus packages/ (lake config
-#                              cache + the FC build artifacts, tens of MB;
-#                              copied into .lake on every reset). The builder's
-#                              Challenge/Submission.Spec stub artifacts ride along:
-#                              staged files hash differently, so lake rebuilds
-#                              them (and reuse on a byte-identical file is the
-#                              same compilation).
-#   /opt/pristine/packages  -- the heavy Mathlib/dependency artifacts; stay
-#                              root-owned outside .lake (and so outside the
-#                              landrun write grant) and are symlinked into the
-#                              fresh .lake (never copied, never writable).
+#   /opt/pristine/dot-lake  -- the project .lake minus the packages link (lake
+#                              config cache + the FC build artifacts, tens of
+#                              MB; copied into .lake on every reset). The
+#                              builder's Challenge/Submission.Spec stub
+#                              artifacts ride along: staged files hash
+#                              differently, so lake rebuilds them (and reuse on
+#                              a byte-identical file is the same compilation).
+#   /opt/pristine/packages  -- the heavy Mathlib/dependency artifacts, at this
+#                              path since base; stay root-owned outside .lake
+#                              (and so outside the landrun write grant) and are
+#                              symlinked into the fresh .lake (never copied,
+#                              never writable).
 # Neither .lake, run/ nor Submission/ is recreated here: the reset script
 # rebuilds .lake and the checker rebuilds run/ and Submission/ before every
-# check, so the image need not carry any of them.
+# check, so the image need not carry any of them. The mv is a copy (a rename
+# across image layers cannot be a rename), but only of the small skeleton:
+# the packages never move.
 RUN mkdir -p /opt/pristine \
-    && mv /workspace/leanproject/.lake/packages /opt/pristine/packages \
-    && mv /workspace/leanproject/.lake /opt/pristine/dot-lake
+    && mv /workspace/leanproject/.lake /opt/pristine/dot-lake \
+    && rm /opt/pristine/dot-lake/packages
 
 # The non-privileged runtime user (comparator README assumption 6). It owns
 # exactly the project dir, in which the reset script recreates .lake and the
