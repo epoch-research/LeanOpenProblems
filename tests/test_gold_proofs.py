@@ -182,7 +182,7 @@ async def test_gold_proof_verifies(
     spec = (ISOLATED_DIR / f"{stem}.lean").read_text()
     decl = _DECL_NAME[stem]
     submission = _gold_submission(stem, decl)
-    outcome = await SandboxComparator().check(
+    outcome = await SandboxComparator("docker").check(
         spec, _tar_of({"Spec.lean": submission}), decl=decl, claim="proof"
     )
     assert outcome.ok, (

@@ -42,7 +42,8 @@ from inspect_ai.util import sandbox
 from inspect_boltons.tools import resources
 
 from apn.dataset import OEIS_DIR, fc_commit
-from apn.task import SandboxBackend, get_sandbox_config
+from apn.sandbox import SandboxBackend
+from apn.task import get_sandbox_config
 from apn.tools import bash
 
 logger = logging.getLogger(__name__)
@@ -292,7 +293,9 @@ def _agent_only_sandbox(backend: SandboxBackend) -> tuple[str, str]:
     config["services"].pop("comparator", None)
     src = Path(path)
     out = src.with_name(
-        "software-test.compose.yaml" if backend == "docker" else "software-test-values.yaml"
+        "software-test.compose.yaml"
+        if backend == "docker"
+        else "software-test-values.yaml"
     )
     content = yaml.safe_dump(config, sort_keys=False)
     if not out.exists() or out.read_text() != content:
@@ -360,11 +363,13 @@ def software_report_scorer() -> Scorer:
             problems = []
         by_severity: dict[str, int] = {}
         for p in problems:
-            sev = str(p.get("severity", "unknown")) if isinstance(p, dict) else "unknown"
+            sev = (
+                str(p.get("severity", "unknown")) if isinstance(p, dict) else "unknown"
+            )
             by_severity[sev] = by_severity.get(sev, 0) + 1
 
-        explanation = md if md is not None else (
-            state.output.completion or "no report written"
+        explanation = (
+            md if md is not None else (state.output.completion or "no report written")
         )
         return Score(
             value=float(len(problems)),
