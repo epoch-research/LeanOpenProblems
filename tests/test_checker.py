@@ -388,7 +388,7 @@ def _checker(
 ) -> tuple[SandboxComparator, ScriptedSandbox]:
     sb = ScriptedSandbox(reset=reset, staging=staging, unpack=unpack, comparator=comparator)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
-    return SandboxComparator(), sb
+    return SandboxComparator("docker"), sb
 
 
 async def test_check_accepts_on_exit_zero(monkeypatch: pytest.MonkeyPatch) -> None:

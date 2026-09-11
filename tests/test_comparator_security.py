@@ -99,7 +99,7 @@ async def _check(
     helpers: dict[str, str] | None = None,
 ) -> CheckOutcome:
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
-    return await SandboxComparator().check(
+    return await SandboxComparator("docker").check(
         spec, _tar_of(submission, helpers), decl="tgt", claim=claim
     )
 
