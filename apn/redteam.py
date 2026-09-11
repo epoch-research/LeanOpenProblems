@@ -44,7 +44,8 @@ from apn.dataset import OEIS_DIR, fc_commit, fc_profile
 from apn.layout import ENTRY_PATH
 from apn.scorer import proof_scorer
 from apn.solver import gated_incorrect_message, submit
-from apn.task import SandboxBackend, get_sandbox_config
+from apn.sandbox import SandboxBackend
+from apn.task import get_sandbox_config, get_scoring_config
 from apn.tools import bash, resources
 
 # Where the apn codebase is unpacked in the agent sandbox for the agent to study.
@@ -148,6 +149,10 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
     hardened verifier -- the adversary simply gets to reach the internet from
     the box it works in (fetch tools, references, payloads).
 
+    On k8s the comparator is no longer in the config being post-processed here
+    at all: it is an on-demand release of its own, and its isolation is set in
+    :func:`apn.task.get_scoring_values_content`.
+
     The modified config is written to a distinct, backend-appropriately named
     sibling file so the base config other tasks read is never clobbered
     (k8s_sandbox treats any file not named ``*compose.yaml`` as chart values;
@@ -161,14 +166,18 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
         # network, which NATs to the host (internet).
         agent.pop("network_mode", None)
     else:  # k8s
-        # The agent-env chart's egress is a *namespace-wide* Cilium allow driven
+        # The agent-env chart's egress is a *release-wide* Cilium allow driven
         # by the top-level allowDomains/allowEntities/allowCIDR (empty by default
         # == offline, the k8s equal of `network_mode: none`). Granting the
         # `world` entity opens the internet and enables `*` DNS resolution.
         # Turning off the agent's own per-service isolation lets it inherit that
-        # allow; the comparator keeps `networkIsolated: True`, whose per-service
-        # egressDeny/ingressDeny wins over the namespace allow in Cilium, so the
-        # verifier stays fully offline.
+        # allow. The scoring release is a *separate* Helm install, so this policy
+        # does not select its pods -- the chart's endpointSelector is keyed on
+        # `app.kubernetes.io/instance: <release name>`, not just the namespace.
+        # The verifier is therefore offline twice over: nothing in its own
+        # release's values opens egress, and `networkIsolated: True`
+        # (apn.task.get_scoring_values_content) adds an explicit per-service
+        # egressDeny/ingressDeny on top.
         agent["networkIsolated"] = False
         config["allowEntities"] = ["world"]
     src = Path(path)
@@ -238,7 +247,14 @@ def apn_redteam_collatz(
     return Task(
         dataset=MemoryDataset([_collatz_sample()], name="redteam_collatz"),
         solver=lean_redteam_prover(gated=gated),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(
+            SandboxComparator(
+                backend=sandbox_backend,
+                scoring_values=(
+                    get_scoring_config(_FC_PIN) if sandbox_backend == "k8s" else None
+                ),
+            )
+        ),
         # The agent's container gets internet (red-team only); the comparator
         # verifier service stays network-isolated (see the helper).
         sandbox=_sandbox_with_agent_internet(sandbox_backend),

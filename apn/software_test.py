@@ -41,7 +41,8 @@ from inspect_ai.tool import text_editor
 from inspect_ai.util import sandbox
 
 from apn.dataset import OEIS_DIR, fc_commit
-from apn.task import SandboxBackend, get_sandbox_config
+from apn.sandbox import SandboxBackend
+from apn.task import get_sandbox_config
 from apn.tools import bash, resources
 
 logger = logging.getLogger(__name__)
