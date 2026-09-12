@@ -4,7 +4,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import yaml
 from inspect_ai import Task, task
@@ -27,6 +27,7 @@ from apn.dataset import (
     personal_corresp_dataset,
     oeis_dataset,
 )
+from apn.sandbox import SandboxBackend
 from apn.scorer import proof_scorer
 
 SANDBOX_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_sandbox"
@@ -35,8 +36,6 @@ IMAGE_REPOSITORY_DEFAULT = "leanopenproblems"
 # Compose interpolates ${VAR:-default} itself; the k8s values file is consumed
 # verbatim by the Helm chart, so its writer resolves the variable at write time.
 IMAGE_REPOSITORY = f"${{{IMAGE_REPOSITORY_VAR}:-{IMAGE_REPOSITORY_DEFAULT}}}"
-
-SandboxBackend = Literal["docker", "k8s"]
 
 # --------------------------------------------------------------------------- #
 # Shared sandbox constants. Both backend writers draw from these so the two    #
@@ -113,50 +112,86 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     return yaml.safe_dump(compose, sort_keys=False)
 
 
+def _image_repository() -> str:
+    """The image repository, resolved at write time (Helm does not interpolate
+    environment variables; compose does, hence the two spellings)."""
+    return os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
+
+
+def _k8s_resources(memory_gib: int) -> dict[str, Any]:
+    """Just a memory limit: k8s defaults the request to the limit (so
+    scheduling still reserves it), and CPU is compressible, so no CPU knobs."""
+    return {"limits": {"memory": f"{memory_gib}Gi"}}
+
+
 def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
-    Written directly in the Helm chart's vocabulary. k8s_sandbox could
-    auto-convert the compose file, but the comparator ``runtimeClassName`` pin
-    must not ride through a translation layer while comparator#83 is open: a
-    dropped or mistranslated pin lands that pod on gvisor, where landrun
-    silently disables (first note below). Notes:
+    The agent sandbox only. Declares no ``comparator`` sandbox: on k8s the
+    comparator is a separate, on-demand Helm release installed and uninstalled
+    around each check.
 
-    - ``runtimeClassName: CLUSTER_DEFAULT`` is the chart's magic string for
-      "do not set a runtime class": pods run under the node's default runtime
-      (runc), where landrun's Landlock syscalls exist. Without the pin the
-      chart defaults to gvisor, whose sentry does not implement Landlock --
-      and until comparator#83 lands upstream that failure is *silent*, so this
-      eval must not run under gvisor/`isolation: strict` (plan §7.6).
-    - The image repository is resolved at write time (Helm does not
-      interpolate environment variables).
+    Note, the image repository is resolved at write time (Helm does not interpolate
+    environment variables).
     """
-    repository = os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
     agent_kind = _agent_image_kind(literature)
-
-    # Just a memory limit: k8s defaults the request to the limit (so
-    # scheduling still reserves it), and CPU is compressible, so no CPU knobs.
-    def resources(memory_gib: int) -> dict[str, Any]:
-        return {"limits": {"memory": f"{memory_gib}Gi"}}
-
     values: dict[str, Any] = {
         "services": {
             "default": {
-                "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
+                "image": f"{_image_repository()}:{get_identifier_for_image(agent_kind, fc_commit)}",
                 "networkIsolated": True,
                 "dnsRecord": True,
-                "resources": resources(AGENT_MEMORY_GIB),
-            },
-            "comparator": {
-                "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
-                "runtimeClassName": "CLUSTER_DEFAULT",
-                "networkIsolated": True,
-                "dnsRecord": True,
-                "resources": resources(COMPARATOR_MEMORY_GIB),
+                "resources": _k8s_resources(AGENT_MEMORY_GIB),
             },
         }
     }
     return yaml.safe_dump(values, sort_keys=False)
+
+
+def get_scoring_values_content(fc_commit: str) -> str:
+    """The chart-native ``comparator`` service, for the on-demand scoring
+    release.
+
+    The comparator ``runtimeClassName`` pin must not ride through a translation
+    layer while comparator#83 is open. A dropped or mistranslated pin lands that
+    pod on gvisor, where landrun silently disables.
+    """
+    values: dict[str, Any] = {
+        "services": {
+            "default": {
+                "image": f"{_image_repository()}:{get_identifier_for_image('comparator', fc_commit)}",
+                # Dropping this pin lands the verifier on
+                # gvisor, where landrun's Landlock syscalls do not exist and
+                # comparator's --best-effort disables itself *without error*.
+                # ``CLUSTER_DEFAULT`` is the chart's magic string for "do not set a
+                # runtime class", i.e. the node's default runtime (runc).
+                "runtimeClassName": "CLUSTER_DEFAULT",
+                "networkIsolated": True,
+                "dnsRecord": True,
+                "resources": _k8s_resources(COMPARATOR_MEMORY_GIB),
+            },
+        }
+    }
+    return yaml.safe_dump(values, sort_keys=False)
+
+
+def _config_dir(fc_commit: str, variant: str | None = None) -> Path:
+    """Generated configs, isolated per (apn version, FC pin) and, for the
+    per-task ones, per corpus variant, so they cannot clobber each other."""
+
+    directory = (
+        SANDBOX_FILES_DIR / _docker_tag_component(__version__) / f"fc_{fc_commit[:12]}"
+    )
+    if variant:
+        directory = directory / variant
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def _write_if_changed(path: Path, content: str) -> str:
+    if not path.exists() or path.read_text() != content:
+        path.write_text(content)
+    return str(path)
 
 
 def get_sandbox_config(
@@ -169,14 +204,7 @@ def get_sandbox_config(
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
     per-(version, FC pin, variant) subdirs so they don't clobber each other.
     """
-    variant = "corpus" if literature else "closed-book"
-    directory = (
-        SANDBOX_FILES_DIR
-        / _docker_tag_component(__version__)
-        / f"fc_{fc_commit[:12]}"
-        / variant
-    )
-    directory.mkdir(parents=True, exist_ok=True)
+    directory = _config_dir(fc_commit, "corpus" if literature else "closed-book")
     if backend == "docker":
         path = directory / "compose.yaml"
         content = get_compose_file_content(fc_commit, literature)
@@ -187,15 +215,34 @@ def get_sandbox_config(
         raise ValueError(
             f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'."
         )
-    if not path.exists() or path.read_text() != content:
-        path.write_text(content)
-    return (backend, str(path))
+    return (backend, _write_if_changed(path, content))
+
+
+def get_scoring_config(fc_commit: str) -> str:
+    """Path to the scoring release's values file (k8s only).
+
+    Keyed on (version, pin) but not the corpus variant -- the verifier image
+    is the same either way. Named ``scoring-values.yaml``: anything ending in
+    ``compose.yaml``/``compose.yml`` is parsed as compose by k8s_sandbox.
+    """
+    return _write_if_changed(
+        _config_dir(fc_commit) / "scoring-values.yaml",
+        get_scoring_values_content(fc_commit),
+    )
 
 
 def get_compose_file(fc_commit: str, literature: bool = False) -> Path:
     """The docker-backend compose file (kept for the test suites, which drive
     the docker sandbox lifecycle directly)."""
     return Path(get_sandbox_config(fc_commit, literature, "docker")[1])
+
+
+def _comparator(fc_commit: str, backend: SandboxBackend) -> SandboxComparator:
+    """The checker for a task, wired for its backend."""
+    return SandboxComparator(
+        backend=backend,
+        scoring_values=get_scoring_config(fc_commit) if backend == "k8s" else None,
+    )
 
 
 @task
@@ -223,7 +270,7 @@ def apn_oeis(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )
 
@@ -246,7 +293,7 @@ def apn_fc100open(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )
 
@@ -270,7 +317,7 @@ def apn_erdos(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )
 
@@ -299,7 +346,7 @@ def apn_erdos_autoformalized(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )
 

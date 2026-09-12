@@ -3,13 +3,16 @@ from __future__ import annotations
 import io
 import json
 import tarfile
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Literal, Protocol, runtime_checkable
+from collections.abc import AsyncIterator
 
-from inspect_ai.util import OutputLimitExceededError, sandbox
+from inspect_ai.util import OutputLimitExceededError, SandboxEnvironment, sandbox
 
 from apn.layout import ENTRY_MODULE, ENTRY_PATH, ENTRY_REL, PROJECT, SUBMISSION_DIR
+from apn.sandbox import SandboxBackend, k8s_scoring_env
 
 # Paths inside the trusted `comparator` sandbox (the comparator stage of
 # apn/lean/Dockerfile). The challenge is staged into the lake project's `run/`
@@ -260,15 +263,38 @@ class SandboxComparator:
         self,
         sandbox_name: str | None = "comparator",
         timeout: int = 60 * 60,
+        backend: SandboxBackend = "docker",
+        scoring_values: str | None = None,
     ) -> None:
         self._sandbox_name = sandbox_name
         self._timeout = timeout
+        self._backend = backend
+        self._scoring_values = scoring_values
+        if backend == "k8s" and scoring_values is None:
+            raise ValueError(
+                "the k8s backend needs a scoring_values path "
+                "(apn.task.get_scoring_config)."
+            )
+
+    @asynccontextmanager
+    async def _env(self) -> AsyncIterator[SandboxEnvironment]:
+        """The comparator sandbox for one check.
+
+        On docker the comparator is a long-lived service, resolved by name.
+
+        On k8s the comparator is a Helm release of its own, installed as
+        needed and uninstalled when the scoring is finished.
+        """
+        if self._backend == "docker":
+            yield sandbox(self._sandbox_name)
+        else:
+            assert self._scoring_values is not None  # enforced in __init__
+            async with k8s_scoring_env(self._scoring_values) as env:
+                yield env
 
     async def check(
         self, spec: str, submission_tar: bytes, decl: str, claim: Claim
     ) -> CheckOutcome:
-        sb = sandbox(self._sandbox_name)
-
         # Host-side: re-serialize the agent's tar as a trusted archive of its
         # Lean modules (a verdict if that is impossible; the sandbox is never
         # touched).
@@ -277,6 +303,17 @@ class SandboxComparator:
         except InvalidSubmission as exc:
             return CheckOutcome(ok=False, stage="entry_missing", detail=str(exc))
 
+        async with self._env() as sb:
+            return await self._check_inner(sb, spec, staged, decl, claim)
+
+    async def _check_inner(
+        self,
+        sb: SandboxEnvironment,
+        spec: str,
+        staged: bytes,
+        decl: str,
+        claim: Claim,
+    ) -> CheckOutcome:
         # Trusted filesystem reset (a reference step: failure raises). It
         # restores a pristine .lake -- the only path the untrusted build can
         # write under its landrun sandbox; it does not terminate processes a
