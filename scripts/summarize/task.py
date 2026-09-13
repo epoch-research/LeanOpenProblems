@@ -115,8 +115,11 @@ class Conjecture(NamedTuple):
 class Solve(NamedTuple):
     id: str
     oeis_id: str
-    # The accepted submission's Lean modules, {Submission-relative path: text};
-    # always includes the entry module ``Spec.lean``.
+    # Every file the agent left under Submission/, {Submission-relative path:
+    # text}; always includes the entry module ``Spec.lean``. Only ``Spec.lean``
+    # and the modules it transitively imports were checked; the prompt tells
+    # the summarizer that and lets it read the imports itself rather than
+    # having us pick the scored modules with a regex.
     files: dict[str, str]
     settlement: Literal["proved", "disproved"]
     directory: Path
@@ -237,13 +240,15 @@ def solved_samples(run_dir: Path) -> list[Solve]:
             print(f"warning: no oeis_id for accepted sample {sample_dir.name}", file=sys.stderr)
             continue
 
-        # The whole module tree the checker scored (extract_plaintext writes
-        # it back under Submission/), not just the entry module.
+        # Everything the agent left under Submission/ (extract_plaintext writes
+        # the captured tree back there; binary files were dropped at capture),
+        # scratch included: the prompt says what is in scope.
         submission_dir = sample_dir / "Submission"
         try:
             files = {
                 path.relative_to(submission_dir).as_posix(): path.read_text()
-                for path in sorted(submission_dir.rglob("*.lean"))
+                for path in sorted(submission_dir.rglob("*"))
+                if path.is_file()
             }
         except OSError as exc:
             print(f"warning: cannot read accepted proof under {submission_dir}: {exc}", file=sys.stderr)
@@ -337,9 +342,13 @@ def proof_prompt(
     instruction = output.instruction.format(noun=noun)
     return f"""\
 An AI agent {solve.settlement} the conjecture {solve.id} about OEIS sequence
-{solve.oeis_id}. The accepted {noun} is the Lean module tree under {SUBMISSION_DIR}/:
-its entry module is {ENTRY_PATH}, and any helper modules it imports
-(`import Submission.…`) are beside it.
+{solve.oeis_id}. {SUBMISSION_DIR}/ holds every file the agent left there. In scope is the
+{noun} the checker accepted: the entry module {ENTRY_PATH} together with the
+`Submission.*` modules it transitively imports (`import Submission.…`); follow
+the imports to find them. Anything else under {SUBMISSION_DIR}/ (Lean modules
+nothing imports, scripts, notes) was never compiled and is not part of the
+verified {noun}: do not present it as part of the argument, though it may help
+you understand the authors' intent.
 
 Call {output.submit_tool} with {instruction}.
 
