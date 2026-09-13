@@ -40,13 +40,16 @@ from apn.task import get_compose_file
 _IMPORT = "import FormalConjectures.Util.ProblemImports\n"
 
 
-def _tar_of(spec_text: str) -> bytes:
+def _tar_of(spec_text: str, helpers: dict[str, str] | None = None) -> bytes:
+    """A submission tar: ``Spec.lean`` plus any ``{Submission-relative path:
+    contents}`` helper modules."""
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as tf:
-        data = spec_text.encode()
-        info = tarfile.TarInfo("./Spec.lean")
-        info.size = len(data)
-        tf.addfile(info, io.BytesIO(data))
+        for name, text in {"./Spec.lean": spec_text, **(helpers or {})}.items():
+            data = text.encode()
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tf.addfile(info, io.BytesIO(data))
     return buf.getvalue()
 
 
@@ -93,15 +96,18 @@ async def _check(
     submission: str,
     *,
     claim: Claim = "proof",
+    helpers: dict[str, str] | None = None,
 ) -> CheckOutcome:
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
-    return await SandboxComparator().check(spec, _tar_of(submission), decl="tgt", claim=claim)
+    return await SandboxComparator().check(
+        spec, _tar_of(submission, helpers), decl="tgt", claim=claim
+    )
 
 
 # --------------------------------------------------------------------------- #
 # Cross-attempt filesystem poisoning (§3.1 item 1; §6).                        #
 # --------------------------------------------------------------------------- #
-# A compile-time #eval that, during `lake build Solution`, replaces the
+# A compile-time #eval that, during `lake build Submission.Spec`, replaces the
 # writable `.lake/packages` symlink (into the pristine tree outside the write
 # grant) with a poisoned real directory. landrun grants writes to `.lake`, so
 # the swap succeeds *within* the check; the next check's reset-dotlake.sh must
@@ -201,6 +207,76 @@ async def test_permission_trap_in_dotlake_is_cleared(
             f"honest proof after a permission-trap attempt was not accepted "
             f"(reset failed to clear the trap?): stage={second.stage}\n"
             f"{second.detail[-1500:]}"
+        )
+
+
+# A compile-time #eval that tries to alter the *staged* inputs from inside the
+# build -- rewrite the helper module the entry imports, drop a new module
+# beside it, and plant chmod-000 traps on the staging directories (the trap
+# that works in .lake, which the build owns). All in-process IO.FS again, and
+# every failure swallowed so the build itself proceeds. run/ and Submission/
+# are root-owned staging while the build runs as the comparator user, so
+# Landlock aside (it does not govern chmod), plain ownership must defeat this.
+_TAMPER_STAGING = (
+    '#eval (do\n'
+    '  let sub := "/workspace/leanproject/Submission"\n'
+    '  for p in [sub ++ "/Helpers/Aux.lean", sub ++ "/Extra.lean"] do\n'
+    '    try IO.FS.writeFile p "theorem planted : False := sorry\\n" catch _ => pure ()\n'
+    '  for d in [sub ++ "/Helpers", sub, "/workspace/leanproject/run"] do\n'
+    '    try IO.setAccessRights d {} catch _ => pure ()\n'
+    '  : IO Unit)\n'
+)
+
+
+async def test_staged_submission_tree_is_beyond_the_build(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Check #1's multi-module submission tries, during its own build, to
+    rewrite its staged helper, add a module, and trap the staging directories;
+    it must reject (its target is a sorry) *and* leave the staged tree exactly
+    as the checker unpacked it. Check #2's honest multi-module proof must then
+    be accepted -- the staging reset met no trap."""
+    helper = _IMPORT + "theorem aux : 1 + 1 = 2 := by norm_num\n"
+    async with _comparator_env() as env:
+        tamper_submission = _IMPORT + "import Submission.Helpers.Aux\n" + _TAMPER_STAGING + (
+            "theorem tgt : 1 + 1 = 2 := by sorry\n"
+            "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+        )
+        first = await _check(
+            env, monkeypatch, _spec("1 + 1 = 2"), tamper_submission,
+            helpers={"./Helpers/Aux.lean": helper},
+        )
+        assert not first.ok, "the tampering submission is a wrong proof; it must reject"
+
+        # The staged tree after check #1: the helper is byte-identical to what
+        # was staged, nothing was added, and no directory lost its mode.
+        listing = await env.exec(
+            ["find", "/workspace/leanproject/Submission", "/workspace/leanproject/run",
+             "-printf", "%p %u %m\\n"]
+        )
+        assert listing.success, listing.stderr
+        entries: dict[str, tuple[str, str]] = {}
+        for line in listing.stdout.splitlines():
+            path, user, mode = line.rsplit(" ", 2)
+            entries[path] = (user, mode)
+        assert entries["/workspace/leanproject/Submission"] == ("root", "755")
+        assert entries["/workspace/leanproject/Submission/Helpers"] == ("root", "755")
+        assert entries["/workspace/leanproject/run"] == ("root", "755")
+        assert "/workspace/leanproject/Submission/Extra.lean" not in entries
+        staged_helper = await env.read_file("/workspace/leanproject/Submission/Helpers/Aux.lean")
+        assert staged_helper == helper
+
+        honest = _IMPORT + "import Submission.Helpers.Aux\n" + (
+            "theorem tgt : 1 + 1 = 2 := aux\n"
+            "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+        )
+        second = await _check(
+            env, monkeypatch, _spec("1 + 1 = 2"), honest,
+            helpers={"./Helpers/Aux.lean": helper},
+        )
+        assert second.ok, (
+            f"honest multi-module proof after a staging-tamper attempt was not accepted: "
+            f"stage={second.stage}\n{second.detail[-1500:]}"
         )
 
 

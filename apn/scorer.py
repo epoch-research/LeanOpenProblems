@@ -26,8 +26,9 @@ CLAIM_STORE_KEY = "submission_claim"
 
 @scorer(metrics=[accuracy(), stderr()])
 def proof_scorer(checker: ProofChecker) -> Scorer:
-    """Score a sample by checking the agent's ``Submission/Spec.lean`` with the
-    configured proof checker (Comparator in production)."""
+    """Score a sample by checking the agent's ``Submission/`` module tree (entry
+    module ``Spec.lean``) with the configured proof checker (Comparator in
+    production)."""
 
     async def score(state: TaskState, target: Target) -> Score:
         # Per-attempt attempt index, kept in the sample store (the react/deepagent

@@ -16,6 +16,10 @@ Examples::
     inspect eval scripts/summarize/task.py@summarize_proofs \
         -T run_dir=logs/<run> -T subset=all -T metadata_dir=metadata \
         --model openai/gpt-5.6-sol --log-dir logs/summarize
+
+The canonical proof-summarization settings for published results live in
+``scripts/summarize/summarize_proofs.sh``; prefer it over hand-typed
+``inspect eval`` commands.
 """
 
 from __future__ import annotations
@@ -35,7 +39,7 @@ from inspect_ai.util import sandbox, store
 
 import apn
 from apn.dataset import OEIS_DIR, fc_commit, load_subset, oeis_dataset
-from apn.layout import ENTRY_PATH
+from apn.layout import ENTRY_PATH, SUBMISSION_DIR
 from apn.task import SANDBOX_FILES_DIR, IMAGE_REPOSITORY, get_identifier_for_image
 from apn.tools import bash
 
@@ -111,7 +115,11 @@ class Conjecture(NamedTuple):
 class Solve(NamedTuple):
     id: str
     oeis_id: str
-    proof: str
+    # Every Lean module the agent left under Submission/, {Submission-relative
+    # path: text}; always includes the entry module ``Spec.lean``. Only
+    # ``Spec.lean`` and the modules it transitively imports were checked; the
+    # prompt says so.
+    files: dict[str, str]
     settlement: Literal["proved", "disproved"]
     directory: Path
 
@@ -231,18 +239,27 @@ def solved_samples(run_dir: Path) -> list[Solve]:
             print(f"warning: no oeis_id for accepted sample {sample_dir.name}", file=sys.stderr)
             continue
 
-        proof_path = sample_dir / "Submission" / "Spec.lean"
+        # Every Lean module the agent left under Submission/ (extract_plaintext
+        # writes the captured tree back there), unimported scratch included:
+        # the prompt says what is in scope.
+        submission_dir = sample_dir / "Submission"
         try:
-            proof = proof_path.read_text()
+            files = {
+                path.relative_to(submission_dir).as_posix(): path.read_text()
+                for path in sorted(submission_dir.rglob("*.lean"))
+            }
         except OSError as exc:
-            print(f"warning: cannot read accepted proof {proof_path}: {exc}", file=sys.stderr)
+            print(f"warning: cannot read accepted proof under {submission_dir}: {exc}", file=sys.stderr)
+            continue
+        if "Spec.lean" not in files:
+            print(f"warning: accepted proof {sample_dir.name} has no Submission/Spec.lean", file=sys.stderr)
             continue
 
         solves.append(
             Solve(
                 id=sample_dir.name,
                 oeis_id=str(oeis_id),
-                proof=proof,
+                files=files,
                 settlement=settlement,
                 directory=sample_dir,
             )
@@ -323,7 +340,12 @@ def proof_prompt(
     instruction = output.instruction.format(noun=noun)
     return f"""\
 An AI agent {solve.settlement} the conjecture {solve.id} about OEIS sequence
-{solve.oeis_id}. The accepted {noun} is in {ENTRY_PATH}.
+{solve.oeis_id}. {SUBMISSION_DIR}/ holds every Lean module the agent left there. In scope is
+the {noun} the checker accepted: the entry module {ENTRY_PATH} together with
+the `Submission.*` modules it transitively imports (`import Submission.…`);
+follow the imports to find them. Any other module under {SUBMISSION_DIR}/ was
+never compiled and is not part of the verified {noun}: do not present it as
+part of the argument, though it may help you understand the authors' intent.
 
 Call {output.submit_tool} with {instruction}.
 
@@ -422,7 +444,8 @@ def submit_full_proof() -> Tool:
 def summarizer(kind: Literal["sequence", "conjecture", "proof"]) -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         if kind == "proof":
-            await sandbox().write_file(ENTRY_PATH, state.metadata["proof"])
+            for rel, text in state.metadata["files"].items():
+                await sandbox().write_file(f"{SUBMISSION_DIR}/{rel}", text)
             tools = [text_editor(), bash(timeout=300)]
             proof_output = state.metadata["proof_output"]
             if proof_output == "full_proof":
@@ -534,7 +557,9 @@ def summarize_proofs(
     run_dir: str,
     subset: str = "lite",
     metadata_dir: str = "metadata",
-    token_limit: int = 500_000,
+    # A safety net, not a target: the summarizer reads the proof and Mathlib
+    # freely, and at 500k about one sample in 300 ran out before submitting.
+    token_limit: int = 5_000_000,
 ) -> Task:
     records = load_records()
     provenance = load_provenance()
@@ -562,7 +587,7 @@ def summarize_proofs(
                     ),
                     id=f"{solve.id}__{output.name}",
                     metadata={
-                        "proof": solve.proof,
+                        "files": solve.files,
                         "proof_id": solve.id,
                         "oeis_id": solve.oeis_id,
                         "settlement": solve.settlement,

@@ -14,9 +14,9 @@ Why elaborate rather than pattern-match the text: Lean 4's surface syntax is
 environment-extensible (Mathlib notation, custom elaborators), so only Lean's
 own parser/elaborator can reliably identify declarations and their extents.
 This mirrors SafeVerify's `replayFile` (it replays oleans; we must read source,
-which oleans do not carry) and Pantograph's frontend `CompilationStep` loop:
-diff the environment before/after each command and keep the new constants that
-have a `findDeclarationRanges?` (this filters compiler auxiliaries such as
+which oleans do not carry) as a per-command frontend loop: diff the environment
+before/after each command and keep the new constants that have a
+`findDeclarationRanges?` (this filters compiler auxiliaries such as
 `._eq`/`.match` while keeping the user's declarations).
 
 Usage:
@@ -205,7 +205,7 @@ unsafe def main (args : List String) : IO UInt32 := do
   -- initializers and `loadExts := true` applies the environment-extension
   -- entries (which include the notation/parser tables). Without `loadExts`,
   -- trailing notation like `^`/`↔`/`∣` is missing and declarations parse only
-  -- up to the first infix operator. (Mirrors Pantograph's frontend setup.)
+  -- up to the first infix operator.
   enableInitializersExecution
   -- All target files share this single import; build the environment once and
   -- reuse it for every file.

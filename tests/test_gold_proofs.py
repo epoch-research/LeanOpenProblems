@@ -25,7 +25,7 @@ each conjecture:
 
 This is the complement of every other checker test. Those prove Comparator says
 **no** to bad proofs (a ``sorry``/custom axiom/build failure is rejected --
-``test_singlefile_proof.py``, ``test_checker.py``) and that our isolated
+``test_proof_acceptance.py``, ``test_checker.py``) and that our isolated
 statements line up with the published ones (the ``test_oeis_isolation.py``
 oracle). This proves it says **yes** to the known-good proofs, end to end. It is
 the only test that catches the over-strict-checker class: an axiom-allowlist
@@ -36,7 +36,7 @@ tank the benchmark with every rejection test still green.
 The ``comparator`` sandbox is brought up **once for the whole module** through
 Inspect's lifecycle from the production compose (``apn.task.get_compose_file``,
 which builds from ``apn/lean/Dockerfile``), exactly like
-``tests/test_singlefile_proof.py``, and every conjecture is a parametrized async
+``tests/test_proof_acceptance.py``, and every conjecture is a parametrized async
 case that reuses it -- the checker resets the workspace before each check, so a
 shared sandbox is safe for these honest proofs. The fixture and cases share one
 module-scoped event loop (pytest-asyncio ``loop_scope="module"``) -- driving
@@ -80,7 +80,7 @@ GOLD_STEMS = sorted(p.stem for p in GOLD_DIR.glob("*.lean"))
 
 def _tar_of(files: dict[str, str]) -> bytes:
     """Pack ``{relative path: contents}`` into the tar the checker consumes
-    (members relative to ``Submission/``). Mirrors ``test_singlefile_proof.py``."""
+    (members relative to ``Submission/``). Mirrors ``test_proof_acceptance.py``."""
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as tf:
         for name, content in files.items():
@@ -95,7 +95,7 @@ def _tar_of(files: dict[str, str]) -> bytes:
 async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """Bring up the production compose and yield the live ``{name: env}`` dict.
 
-    Mirrors ``tests/test_singlefile_proof.py``: Inspect's sandbox lifecycle
+    Mirrors ``tests/test_proof_acceptance.py``: Inspect's sandbox lifecycle
     against ``apn.task.get_compose_file`` (which builds from
     ``apn/lean/Dockerfile``), so the image is current by construction. The
     checker uses the trusted ``comparator`` sandbox, exposed here by name.

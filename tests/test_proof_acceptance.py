@@ -1,4 +1,4 @@
-"""Integration tests for single-file submissions against the real comparator image.
+"""Integration tests for submission acceptance against the real comparator image.
 
 These exercise the *actual* :class:`apn.checker.SandboxComparator` against the
 real ``comparator`` sandbox (Lean + Mathlib + FormalConjectures + the Comparator
@@ -16,24 +16,34 @@ We call ``SandboxComparator().check(spec, submission, decl, claim)`` with
 ``apn.checker.sandbox`` pointed at the live comparator env, so the verdict here
 is exactly the one the scorer would return for that submission.
 
-What they cover (the soundness-relevant behaviour of the single-file model; the
-plumbing -- tar shaping, verdict mapping -- is unit-tested in ``test_checker.py``):
+What they cover (the acceptance side of the submission model -- a submission is
+the Lean module tree under ``Submission/``, entry module ``Spec.lean``; the
+plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
+``test_checker.py`` and the cheating attempts in ``test_lean_vuln_e2e.py``):
 
 * a single-file proof is accepted;
 * a theorem whose fully qualified name contains a dotted guillemet-quoted
   component is accepted (the shape of three live FC100 targets);
-* the same accept path in the *erdos* pin's comparator image -- the
-  institutionalized pin-move smoke test: that pin sits past upstream's
-  ``FormalConjecturesUtil`` rename, so the end-to-end build + kernel replay run
-  with the module-built util oleans in the import closure;
+* **a proof split across helper modules is accepted** -- ``Spec.lean`` imports
+  ``Submission.Helpers.Aux``, which imports a helper of its own; the checker
+  stages the whole tree at ``Submission/`` in the comparator sandbox, where the
+  image's lakefile registers the ``Submission`` library, so Lake builds the
+  helpers as part of building the entry module;
+* the same, in the *erdos* pin's comparator image -- the institutionalized
+  pin-move smoke test: that pin sits past upstream's ``FormalConjecturesUtil``
+  rename, so the end-to-end build + kernel replay run with the module-built
+  util oleans in the import closure, and the multi-module layout is exercised
+  on the second live Lean track too;
 * a single-file disproof is accepted under the ``disproof`` claim;
-* **a submission that ``import``s a helper module of its own is rejected** --
-  the load-bearing single-file guard. Only ``Spec.lean`` becomes
-  ``run/Solution.lean``; ``Submission`` is not a registered Lake library, so
-  ``import Submission.…`` does not resolve and the solution build fails;
 * a pattern-matching ``def`` in the entry module + a real proof is accepted --
-  the module-name story (Challenge and Solution are different modules by design,
-  so this confirms a faithful private/generated-name closure still matches);
+  the module-name story (Challenge and the entry module are different modules
+  by design, so this confirms a faithful private/generated-name closure still
+  matches);
+* a helper at a name Lake can only import with ``«»`` quoting
+  (``my-helpers/Aux.lean``, imported as ``Submission.«my-helpers».Aux``) is
+  staged and resolves like any other -- the checker stages every ``.lean``
+  file inside the tree and leaves importability to Lake, which decides it
+  identically in both sandboxes;
 * a missing/renamed entry module, and an empty submission, are rejected as a
   verdict (``entry_missing``), host-side, without touching the sandbox.
 
@@ -93,9 +103,29 @@ def _spec(theorem_body: str, *, defs: str = "", imp: str = _IMPORT) -> str:
     )
 
 
+def _multi_module_submission(imp: str = _IMPORT) -> dict[str, str]:
+    """An honest proof of ``1 + 1 = 2`` split across three modules: the entry
+    imports ``Submission.Helpers.Aux``, which imports
+    ``Submission.Helpers.Deep.Base``, where the actual proof lives."""
+    return {
+        "Spec.lean": (
+            imp
+            + "import Submission.Helpers.Aux\n"
+            + "theorem tgt : 1 + 1 = 2 := aux_eq\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+        ),
+        "Helpers/Aux.lean": (
+            imp
+            + "import Submission.Helpers.Deep.Base\n"
+            + "theorem aux_eq : 1 + 1 = 2 := base_eq\n"
+        ),
+        "Helpers/Deep/Base.lean": imp + "theorem base_eq : 1 + 1 = 2 := by norm_num\n",
+    }
+
+
 @asynccontextmanager
 async def _comparator_env(
-    pin: str, task_name: str = "pytest_singlefile_comparator"
+    pin: str, task_name: str = "pytest_acceptance_comparator"
 ) -> AsyncIterator[SandboxEnvironment]:
     """Bring up the production compose at FC ``pin`` and yield the live
     ``comparator`` env.
@@ -209,22 +239,39 @@ async def test_quoted_decl_name_component_containing_dot_is_accepted(
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_single_file_proof_is_accepted_at_erdos_pin(
+async def test_multi_module_proof_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The submission is the whole Submission/ module tree: the entry imports a
+    # helper that imports another (in a nested directory). The checker stages
+    # the tree at Submission/ in the comparator sandbox, where the image's
+    # lakefile registers the `Submission` library, so `lake build
+    # Submission.Spec` compiles both helpers first, and the full closure is
+    # exported, compared and kernel-replayed.
+    spec = _spec("1 + 1 = 2")
+    outcome = await _check(comparator_env, monkeypatch, spec, _multi_module_submission())
+    assert outcome.ok, (
+        f"a proof split across helper modules should be accepted, got "
+        f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+    )
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_multi_module_proof_is_accepted_at_erdos_pin(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The erdos dataset pins a post-rename FC commit whose util lib
     # (FormalConjecturesUtil) is built with the Lean module system; this
     # institutionalizes the pin-move smoke test (Gate B of the migration): the
     # solution build + kernel replay work end to end in that pin's comparator
-    # image, with the module-built oleans in the import closure.
+    # image, with the module-built oleans in the import closure -- and, since
+    # every image shares the one lakefile recipe, the `Submission` library and
+    # the multi-module layout are exercised on this Lean track too.
     pin = fc_commit(ERDOS_DIR)
     imp = f"import {fc_profile(pin).util_module}\n"
     spec = _spec("1 + 1 = 2", imp=imp)
-    submission = {"Spec.lean": spec.replace(
-        "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
-    )}
-    async with _comparator_env(pin, task_name="pytest_singlefile_comparator_erdos") as env:
-        outcome = await _check(env, monkeypatch, spec, submission)
+    async with _comparator_env(pin, task_name="pytest_acceptance_comparator_erdos") as env:
+        outcome = await _check(env, monkeypatch, spec, _multi_module_submission(imp))
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
@@ -245,36 +292,14 @@ async def test_single_file_disproof_is_accepted(
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_helper_import_is_rejected(
-    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # The single-file guard. Even an *honest* helper is unusable: only Spec.lean
-    # becomes run/Solution.lean, `Submission` is not a registered Lake library,
-    # so `import Submission.Helpers.Aux` does not resolve and Comparator returns
-    # a rejecting verdict.
-    spec = _spec("1 + 1 = 2")
-    submission = {
-        "Spec.lean": (
-            _IMPORT
-            + "import Submission.Helpers.Aux\n"
-            + "theorem tgt : 1 + 1 = 2 := aux_eq\n"
-            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
-        ),
-        "Helpers/Aux.lean": _IMPORT + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
-    }
-    outcome = await _check(comparator_env, monkeypatch, spec, submission)
-    assert not outcome.ok, f"a helper import must be rejected:\n{outcome.detail[-1500:]}"
-    assert outcome.stage == "comparator"
-
-
-@pytest.mark.asyncio(loop_scope="module")
 async def test_pattern_matching_def_in_entry_is_accepted(
     comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # The submission reproduces a pattern-matching def verbatim and proves the
-    # theorem. Comparator builds Challenge and Solution as different modules by
-    # design; this confirms a faithful proof whose closure includes
-    # compiler-generated equational lemmas still matches.
+    # theorem. Comparator builds Challenge and the entry module
+    # (Submission.Spec) as different modules by design; this confirms a
+    # faithful proof whose closure includes compiler-generated equational
+    # lemmas still matches.
     defs = "def parity : Nat → Bool\n  | 0 => true\n  | (n + 1) => !parity n"
     spec = _spec("parity 0 = true", defs=defs)
     submission = {"Spec.lean": _spec("parity 0 = true", defs=defs).replace(
@@ -284,6 +309,32 @@ async def test_pattern_matching_def_in_entry_is_accepted(
     outcome = await _check(comparator_env, monkeypatch, spec, submission)
     assert outcome.ok, (
         f"pattern-matching def proof should match, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+    )
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_helper_at_quoted_module_name_is_accepted(
+    comparator_env: SandboxEnvironment, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The checker stages every `.lean` file inside the tree
+    # (apn.checker.module_path) and leaves importability to Lake: a helper at
+    # `my-helpers/Aux.lean` is the module `Submission.«my-helpers».Aux`, in the
+    # agent's sandbox and in the comparator's alike, so what builds for the
+    # agent builds for the verifier.
+    spec = _spec("1 + 1 = 2")
+    submission = {
+        "Spec.lean": (
+            _IMPORT
+            + "import Submission.«my-helpers».Aux\n"
+            + "theorem tgt : 1 + 1 = 2 := aux_eq\n"
+            + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
+        ),
+        "my-helpers/Aux.lean": _IMPORT + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
+    }
+    outcome = await _check(comparator_env, monkeypatch, spec, submission)
+    assert outcome.ok, (
+        f"a helper at a quoted module name should be accepted, got "
+        f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
     )
 
 

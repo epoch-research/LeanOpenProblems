@@ -8,7 +8,7 @@ There is no local Lean toolchain, so the container is the ``generate`` stage of
 plus the baked ``extract_ranges`` binary), brought up through Inspect's own
 sandbox lifecycle (``task_init`` / ``init_sandbox_environments_sample`` /
 ``cleanup``) from a compose file that carries a ``build:`` section, exactly
-like ``tests/test_singlefile_proof.py`` and a real eval -- so docker (re)builds
+like ``tests/test_proof_acceptance.py`` and a real eval -- so docker (re)builds
 the image from the current Dockerfile on demand, cache-backed, and a stale
 prebuilt image can never silently satisfy the test. No raw ``docker`` CLI, no
 host bind mount, no pre-provisioned dev container: host ``.lean`` files are
@@ -92,7 +92,7 @@ async def generate_env(task_name: str, fc_commit: str) -> AsyncIterator[DockerSa
 
     Per-session bring-up/tear-down through Inspect's sandbox lifecycle (the same
     path a real eval uses); the docker cache keeps repeat runs cheap. Mirrors
-    ``tests/test_singlefile_proof.py::_sandbox_envs``.
+    ``tests/test_proof_acceptance.py::_sandbox_envs``.
     """
     compose = generate_compose_file(fc_commit)
     await DockerSandboxEnvironment.task_init(task_name, compose)
