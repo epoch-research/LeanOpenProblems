@@ -1,7 +1,7 @@
 #!/bin/sh
 # Trusted per-check reset of the comparator sandbox's `.lake`.
 #
-# Landrun confines the untrusted `lake build Solution` to writes in `.lake`
+# Landrun confines the untrusted `lake build Submission.Spec` to writes in `.lake`
 # (+ `/dev`), so `.lake` is the only place a submission's bytes can persist
 # between checks -- the kill shot being a poisoned Mathlib olean that makes a
 # later check's *trusted* Challenge elaborate to something trivial. The checker

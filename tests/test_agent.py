@@ -11,12 +11,19 @@ guessing blindly.
 
 from __future__ import annotations
 
-from inspect_ai.agent import AgentState
+from typing import Any
+
+import pytest
+from inspect_ai.agent import AgentAttempts, AgentState, AgentSubmit
+from inspect_ai.model import CompactionSummary
 from inspect_ai.scorer import INCORRECT, Score
 
+import apn.solver as solver_module
 from apn.solver import (
     INCORRECT_MESSAGE,
     RESOURCE_INCORRECT_MESSAGE,
+    AgentType,
+    build_agent,
     gated_incorrect_message,
 )
 
@@ -68,3 +75,39 @@ async def test_no_stage_metadata_stays_opaque() -> None:
     score = Score(value=INCORRECT, answer="proof")
     msg = await gated_incorrect_message(AgentState(messages=[]), [score])
     assert msg == INCORRECT_MESSAGE
+
+
+def _build(monkeypatch: pytest.MonkeyPatch, agent_type: AgentType) -> dict[str, Any]:
+    """Call build_agent with the loop constructors stubbed; return the kwargs."""
+    seen: dict[str, Any] = {}
+
+    def fake(**kwargs: Any) -> object:
+        seen.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(solver_module, "deepagent", fake)
+    monkeypatch.setattr(solver_module, "react", fake)
+    build_agent(
+        agent_type,
+        tools=[],
+        attempts=AgentAttempts(attempts=1),
+        submit=AgentSubmit(),
+        on_continue="go",
+        compaction=CompactionSummary(),
+    )
+    return seen
+
+
+def test_deep_agent_offers_only_general_subagent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # deepagent() defaults to [research(), plan(), general()]; we pass general()
+    # alone, since it is the only one that inherits the parent's Lean tools.
+    seen = _build(monkeypatch, "deep")
+    assert [sa.name for sa in seen["subagents"]] == ["general"]
+
+
+def test_react_agent_gets_no_subagents_kwarg(monkeypatch: pytest.MonkeyPatch) -> None:
+    # react() has no subagents parameter; the deep-only kwarg must not leak.
+    seen = _build(monkeypatch, "react")
+    assert "subagents" not in seen

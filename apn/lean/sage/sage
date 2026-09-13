@@ -1,0 +1,5 @@
+#!/bin/sh
+# Sage starts helpers (giac, lcalc, pkg-config, ...) by bare name and expects its
+# env's bin on PATH, as `conda activate` or the classic sage-env would arrange.
+# Give its process exactly that; the agent's own PATH is untouched.
+PATH=/opt/sage/bin:$PATH exec /opt/sage/bin/sage "$@"
