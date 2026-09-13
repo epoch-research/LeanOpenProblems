@@ -16,6 +16,10 @@ Examples::
     inspect eval scripts/summarize/task.py@summarize_proofs \
         -T run_dir=logs/<run> -T subset=all -T metadata_dir=metadata \
         --model openai/gpt-5.6-sol --log-dir logs/summarize
+
+The canonical proof-summarization settings for published results live in
+``scripts/summarize/summarize_proofs.sh``; prefer it over hand-typed
+``inspect eval`` commands.
 """
 
 from __future__ import annotations
@@ -111,8 +115,10 @@ class Conjecture(NamedTuple):
 class Solve(NamedTuple):
     id: str
     oeis_id: str
-    # The accepted submission's Lean modules, {Submission-relative path: text};
-    # always includes the entry module ``Spec.lean``.
+    # Every Lean module the agent left under Submission/, {Submission-relative
+    # path: text}; always includes the entry module ``Spec.lean``. Only
+    # ``Spec.lean`` and the modules it transitively imports were checked; the
+    # prompt says so.
     files: dict[str, str]
     settlement: Literal["proved", "disproved"]
     directory: Path
@@ -233,8 +239,9 @@ def solved_samples(run_dir: Path) -> list[Solve]:
             print(f"warning: no oeis_id for accepted sample {sample_dir.name}", file=sys.stderr)
             continue
 
-        # The whole module tree the checker scored (extract_plaintext writes
-        # it back under Submission/), not just the entry module.
+        # Every Lean module the agent left under Submission/ (extract_plaintext
+        # writes the captured tree back there), unimported scratch included:
+        # the prompt says what is in scope.
         submission_dir = sample_dir / "Submission"
         try:
             files = {
@@ -333,9 +340,12 @@ def proof_prompt(
     instruction = output.instruction.format(noun=noun)
     return f"""\
 An AI agent {solve.settlement} the conjecture {solve.id} about OEIS sequence
-{solve.oeis_id}. The accepted {noun} is the Lean module tree under {SUBMISSION_DIR}/:
-its entry module is {ENTRY_PATH}, and any helper modules it imports
-(`import Submission.…`) are beside it.
+{solve.oeis_id}. {SUBMISSION_DIR}/ holds every Lean module the agent left there. In scope is
+the {noun} the checker accepted: the entry module {ENTRY_PATH} together with
+the `Submission.*` modules it transitively imports (`import Submission.…`);
+follow the imports to find them. Any other module under {SUBMISSION_DIR}/ was
+never compiled and is not part of the verified {noun}: do not present it as
+part of the argument, though it may help you understand the authors' intent.
 
 Call {output.submit_tool} with {instruction}.
 
@@ -547,7 +557,9 @@ def summarize_proofs(
     run_dir: str,
     subset: str = "lite",
     metadata_dir: str = "metadata",
-    token_limit: int = 500_000,
+    # A safety net, not a target: the summarizer reads the proof and Mathlib
+    # freely, and at 500k about one sample in 300 ran out before submitting.
+    token_limit: int = 5_000_000,
 ) -> Task:
     records = load_records()
     provenance = load_provenance()
