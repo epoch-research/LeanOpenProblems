@@ -118,8 +118,7 @@ class Solve(NamedTuple):
     # Every Lean module the agent left under Submission/, {Submission-relative
     # path: text}; always includes the entry module ``Spec.lean``. Only
     # ``Spec.lean`` and the modules it transitively imports were checked; the
-    # prompt tells the summarizer that and lets it read the imports itself
-    # rather than having us pick the scored modules with a regex.
+    # prompt says so.
     files: dict[str, str]
     settlement: Literal["proved", "disproved"]
     directory: Path
@@ -242,7 +241,7 @@ def solved_samples(run_dir: Path) -> list[Solve]:
 
         # Every Lean module the agent left under Submission/ (extract_plaintext
         # writes the captured tree back there), unimported scratch included:
-        # the prompt says what is in scope. Scripts and notes are left out.
+        # the prompt says what is in scope.
         submission_dir = sample_dir / "Submission"
         try:
             files = {
