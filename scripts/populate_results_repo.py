@@ -2,21 +2,34 @@
 """Populate LeanOpenProblems-results from metadata and selected plaintext runs.
 
 The export is additive: destination-only files are retained. Agent transcripts
-and operating-system metadata are omitted.
+and operating-system metadata are omitted. Under each sample's ``Submission/``
+only the scored module tree is exported: ``Spec.lean`` and the ``Submission.*``
+modules it transitively imports. Scratch files the agent left beside them
+(unused ``.lean`` experiments, Python scripts) are not part of the verified
+proof and are dropped.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import stat
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 
 EXCLUDED_NAMES = frozenset({".DS_Store", "messages.txt", "compactions.txt"})
+SUBMISSION_DIR_NAME = "Submission"
+ENTRY_MODULE = "Spec.lean"
+# `import Submission.Foo.Bar` (the checker builds only Submission.Spec and the
+# modules it imports; other files under Submission/ are never compiled).
+SUBMISSION_IMPORT = re.compile(
+    r"^\s*import\s+Submission((?:\.[A-Za-z0-9_«»']+)+)", re.MULTILINE
+)
 DEFAULT_DEST = Path(
     "/Users/t/repos/github.com/epoch-research/LeanOpenProblems-results"
 )
@@ -94,8 +107,17 @@ def sync_symlink(source: Path, target: Path, *, dry_run: bool) -> bool:
     return True
 
 
-def sync_tree(source: Path, target: Path, *, dry_run: bool) -> SyncStats:
-    """Add or update source entries under target, retaining target-only entries."""
+def sync_tree(
+    source: Path,
+    target: Path,
+    *,
+    dry_run: bool,
+    file_filter: Callable[[Path], bool] | None = None,
+) -> SyncStats:
+    """Add or update source entries under target, retaining target-only entries.
+
+    ``file_filter`` receives each source file path and returns whether to export it.
+    """
     stats = SyncStats()
     for current, directory_names, file_names in os.walk(source, followlinks=False):
         current_path = Path(current)
@@ -128,6 +150,8 @@ def sync_tree(source: Path, target: Path, *, dry_run: bool) -> SyncStats:
 
         for name in file_names:
             source_file = current_path / name
+            if file_filter is not None and not file_filter(source_file):
+                continue
             target_file = target_directory / name
             if source_file.is_symlink():
                 stats.symlinks += 1
@@ -138,6 +162,51 @@ def sync_tree(source: Path, target: Path, *, dry_run: bool) -> SyncStats:
             if changed:
                 stats.changes += 1
     return stats
+
+
+def scored_modules(submission_dir: Path) -> set[Path]:
+    """Return ``Spec.lean`` and the Submission modules it transitively imports."""
+    entry = submission_dir / ENTRY_MODULE
+    if not entry.is_file():
+        return set()
+    keep: set[Path] = set()
+    pending = [entry]
+    while pending:
+        module = pending.pop()
+        if module in keep:
+            continue
+        keep.add(module)
+        try:
+            text = module.read_text(errors="replace")
+        except OSError:
+            continue
+        for match in SUBMISSION_IMPORT.finditer(text):
+            relative = Path(*match.group(1).lstrip(".").split(".")).with_suffix(".lean")
+            imported = submission_dir / relative
+            if imported.is_file():
+                pending.append(imported)
+            else:
+                print(
+                    f"warning: {module} imports missing module {relative}",
+                    flush=True,
+                )
+    return keep
+
+
+def scored_submission_filter(run_source: Path) -> Callable[[Path], bool]:
+    """Keep every file outside ``Submission/``; inside it, only scored modules."""
+    cache: dict[Path, set[Path]] = {}
+
+    def keep(path: Path) -> bool:
+        relative = path.relative_to(run_source)
+        if len(relative.parts) < 3 or relative.parts[1] != SUBMISSION_DIR_NAME:
+            return True
+        submission_dir = run_source / relative.parts[0] / SUBMISSION_DIR_NAME
+        if submission_dir not in cache:
+            cache[submission_dir] = scored_modules(submission_dir)
+        return path in cache[submission_dir]
+
+    return keep
 
 
 def plaintext_directory(logs_dir: Path, run: str) -> Path:
@@ -216,7 +285,12 @@ def main() -> int:
     for run in args.runs:
         source = plaintext_directory(args.logs_dir, run)
         target = args.dest / "runs" / run
-        stats = sync_tree(source, target, dry_run=args.dry_run)
+        stats = sync_tree(
+            source,
+            target,
+            dry_run=args.dry_run,
+            file_filter=scored_submission_filter(source),
+        )
         if not args.dry_run:
             stage_path(args.dest, target)
         prefix = "would change" if args.dry_run else "changed"

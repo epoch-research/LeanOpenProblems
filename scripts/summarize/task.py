@@ -16,6 +16,10 @@ Examples::
     inspect eval scripts/summarize/task.py@summarize_proofs \
         -T run_dir=logs/<run> -T subset=all -T metadata_dir=metadata \
         --model openai/gpt-5.6-sol --log-dir logs/summarize
+
+The canonical proof-summarization settings for published results live in
+``scripts/summarize/summarize_proofs.sh``; prefer it over hand-typed
+``inspect eval`` commands.
 """
 
 from __future__ import annotations
@@ -547,7 +551,9 @@ def summarize_proofs(
     run_dir: str,
     subset: str = "lite",
     metadata_dir: str = "metadata",
-    token_limit: int = 500_000,
+    # A safety net, not a target: the summarizer reads the proof and Mathlib
+    # freely, and at 500k about one sample in 300 ran out before submitting.
+    token_limit: int = 5_000_000,
 ) -> Task:
     records = load_records()
     provenance = load_provenance()
