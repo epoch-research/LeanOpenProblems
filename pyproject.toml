@@ -5,7 +5,9 @@ description = "An Inspect implementation of the AlphaProof Nexus formal proof-se
 license = "MIT AND Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
-dependencies = []
+dependencies = [
+    "tenacity>=9,<10",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -27,6 +29,7 @@ dev = [
     "anthropic>=0.105.2",
     "hawk[cli]",
     "inspect-ai>=0.3.229",
+    "inspect-k8s-sandbox>=0.5,<0.6",
     "mypy>=2.1.0",
     "openai>=2.38.0",
     "pytest>=8.0",
