@@ -204,7 +204,7 @@ def build_source(shard_paths: list[Path], out: Path, max_papers: int | None) -> 
 
 def build_metadata(meta_paths: list[Path], written: dict[str, str], out: Path) -> None:
     """Join the metadata dump against ``written`` and emit ``out/metadata.jsonl``."""
-    import pyarrow.parquet as pq  # type: ignore[import-not-found]
+    import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
     wanted = set(written)
     records: dict[str, dict[str, object]] = {}

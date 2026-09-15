@@ -26,7 +26,7 @@ apn = "apn._registry"
 dev = [
     "anthropic>=0.105.2",
     "hawk[cli]",
-    "inspect-ai>=0.3.229",
+    "inspect-ai>=0.3.263",
     "mypy>=2.1.0",
     "openai>=2.38.0",
     "pytest>=8.0",
@@ -40,7 +40,7 @@ dev = [
 override-dependencies = ["inspect-ai"]
 
 [tool.uv.sources]
-hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v2026.06.01" }
+hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v3.3.1" }
 
 [tool.mypy]
 python_version = "3.13"
