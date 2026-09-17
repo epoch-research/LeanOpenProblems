@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 from inspect_ai import Task, task
+from inspect_ai.solver import Solver
 
 from apn import __version__
 from apn.solver import AgentType, lean_prover
@@ -27,7 +28,7 @@ from apn.dataset import (
     personal_corresp_dataset,
     oeis_dataset,
 )
-from apn.sandbox import SandboxBackend
+from apn.sandbox import SandboxBackend, capture_hawk_sandbox_values
 from apn.scorer import proof_scorer
 
 SANDBOX_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_sandbox"
@@ -166,7 +167,7 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     return yaml.safe_dump(values, sort_keys=False)
 
 
-def get_scoring_values_content(fc_commit: str) -> str:
+def get_scoring_values(fc_commit: str) -> dict[str, Any]:
     """The chart-native ``comparator`` service, for the on-demand scoring
     release.
 
@@ -182,10 +183,10 @@ def get_scoring_values_content(fc_commit: str) -> str:
       chart defaults to gvisor, whose sentry does not implement Landlock --
       and until comparator#83 lands upstream that failure is *silent*, so this
       eval must not run under gvisor/`isolation: strict` (plan §7.6).
-    - The image repository is resolved at write time (Helm does not
-      interpolate environment variables).
+    - The image repository is resolved here (Helm does not interpolate
+      environment variables).
     """
-    values: dict[str, Any] = {
+    return {
         "services": {
             # k8s_sandbox helm chart needs a default service
             "default": {
@@ -197,7 +198,6 @@ def get_scoring_values_content(fc_commit: str) -> str:
             },
         }
     }
-    return yaml.safe_dump(values, sort_keys=False)
 
 
 def _config_dir(fc_commit: str, variant: str | None = None) -> Path:
@@ -243,30 +243,22 @@ def get_sandbox_config(
     return (backend, _write_if_changed(path, content))
 
 
-def get_scoring_config(fc_commit: str) -> str:
-    """Path to the scoring release's values file (k8s only).
-
-    Keyed on (version, pin) but not the corpus variant -- the verifier image
-    is the same either way. Named ``scoring-values.yaml``: anything ending in
-    ``compose.yaml``/``compose.yml`` is parsed as compose by k8s_sandbox.
-    """
-    return _write_if_changed(
-        _config_dir(fc_commit) / "scoring-values.yaml",
-        get_scoring_values_content(fc_commit),
-    )
-
-
 def get_compose_file(fc_commit: str, literature: bool = False) -> Path:
     """The docker-backend compose file (kept for the test suites, which drive
     the docker sandbox lifecycle directly)."""
     return Path(get_sandbox_config(fc_commit, literature, "docker")[1])
 
 
-def _comparator(fc_commit: str, backend: SandboxBackend) -> SandboxComparator:
-    """The checker for a task, wired for its backend."""
-    return SandboxComparator(
-        backend=backend,
-        scoring_values=get_scoring_config(fc_commit) if backend == "k8s" else None,
+def capture_setup(fc_commit: str, backend: SandboxBackend) -> Solver:
+    """The task ``setup`` step for a task that scores with the comparator.
+
+    On k8s it carries the runner's labels, annotations and scheduling
+    constraints from the agent release onto the on-demand scoring release, and
+    writes the sample's merged values file. A no-op on docker, where the
+    comparator is a long-lived compose service.
+    """
+    return capture_hawk_sandbox_values(
+        backend, get_scoring_values(fc_commit) if backend == "k8s" else None
     )
 
 
@@ -295,8 +287,9 @@ def apn_oeis(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -318,8 +311,9 @@ def apn_fc100open(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -342,8 +336,9 @@ def apn_erdos(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -371,8 +366,9 @@ def apn_erdos_autoformalized(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -398,6 +394,7 @@ def apn_personal_corresp(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(_comparator(pin, sandbox_backend)),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
