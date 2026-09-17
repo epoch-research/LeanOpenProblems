@@ -46,7 +46,7 @@ from apn.layout import ENTRY_PATH
 from apn.scorer import proof_scorer
 from apn.solver import gated_incorrect_message, submit
 from apn.sandbox import SandboxBackend
-from apn.task import get_sandbox_config, get_scoring_config
+from apn.task import capture_setup, get_sandbox_config
 from apn.tools import bash
 
 # Where the apn codebase is unpacked in the agent sandbox for the agent to study.
@@ -152,7 +152,7 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
 
     On k8s the comparator is no longer in the config being post-processed here
     at all: it is an on-demand release of its own, and its isolation is set in
-    :func:`apn.task.get_scoring_values_content`.
+    :func:`apn.task.get_scoring_values`.
 
     The modified config is written to a distinct, backend-appropriately named
     sibling file so the base config other tasks read is never clobbered
@@ -177,8 +177,11 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
         # `app.kubernetes.io/instance: <release name>`, not just the namespace.
         # The verifier is therefore offline twice over: nothing in its own
         # release's values opens egress, and `networkIsolated: True`
-        # (apn.task.get_scoring_values_content) adds an explicit per-service
-        # egressDeny/ingressDeny on top.
+        # (apn.task.get_scoring_values) adds an explicit per-service
+        # egressDeny/ingressDeny on top. What the scoring release *does*
+        # inherit from this one is an allowlist that excludes egress entirely
+        # (apn.sandbox.HawkSandboxValues), so `allowEntities: ["world"]` and
+        # the agent's `networkIsolated: False` do not ride along.
         agent["networkIsolated"] = False
         config["allowEntities"] = ["world"]
     src = Path(path)
@@ -260,15 +263,9 @@ def apn_redteam_collatz(
     return Task(
         dataset=MemoryDataset([_collatz_sample()], name="redteam_collatz"),
         solver=lean_redteam_prover(gated=gated),
-        scorer=proof_scorer(
-            SandboxComparator(
-                backend=sandbox_backend,
-                scoring_values=(
-                    get_scoring_config(_FC_PIN) if sandbox_backend == "k8s" else None
-                ),
-            )
-        ),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         # The agent's container gets internet (red-team only); the comparator
         # verifier service stays network-isolated (see the helper).
         sandbox=_sandbox_with_agent_internet(sandbox_backend),
+        setup=capture_setup(_FC_PIN, sandbox_backend),
     )

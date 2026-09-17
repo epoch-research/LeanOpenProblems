@@ -24,6 +24,8 @@ import gzip
 import io
 import json
 import tarfile
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import cast
@@ -709,3 +711,51 @@ async def test_scorer_writes_attempt_sidecar(
     sidecars = list((tmp_path / "artifacts").rglob("attempt-*.tar"))
     assert len(sidecars) == 1
     assert sidecars[0].read_bytes() == tar
+
+
+async def test_k8s_check_without_captured_values_is_reported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The k8s comparator installs from whatever the task's setup step merged
+    # into the store. An empty store means the task forgot capture_setup, and
+    # the message has to say so -- by the time scoring runs, the sample has
+    # already burned its whole time budget.
+    # StoreModel reads its fields back out of the sample store, so stand in
+    # for the whole lookup rather than instantiating one outside a sample.
+    monkeypatch.setattr(
+        checker_mod, "store_as", lambda model: SimpleNamespace(values=None)
+    )
+
+    with pytest.raises(RuntimeError, match="capture_setup"):
+        await SandboxComparator("k8s").check(
+            SPEC, SUBMISSION_TAR, decl="tgt", claim="proof"
+        )
+
+
+async def test_k8s_check_installs_from_the_captured_values(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[dict[str, object]] = []
+    values = {"services": {"default": {"image": "comparator:pinned"}}}
+
+    monkeypatch.setattr(
+        checker_mod, "store_as", lambda model: SimpleNamespace(values=values)
+    )
+
+    sb = ScriptedSandbox(comparator=_ok(_ACCEPT_OUT))
+
+    @asynccontextmanager
+    async def fake_scoring_env(
+        v: dict[str, object],
+    ) -> AsyncIterator[ScriptedSandbox]:
+        captured.append(v)
+        yield sb
+
+    monkeypatch.setattr(checker_mod, "k8s_scoring_env", fake_scoring_env)
+
+    outcome = await SandboxComparator("k8s").check(
+        SPEC, SUBMISSION_TAR, decl="tgt", claim="proof"
+    )
+
+    assert outcome.ok
+    assert captured == [values]
