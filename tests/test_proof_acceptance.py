@@ -188,7 +188,7 @@ async def _check(
 ) -> CheckOutcome:
     """Run the real checker against the given comparator sandbox."""
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
-    return await SandboxComparator().check(spec, _tar_of(submission), decl=decl, claim=claim)
+    return await SandboxComparator("docker").check(spec, _tar_of(submission), decl=decl, claim=claim)
 
 
 # --------------------------------------------------------------------------- #

@@ -24,6 +24,8 @@ import gzip
 import io
 import json
 import tarfile
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import cast
@@ -32,11 +34,12 @@ import pytest
 from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target
 from inspect_ai.solver import TaskState
-from inspect_ai.util import ExecResult, OutputLimitExceededError
+from inspect_ai.util import ExecResult, OutputLimitExceededError, store
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import (
+    CACHE_STORE_KEY,
     CHALLENGE_PATH,
     COMPARATOR_USER,
     CONFIG_PATH,
@@ -388,7 +391,7 @@ def _checker(
 ) -> tuple[SandboxComparator, ScriptedSandbox]:
     sb = ScriptedSandbox(reset=reset, staging=staging, unpack=unpack, comparator=comparator)
     monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
-    return SandboxComparator(), sb
+    return SandboxComparator("docker"), sb
 
 
 async def test_check_accepts_on_exit_zero(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -573,6 +576,95 @@ async def test_check_maps_output_limit(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# One-entry result cache                                                       #
+# --------------------------------------------------------------------------- #
+# A resubmit of an unchanged tree is a full Lean build for a verdict we already
+# have, so `check` keeps its last outcome in the sample store, keyed by
+# everything the outcome depends on: the spec, the sanitized submission, the
+# decl and the claim. One slot, so at most the latest answer is reused. The
+# conftest fixture clears it between tests (under pytest `store()` is a
+# process-global default, not a per-sample store).
+OTHER_TAR = _tar_of({"./Spec.lean": "theorem tgt : True := by trivial\n"})
+
+
+async def test_cache_reuses_last_outcome(monkeypatch: pytest.MonkeyPatch) -> None:
+    checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
+    first = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    after_first = list(sb.events)
+    second = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    # Nothing ran the second time: no reset, no staging, no comparator.
+    assert sb.events == after_first
+    assert second == first
+
+
+async def test_cache_caches_rejections_too(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The cache is about the cost of the build, which a rejection pays in full.
+    checker, sb = _checker(monkeypatch, comparator=_fail(1, "not okay"))
+    first = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    after_first = list(sb.events)
+    second = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert not first.ok
+    assert sb.events == after_first
+    assert second == first
+
+
+@pytest.mark.parametrize(
+    "second_call",
+    [
+        pytest.param({"spec": SPEC + "\n-- edit\n"}, id="spec"),
+        pytest.param({"submission_tar": OTHER_TAR}, id="submission"),
+        pytest.param({"decl": "other"}, id="decl"),
+        pytest.param({"claim": "disproof"}, id="claim"),
+    ],
+)
+async def test_cache_misses_when_any_input_changes(
+    monkeypatch: pytest.MonkeyPatch, second_call: dict[str, object]
+) -> None:
+    checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
+    call: dict[str, object] = {
+        "spec": SPEC,
+        "submission_tar": SUBMISSION_TAR,
+        "decl": "tgt",
+        "claim": "proof",
+    }
+    await checker.check(**call)  # type: ignore[arg-type]
+    ran = len(sb.commands)
+    await checker.check(**{**call, **second_call})  # type: ignore[arg-type]
+    assert COMPARATOR_CMD in sb.commands[ran:]
+
+
+async def test_cache_keeps_only_the_latest_outcome(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A, B, A: the B check evicts A, so the third call rebuilds rather than
+    # reaching back past the one slot.
+    checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
+    await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    await checker.check(SPEC, OTHER_TAR, decl="tgt", claim="proof")
+    ran = len(sb.commands)
+    await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert COMPARATOR_CMD in sb.commands[ran:]
+
+
+async def test_cache_does_not_hold_an_infrastructure_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A failed .lake reset raises rather than producing a verdict, so there is
+    # nothing to cache -- a retry of the same submission must really run.
+    checker, sb = _checker(
+        monkeypatch, reset=_fail(1, "reset broke"), comparator=_ok(_ACCEPT_OUT)
+    )
+    with pytest.raises(RuntimeError, match="reset failed"):
+        await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert store().get(CACHE_STORE_KEY) is None
+
+    sb._reset = _ok()  # the sandbox recovers; same submission, retried
+    outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert outcome.ok
+    assert COMPARATOR_CMD in sb.commands
+
+
+# --------------------------------------------------------------------------- #
 # Scorer wiring                                                                #
 # --------------------------------------------------------------------------- #
 def _state(store: FakeStore) -> TaskState:
@@ -709,3 +801,51 @@ async def test_scorer_writes_attempt_sidecar(
     sidecars = list((tmp_path / "artifacts").rglob("attempt-*.tar"))
     assert len(sidecars) == 1
     assert sidecars[0].read_bytes() == tar
+
+
+async def test_k8s_check_without_captured_values_is_reported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The k8s comparator installs from whatever the task's setup step merged
+    # into the store. An empty store means the task forgot capture_setup, and
+    # the message has to say so -- by the time scoring runs, the sample has
+    # already burned its whole time budget.
+    # StoreModel reads its fields back out of the sample store, so stand in
+    # for the whole lookup rather than instantiating one outside a sample.
+    monkeypatch.setattr(
+        checker_mod, "store_as", lambda model: SimpleNamespace(values=None)
+    )
+
+    with pytest.raises(RuntimeError, match="capture_setup"):
+        await SandboxComparator("k8s").check(
+            SPEC, SUBMISSION_TAR, decl="tgt", claim="proof"
+        )
+
+
+async def test_k8s_check_installs_from_the_captured_values(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[dict[str, object]] = []
+    values = {"services": {"default": {"image": "comparator:pinned"}}}
+
+    monkeypatch.setattr(
+        checker_mod, "store_as", lambda model: SimpleNamespace(values=values)
+    )
+
+    sb = ScriptedSandbox(comparator=_ok(_ACCEPT_OUT))
+
+    @asynccontextmanager
+    async def fake_scoring_env(
+        v: dict[str, object],
+    ) -> AsyncIterator[ScriptedSandbox]:
+        captured.append(v)
+        yield sb
+
+    monkeypatch.setattr(checker_mod, "k8s_scoring_env", fake_scoring_env)
+
+    outcome = await SandboxComparator("k8s").check(
+        SPEC, SUBMISSION_TAR, decl="tgt", claim="proof"
+    )
+
+    assert outcome.ok
+    assert captured == [values]

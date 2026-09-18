@@ -5,7 +5,9 @@ description = "An Inspect implementation of the AlphaProof Nexus formal proof-se
 license = "MIT AND Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
-dependencies = []
+dependencies = [
+    "tenacity>=9,<10",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -27,6 +29,7 @@ dev = [
     "anthropic>=0.105.2",
     "hawk[cli]",
     "inspect-ai>=0.3.263",
+    "inspect-k8s-sandbox",
     "mypy>=2.1.0",
     "openai>=2.38.0",
     "pytest>=8.0",
@@ -41,6 +44,11 @@ override-dependencies = ["inspect-ai"]
 
 [tool.uv.sources]
 hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v3.3.1" }
+# apn/sandbox.py drives K8sSandboxEnvironment.sample_init/sample_cleanup
+# directly, so tests and type checks only mean anything against the exact
+# code hawk runs. Keep this rev in sync with hawk's own pin when bumping
+# the hawk tag above; uv does not inherit a dependency's [tool.uv.sources].
+inspect-k8s-sandbox = { git = "https://github.com/METR/inspect_k8s_sandbox.git", rev = "ff1ef4a6d845ed0abce87408e2ab2275d31c3687" }
 
 [tool.mypy]
 python_version = "3.13"

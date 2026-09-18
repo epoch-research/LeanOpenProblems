@@ -4,10 +4,11 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import yaml
 from inspect_ai import Task, task
+from inspect_ai.solver import Solver
 
 from apn import __version__
 from apn.solver import AgentType, lean_prover
@@ -27,6 +28,7 @@ from apn.dataset import (
     personal_corresp_dataset,
     oeis_dataset,
 )
+from apn.sandbox import SandboxBackend, capture_hawk_sandbox_values
 from apn.scorer import proof_scorer
 
 SANDBOX_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_sandbox"
@@ -35,8 +37,6 @@ IMAGE_REPOSITORY_DEFAULT = "leanopenproblems"
 # Compose interpolates ${VAR:-default} itself; the k8s values file is consumed
 # verbatim by the Helm chart, so its writer resolves the variable at write time.
 IMAGE_REPOSITORY = f"${{{IMAGE_REPOSITORY_VAR}:-{IMAGE_REPOSITORY_DEFAULT}}}"
-
-SandboxBackend = Literal["docker", "k8s"]
 
 # --------------------------------------------------------------------------- #
 # Shared sandbox constants. Both backend writers draw from these so the two    #
@@ -128,8 +128,48 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     return yaml.safe_dump(compose, sort_keys=False)
 
 
+def _image_repository() -> str:
+    """The image repository, resolved at write time (Helm does not interpolate
+    environment variables; compose does, hence the two spellings)."""
+    return os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
+
+
+def _k8s_resources(memory_gib: int) -> dict[str, Any]:
+    """Just a memory limit: k8s defaults the request to the limit (so
+    scheduling still reserves it), and CPU is compressible, so no CPU knobs."""
+    return {"limits": {"memory": f"{memory_gib}Gi"}}
+
+
 def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
+
+    The agent sandbox only. Declares no ``comparator`` sandbox: on k8s the
+    comparator is a separate, on-demand Helm release installed and uninstalled
+    around each check.
+
+    Note, the image repository is resolved at write time (Helm does not interpolate
+    environment variables).
+    """
+    agent_kind = _agent_image_kind(literature)
+    values: dict[str, Any] = {
+        "services": {
+            "default": {
+                "image": f"{_image_repository()}:{get_identifier_for_image(agent_kind, fc_commit)}",
+                # Without this the chart defaults to a bare `tail -f /dev/null`
+                # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
+                "command": list(SANDBOX_COMMAND),
+                "networkIsolated": True,
+                "dnsRecord": True,
+                "resources": _k8s_resources(AGENT_MEMORY_GIB),
+            },
+        }
+    }
+    return yaml.safe_dump(values, sort_keys=False)
+
+
+def get_scoring_values(fc_commit: str) -> dict[str, Any]:
+    """The chart-native ``comparator`` service, for the on-demand scoring
+    release.
 
     Written directly in the Helm chart's vocabulary. k8s_sandbox could
     auto-convert the compose file, but the comparator ``runtimeClassName`` pin
@@ -143,39 +183,40 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
       chart defaults to gvisor, whose sentry does not implement Landlock --
       and until comparator#83 lands upstream that failure is *silent*, so this
       eval must not run under gvisor/`isolation: strict` (plan §7.6).
-    - The image repository is resolved at write time (Helm does not
-      interpolate environment variables).
+    - The image repository is resolved here (Helm does not interpolate
+      environment variables).
     """
-    repository = os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
-    agent_kind = _agent_image_kind(literature)
-
-    # Just a memory limit: k8s defaults the request to the limit (so
-    # scheduling still reserves it), and CPU is compressible, so no CPU knobs.
-    def resources(memory_gib: int) -> dict[str, Any]:
-        return {"limits": {"memory": f"{memory_gib}Gi"}}
-
-    values: dict[str, Any] = {
+    return {
         "services": {
+            # k8s_sandbox helm chart needs a default service
             "default": {
-                "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
-                # Without this the chart defaults to a bare `tail -f /dev/null`
-                # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
-                "command": list(SANDBOX_COMMAND),
-                "networkIsolated": True,
-                "dnsRecord": True,
-                "resources": resources(AGENT_MEMORY_GIB),
-            },
-            "comparator": {
-                "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
+                "image": f"{_image_repository()}:{get_identifier_for_image('comparator', fc_commit)}",
                 "command": list(SANDBOX_COMMAND),
                 "runtimeClassName": "CLUSTER_DEFAULT",
                 "networkIsolated": True,
-                "dnsRecord": True,
-                "resources": resources(COMPARATOR_MEMORY_GIB),
+                "resources": _k8s_resources(COMPARATOR_MEMORY_GIB),
             },
         }
     }
-    return yaml.safe_dump(values, sort_keys=False)
+
+
+def _config_dir(fc_commit: str, variant: str | None = None) -> Path:
+    """Generated configs, isolated per (apn version, FC pin) and, for the
+    per-task ones, per corpus variant, so they cannot clobber each other."""
+
+    directory = (
+        SANDBOX_FILES_DIR / _docker_tag_component(__version__) / f"fc_{fc_commit[:12]}"
+    )
+    if variant:
+        directory = directory / variant
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def _write_if_changed(path: Path, content: str) -> str:
+    if not path.exists() or path.read_text() != content:
+        path.write_text(content)
+    return str(path)
 
 
 def get_sandbox_config(
@@ -188,14 +229,7 @@ def get_sandbox_config(
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
     per-(version, FC pin, variant) subdirs so they don't clobber each other.
     """
-    variant = "corpus" if literature else "closed-book"
-    directory = (
-        SANDBOX_FILES_DIR
-        / _docker_tag_component(__version__)
-        / f"fc_{fc_commit[:12]}"
-        / variant
-    )
-    directory.mkdir(parents=True, exist_ok=True)
+    directory = _config_dir(fc_commit, "corpus" if literature else "closed-book")
     if backend == "docker":
         path = directory / "compose.yaml"
         content = get_compose_file_content(fc_commit, literature)
@@ -206,15 +240,26 @@ def get_sandbox_config(
         raise ValueError(
             f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'."
         )
-    if not path.exists() or path.read_text() != content:
-        path.write_text(content)
-    return (backend, str(path))
+    return (backend, _write_if_changed(path, content))
 
 
 def get_compose_file(fc_commit: str, literature: bool = False) -> Path:
     """The docker-backend compose file (kept for the test suites, which drive
     the docker sandbox lifecycle directly)."""
     return Path(get_sandbox_config(fc_commit, literature, "docker")[1])
+
+
+def capture_setup(fc_commit: str, backend: SandboxBackend) -> Solver:
+    """The task ``setup`` step for a task that scores with the comparator.
+
+    On k8s it carries the runner's labels, annotations and scheduling
+    constraints from the agent release onto the on-demand scoring release, and
+    writes the sample's merged values file. A no-op on docker, where the
+    comparator is a long-lived compose service.
+    """
+    return capture_hawk_sandbox_values(
+        backend, get_scoring_values(fc_commit) if backend == "k8s" else None
+    )
 
 
 @task
@@ -242,8 +287,9 @@ def apn_oeis(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -265,8 +311,9 @@ def apn_fc100open(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -289,8 +336,9 @@ def apn_erdos(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -318,8 +366,9 @@ def apn_erdos_autoformalized(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )
 
 
@@ -345,6 +394,7 @@ def apn_personal_corresp(
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
+        scorer=proof_scorer(SandboxComparator(backend=sandbox_backend)),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        setup=capture_setup(pin, sandbox_backend),
     )

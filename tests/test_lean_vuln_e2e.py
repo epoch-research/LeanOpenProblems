@@ -433,7 +433,7 @@ async def _score(
         messages=[],
         metadata={"sketch": spec, "decl_name": "tgt"},
     )
-    score = await proof_scorer(SandboxComparator())(state, Target(""))
+    score = await proof_scorer(SandboxComparator("docker"))(state, Target(""))
     assert score is not None
     return score
 

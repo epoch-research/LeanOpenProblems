@@ -1,15 +1,25 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import tarfile
-from dataclasses import dataclass
+from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass
 from pathlib import PurePosixPath
 from typing import Literal, Protocol, runtime_checkable
+from collections.abc import AsyncIterator
 
-from inspect_ai.util import OutputLimitExceededError, sandbox
+from inspect_ai.util import (
+    OutputLimitExceededError,
+    SandboxEnvironment,
+    sandbox,
+    store,
+    store_as,
+)
 
 from apn.layout import ENTRY_MODULE, ENTRY_PATH, ENTRY_REL, PROJECT, SUBMISSION_DIR
+from apn.sandbox import SandboxBackend, ScoringRelease, k8s_scoring_env
 
 # Paths inside the trusted `comparator` sandbox (the comparator stage of
 # apn/lean/Dockerfile). The challenge is staged into the lake project's `run/`
@@ -80,6 +90,9 @@ MAX_MODULE_PATH_BYTES = 1024
 ENTRY_MEMBER = PurePosixPath(ENTRY_PATH).relative_to(SUBMISSION_DIR)
 
 Claim = Literal["proof", "disproof"]
+
+# store key for the latest response by the checker
+CACHE_STORE_KEY = "_check_cache"
 
 
 @dataclass(frozen=True)
@@ -258,17 +271,39 @@ class SandboxComparator:
 
     def __init__(
         self,
+        backend: SandboxBackend,
         sandbox_name: str | None = "comparator",
         timeout: int = 60 * 60,
     ) -> None:
         self._sandbox_name = sandbox_name
         self._timeout = timeout
+        self._backend = backend
+
+    @asynccontextmanager
+    async def _env(self) -> AsyncIterator[SandboxEnvironment]:
+        """The comparator sandbox for one check.
+
+        On docker the comparator is a long-lived service, resolved by name.
+
+        On k8s the comparator is a Helm release of its own, installed as
+        needed and uninstalled when the scoring is finished, from the values
+        the task's setup step merged at the start of the sample.
+        """
+        if self._backend == "docker":
+            yield sandbox(self._sandbox_name)
+        else:
+            values = store_as(ScoringRelease).values
+            if values is None:
+                raise RuntimeError(
+                    "No scoring values in the sample store. The task is missing "
+                    "setup=apn.task.capture_setup(...), which merges them."
+                )
+            async with k8s_scoring_env(values) as env:
+                yield env
 
     async def check(
         self, spec: str, submission_tar: bytes, decl: str, claim: Claim
     ) -> CheckOutcome:
-        sb = sandbox(self._sandbox_name)
-
         # Host-side: re-serialize the agent's tar as a trusted archive of its
         # Lean modules (a verdict if that is impossible; the sandbox is never
         # touched).
@@ -277,6 +312,27 @@ class SandboxComparator:
         except InvalidSubmission as exc:
             return CheckOutcome(ok=False, stage="entry_missing", detail=str(exc))
 
+        # a repeat submit gets the same answer
+        # this happens if the model under test believes it cannot make further progress
+        key = _cache_key(spec, staged, decl, claim)
+        cached = _cached_outcome(key)
+        if cached is not None:
+            return cached
+
+        async with self._env() as sb:
+            outcome = await self._check_inner(sb, spec, staged, decl, claim)
+
+        _store_outcome(key, outcome)
+        return outcome
+
+    async def _check_inner(
+        self,
+        sb: SandboxEnvironment,
+        spec: str,
+        staged: bytes,
+        decl: str,
+        claim: Claim,
+    ) -> CheckOutcome:
         # Trusted filesystem reset (a reference step: failure raises). It
         # restores a pristine .lake -- the only path the untrusted build can
         # write under its landrun sandbox; it does not terminate processes a
@@ -356,3 +412,30 @@ class SandboxComparator:
                 detail=f"killed (exit {result.returncode})\n{output}",
             )
         return CheckOutcome(ok=False, stage="comparator", detail=output)
+
+
+def _cache_key(spec: str, staged: bytes, decl: str, claim: Claim) -> str:
+    """A digest of everything a check's outcome depends on."""
+    h = hashlib.sha256()
+    for part in (
+        spec.encode("utf-8"),
+        staged,
+        decl.encode("utf-8"),
+        claim.encode("utf-8"),
+    ):
+        h.update(len(part).to_bytes(8, "big"))
+        h.update(part)
+    return h.hexdigest()
+
+
+def _cached_outcome(key: str) -> CheckOutcome | None:
+    """The stored outcome if it was produced for ``key``, else ``None``."""
+    entry = store().get(CACHE_STORE_KEY)
+    if not isinstance(entry, dict) or entry.get("key") != key:
+        return None
+    return CheckOutcome(**entry["outcome"])
+
+
+def _store_outcome(key: str, outcome: CheckOutcome) -> None:
+    """Make ``outcome`` the cache's only entry, replacing any predecessor."""
+    store().set(CACHE_STORE_KEY, {"key": key, "outcome": asdict(outcome)})

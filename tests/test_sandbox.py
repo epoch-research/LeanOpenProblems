@@ -1,0 +1,242 @@
+"""Lifecycle tests for the on-demand k8s scoring sandbox.
+
+``k8s_scoring_env`` owns a Helm release's whole life: install, hand the
+comparator environment to the checker, uninstall. The invariant worth testing
+is the teardown side. A leaked 32Gi pod has no timely collector (Inspect sweeps
+at eval end; the Hawk janitor waits an hour past a terminal runner Job), so
+cleanup must survive the body raising *and* the sample being cancelled -- while
+a cleanup failure must never replace the verdict or exception the checker was
+already carrying.
+
+``k8s_scoring_env`` imports k8s_sandbox in its own body, so a docker-only
+install need not have the package to import ``apn.checker``. That import reads
+the two names off ``k8s_sandbox`` at call time, so the fixture patches them
+there. Same hand-rolled-fake style as test_checker.py: no mock library.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+import anyio
+import pytest
+import yaml
+from tenacity.wait import wait_none
+
+from apn.sandbox import (
+    _INSTALL_ATTEMPTS,
+    FALLBACK_TASK_NAME,
+    k8s_scoring_env,
+)
+
+# The merged mapping a caller hands the helper. Its contents are irrelevant
+# here -- the merge itself is tested in test_scoring_values.py -- but it must
+# round-trip through the file the helper writes for Helm.
+VALUES: dict[str, Any] = {"services": {"default": {"image": "comparator:pinned"}}}
+
+
+class FakeConfig:
+    def __init__(
+        self, values: Path, restarted_container_behavior: str | None = None
+    ) -> None:
+        self.values = values
+        self.restarted_container_behavior = restarted_container_behavior
+
+
+class FakeEnv:
+    """Stands in for a K8sSandboxEnvironment (the checker only ever execs)."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+class FakeK8sSandboxEnvironment:
+    """Records every sample_init/sample_cleanup call the helper makes.
+
+    An instance, not a class, even though the real ``sample_init`` is a
+    classmethod. ``apn.sandbox`` only looks the two methods up on the patched
+    name and passes it around as a value, so bound instance methods serve --
+    and each test gets a fresh call log instead of a hand-written reset.
+    """
+
+    def __init__(self) -> None:
+        self.init_calls: list[tuple[str, FakeConfig, dict[str, str]]] = []
+        self.cleanup_calls: list[tuple[str, dict[str, Any]]] = []
+        self.cleanup_error: Exception | None = None
+        # The first `init_failures` sample_init calls raise `init_error`.
+        self.init_error: Exception | None = None
+        self.init_failures = 0
+        # `default` first, exactly as the real sample_init reorders it -- so a
+        # test that picks the first environment instead of indexing by name
+        # fails.
+        self.services: tuple[str, ...] = ("default", )
+
+    async def sample_init(
+        self, task_name: str, config: FakeConfig, metadata: dict[str, str]
+    ) -> dict[str, Any]:
+        self.init_calls.append((task_name, config, metadata))
+        if self.init_error is not None and len(self.init_calls) <= self.init_failures:
+            raise self.init_error
+        return {name: FakeEnv(name) for name in self.services}
+
+    async def sample_cleanup(
+        self,
+        task_name: str,
+        config: FakeConfig,
+        environments: dict[str, Any],
+        interrupted: bool,
+    ) -> None:
+        self.cleanup_calls.append((task_name, environments))
+        if self.cleanup_error is not None:
+            raise self.cleanup_error
+
+
+@pytest.fixture
+def fake_k8s(monkeypatch: pytest.MonkeyPatch) -> FakeK8sSandboxEnvironment:
+    fake = FakeK8sSandboxEnvironment()
+    monkeypatch.setattr("k8s_sandbox.K8sSandboxEnvironment", fake)
+    monkeypatch.setattr("k8s_sandbox.K8sSandboxEnvironmentConfig", FakeConfig)
+    return fake
+
+
+async def test_installs_yields_comparator_and_uninstalls(fake_k8s: FakeK8sSandboxEnvironment) -> None:
+    async with k8s_scoring_env(VALUES) as env:
+        # By name, not the first entry: `default` is deliberately first above.
+        assert env.name == "default"  # type: ignore[attr-defined]
+        assert len(fake_k8s.init_calls) == 1
+        assert fake_k8s.cleanup_calls == []
+
+    assert len(fake_k8s.cleanup_calls) == 1
+
+
+async def test_values_are_written_to_a_file_helm_accepts(
+    fake_k8s: FakeK8sSandboxEnvironment,
+) -> None:
+    """Helm only takes a file, so the helper writes the mapping to one.
+
+    The suffix matters: k8s_sandbox parses anything ending in
+    ``compose.yaml``/``compose.yml`` as a compose file rather than as chart
+    values.
+    """
+    async with k8s_scoring_env(VALUES):
+        (_, config, _) = fake_k8s.init_calls[0]
+        path = Path(config.values)
+        assert path.name == "scoring-values.yaml"
+        assert yaml.safe_load(path.read_text()) == VALUES
+        # A restarted verifier container must fail the check, not be re-execed
+        # into with a workspace we never staged.
+        assert config.restarted_container_behavior == "raise"
+
+
+async def test_values_file_is_removed_with_the_release(
+    fake_k8s: FakeK8sSandboxEnvironment,
+) -> None:
+    async with k8s_scoring_env(VALUES):
+        (_, config, _) = fake_k8s.init_calls[0]
+        path = Path(config.values)
+        assert path.exists()
+
+    # The file outlives the install but not the uninstall: it is gone only
+    # after sample_cleanup has run, never while the release still needs it.
+    assert len(fake_k8s.cleanup_calls) == 1
+    assert not path.exists()
+
+
+async def test_body_exception_still_uninstalls_and_propagates(fake_k8s: FakeK8sSandboxEnvironment) -> None:
+    with pytest.raises(RuntimeError, match="reset failed"):
+        async with k8s_scoring_env(VALUES):
+            raise RuntimeError(".lake reset failed")
+
+    assert len(fake_k8s.cleanup_calls) == 1
+
+
+async def test_cancellation_still_uninstalls(fake_k8s: FakeK8sSandboxEnvironment) -> None:
+    with anyio.move_on_after(0.01):
+        async with k8s_scoring_env(VALUES):
+            await anyio.sleep(30)
+
+    assert len(fake_k8s.cleanup_calls) == 1
+
+
+async def test_failed_uninstall_is_swallowed(fake_k8s: FakeK8sSandboxEnvironment) -> None:
+    # A helm hiccup must not replace the checker's verdict.
+    fake_k8s.cleanup_error = RuntimeError("helm uninstall exploded")
+    async with k8s_scoring_env(VALUES) as env:
+        verdict = f"checked in {env.name}"  # type: ignore[attr-defined]
+
+    assert verdict == "checked in default"
+
+
+async def test_failed_uninstall_preserves_the_body_exception(fake_k8s: FakeK8sSandboxEnvironment) -> None:
+    fake_k8s.cleanup_error = RuntimeError("helm uninstall exploded")
+    with pytest.raises(RuntimeError, match="reset failed"):
+        async with k8s_scoring_env(VALUES):
+            raise RuntimeError(".lake reset failed")
+
+
+async def test_release_is_named_for_the_active_sample(
+    fake_k8s: FakeK8sSandboxEnvironment,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    import inspect_ai.log._samples as samples_mod
+
+    active = SimpleNamespace(
+        task="apn_oeis",
+        sample=SimpleNamespace(id="A000045", metadata={"decl_name": "fib_thm"}),
+    )
+    monkeypatch.setattr(samples_mod, "sample_active", lambda: active)
+    async with k8s_scoring_env(VALUES):
+        pass
+
+    (task_name, _, metadata) = fake_k8s.init_calls[0]
+    assert task_name == "apn_oeis"
+    # The release only needs a name; the sample's own metadata is not forwarded.
+    assert metadata == {}
+
+
+async def test_falls_back_when_no_sample_is_active(fake_k8s: FakeK8sSandboxEnvironment) -> None:
+    async with k8s_scoring_env(VALUES):
+        pass
+
+    (task_name, _, metadata) = fake_k8s.init_calls[0]
+    assert task_name == FALLBACK_TASK_NAME
+    assert metadata == {}
+
+
+async def test_failed_install_is_retried(
+    fake_k8s: FakeK8sSandboxEnvironment,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The decorator baked the real backoff in at import time; swap the wait
+    # so the test doesn't actually sleep between attempts.
+    monkeypatch.setattr("apn.sandbox._install.retry.wait", wait_none())
+    fake_k8s.init_error = RuntimeError("helm install exploded")
+    fake_k8s.init_failures = 1
+    async with k8s_scoring_env(VALUES) as env:
+        assert env.name == "default"  # type: ignore[attr-defined]
+
+    assert len(fake_k8s.init_calls) == 2
+    assert len(fake_k8s.cleanup_calls) == 1
+
+
+async def test_install_gives_up_after_the_last_attempt(
+    fake_k8s: FakeK8sSandboxEnvironment,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The decorator baked the real backoff in at import time; swap the wait
+    # so the test doesn't actually sleep between attempts.
+    monkeypatch.setattr("apn.sandbox._install.retry.wait", wait_none())
+    fake_k8s.init_error = RuntimeError("helm install exploded")
+    fake_k8s.init_failures = _INSTALL_ATTEMPTS
+    with pytest.raises(RuntimeError, match="helm install exploded"):
+        async with k8s_scoring_env(VALUES):
+            pass
+
+    assert len(fake_k8s.init_calls) == _INSTALL_ATTEMPTS
+    # sample_init never handed back an environment, so there is nothing this
+    # helper can clean up; the half-installed release (if any) stays tracked by
+    # k8s_sandbox for the end-of-task sweep.
+    assert fake_k8s.cleanup_calls == []
