@@ -34,11 +34,12 @@ import pytest
 from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target
 from inspect_ai.solver import TaskState
-from inspect_ai.util import ExecResult, OutputLimitExceededError
+from inspect_ai.util import ExecResult, OutputLimitExceededError, store
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import (
+    CACHE_STORE_KEY,
     CHALLENGE_PATH,
     COMPARATOR_USER,
     CONFIG_PATH,
@@ -572,6 +573,95 @@ async def test_check_maps_output_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
     assert not outcome.ok
     assert outcome.stage == "comparator_output_limit"
+
+
+# --------------------------------------------------------------------------- #
+# One-entry result cache                                                       #
+# --------------------------------------------------------------------------- #
+# A resubmit of an unchanged tree is a full Lean build for a verdict we already
+# have, so `check` keeps its last outcome in the sample store, keyed by
+# everything the outcome depends on: the spec, the sanitized submission, the
+# decl and the claim. One slot, so at most the latest answer is reused. The
+# conftest fixture clears it between tests (under pytest `store()` is a
+# process-global default, not a per-sample store).
+OTHER_TAR = _tar_of({"./Spec.lean": "theorem tgt : True := by trivial\n"})
+
+
+async def test_cache_reuses_last_outcome(monkeypatch: pytest.MonkeyPatch) -> None:
+    checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
+    first = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    after_first = list(sb.events)
+    second = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    # Nothing ran the second time: no reset, no staging, no comparator.
+    assert sb.events == after_first
+    assert second == first
+
+
+async def test_cache_caches_rejections_too(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The cache is about the cost of the build, which a rejection pays in full.
+    checker, sb = _checker(monkeypatch, comparator=_fail(1, "not okay"))
+    first = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    after_first = list(sb.events)
+    second = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert not first.ok
+    assert sb.events == after_first
+    assert second == first
+
+
+@pytest.mark.parametrize(
+    "second_call",
+    [
+        pytest.param({"spec": SPEC + "\n-- edit\n"}, id="spec"),
+        pytest.param({"submission_tar": OTHER_TAR}, id="submission"),
+        pytest.param({"decl": "other"}, id="decl"),
+        pytest.param({"claim": "disproof"}, id="claim"),
+    ],
+)
+async def test_cache_misses_when_any_input_changes(
+    monkeypatch: pytest.MonkeyPatch, second_call: dict[str, object]
+) -> None:
+    checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
+    call: dict[str, object] = {
+        "spec": SPEC,
+        "submission_tar": SUBMISSION_TAR,
+        "decl": "tgt",
+        "claim": "proof",
+    }
+    await checker.check(**call)  # type: ignore[arg-type]
+    ran = len(sb.commands)
+    await checker.check(**{**call, **second_call})  # type: ignore[arg-type]
+    assert COMPARATOR_CMD in sb.commands[ran:]
+
+
+async def test_cache_keeps_only_the_latest_outcome(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A, B, A: the B check evicts A, so the third call rebuilds rather than
+    # reaching back past the one slot.
+    checker, sb = _checker(monkeypatch, comparator=_ok(_ACCEPT_OUT))
+    await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    await checker.check(SPEC, OTHER_TAR, decl="tgt", claim="proof")
+    ran = len(sb.commands)
+    await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert COMPARATOR_CMD in sb.commands[ran:]
+
+
+async def test_cache_does_not_hold_an_infrastructure_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A failed .lake reset raises rather than producing a verdict, so there is
+    # nothing to cache -- a retry of the same submission must really run.
+    checker, sb = _checker(
+        monkeypatch, reset=_fail(1, "reset broke"), comparator=_ok(_ACCEPT_OUT)
+    )
+    with pytest.raises(RuntimeError, match="reset failed"):
+        await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert store().get(CACHE_STORE_KEY) is None
+
+    sb._reset = _ok()  # the sandbox recovers; same submission, retried
+    outcome = await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert outcome.ok
+    assert COMPARATOR_CMD in sb.commands
 
 
 # --------------------------------------------------------------------------- #

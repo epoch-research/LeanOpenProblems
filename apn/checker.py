@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import tarfile
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import PurePosixPath
 from typing import Literal, Protocol, runtime_checkable
 from collections.abc import AsyncIterator
@@ -13,6 +14,7 @@ from inspect_ai.util import (
     OutputLimitExceededError,
     SandboxEnvironment,
     sandbox,
+    store,
     store_as,
 )
 
@@ -88,6 +90,9 @@ MAX_MODULE_PATH_BYTES = 1024
 ENTRY_MEMBER = PurePosixPath(ENTRY_PATH).relative_to(SUBMISSION_DIR)
 
 Claim = Literal["proof", "disproof"]
+
+# store key for the latest response by the checker
+CACHE_STORE_KEY = "_check_cache"
 
 
 @dataclass(frozen=True)
@@ -307,8 +312,18 @@ class SandboxComparator:
         except InvalidSubmission as exc:
             return CheckOutcome(ok=False, stage="entry_missing", detail=str(exc))
 
+        # a repeat submit gets the same answer
+        # this happens if the model under test believes it cannot make further progress
+        key = _cache_key(spec, staged, decl, claim)
+        cached = _cached_outcome(key)
+        if cached is not None:
+            return cached
+
         async with self._env() as sb:
-            return await self._check_inner(sb, spec, staged, decl, claim)
+            outcome = await self._check_inner(sb, spec, staged, decl, claim)
+
+        _store_outcome(key, outcome)
+        return outcome
 
     async def _check_inner(
         self,
@@ -397,3 +412,30 @@ class SandboxComparator:
                 detail=f"killed (exit {result.returncode})\n{output}",
             )
         return CheckOutcome(ok=False, stage="comparator", detail=output)
+
+
+def _cache_key(spec: str, staged: bytes, decl: str, claim: Claim) -> str:
+    """A digest of everything a check's outcome depends on."""
+    h = hashlib.sha256()
+    for part in (
+        spec.encode("utf-8"),
+        staged,
+        decl.encode("utf-8"),
+        claim.encode("utf-8"),
+    ):
+        h.update(len(part).to_bytes(8, "big"))
+        h.update(part)
+    return h.hexdigest()
+
+
+def _cached_outcome(key: str) -> CheckOutcome | None:
+    """The stored outcome if it was produced for ``key``, else ``None``."""
+    entry = store().get(CACHE_STORE_KEY)
+    if not isinstance(entry, dict) or entry.get("key") != key:
+        return None
+    return CheckOutcome(**entry["outcome"])
+
+
+def _store_outcome(key: str, outcome: CheckOutcome) -> None:
+    """Make ``outcome`` the cache's only entry, replacing any predecessor."""
+    store().set(CACHE_STORE_KEY, {"key": key, "outcome": asdict(outcome)})
