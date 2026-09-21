@@ -400,7 +400,7 @@ def main():
     parser.add_argument(
         "--method",
         choices=("hawk", "s3"),
-        default="s3",
+        default="hawk",
         help=(
             "Download method. 'hawk' uses the Hawk API and presigned URLs; "
             "'s3' uses aws s3 sync against HAWK_S3_BUCKET."
