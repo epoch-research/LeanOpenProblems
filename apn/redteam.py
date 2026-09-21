@@ -43,7 +43,6 @@ from inspect_boltons.tools import resources
 from apn.checker import SandboxComparator
 from apn.dataset import OEIS_DIR, fc_commit, fc_profile
 from apn.layout import ENTRY_PATH
-from apn.limits import continue_unless_looping
 from apn.scorer import proof_scorer
 from apn.solver import gated_incorrect_message, submit
 from apn.task import SandboxBackend, get_sandbox_config
@@ -217,7 +216,7 @@ def lean_redteam_prover(gated: bool) -> Solver:
                 attempts=max_attempts, incorrect_message=gated_incorrect_message
             ),
             submit=AgentSubmit(tool=submit(), name="submit_proof", keep_in_messages=True),
-            on_continue=continue_unless_looping("Continue working on the problem."),
+            on_continue="Continue working on the problem.",
             compaction=CompactionSummary(threshold=300_000),
         )
         state.messages = [ChatMessageUser(content=_REDTEAM_USER_PROMPT, source="input")]
