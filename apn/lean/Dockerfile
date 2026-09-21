@@ -632,9 +632,8 @@ RUN python3 /tmp/fetch.py --repo metadata --dest /meta --cache-dir /tmp/hfcache 
 
 FROM debian:bookworm-slim AS corpus_build
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip \
+RUN apt-get update && apt-get install -y --no-install-recommends python3 \
     && rm -rf /var/lib/apt/lists/*
-RUN pip3 install --break-system-packages --no-cache-dir pyarrow
 # COPY the downloads first so they stay cached when only the join script changes.
 COPY --from=corpus_fetch_src /shards /shards
 COPY --from=corpus_fetch_meta /meta /meta
