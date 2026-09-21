@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Processing stage of the corpus build: join the downloaded data into /corpus.
 
-Reads the proof-pile shards and metadata parquet that the two fetch stages
+Reads the proof-pile shards and metadata dump that the two fetch stages
 already downloaded (``--shards-dir`` / ``--meta-dir``, populated by fetch.py) and
 writes the final artifacts -- no network here, so editing this never re-runs the
 downloads:
@@ -16,7 +16,10 @@ downloads:
 The agent greps the result with plain ``rg``/``cat``: grep ``metadata.jsonl`` to
 find papers by topic, then read their ``src/<id>/`` directory. The 2022
 proof-pile snapshot is leak-safe by construction (it predates the benchmark
-paper), so we don't top it up with newer papers.
+paper), so we don't top it up with newer papers. The metadata dump is a July
+2022 version of the Kaggle/Cornell arXiv metadata, taken just before proof-pile's
+snapshot: a current dump would give every paper revised since its *latest*
+title, abstract and comments ("v3: conjecture 4.1 is now proved").
 
 Invariant: no arxiv row is dropped without an explicit, intended reason
 (superseded version, --max-papers cap). A row whose meta.file we can't parse,
@@ -26,7 +29,7 @@ shapes this script knew about and were skipped silently.
 
 Local eyeball (after fetch.py populated ./shards and ./meta)::
 
-    uv run --with pyarrow python apn/lean/build_corpus.py \\
+    python apn/lean/build_corpus.py \\
         --shards-dir ./shards --meta-dir ./meta --out ./corpus
 """
 
@@ -41,9 +44,13 @@ import sys
 from collections.abc import Iterator
 from pathlib import Path
 
-# Benchmark paper's month; the corpus must predate it. The 2022 snapshot is
-# already safely below this -- the check is a cheap tripwire, not the defense.
-CUTOFF_DATE = "2026-05-01"
+# Date of the pinned metadata dump (Kaggle version 86 of Cornell-University/arxiv).
+# It must not be later than proof-pile's own snapshot -- the newest source
+# version proof-pile holds was created 2022-07-20 (its build repo says "up to
+# 03/22", but the shards run through 2206.xxxxx ids) -- or post-snapshot titles
+# and abstracts leak in. The build fails on any record updated after this date,
+# so the pin can't be bumped to a current dump.
+SNAPSHOT_DATE = "2022-07-16"
 
 # How many offending meta.file values to show when failing the build.
 MAX_EXAMPLES = 20
@@ -204,41 +211,34 @@ def build_source(shard_paths: list[Path], out: Path, max_papers: int | None) -> 
 
 def build_metadata(meta_paths: list[Path], written: dict[str, str], out: Path) -> None:
     """Join the metadata dump against ``written`` and emit ``out/metadata.jsonl``."""
-    import pyarrow.parquet as pq  # type: ignore[import-untyped]
-
-    wanted = set(written)
     records: dict[str, dict[str, object]] = {}
-    late = 0
-    for shard in meta_paths:
-        print(f"  scanning {shard.name}", flush=True)
-        pf = pq.ParquetFile(shard)
-        # No `columns=` filter: keep every field from the dump verbatim and let
-        # the agent make sense of them. We only add a synthetic `file` pointing
-        # at the paper's src/ dir.
-        for batch in pf.iter_batches(batch_size=65536):
-            cols = batch.to_pydict()
-            for i, aid in enumerate(cols["id"]):
-                if aid not in wanted or aid in records:
+    latest = ""
+    for meta_path in meta_paths:
+        print(f"  scanning {meta_path.name}", flush=True)
+        with gzip.open(meta_path, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                record = json.loads(line)
+                aid = record["id"]
+                if aid not in written:
                     continue
-                record = {key: col[i] for key, col in cols.items()}
+                # Every field from the dump verbatim; we only add a synthetic
+                # `file` pointing at the paper's src/ dir.
                 record["file"] = written[aid]
                 records[aid] = record
-                upd = cols["update_date"][i]
-                upd_s = upd.isoformat()[:10] if hasattr(upd, "isoformat") else str(upd)[:10]
-                if upd_s >= CUTOFF_DATE:
-                    late += 1  # a later metadata revision; the paper itself is 2022
+                latest = max(latest, record["update_date"])
+    if latest > SNAPSHOT_DATE:
+        raise RuntimeError(
+            f"metadata dump has a record updated on {latest}, after the {SNAPSHOT_DATE} "
+            f"snapshot; a newer dump would leak post-snapshot titles and abstracts."
+        )
 
     path = out / "metadata.jsonl"
     with path.open("w", encoding="utf-8") as fh:
         for aid in sorted(records):
-            # default=str stringifies non-JSON types (e.g. the update_date
-            # timestamp) so every record stays one grep-friendly line.
-            fh.write(json.dumps(records[aid], ensure_ascii=False, default=str) + "\n")
-    missing = len(wanted) - len(records)
+            fh.write(json.dumps(records[aid], ensure_ascii=False) + "\n")
+    missing = len(written) - len(records)
     print(
-        f"  wrote {len(records)} records to {path} "
-        f"({missing} src papers had no metadata match; "
-        f"{late} have a post-{CUTOFF_DATE} update_date)",
+        f"  wrote {len(records)} records to {path} ({missing} src papers had no metadata match)",
         flush=True,
     )
 
@@ -248,7 +248,7 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--shards-dir", type=Path, required=True, help="dir of proof-pile .jsonl.gz")
-    ap.add_argument("--meta-dir", type=Path, required=True, help="dir of metadata .parquet")
+    ap.add_argument("--meta-dir", type=Path, required=True, help="dir of metadata .json.gz")
     ap.add_argument("--out", type=Path, default=Path("corpus"), help="output directory")
     ap.add_argument("--max-papers", type=int, default=None, help="cap papers written (smoke test)")
     args = ap.parse_args()
@@ -264,11 +264,11 @@ def main() -> int:
         print("no papers written", file=sys.stderr)
         return 1
 
-    meta_paths = sorted(args.meta_dir.rglob("*.parquet"))
+    meta_paths = sorted(args.meta_dir.rglob("*.json.gz"))
     if not meta_paths:
-        print(f"no .parquet under {args.meta_dir} -- run fetch.py --repo metadata", file=sys.stderr)
+        print(f"no .json.gz under {args.meta_dir} -- run fetch.py --repo metadata", file=sys.stderr)
         return 1
-    print(f"=== metadata: {len(meta_paths)} shard(s) ===", flush=True)
+    print(f"=== metadata: {len(meta_paths)} file(s) ===", flush=True)
     build_metadata(meta_paths, written, args.out)
     print("done.", flush=True)
     return 0

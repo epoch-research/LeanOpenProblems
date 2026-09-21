@@ -4,8 +4,7 @@
 ``corpus_build`` stage), not part of the ``apn`` package, so we load it by path.
 The parsing of proof-pile ``meta.file`` paths into canonical arXiv ids drives
 both the src/ layout and the metadata join, so it's worth pinning down --
-especially the pre-2007 id scheme and path-traversal rejection. (Importing the
-module is cheap: pyarrow is imported lazily, only inside build_metadata.)
+especially the pre-2007 id scheme and path-traversal rejection.
 """
 
 from __future__ import annotations
@@ -112,3 +111,35 @@ def test_build_source_fails_on_unrecognized_rows(tmp_path: Path) -> None:
     )
     with pytest.raises(RuntimeError, match="something-new.xyz"):
         bc.build_source([tmp_path / "shard.jsonl.gz"], tmp_path / "out", max_papers=None)
+
+
+def _record(aid: str, update_date: str) -> dict[str, object]:
+    return {"id": aid, "title": f"title {aid}", "abstract": "...", "update_date": update_date}
+
+
+def test_build_metadata_joins_on_written_ids(tmp_path: Path) -> None:
+    import json
+
+    _write_shard(
+        tmp_path / "meta.json.gz",
+        [_record("1506.04210", "2015-06-16"), _record("1705.00729", "2017-05-02")],
+    )
+    bc.build_metadata([tmp_path / "meta.json.gz"], {"1506.04210": "src/1506.04210"}, tmp_path)
+    records = [json.loads(line) for line in (tmp_path / "metadata.jsonl").read_text().splitlines()]
+    assert records == [
+        {
+            "id": "1506.04210",
+            "title": "title 1506.04210",
+            "abstract": "...",
+            "update_date": "2015-06-16",
+            "file": "src/1506.04210",
+        },
+    ]
+
+
+def test_build_metadata_fails_on_post_snapshot_dump(tmp_path: Path) -> None:
+    import pytest
+
+    _write_shard(tmp_path / "meta.json.gz", [_record("1506.04210", "2026-05-29")])
+    with pytest.raises(RuntimeError, match="2026-05-29"):
+        bc.build_metadata([tmp_path / "meta.json.gz"], {"1506.04210": "src/1506.04210"}, tmp_path)

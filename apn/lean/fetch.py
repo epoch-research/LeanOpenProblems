@@ -10,8 +10,9 @@ processing code, so editing that never busts these stages either.
 Sources (both public, no auth):
   * hoskinson-center/proof-pile -- a 2022 snapshot; its ``arxiv`` subset is the
     pure-math LaTeX source. A 2022 snapshot is leak-safe by construction.
-  * librarian-bots/arxiv-metadata-snapshot -- CC0 mirror of the Cornell/Kaggle
-    arXiv metadata dump.
+  * EpochAI/arxiv-metadata-2022-07 -- the Cornell/Kaggle arXiv metadata dump
+    (CC0) as of July 2022, re-hosted verbatim. A current dump would carry
+    post-2022 titles and abstracts for every paper revised since.
 
 Revisions are pinned for reproducible builds; bump deliberately (a corpus change
 rides an apn.__version__ bump, which keys the image tag).
@@ -33,9 +34,9 @@ SOURCES: dict[str, tuple[str, str, list[str]]] = {
         + ["dev/proofpile_dev.jsonl.gz", "test/proofpile_test.jsonl.gz"],
     ),
     "metadata": (
-        "librarian-bots/arxiv-metadata-snapshot",
-        "489d966b008f003cb3a5d3482041b7ed1946cd58",
-        [f"data/train-{i:05d}-of-00010.parquet" for i in range(10)],
+        "EpochAI/arxiv-metadata-2022-07",
+        "7dbab0a1eb10a6f7b8b20a2c8189286562d4dce7",
+        ["arxiv-metadata-oai-snapshot.json.gz"],
     ),
 }
 
