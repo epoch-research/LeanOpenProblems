@@ -15,12 +15,12 @@ def _text(content: str) -> ChatMessageAssistant:
     return ChatMessageAssistant(content=content)
 
 
-def _tool_call() -> list[ChatMessage]:
+def _tool_call(function: str = "bash") -> list[ChatMessage]:
     return [
         ChatMessageAssistant(
-            content="", tool_calls=[ToolCall(id="c", function="bash", arguments={})]
+            content="", tool_calls=[ToolCall(id="c", function=function, arguments={})]
         ),
-        ChatMessageTool(content="ok", tool_call_id="c", function="bash"),
+        ChatMessageTool(content="ok", tool_call_id="c", function=function),
     ]
 
 
@@ -44,6 +44,14 @@ async def test_stops_after_100_turns_without_tool_call() -> None:
     with pytest.raises(LimitExceededError) as excinfo:
         await on_continue(_state(*_tool_call(), *_no_tool_turns(100)))
     assert excinfo.value.type == "custom"
+    assert excinfo.value.limit == 100
+
+
+async def test_resources_calls_do_not_count_as_productive() -> None:
+    on_continue = continue_unless_looping(CONTINUE)
+    turns = [*_no_tool_turns(50), *_tool_call("resources"), *_no_tool_turns(49)]
+    with pytest.raises(LimitExceededError) as excinfo:
+        await on_continue(_state(*_tool_call(), *turns))
     assert excinfo.value.limit == 100
 
 

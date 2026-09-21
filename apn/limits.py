@@ -4,7 +4,7 @@ from inspect_ai.agent import AgentContinue, AgentState
 from inspect_boltons.limits import NoToolCallLimit, RepeatedTextLimit
 
 UNPRODUCTIVE_LOOP_LIMITS = (
-    NoToolCallLimit(turns=100),
+    NoToolCallLimit(turns=100, unproductive_tools=["resources"]),
     RepeatedTextLimit(turns=30),
 )
 
