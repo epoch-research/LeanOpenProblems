@@ -22,12 +22,13 @@ from inspect_ai.scorer import Score
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, tool
 from inspect_ai.util import sandbox, store
+from inspect_boltons.tools import resources
 
 from apn.checker import Claim
 from apn.layout import ENTRY_PATH
 from apn.prompts import user_prompt
 from apn.scorer import CLAIM_STORE_KEY
-from apn.tools import bash, resources
+from apn.tools import bash
 
 logger = logging.getLogger(__name__)
 

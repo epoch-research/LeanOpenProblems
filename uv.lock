@@ -185,6 +185,9 @@ wheels = [
 name = "apn"
 version = "0.1.11rc9"
 source = { editable = "." }
+dependencies = [
+    { name = "inspect-boltons" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -200,6 +203,7 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "inspect-boltons", git = "https://github.com/tadamcz/inspect_boltons?rev=35b794e845f1748947a4f18efdfcb31dd0cf746a" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -675,6 +679,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/92/03/3bd61990e197e6e0a68ebd7f1496d0b80af6c1966eea0e48fcfc1ed3b793/inspect_ai-0.3.263.tar.gz", hash = "sha256:54553ca8bfe711853414b49d962e492a60fd4cac8df935be47287a4b719f92b1", size = 35796833, upload-time = "2026-09-04T01:38:04.104Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/c0/c12e505462462d5cc2b3fa98b6b2142c9589ebc0308144498f6e9de0c70c/inspect_ai-0.3.263-py3-none-any.whl", hash = "sha256:503e7ff509d77fcdf65989027a19fea966fb668deb88a234468c3290964fd86a", size = 34294681, upload-time = "2026-09-04T01:37:58.013Z" },
+]
+
+[[package]]
+name = "inspect-boltons"
+version = "0.1.0"
+source = { git = "https://github.com/tadamcz/inspect_boltons?rev=35b794e845f1748947a4f18efdfcb31dd0cf746a#35b794e845f1748947a4f18efdfcb31dd0cf746a" }
+dependencies = [
+    { name = "inspect-ai" },
+    { name = "tabulate" },
 ]
 
 [[package]]

@@ -5,11 +5,16 @@ description = "An Inspect implementation of the AlphaProof Nexus formal proof-se
 license = "MIT AND Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
-dependencies = []
+dependencies = [
+    "inspect-boltons @ git+https://github.com/tadamcz/inspect_boltons@35b794e845f1748947a4f18efdfcb31dd0cf746a",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["apn"]
