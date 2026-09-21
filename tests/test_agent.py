@@ -19,6 +19,7 @@ from inspect_ai.model import CompactionSummary
 from inspect_ai.scorer import INCORRECT, Score
 
 import apn.solver as solver_module
+from apn.limits import continue_unless_looping
 from apn.solver import (
     INCORRECT_MESSAGE,
     RESOURCE_INCORRECT_MESSAGE,
@@ -92,7 +93,7 @@ def _build(monkeypatch: pytest.MonkeyPatch, agent_type: AgentType) -> dict[str, 
         tools=[],
         attempts=AgentAttempts(attempts=1),
         submit=AgentSubmit(),
-        on_continue="go",
+        on_continue=continue_unless_looping("go"),
         compaction=CompactionSummary(),
     )
     return seen

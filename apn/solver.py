@@ -6,6 +6,7 @@ from typing import Any, Callable, Literal, Sequence
 from inspect_ai.agent import (
     Agent,
     AgentAttempts,
+    AgentContinue,
     AgentState,
     AgentSubmit,
     as_solver,
@@ -26,6 +27,7 @@ from inspect_boltons.tools import resources
 
 from apn.checker import Claim
 from apn.layout import ENTRY_PATH
+from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
 from apn.scorer import CLAIM_STORE_KEY
 from apn.tools import bash
@@ -119,7 +121,7 @@ def build_agent(
     tools: Sequence[Tool | ToolDef | ToolSource],
     attempts: AgentAttempts,
     submit: AgentSubmit,
-    on_continue: str,
+    on_continue: AgentContinue,
     compaction: CompactionStrategy,
 ) -> Agent:
     """Construct the configured agent loop.
@@ -210,7 +212,7 @@ def lean_prover(
             ),
             # The default continue message is very generic ("proceed to the next step"), this one
             # might be better at avoiding doom loops.
-            on_continue="Continue working on the problem.",
+            on_continue=continue_unless_looping("Continue working on the problem."),
             compaction=CompactionSummary(threshold=300_000),
         )
         state.messages = [

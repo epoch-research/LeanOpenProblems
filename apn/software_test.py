@@ -42,6 +42,7 @@ from inspect_ai.util import sandbox
 from inspect_boltons.tools import resources
 
 from apn.dataset import OEIS_DIR, fc_commit
+from apn.limits import continue_unless_looping
 from apn.task import SandboxBackend, get_sandbox_config
 from apn.tools import bash
 
@@ -313,7 +314,7 @@ def software_tester() -> Solver:
         agent = react(
             prompt=AgentPrompt(instructions=_SYSTEM_PROMPT),
             tools=tools,
-            on_continue=(
+            on_continue=continue_unless_looping(
                 "Continue testing. Remember to write the report files before "
                 "you submit."
             ),
