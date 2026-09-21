@@ -39,10 +39,11 @@ from inspect_ai.scorer import Score, Scorer, Target, mean, scorer
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import text_editor
 from inspect_ai.util import sandbox
+from inspect_boltons.tools import resources
 
 from apn.dataset import OEIS_DIR, fc_commit
 from apn.task import SandboxBackend, get_sandbox_config
-from apn.tools import bash, resources
+from apn.tools import bash
 
 logger = logging.getLogger(__name__)
 

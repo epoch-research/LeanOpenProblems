@@ -38,6 +38,7 @@ from inspect_ai.agent import AgentAttempts, AgentPrompt, AgentSubmit, as_solver,
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import text_editor
 from inspect_ai.util import sandbox
+from inspect_boltons.tools import resources
 
 from apn.checker import SandboxComparator
 from apn.dataset import OEIS_DIR, fc_commit, fc_profile
@@ -45,7 +46,7 @@ from apn.layout import ENTRY_PATH
 from apn.scorer import proof_scorer
 from apn.solver import gated_incorrect_message, submit
 from apn.task import SandboxBackend, get_sandbox_config
-from apn.tools import bash, resources
+from apn.tools import bash
 
 # Where the apn codebase is unpacked in the agent sandbox for the agent to study.
 CODEBASE_DIR = "/workspace/apn-codebase"
