@@ -65,6 +65,8 @@ _FC_PROFILES = {
     ),
 }
 
+FC_PINS: tuple[str, ...] = tuple(_FC_PROFILES)
+
 
 def fc_profile(commit: str) -> FCProfile:
     """The :class:`FCProfile` for a pinned FC commit.

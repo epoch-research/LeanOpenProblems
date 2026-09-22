@@ -214,7 +214,8 @@ RUN lake exe cache get \
            lake build FormalConjectures.Util.ProblemImports; \
        fi \
     # Stub build: broken scratch-lib plumbing fails here, not at the first check.
-    && lake build Challenge Submission.Spec
+    && lake build Challenge Submission.Spec \
+    && chmod -R a+rX .lake
 
 # `COPY` can't branch on layout, so stage the proving-library SOURCE (the files
 # the agent legitimately proves *with*, imported into every problem's scope

@@ -21,7 +21,9 @@ suites. Docker is part of the test environment, so this always runs.
 
 from __future__ import annotations
 
-from apn.dataset import OEIS_DIR, fc_commit, fc_profile
+import pytest
+
+from apn.dataset import FC_PINS, fc_profile
 from scripts.isolation import CONTAINER_PROJECT
 from tests.lean_sandbox import generate_env
 
@@ -41,9 +43,9 @@ BUILTIN_TARGETS = [
 ]
 
 
-async def test_primitive_and_builtin_targets_resolve() -> None:
+@pytest.mark.parametrize("pin", FC_PINS, ids=lambda p: p[:12])
+async def test_primitive_and_builtin_targets_resolve(pin: str) -> None:
     """Every comparator primitive/builtin target resolves in the dataset env."""
-    pin = fc_commit(OEIS_DIR)
     names = PRIMITIVE_TARGETS + BUILTIN_TARGETS
     name_list = "\n".join(f"  `{n}," for n in names)
     probe = (
@@ -56,7 +58,7 @@ async def test_primitive_and_builtin_targets_resolve() -> None:
         "    unless env.contains n do\n"
         '      throwError "missing primitive/builtin constant: {n}"\n'
     )
-    async with generate_env("pytest_comparator_primitives", pin) as env:
+    async with generate_env(f"pytest_comparator_primitives_{pin[:8]}", pin) as env:
         await env.write_file(f"{CONTAINER_PROJECT}/_apn_primitives.lean", probe)
         # A missing constant makes the run_cmd throw -> nonzero exit + the
         # message naming it; a clean compile means every name resolved.

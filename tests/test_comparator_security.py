@@ -34,10 +34,18 @@ from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 from apn.checker import Claim, CheckOutcome, SandboxComparator
-from apn.dataset import OEIS_DIR, fc_commit
+from apn.dataset import FC_PINS, fc_profile
 from apn.task import get_compose_file
 
-_IMPORT = "import FormalConjectures.Util.ProblemImports\n"
+
+@pytest.fixture(params=FC_PINS, ids=lambda p: p[:12])
+def pin(request: pytest.FixtureRequest) -> str:
+    return str(request.param)
+
+
+@pytest.fixture
+def imp(pin: str) -> str:
+    return f"import {fc_profile(pin).util_module}\n"
 
 
 def _tar_of(spec_text: str, helpers: dict[str, str] | None = None) -> bytes:
@@ -53,18 +61,18 @@ def _tar_of(spec_text: str, helpers: dict[str, str] | None = None) -> bytes:
     return buf.getvalue()
 
 
-def _spec(body: str) -> str:
+def _spec(body: str, imp: str) -> str:
     return (
-        _IMPORT
+        imp
         + f"theorem tgt : {body} := by sorry\n"
         + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
     )
 
 
 @asynccontextmanager
-async def _comparator_env() -> AsyncIterator[SandboxEnvironment]:
-    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
-    task_name = "pytest_comparator_security"
+async def _comparator_env(pin: str) -> AsyncIterator[SandboxEnvironment]:
+    compose = str(get_compose_file(pin, literature=False))
+    task_name = f"pytest_comparator_security_{pin[:8]}"
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:
         envs = await init_sandbox_environments_sample(
@@ -125,7 +133,7 @@ _POISON_PACKAGES = (
 
 
 async def test_cross_attempt_filesystem_poisoning_is_scrubbed(
-    monkeypatch: pytest.MonkeyPatch,
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Check #1's submission swaps the Mathlib packages symlink for a poisoned
     directory during its build; check #2's honest proof must still be ACCEPTED,
@@ -133,24 +141,24 @@ async def test_cross_attempt_filesystem_poisoning_is_scrubbed(
     Challenge built. (This asserts the quiescent filesystem-reset story only;
     it is deliberately not evidence that a hostile *process* was removed --
     see the process-survival note below.)"""
-    async with _comparator_env() as env:
+    async with _comparator_env(pin) as env:
         # Check #1: a wrong proof (sorry) that also tries to poison packages.
         # It is rejected either way; what matters is the side effect.
-        poison_submission = _IMPORT + _POISON_PACKAGES + (
+        poison_submission = imp + _POISON_PACKAGES + (
             "theorem tgt : 1 + 1 = 2 := by sorry\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        first = await _check(env, monkeypatch, _spec("1 + 1 = 2"), poison_submission)
+        first = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), poison_submission)
         assert not first.ok, "the poisoning submission is a wrong proof; it must reject"
 
         # Check #2: an honest proof. If the poison survived, this check's
         # Challenge build would not find Mathlib and the challenge phase would
         # raise; acceptance proves the reset restored the pristine packages.
-        honest = _IMPORT + (
+        honest = imp + (
             "theorem tgt : 1 + 1 = 2 := by norm_num\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        second = await _check(env, monkeypatch, _spec("1 + 1 = 2"), honest)
+        second = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), honest)
         assert second.ok, (
             f"honest proof after a poisoning attempt was not accepted "
             f"(reset failed to restore Mathlib?): stage={second.stage}\n{second.detail[-1500:]}"
@@ -174,18 +182,18 @@ _PERMISSION_TRAP = (
 
 
 async def test_permission_trap_in_dotlake_is_cleared(
-    monkeypatch: pytest.MonkeyPatch,
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Check #1's submission plants a nonempty chmod-000 directory in `.lake`
     and otherwise fails normally; check #2's honest proof must still come back
     as a *verdict* (accepted, here) rather than raising -- i.e. the root reset
     cleared a trap that a comparator-user `rm -rf` provably cannot."""
-    async with _comparator_env() as env:
-        trap_submission = _IMPORT + _PERMISSION_TRAP + (
+    async with _comparator_env(pin) as env:
+        trap_submission = imp + _PERMISSION_TRAP + (
             "theorem tgt : 1 + 1 = 2 := by sorry\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        first = await _check(env, monkeypatch, _spec("1 + 1 = 2"), trap_submission)
+        first = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), trap_submission)
         assert not first.ok, "the trap submission is a wrong proof; it must reject"
 
         # The attack premise must have landed, else check #2 proves nothing:
@@ -198,11 +206,11 @@ async def test_permission_trap_in_dotlake_is_cleared(
             f"rc={probe.returncode} out={probe.stdout!r} err={probe.stderr!r}"
         )
 
-        honest = _IMPORT + (
+        honest = imp + (
             "theorem tgt : 1 + 1 = 2 := by norm_num\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        second = await _check(env, monkeypatch, _spec("1 + 1 = 2"), honest)
+        second = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), honest)
         assert second.ok, (
             f"honest proof after a permission-trap attempt was not accepted "
             f"(reset failed to clear the trap?): stage={second.stage}\n"
@@ -229,21 +237,21 @@ _TAMPER_STAGING = (
 
 
 async def test_staged_submission_tree_is_beyond_the_build(
-    monkeypatch: pytest.MonkeyPatch,
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Check #1's multi-module submission tries, during its own build, to
     rewrite its staged helper, add a module, and trap the staging directories;
     it must reject (its target is a sorry) *and* leave the staged tree exactly
     as the checker unpacked it. Check #2's honest multi-module proof must then
     be accepted -- the staging reset met no trap."""
-    helper = _IMPORT + "theorem aux : 1 + 1 = 2 := by norm_num\n"
-    async with _comparator_env() as env:
-        tamper_submission = _IMPORT + "import Submission.Helpers.Aux\n" + _TAMPER_STAGING + (
+    helper = imp + "theorem aux : 1 + 1 = 2 := by norm_num\n"
+    async with _comparator_env(pin) as env:
+        tamper_submission = imp + "import Submission.Helpers.Aux\n" + _TAMPER_STAGING + (
             "theorem tgt : 1 + 1 = 2 := by sorry\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
         first = await _check(
-            env, monkeypatch, _spec("1 + 1 = 2"), tamper_submission,
+            env, monkeypatch, _spec("1 + 1 = 2", imp), tamper_submission,
             helpers={"./Helpers/Aux.lean": helper},
         )
         assert not first.ok, "the tampering submission is a wrong proof; it must reject"
@@ -266,12 +274,12 @@ async def test_staged_submission_tree_is_beyond_the_build(
         staged_helper = await env.read_file("/workspace/leanproject/Submission/Helpers/Aux.lean")
         assert staged_helper == helper
 
-        honest = _IMPORT + "import Submission.Helpers.Aux\n" + (
+        honest = imp + "import Submission.Helpers.Aux\n" + (
             "theorem tgt : 1 + 1 = 2 := aux\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
         second = await _check(
-            env, monkeypatch, _spec("1 + 1 = 2"), honest,
+            env, monkeypatch, _spec("1 + 1 = 2", imp), honest,
             helpers={"./Helpers/Aux.lean": helper},
         )
         assert second.ok, (
@@ -296,37 +304,41 @@ async def test_staged_submission_tree_is_beyond_the_build(
 # Disproof-match semantic delta (§4, §6): the match is now syntactic BEq over  #
 # export-parsed (mdata-stripped) terms, not SafeVerify's kernel defeq.         #
 # --------------------------------------------------------------------------- #
-async def test_disproof_exact_not_forall_accepts(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_disproof_exact_not_forall_accepts(
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """The by-construction happy path: the agent keeps the file's own
     ``type_of%`` disproof line and fills its sorry. Its type is exactly the
     challenge's, so BEq matches."""
-    spec = _spec("∀ n : Nat, n + 2 = n")
-    submission = _IMPORT + (
+    spec = _spec("∀ n : Nat, n + 2 = n", imp)
+    submission = imp + (
         "theorem tgt : ∀ n : Nat, n + 2 = n := by sorry\n"
         "theorem tgt.disproof : ¬ (type_of% @tgt) := by intro h; have := h 0; omega\n"
     )
-    async with _comparator_env() as env:
+    async with _comparator_env(pin) as env:
         outcome = await _check(env, monkeypatch, spec, submission, claim="disproof")
     assert outcome.ok, f"exact type_of% disproof should accept: {outcome.stage}\n{outcome.detail[-1200:]}"
 
 
-async def test_disproof_restated_negation_accepts(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_disproof_restated_negation_accepts(
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Restating the negation as an explicit ``¬ (∀ …)`` -- syntactically the
     same ``Not (∀ …)`` the challenge elaborates to -- also accepts. (Binder
     *names* live under Not's lambda and Expr BEq is not alpha-sensitive there,
     so a renamed bound variable is fine; pinned by the next test.)"""
-    spec = _spec("∀ n : Nat, n + 2 = n")
-    submission = _IMPORT + (
+    spec = _spec("∀ n : Nat, n + 2 = n", imp)
+    submission = imp + (
         "theorem tgt : ∀ n : Nat, n + 2 = n := by sorry\n"
         "theorem tgt.disproof : ¬ (∀ n : Nat, n + 2 = n) := by intro h; have := h 0; omega\n"
     )
-    async with _comparator_env() as env:
+    async with _comparator_env(pin) as env:
         outcome = await _check(env, monkeypatch, spec, submission, claim="disproof")
     assert outcome.ok, f"explicit ¬(∀ …) disproof should accept: {outcome.stage}\n{outcome.detail[-1200:]}"
 
 
 async def test_disproof_false_conclusion_form_rejects(
-    monkeypatch: pytest.MonkeyPatch,
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A rewritten disproof of the shape ``(h : ∀ …) : False`` is defeq to
     ``Not (∀ …)`` but not *syntactically* it (``Not P`` unfolds to ``P → False``
@@ -334,12 +346,12 @@ async def test_disproof_false_conclusion_form_rejects(
     accepted this via kernel defeq; Comparator's syntactic BEq rejects it. This
     pins the delta so the prompt's "fill the sorry, don't restate" guidance is
     load-bearing, not cosmetic."""
-    spec = _spec("∀ n : Nat, n + 2 = n")
-    submission = _IMPORT + (
+    spec = _spec("∀ n : Nat, n + 2 = n", imp)
+    submission = imp + (
         "theorem tgt : ∀ n : Nat, n + 2 = n := by sorry\n"
         "theorem tgt.disproof (h : ∀ n : Nat, n + 2 = n) : False := by have := h 0; omega\n"
     )
-    async with _comparator_env() as env:
+    async with _comparator_env(pin) as env:
         outcome = await _check(env, monkeypatch, spec, submission, claim="disproof")
     assert not outcome.ok, (
         "a (h : ∀ …) : False disproof is not syntactically Not (∀ …); Comparator's "
@@ -352,7 +364,7 @@ async def test_disproof_false_conclusion_form_rejects(
 # Statement depends on a sorry'd def -- the "unusual defect" class (§7.3, §6).  #
 # --------------------------------------------------------------------------- #
 async def test_statement_with_sorryd_def_rejects_faithful_solution(
-    monkeypatch: pytest.MonkeyPatch,
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """When the *statement* depends on a ``def`` whose body is ``sorry``, even a
     faithful proof pulls ``sorryAx`` into its axiom closure, and Comparator's
@@ -365,13 +377,13 @@ async def test_statement_with_sorryd_def_rejects_faithful_solution(
     per-statement axiom scan of the statement's defs), not the scoring path;
     this test just pins the runtime behavior so the class is documented."""
     defs = "noncomputable def badConst : Nat := sorry"
-    spec = _IMPORT + defs + "\n" + (
+    spec = imp + defs + "\n" + (
         "theorem tgt : badConst = badConst := by rfl\n"
         "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
     )
     # An honest, complete proof -- yet its closure reaches badConst's sorry.
     submission = spec
-    async with _comparator_env() as env:
+    async with _comparator_env(pin) as env:
         outcome = await _check(env, monkeypatch, spec, submission, claim="proof")
     assert not outcome.ok, (
         "a statement depending on a sorry'd def must reject (sorryAx in the "
