@@ -49,8 +49,6 @@ hit the layer cache.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -60,19 +58,13 @@ from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, Score, Target
 from inspect_ai.solver import TaskState
 from inspect_ai.util import SandboxEnvironment
-from inspect_ai.util._sandbox.context import (
-    cleanup_sandbox_environments_sample,
-    init_sandbox_environments_sample,
-)
-from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import Claim, SandboxComparator
-from apn.dataset import FC_PINS, fc_profile
 from apn.layout import SUBMISSION_DIR
 from apn.scorer import CLAIM_STORE_KEY, proof_scorer
-from apn.task import get_compose_file
+from tests.lean_sandbox import production_envs, write_submission
 
 _IMPORT = "import FormalConjectures.Util.ProblemImports\n"
 
@@ -349,12 +341,7 @@ CASES: list[Case] = [
 ]
 
 
-def _imp(pin: str) -> str:
-    return f"import {fc_profile(pin).util_module}\n"
-
-
-def _at_pin(case: Case, pin: str) -> Case:
-    imp = _imp(pin)
+def _at_pin(case: Case, imp: str) -> Case:
     return replace(
         case,
         spec=case.spec.replace(_IMPORT, imp),
@@ -363,9 +350,7 @@ def _at_pin(case: Case, pin: str) -> Case:
 
 
 def _params() -> list[object]:
-    return [
-        pytest.param(pin, c, id=f"{c.label}-{pin[:8]}") for pin in FC_PINS for c in CASES
-    ]
+    return [pytest.param(c, id=c.label) for c in CASES]
 
 
 # --------------------------------------------------------------------------- #
@@ -381,50 +366,6 @@ class _FakeStore:
 
     def set(self, key: str, value: object) -> None:
         self._data[key] = value
-
-
-@asynccontextmanager
-async def _sandboxes(pin: str) -> AsyncIterator[dict[str, SandboxEnvironment]]:
-    """Bring up the production compose; yield the live ``{name: env}`` dict.
-
-    Same lifecycle as ``test_proof_acceptance._comparator_env``. Exposes the
-    default (agent) sandbox -- where the submission tree is staged and tarred --
-    plus the trusted ``comparator`` sandbox the checker uses. Per-test bring-up
-    isolates an OOM/crash (and any compile-time tamper against the read-only
-    rootfs) to a single case.
-    """
-    compose = str(get_compose_file(pin, literature=False))
-    task_name = f"pytest_lean_vuln_e2e_{pin[:8]}"
-    await DockerSandboxEnvironment.task_init(task_name, compose)
-    try:
-        envs = await init_sandbox_environments_sample(
-            sandboxenv_type=DockerSandboxEnvironment,
-            task_name=task_name,
-            config=compose,
-            files={},
-            setup=None,
-            metadata={},
-        )
-        try:
-            yield envs
-        finally:
-            await cleanup_sandbox_environments_sample(
-                type="docker",
-                task_name=task_name,
-                config=compose,
-                environments=envs,
-                interrupted=False,
-            )
-    finally:
-        await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
-
-
-async def _write_tree(env: SandboxEnvironment, files: dict[str, str]) -> None:
-    """Stage ``files`` (paths relative to ``Submission/``) in the agent sandbox."""
-    await env.exec(["rm", "-rf", SUBMISSION_DIR])
-    await env.exec(["mkdir", "-p", SUBMISSION_DIR])
-    for rel, content in files.items():
-        await env.write_file(f"{SUBMISSION_DIR}/{rel}", content)
 
 
 async def _score(
@@ -457,11 +398,13 @@ async def _score(
     return score
 
 
-@pytest.mark.parametrize(("pin", "case"), _params())
-async def test_scorer_verdict(pin: str, case: Case, monkeypatch: pytest.MonkeyPatch) -> None:
-    case = _at_pin(case, pin)
-    async with _sandboxes(pin) as envs:
-        await _write_tree(envs["default"], case.files)
+@pytest.mark.parametrize("case", _params())
+async def test_scorer_verdict(
+    pin: str, imp: str, case: Case, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case = _at_pin(case, imp)
+    async with production_envs("pytest_lean_vuln_e2e", pin) as envs:
+        await write_submission(envs["default"], case.files)
         score = await _score(envs, monkeypatch, case.label, case.spec, case.claim)
 
     accepted = score.value == CORRECT
@@ -473,23 +416,23 @@ async def test_scorer_verdict(pin: str, case: Case, monkeypatch: pytest.MonkeyPa
     )
 
 
-@pytest.mark.parametrize("pin", FC_PINS, ids=lambda p: p[:12])
-async def test_symlinks_are_not_staged(pin: str, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_symlinks_are_not_staged(
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Symlink members of the agent's ``Submission/`` -- as ``tar(1)`` records
     them, unfollowed -- are dropped by the sanitizer, whatever they point at: a
     link to a file outside the tree and an alias of the entry both vanish, the
     honest single-file proof beside them is accepted, and the comparator
     sandbox's staged tree holds exactly ``Spec.lean``, root-owned and read-only
     to the build."""
-    imp = _imp(pin)
     spec = _spec("2 + 2 = 4").replace(_IMPORT, imp)
     honest = (
         imp + "theorem tgt : 2 + 2 = 4 := by decide\n"
         + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
     )
-    async with _sandboxes(pin) as envs:
+    async with production_envs("pytest_lean_vuln_e2e", pin) as envs:
         agent_env = envs["default"]
-        await _write_tree(agent_env, {"Spec.lean": honest})
+        await write_submission(agent_env, {"Spec.lean": honest})
         for link, target in [
             (f"{SUBMISSION_DIR}/Passwd.lean", "/etc/passwd"),
             (f"{SUBMISSION_DIR}/Helpers/Alias.lean", "../Spec.lean"),

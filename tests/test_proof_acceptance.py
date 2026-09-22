@@ -57,40 +57,18 @@ Dockerfile; subsequent runs reuse the docker layer cache.
 
 from __future__ import annotations
 
-import io
-import tarfile
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 
 import pytest
 import pytest_asyncio
 from inspect_ai.util import SandboxEnvironment
-from inspect_ai.util._sandbox.context import (
-    cleanup_sandbox_environments_sample,
-    init_sandbox_environments_sample,
-)
-from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 from apn.checker import COMPARATOR_USER, Claim, CheckOutcome, SandboxComparator
-from apn.dataset import FC_PINS, fc_profile
-from apn.task import get_compose_file
+from apn.filetree import read_submission_tar
+from tests.lean_sandbox import production_envs, write_submission
 
 _PRISTINE = "/opt/pristine"
-
-
-def _tar_of(files: dict[str, str]) -> bytes:
-    """Pack ``{relative path: contents}`` into a tar, as the checker expects
-    (members relative to ``Submission/``). Stands in for what
-    ``read_submission_tar`` produces from the agent's live sandbox."""
-    buf = io.BytesIO()
-    with tarfile.open(fileobj=buf, mode="w") as tf:
-        for name, content in files.items():
-            data = content.encode()
-            info = tarfile.TarInfo(name)
-            info.size = len(data)
-            tf.addfile(info, io.BytesIO(data))
-    return buf.getvalue()
 
 
 def _spec(theorem_body: str, imp: str, *, defs: str = "") -> str:
@@ -125,55 +103,10 @@ def _multi_module_submission(imp: str) -> dict[str, str]:
     }
 
 
-@asynccontextmanager
-async def _comparator_env(pin: str) -> AsyncIterator[SandboxEnvironment]:
-    """Bring up the production compose at FC ``pin`` and yield the live
-    ``comparator`` env.
-
-    Uses Inspect's sandbox lifecycle against ``apn.task.get_compose_file`` (which
-    builds from ``apn/lean/Dockerfile``), so the image is current by
-    construction.
-    """
-    compose = str(get_compose_file(pin, literature=False))
-    task_name = f"pytest_acceptance_comparator_{pin[:8]}"
-    await DockerSandboxEnvironment.task_init(task_name, compose)
-    try:
-        envs = await init_sandbox_environments_sample(
-            sandboxenv_type=DockerSandboxEnvironment,
-            task_name=task_name,
-            config=compose,
-            files={},
-            setup=None,
-            metadata={},
-        )
-        try:
-            yield envs["comparator"]
-        finally:
-            await cleanup_sandbox_environments_sample(
-                type="docker",
-                task_name=task_name,
-                config=compose,
-                environments=envs,
-                interrupted=False,
-            )
-    finally:
-        await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
-
-
-@pytest.fixture(scope="module", params=FC_PINS, ids=lambda p: p[:12])
-def pin(request: pytest.FixtureRequest) -> str:
-    return str(request.param)
-
-
-@pytest.fixture(scope="module")
-def imp(pin: str) -> str:
-    return f"import {fc_profile(pin).util_module}\n"
-
-
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
-async def comparator_env(pin: str) -> AsyncIterator[SandboxEnvironment]:
-    """The live ``comparator`` env at ``pin``, brought up **once** per pin for
-    the whole module.
+async def envs(pin: str) -> AsyncIterator[dict[str, SandboxEnvironment]]:
+    """The live sandbox envs at ``pin`` -- the agent's ``default`` and the
+    trusted ``comparator`` -- brought up **once** per pin for the whole module.
 
     Every case here is honest, and ``SandboxComparator.check`` resets the
     workspace before each check, so a shared sandbox is safe -- and it builds
@@ -183,12 +116,12 @@ async def comparator_env(pin: str) -> AsyncIterator[SandboxEnvironment]:
     Inspect's sandbox lifecycle on pytest-asyncio's own loop is the only safe
     way (an ``asyncio.run`` in a plain fixture spins up a second loop its
     loop-bound globals deadlock against)."""
-    async with _comparator_env(pin) as env:
-        yield env
+    async with production_envs("pytest_acceptance", pin) as envs:
+        yield envs
 
 
 async def _check(
-    env: SandboxEnvironment,
+    envs: dict[str, SandboxEnvironment],
     monkeypatch: pytest.MonkeyPatch,
     spec: str,
     submission: dict[str, str],
@@ -196,9 +129,12 @@ async def _check(
     decl: str = "tgt",
     claim: Claim = "proof",
 ) -> CheckOutcome:
-    """Run the real checker against the given comparator sandbox."""
-    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
-    return await SandboxComparator().check(spec, _tar_of(submission), decl=decl, claim=claim)
+    """Stage ``submission`` in the agent sandbox, tar it exactly as the scorer
+    does, and run the real checker against the comparator sandbox."""
+    await write_submission(envs["default"], submission)
+    tar = await read_submission_tar(envs["default"])
+    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: envs["comparator"])
+    return await SandboxComparator().check(spec, tar, decl=decl, claim=claim)
 
 
 # --------------------------------------------------------------------------- #
@@ -206,15 +142,15 @@ async def _check(
 # --------------------------------------------------------------------------- #
 @pytest.mark.asyncio(loop_scope="module")
 async def test_pristine_tree_is_readable_by_comparator_user(
-    comparator_env: SandboxEnvironment,
+    envs: dict[str, SandboxEnvironment],
 ) -> None:
-    traces = await comparator_env.exec(
+    traces = await envs["comparator"].exec(
         ["find", _PRISTINE, "-name", "*.trace", "-type", "f"], user=COMPARATOR_USER
     )
     assert traces.success, f"{traces.stdout}\n{traces.stderr}"
     assert traces.stdout.strip(), f"no .trace files under {_PRISTINE}: is the tree staged?"
 
-    denied = await comparator_env.exec(
+    denied = await envs["comparator"].exec(
         ["find", _PRISTINE, "(", "!", "-readable", "-o", "-type", "d", "!", "-executable", ")"],
         user=COMPARATOR_USER,
     )
@@ -229,19 +165,19 @@ async def test_pristine_tree_is_readable_by_comparator_user(
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_single_file_proof_is_accepted(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     spec = _spec("1 + 1 = 2", imp)
     submission = {"Spec.lean": _spec("1 + 1 = 2", imp).replace(
         "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
     )}
-    outcome = await _check(comparator_env, monkeypatch, spec, submission)
+    outcome = await _check(envs, monkeypatch, spec, submission)
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_quoted_decl_name_component_containing_dot_is_accepted(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A source-spelled declaration name must round-trip through Comparator's config.
 
@@ -264,7 +200,7 @@ async def test_quoted_decl_name_component_containing_dot_is_accepted(
             "theorem curling_number_conjecture : 1 + 1 = 2 := by norm_num",
         )
     }
-    outcome = await _check(comparator_env, monkeypatch, spec, submission, decl=decl)
+    outcome = await _check(envs, monkeypatch, spec, submission, decl=decl)
     assert outcome.ok, (
         "a valid proof under a quoted dotted name should be accepted, got "
         f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
@@ -273,7 +209,7 @@ async def test_quoted_decl_name_component_containing_dot_is_accepted(
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_multi_module_proof_is_accepted(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # The submission is the whole Submission/ module tree: the entry imports a
     # helper that imports another (in a nested directory). The checker stages
@@ -282,7 +218,7 @@ async def test_multi_module_proof_is_accepted(
     # Submission.Spec` compiles both helpers first, and the full closure is
     # exported, compared and kernel-replayed.
     spec = _spec("1 + 1 = 2", imp)
-    outcome = await _check(comparator_env, monkeypatch, spec, _multi_module_submission(imp))
+    outcome = await _check(envs, monkeypatch, spec, _multi_module_submission(imp))
     assert outcome.ok, (
         f"a proof split across helper modules should be accepted, got "
         f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
@@ -291,7 +227,7 @@ async def test_multi_module_proof_is_accepted(
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_single_file_disproof_is_accepted(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # A false conjecture: the agent fills the .disproof sorry and declares the
     # disproof claim. The kept `tgt := sorry` is inert (not a config target and
@@ -301,13 +237,13 @@ async def test_single_file_disproof_is_accepted(
         "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry",
         "theorem tgt.disproof : ¬ (type_of% @tgt) := by norm_num",
     )}
-    outcome = await _check(comparator_env, monkeypatch, spec, submission, claim="disproof")
+    outcome = await _check(envs, monkeypatch, spec, submission, claim="disproof")
     assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_pattern_matching_def_in_entry_is_accepted(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # The submission reproduces a pattern-matching def verbatim and proves the
     # theorem. Comparator builds Challenge and the entry module
@@ -320,7 +256,7 @@ async def test_pattern_matching_def_in_entry_is_accepted(
         "theorem tgt : parity 0 = true := by sorry",
         "theorem tgt : parity 0 = true := by decide",
     )}
-    outcome = await _check(comparator_env, monkeypatch, spec, submission)
+    outcome = await _check(envs, monkeypatch, spec, submission)
     assert outcome.ok, (
         f"pattern-matching def proof should match, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
     )
@@ -328,7 +264,7 @@ async def test_pattern_matching_def_in_entry_is_accepted(
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_helper_at_quoted_module_name_is_accepted(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # The checker stages every `.lean` file inside the tree
     # (apn.checker.module_path) and leaves importability to Lake: a helper at
@@ -345,7 +281,7 @@ async def test_helper_at_quoted_module_name_is_accepted(
         ),
         "my-helpers/Aux.lean": imp + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
     }
-    outcome = await _check(comparator_env, monkeypatch, spec, submission)
+    outcome = await _check(envs, monkeypatch, spec, submission)
     assert outcome.ok, (
         f"a helper at a quoted module name should be accepted, got "
         f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
@@ -354,10 +290,10 @@ async def test_helper_at_quoted_module_name_is_accepted(
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_missing_entry_module_is_rejected(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # A submission whose tar omits Spec.lean: rejected host-side as a verdict.
-    outcome = await _check(comparator_env, monkeypatch, _spec("1 + 1 = 2", imp),
+    outcome = await _check(envs, monkeypatch, _spec("1 + 1 = 2", imp),
                            {"Other.lean": imp + "theorem aux : True := trivial\n"})
     assert not outcome.ok
     assert outcome.stage == "entry_missing"
@@ -365,8 +301,8 @@ async def test_missing_entry_module_is_rejected(
 
 @pytest.mark.asyncio(loop_scope="module")
 async def test_empty_submission_is_rejected(
-    comparator_env: SandboxEnvironment, imp: str, monkeypatch: pytest.MonkeyPatch
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    outcome = await _check(comparator_env, monkeypatch, _spec("1 + 1 = 2", imp), {})
+    outcome = await _check(envs, monkeypatch, _spec("1 + 1 = 2", imp), {})
     assert not outcome.ok
     assert outcome.stage == "entry_missing"

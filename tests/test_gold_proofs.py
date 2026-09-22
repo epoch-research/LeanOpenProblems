@@ -48,26 +48,19 @@ runs.
 
 from __future__ import annotations
 
-import io
-import tarfile
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 import pytest
 import pytest_asyncio
 from inspect_ai.util import SandboxEnvironment
-from inspect_ai.util._sandbox.context import (
-    cleanup_sandbox_environments_sample,
-    init_sandbox_environments_sample,
-)
-from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 from apn.checker import SandboxComparator
 from apn.dataset import OEIS_DIR, fc_commit, load_manifest
-from apn.task import get_compose_file
+from apn.filetree import read_submission_tar
 from scripts.isolation import disproof_declaration, strip_private
+from tests.lean_sandbox import production_envs, write_submission
 
 REPO = Path(__file__).resolve().parent.parent
 # Vendored, committed copies of the paper's gold proofs (see the dir's README);
@@ -77,55 +70,6 @@ ISOLATED_DIR = REPO / "apn" / "data" / "oeis" / "Isolated"
 
 # Collected at import time so each conjecture is its own parametrized case.
 GOLD_STEMS = sorted(p.stem for p in GOLD_DIR.glob("*.lean"))
-
-def _tar_of(files: dict[str, str]) -> bytes:
-    """Pack ``{relative path: contents}`` into the tar the checker consumes
-    (members relative to ``Submission/``). Mirrors ``test_proof_acceptance.py``."""
-    buf = io.BytesIO()
-    with tarfile.open(fileobj=buf, mode="w") as tf:
-        for name, content in files.items():
-            data = content.encode()
-            info = tarfile.TarInfo(name)
-            info.size = len(data)
-            tf.addfile(info, io.BytesIO(data))
-    return buf.getvalue()
-
-
-@asynccontextmanager
-async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
-    """Bring up the production compose and yield the live ``{name: env}`` dict.
-
-    Mirrors ``tests/test_proof_acceptance.py``: Inspect's sandbox lifecycle
-    against ``apn.task.get_compose_file`` (which builds from
-    ``apn/lean/Dockerfile``), so the image is current by construction. The
-    checker uses the trusted ``comparator`` sandbox, exposed here by name.
-    """
-    # The gold proofs are OEIS conjectures, so score against the oeis pin's image.
-    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
-    task_name = "pytest_gold_proofs_comparator"
-    await DockerSandboxEnvironment.task_init(task_name, compose)
-    try:
-        envs = await init_sandbox_environments_sample(
-            sandboxenv_type=DockerSandboxEnvironment,
-            task_name=task_name,
-            config=compose,
-            files={},
-            setup=None,
-            metadata={},
-        )
-        try:
-            yield envs
-        finally:
-            await cleanup_sandbox_environments_sample(
-                type="docker",
-                task_name=task_name,
-                config=compose,
-                environments=envs,
-                interrupted=False,
-            )
-    finally:
-        await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
-
 
 # The target theorem's fully qualified name for each gold stem, taken from the
 # manifest (== the id for all 38, none namespaced). Built once at import.
@@ -161,7 +105,8 @@ async def sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
     Shared (not per-case) is safe here: all gold proofs are honest, and the
     checker clears the compile + score scratch dirs on every call.
     """
-    async with _sandbox_envs() as envs:
+    # The gold proofs are OEIS conjectures, so score against the oeis pin's image.
+    async with production_envs("pytest_gold_proofs", fc_commit(OEIS_DIR)) as envs:
         yield envs
 
 
@@ -182,9 +127,9 @@ async def test_gold_proof_verifies(
     spec = (ISOLATED_DIR / f"{stem}.lean").read_text()
     decl = _DECL_NAME[stem]
     submission = _gold_submission(stem, decl)
-    outcome = await SandboxComparator().check(
-        spec, _tar_of({"Spec.lean": submission}), decl=decl, claim="proof"
-    )
+    await write_submission(sandbox_envs["default"], {"Spec.lean": submission})
+    tar = await read_submission_tar(sandbox_envs["default"])
+    outcome = await SandboxComparator().check(spec, tar, decl=decl, claim="proof")
     assert outcome.ok, (
         f"gold proof {stem!r} was rejected at stage={outcome.stage!r}:\n"
         f"{outcome.detail[-2000:]}"

@@ -21,9 +21,7 @@ suites. Docker is part of the test environment, so this always runs.
 
 from __future__ import annotations
 
-import pytest
-
-from apn.dataset import FC_PINS, fc_profile
+from apn.dataset import fc_profile
 from scripts.isolation import CONTAINER_PROJECT
 from tests.lean_sandbox import generate_env
 
@@ -43,7 +41,6 @@ BUILTIN_TARGETS = [
 ]
 
 
-@pytest.mark.parametrize("pin", FC_PINS, ids=lambda p: p[:12])
 async def test_primitive_and_builtin_targets_resolve(pin: str) -> None:
     """Every comparator primitive/builtin target resolves in the dataset env."""
     names = PRIMITIVE_TARGETS + BUILTIN_TARGETS

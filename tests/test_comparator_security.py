@@ -19,46 +19,13 @@ builds the image, later runs hit the layer cache.
 
 from __future__ import annotations
 
-import io
-import tarfile
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-
 import pytest
 from inspect_ai.util import SandboxEnvironment
-from inspect_ai.util._sandbox.context import (
-    cleanup_sandbox_environments_sample,
-    init_sandbox_environments_sample,
-)
-from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 from apn.checker import Claim, CheckOutcome, SandboxComparator
-from apn.dataset import FC_PINS, fc_profile
-from apn.task import get_compose_file
-
-
-@pytest.fixture(params=FC_PINS, ids=lambda p: p[:12])
-def pin(request: pytest.FixtureRequest) -> str:
-    return str(request.param)
-
-
-@pytest.fixture
-def imp(pin: str) -> str:
-    return f"import {fc_profile(pin).util_module}\n"
-
-
-def _tar_of(spec_text: str, helpers: dict[str, str] | None = None) -> bytes:
-    """A submission tar: ``Spec.lean`` plus any ``{Submission-relative path:
-    contents}`` helper modules."""
-    buf = io.BytesIO()
-    with tarfile.open(fileobj=buf, mode="w") as tf:
-        for name, text in {"./Spec.lean": spec_text, **(helpers or {})}.items():
-            data = text.encode()
-            info = tarfile.TarInfo(name)
-            info.size = len(data)
-            tf.addfile(info, io.BytesIO(data))
-    return buf.getvalue()
+from apn.filetree import read_submission_tar
+from tests.lean_sandbox import production_envs, write_submission
 
 
 def _spec(body: str, imp: str) -> str:
@@ -69,36 +36,8 @@ def _spec(body: str, imp: str) -> str:
     )
 
 
-@asynccontextmanager
-async def _comparator_env(pin: str) -> AsyncIterator[SandboxEnvironment]:
-    compose = str(get_compose_file(pin, literature=False))
-    task_name = f"pytest_comparator_security_{pin[:8]}"
-    await DockerSandboxEnvironment.task_init(task_name, compose)
-    try:
-        envs = await init_sandbox_environments_sample(
-            sandboxenv_type=DockerSandboxEnvironment,
-            task_name=task_name,
-            config=compose,
-            files={},
-            setup=None,
-            metadata={},
-        )
-        try:
-            yield envs["comparator"]
-        finally:
-            await cleanup_sandbox_environments_sample(
-                type="docker",
-                task_name=task_name,
-                config=compose,
-                environments=envs,
-                interrupted=False,
-            )
-    finally:
-        await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
-
-
 async def _check(
-    env: SandboxEnvironment,
+    envs: dict[str, SandboxEnvironment],
     monkeypatch: pytest.MonkeyPatch,
     spec: str,
     submission: str,
@@ -106,10 +45,10 @@ async def _check(
     claim: Claim = "proof",
     helpers: dict[str, str] | None = None,
 ) -> CheckOutcome:
-    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: env)
-    return await SandboxComparator().check(
-        spec, _tar_of(submission, helpers), decl="tgt", claim=claim
-    )
+    await write_submission(envs["default"], {"Spec.lean": submission, **(helpers or {})})
+    tar = await read_submission_tar(envs["default"])
+    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: envs["comparator"])
+    return await SandboxComparator().check(spec, tar, decl="tgt", claim=claim)
 
 
 # --------------------------------------------------------------------------- #
@@ -141,14 +80,14 @@ async def test_cross_attempt_filesystem_poisoning_is_scrubbed(
     Challenge built. (This asserts the quiescent filesystem-reset story only;
     it is deliberately not evidence that a hostile *process* was removed --
     see the process-survival note below.)"""
-    async with _comparator_env(pin) as env:
+    async with production_envs("pytest_comparator_security", pin) as envs:
         # Check #1: a wrong proof (sorry) that also tries to poison packages.
         # It is rejected either way; what matters is the side effect.
         poison_submission = imp + _POISON_PACKAGES + (
             "theorem tgt : 1 + 1 = 2 := by sorry\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        first = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), poison_submission)
+        first = await _check(envs, monkeypatch, _spec("1 + 1 = 2", imp), poison_submission)
         assert not first.ok, "the poisoning submission is a wrong proof; it must reject"
 
         # Check #2: an honest proof. If the poison survived, this check's
@@ -158,7 +97,7 @@ async def test_cross_attempt_filesystem_poisoning_is_scrubbed(
             "theorem tgt : 1 + 1 = 2 := by norm_num\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        second = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), honest)
+        second = await _check(envs, monkeypatch, _spec("1 + 1 = 2", imp), honest)
         assert second.ok, (
             f"honest proof after a poisoning attempt was not accepted "
             f"(reset failed to restore Mathlib?): stage={second.stage}\n{second.detail[-1500:]}"
@@ -188,17 +127,17 @@ async def test_permission_trap_in_dotlake_is_cleared(
     and otherwise fails normally; check #2's honest proof must still come back
     as a *verdict* (accepted, here) rather than raising -- i.e. the root reset
     cleared a trap that a comparator-user `rm -rf` provably cannot."""
-    async with _comparator_env(pin) as env:
+    async with production_envs("pytest_comparator_security", pin) as envs:
         trap_submission = imp + _PERMISSION_TRAP + (
             "theorem tgt : 1 + 1 = 2 := by sorry\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        first = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), trap_submission)
+        first = await _check(envs, monkeypatch, _spec("1 + 1 = 2", imp), trap_submission)
         assert not first.ok, "the trap submission is a wrong proof; it must reject"
 
         # The attack premise must have landed, else check #2 proves nothing:
         # the trap survived its own check, nonempty and mode 000.
-        probe = await env.exec(
+        probe = await envs["comparator"].exec(
             ["stat", "-c", "%a", "/workspace/leanproject/.lake/trap"]
         )
         assert probe.success and probe.stdout.strip() == "0", (
@@ -210,7 +149,7 @@ async def test_permission_trap_in_dotlake_is_cleared(
             "theorem tgt : 1 + 1 = 2 := by norm_num\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
-        second = await _check(env, monkeypatch, _spec("1 + 1 = 2", imp), honest)
+        second = await _check(envs, monkeypatch, _spec("1 + 1 = 2", imp), honest)
         assert second.ok, (
             f"honest proof after a permission-trap attempt was not accepted "
             f"(reset failed to clear the trap?): stage={second.stage}\n"
@@ -245,20 +184,20 @@ async def test_staged_submission_tree_is_beyond_the_build(
     as the checker unpacked it. Check #2's honest multi-module proof must then
     be accepted -- the staging reset met no trap."""
     helper = imp + "theorem aux : 1 + 1 = 2 := by norm_num\n"
-    async with _comparator_env(pin) as env:
+    async with production_envs("pytest_comparator_security", pin) as envs:
         tamper_submission = imp + "import Submission.Helpers.Aux\n" + _TAMPER_STAGING + (
             "theorem tgt : 1 + 1 = 2 := by sorry\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
         first = await _check(
-            env, monkeypatch, _spec("1 + 1 = 2", imp), tamper_submission,
-            helpers={"./Helpers/Aux.lean": helper},
+            envs, monkeypatch, _spec("1 + 1 = 2", imp), tamper_submission,
+            helpers={"Helpers/Aux.lean": helper},
         )
         assert not first.ok, "the tampering submission is a wrong proof; it must reject"
 
         # The staged tree after check #1: the helper is byte-identical to what
         # was staged, nothing was added, and no directory lost its mode.
-        listing = await env.exec(
+        listing = await envs["comparator"].exec(
             ["find", "/workspace/leanproject/Submission", "/workspace/leanproject/run",
              "-printf", "%p %u %m\\n"]
         )
@@ -271,7 +210,7 @@ async def test_staged_submission_tree_is_beyond_the_build(
         assert entries["/workspace/leanproject/Submission/Helpers"] == ("root", "755")
         assert entries["/workspace/leanproject/run"] == ("root", "755")
         assert "/workspace/leanproject/Submission/Extra.lean" not in entries
-        staged_helper = await env.read_file("/workspace/leanproject/Submission/Helpers/Aux.lean")
+        staged_helper = await envs["comparator"].read_file("/workspace/leanproject/Submission/Helpers/Aux.lean")
         assert staged_helper == helper
 
         honest = imp + "import Submission.Helpers.Aux\n" + (
@@ -279,8 +218,8 @@ async def test_staged_submission_tree_is_beyond_the_build(
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
         second = await _check(
-            env, monkeypatch, _spec("1 + 1 = 2", imp), honest,
-            helpers={"./Helpers/Aux.lean": helper},
+            envs, monkeypatch, _spec("1 + 1 = 2", imp), honest,
+            helpers={"Helpers/Aux.lean": helper},
         )
         assert second.ok, (
             f"honest multi-module proof after a staging-tamper attempt was not accepted: "
@@ -315,8 +254,8 @@ async def test_disproof_exact_not_forall_accepts(
         "theorem tgt : ∀ n : Nat, n + 2 = n := by sorry\n"
         "theorem tgt.disproof : ¬ (type_of% @tgt) := by intro h; have := h 0; omega\n"
     )
-    async with _comparator_env(pin) as env:
-        outcome = await _check(env, monkeypatch, spec, submission, claim="disproof")
+    async with production_envs("pytest_comparator_security", pin) as envs:
+        outcome = await _check(envs, monkeypatch, spec, submission, claim="disproof")
     assert outcome.ok, f"exact type_of% disproof should accept: {outcome.stage}\n{outcome.detail[-1200:]}"
 
 
@@ -332,8 +271,8 @@ async def test_disproof_restated_negation_accepts(
         "theorem tgt : ∀ n : Nat, n + 2 = n := by sorry\n"
         "theorem tgt.disproof : ¬ (∀ n : Nat, n + 2 = n) := by intro h; have := h 0; omega\n"
     )
-    async with _comparator_env(pin) as env:
-        outcome = await _check(env, monkeypatch, spec, submission, claim="disproof")
+    async with production_envs("pytest_comparator_security", pin) as envs:
+        outcome = await _check(envs, monkeypatch, spec, submission, claim="disproof")
     assert outcome.ok, f"explicit ¬(∀ …) disproof should accept: {outcome.stage}\n{outcome.detail[-1200:]}"
 
 
@@ -351,8 +290,8 @@ async def test_disproof_false_conclusion_form_rejects(
         "theorem tgt : ∀ n : Nat, n + 2 = n := by sorry\n"
         "theorem tgt.disproof (h : ∀ n : Nat, n + 2 = n) : False := by have := h 0; omega\n"
     )
-    async with _comparator_env(pin) as env:
-        outcome = await _check(env, monkeypatch, spec, submission, claim="disproof")
+    async with production_envs("pytest_comparator_security", pin) as envs:
+        outcome = await _check(envs, monkeypatch, spec, submission, claim="disproof")
     assert not outcome.ok, (
         "a (h : ∀ …) : False disproof is not syntactically Not (∀ …); Comparator's "
         f"BEq match must reject it. stage={outcome.stage}\n{outcome.detail[-1200:]}"
@@ -383,8 +322,8 @@ async def test_statement_with_sorryd_def_rejects_faithful_solution(
     )
     # An honest, complete proof -- yet its closure reaches badConst's sorry.
     submission = spec
-    async with _comparator_env(pin) as env:
-        outcome = await _check(env, monkeypatch, spec, submission, claim="proof")
+    async with production_envs("pytest_comparator_security", pin) as envs:
+        outcome = await _check(envs, monkeypatch, spec, submission, claim="proof")
     assert not outcome.ok, (
         "a statement depending on a sorry'd def must reject (sorryAx in the "
         f"closure), even for a faithful proof. stage={outcome.stage}\n{outcome.detail[-1200:]}"
