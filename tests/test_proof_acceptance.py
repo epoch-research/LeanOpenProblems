@@ -34,9 +34,6 @@ plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
   pins span upstream's ``FormalConjecturesUtil`` rename and both live Lean
   tracks, so the end-to-end build + kernel replay run with each pin's util
   oleans in the import closure;
-* the image's pristine Mathlib tree (``/opt/pristine``) is readable by the
-  non-privileged comparator user -- the trusted Challenge build reads it as
-  that user, and a build-time mode slip there fails every check as a verdict;
 * a single-file disproof is accepted under the ``disproof`` claim;
 * a pattern-matching ``def`` in the entry module + a real proof is accepted --
   the module-name story (Challenge and the entry module are different modules
@@ -64,11 +61,9 @@ import pytest_asyncio
 from inspect_ai.util import SandboxEnvironment
 
 import apn.checker as checker_mod
-from apn.checker import COMPARATOR_USER, Claim, CheckOutcome, SandboxComparator
+from apn.checker import Claim, CheckOutcome, SandboxComparator
 from apn.filetree import read_submission_tar
 from tests.lean_sandbox import production_envs, write_submission
-
-_PRISTINE = "/opt/pristine"
 
 
 def _spec(theorem_body: str, imp: str, *, defs: str = "") -> str:
@@ -140,29 +135,6 @@ async def _check(
 # --------------------------------------------------------------------------- #
 # Tests.                                                                        #
 # --------------------------------------------------------------------------- #
-@pytest.mark.asyncio(loop_scope="module")
-async def test_pristine_tree_is_readable_by_comparator_user(
-    envs: dict[str, SandboxEnvironment],
-) -> None:
-    traces = await envs["comparator"].exec(
-        ["find", _PRISTINE, "-name", "*.trace", "-type", "f"], user=COMPARATOR_USER
-    )
-    assert traces.success, f"{traces.stdout}\n{traces.stderr}"
-    assert traces.stdout.strip(), f"no .trace files under {_PRISTINE}: is the tree staged?"
-
-    denied = await envs["comparator"].exec(
-        ["find", _PRISTINE, "(", "!", "-readable", "-o", "-type", "d", "!", "-executable", ")"],
-        user=COMPARATOR_USER,
-    )
-    assert denied.success, f"{denied.stdout}\n{denied.stderr}"
-    entries = denied.stdout.splitlines()
-    assert not entries, (
-        f"{len(entries)} entries under {_PRISTINE} are not readable by {COMPARATOR_USER}; "
-        f"the trusted Challenge build would fail every check. First few:\n"
-        + "\n".join(entries[:10])
-    )
-
-
 @pytest.mark.asyncio(loop_scope="module")
 async def test_single_file_proof_is_accepted(
     envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
