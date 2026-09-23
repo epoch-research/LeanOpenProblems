@@ -745,10 +745,10 @@ async def test_lake_builds_multi_module_submission(agent_env: SandboxEnvironment
         "theorem smoke_aux (a b : Nat) : a + b = b + a := by omega\n"
     )
     spec = (
-        "import Submission.SmokeHelpers.Aux\n"
+        "import Submission.SmokeHelpers.Lemmas\n"
         "theorem smoke_tgt : 1 + 2 = 2 + 1 := smoke_aux 1 2\n"
     )
-    await agent_env.write_file(f"{SUBMISSION_DIR}/SmokeHelpers/Aux.lean", helper)
+    await agent_env.write_file(f"{SUBMISSION_DIR}/SmokeHelpers/Lemmas.lean", helper)
     await agent_env.write_file(f"{SUBMISSION_DIR}/Spec.lean", spec)
     try:
         code, stdout, stderr = await _bash(
@@ -757,7 +757,7 @@ async def test_lake_builds_multi_module_submission(agent_env: SandboxEnvironment
         assert code == 0, f"lake build Submission.Spec failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
         code, stdout, stderr = await _bash(
             agent_env,
-            "cd /workspace/leanproject && find .lake/build/lib -path '*/Submission/SmokeHelpers/Aux.olean'",
+            "cd /workspace/leanproject && find .lake/build/lib -path '*/Submission/SmokeHelpers/Lemmas.olean'",
         )
         assert code == 0 and stdout.strip(), f"helper olean not built:\n{stderr[-2000:]}"
     finally:

@@ -25,7 +25,7 @@ plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
 * a theorem whose fully qualified name contains a dotted guillemet-quoted
   component is accepted (the shape of three live FC100 targets);
 * **a proof split across helper modules is accepted** -- ``Spec.lean`` imports
-  ``Submission.Helpers.Aux``, which imports a helper of its own; the checker
+  ``Submission.Helpers.Lemmas``, which imports a helper of its own; the checker
   stages the whole tree at ``Submission/`` in the comparator sandbox, where the
   image's lakefile registers the ``Submission`` library, so Lake builds the
   helpers as part of building the entry module;
@@ -40,7 +40,7 @@ plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
   by design, so this confirms a faithful private/generated-name closure still
   matches);
 * a helper at a name Lake can only import with ``«»`` quoting
-  (``my-helpers/Aux.lean``, imported as ``Submission.«my-helpers».Aux``) is
+  (``my-helpers/Lemmas.lean``, imported as ``Submission.«my-helpers».Lemmas``) is
   staged and resolves like any other -- the checker stages every ``.lean``
   file inside the tree and leaves importability to Lake, which decides it
   identically in both sandboxes;
@@ -80,16 +80,16 @@ def _spec(theorem_body: str, imp: str, *, defs: str = "") -> str:
 
 def _multi_module_submission(imp: str) -> dict[str, str]:
     """An honest proof of ``1 + 1 = 2`` split across three modules: the entry
-    imports ``Submission.Helpers.Aux``, which imports
+    imports ``Submission.Helpers.Lemmas``, which imports
     ``Submission.Helpers.Deep.Base``, where the actual proof lives."""
     return {
         "Spec.lean": (
             imp
-            + "import Submission.Helpers.Aux\n"
+            + "import Submission.Helpers.Lemmas\n"
             + "theorem tgt : 1 + 1 = 2 := aux_eq\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         ),
-        "Helpers/Aux.lean": (
+        "Helpers/Lemmas.lean": (
             imp
             + "import Submission.Helpers.Deep.Base\n"
             + "theorem aux_eq : 1 + 1 = 2 := base_eq\n"
@@ -240,18 +240,18 @@ async def test_helper_at_quoted_module_name_is_accepted(
 ) -> None:
     # The checker stages every `.lean` file inside the tree
     # (apn.checker.module_path) and leaves importability to Lake: a helper at
-    # `my-helpers/Aux.lean` is the module `Submission.«my-helpers».Aux`, in the
+    # `my-helpers/Lemmas.lean` is the module `Submission.«my-helpers».Lemmas`, in the
     # agent's sandbox and in the comparator's alike, so what builds for the
     # agent builds for the verifier.
     spec = _spec("1 + 1 = 2", imp)
     submission = {
         "Spec.lean": (
             imp
-            + "import Submission.«my-helpers».Aux\n"
+            + "import Submission.«my-helpers».Lemmas\n"
             + "theorem tgt : 1 + 1 = 2 := aux_eq\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         ),
-        "my-helpers/Aux.lean": imp + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
+        "my-helpers/Lemmas.lean": imp + "theorem aux_eq : 1 + 1 = 2 := by norm_num\n",
     }
     outcome = await _check(envs, monkeypatch, spec, submission)
     assert outcome.ok, (

@@ -167,7 +167,7 @@ async def test_permission_trap_in_dotlake_is_cleared(
 _TAMPER_STAGING = (
     '#eval (do\n'
     '  let sub := "/workspace/leanproject/Submission"\n'
-    '  for p in [sub ++ "/Helpers/Aux.lean", sub ++ "/Extra.lean"] do\n'
+    '  for p in [sub ++ "/Helpers/Lemmas.lean", sub ++ "/Extra.lean"] do\n'
     '    try IO.FS.writeFile p "theorem planted : False := sorry\\n" catch _ => pure ()\n'
     '  for d in [sub ++ "/Helpers", sub, "/workspace/leanproject/run"] do\n'
     '    try IO.setAccessRights d {} catch _ => pure ()\n'
@@ -185,13 +185,13 @@ async def test_staged_submission_tree_is_beyond_the_build(
     be accepted -- the staging reset met no trap."""
     helper = imp + "theorem aux : 1 + 1 = 2 := by norm_num\n"
     async with production_envs("pytest_comparator_security", pin) as envs:
-        tamper_submission = imp + "import Submission.Helpers.Aux\n" + _TAMPER_STAGING + (
+        tamper_submission = imp + "import Submission.Helpers.Lemmas\n" + _TAMPER_STAGING + (
             "theorem tgt : 1 + 1 = 2 := by sorry\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
         first = await _check(
             envs, monkeypatch, _spec("1 + 1 = 2", imp), tamper_submission,
-            helpers={"Helpers/Aux.lean": helper},
+            helpers={"Helpers/Lemmas.lean": helper},
         )
         assert not first.ok, "the tampering submission is a wrong proof; it must reject"
 
@@ -210,16 +210,16 @@ async def test_staged_submission_tree_is_beyond_the_build(
         assert entries["/workspace/leanproject/Submission/Helpers"] == ("root", "755")
         assert entries["/workspace/leanproject/run"] == ("root", "755")
         assert "/workspace/leanproject/Submission/Extra.lean" not in entries
-        staged_helper = await envs["comparator"].read_file("/workspace/leanproject/Submission/Helpers/Aux.lean")
+        staged_helper = await envs["comparator"].read_file("/workspace/leanproject/Submission/Helpers/Lemmas.lean")
         assert staged_helper == helper
 
-        honest = imp + "import Submission.Helpers.Aux\n" + (
+        honest = imp + "import Submission.Helpers.Lemmas\n" + (
             "theorem tgt : 1 + 1 = 2 := aux\n"
             "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
         )
         second = await _check(
             envs, monkeypatch, _spec("1 + 1 = 2", imp), honest,
-            helpers={"Helpers/Aux.lean": helper},
+            helpers={"Helpers/Lemmas.lean": helper},
         )
         assert second.ok, (
             f"honest multi-module proof after a staging-tamper attempt was not accepted: "

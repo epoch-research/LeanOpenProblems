@@ -87,7 +87,7 @@ INJECT = (
     "    type := .const ``False [], value := .const ``True.intro [], all := [`fakeFalse] }\n"
     "  liftCoreM (addDecl decl)\n"
 )
-IMPORT_AUX = "import Submission.Helpers.Aux\n"
+IMPORT_AUX = "import Submission.Helpers.Lemmas\n"
 
 # Code-execution attack on the verifier's TCB. The submission is *built*
 # (`lake build Submission.Spec`) inside the comparator container -- but under landrun
@@ -181,7 +181,7 @@ CASES: list[Case] = [
         secure_accept=False,
     ),
     # ------------------- cheating from a helper module ------------------- #
-    # Helpers are real modules: `import Submission.Helpers.Aux` resolves in the
+    # Helpers are real modules: `import Submission.Helpers.Lemmas` resolves in the
     # comparator sandbox exactly as in the agent's, so a helper is built,
     # imported, and lands in the entry's export closure -- which comparator
     # kernel-replays and axiom-checks whole. Nothing in a helper is trusted.
@@ -195,7 +195,7 @@ CASES: list[Case] = [
         "helper_inject_false_rejected",
         _spec("False"),
         {
-            "Helpers/Aux.lean": INJECT,
+            "Helpers/Lemmas.lean": INJECT,
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : False := fakeFalse\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
@@ -207,7 +207,7 @@ CASES: list[Case] = [
         "helper_sorry_rejected",
         _spec("2 + 2 = 4"),
         {
-            "Helpers/Aux.lean": _IMPORT + "theorem aux : 2 + 2 = 4 := by sorry\n",
+            "Helpers/Lemmas.lean": _IMPORT + "theorem aux : 2 + 2 = 4 := by sorry\n",
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
@@ -218,7 +218,7 @@ CASES: list[Case] = [
         "helper_custom_axiom_rejected",
         _spec("2 + 2 = 4"),
         {
-            "Helpers/Aux.lean": _IMPORT + "axiom bad : 2 + 2 = 4\n",
+            "Helpers/Lemmas.lean": _IMPORT + "axiom bad : 2 + 2 = 4\n",
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := bad\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
@@ -271,7 +271,7 @@ CASES: list[Case] = [
         _spec("2 + 2 = 4"),
         {
             "Helpers/Base.lean": _IMPORT + "theorem base : 2 + 2 = 4 := by norm_num\n",
-            "Helpers/Aux.lean": _IMPORT + "import Submission.Helpers.Base\n"
+            "Helpers/Lemmas.lean": _IMPORT + "import Submission.Helpers.Base\n"
             + "theorem aux : 2 + 2 = 4 := base\n",
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
