@@ -31,22 +31,16 @@ from __future__ import annotations
 
 import platform
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 import pytest
 import pytest_asyncio
 from inspect_ai.util import SandboxEnvironment
-from inspect_ai.util._sandbox.context import (
-    cleanup_sandbox_environments_sample,
-    init_sandbox_environments_sample,
-)
-from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn
 from apn.dataset import OEIS_DIR, fc_commit
 from apn.layout import SUBMISSION_DIR
-from apn.task import get_compose_file
+from tests.lean_sandbox import production_envs
 
 # --------------------------------------------------------------------------- #
 # The contract: hardcoded rosters (no manifest machinery by design -- these    #
@@ -209,39 +203,9 @@ AGENT_COMMANDS = [
 ]
 
 
-@asynccontextmanager
-async def _sandbox_envs() -> AsyncIterator[dict[str, SandboxEnvironment]]:
-    """Bring up the production compose and yield the live ``{name: env}`` dict
-    (mirrors ``tests/test_gold_proofs.py``; the agent workspace is ``default``)."""
-    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
-    task_name = "pytest_agent_image"
-    await DockerSandboxEnvironment.task_init(task_name, compose)
-    try:
-        envs = await init_sandbox_environments_sample(
-            sandboxenv_type=DockerSandboxEnvironment,
-            task_name=task_name,
-            config=compose,
-            files={},
-            setup=None,
-            metadata={},
-        )
-        try:
-            yield envs
-        finally:
-            await cleanup_sandbox_environments_sample(
-                type="docker",
-                task_name=task_name,
-                config=compose,
-                environments=envs,
-                interrupted=False,
-            )
-    finally:
-        await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
-
-
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
 async def agent_env() -> AsyncIterator[SandboxEnvironment]:
-    async with _sandbox_envs() as envs:
+    async with production_envs("pytest_agent_image", fc_commit(OEIS_DIR)) as envs:
         yield envs["default"]
 
 
@@ -781,10 +745,10 @@ async def test_lake_builds_multi_module_submission(agent_env: SandboxEnvironment
         "theorem smoke_aux (a b : Nat) : a + b = b + a := by omega\n"
     )
     spec = (
-        "import Submission.SmokeHelpers.Aux\n"
+        "import Submission.SmokeHelpers.Lemmas\n"
         "theorem smoke_tgt : 1 + 2 = 2 + 1 := smoke_aux 1 2\n"
     )
-    await agent_env.write_file(f"{SUBMISSION_DIR}/SmokeHelpers/Aux.lean", helper)
+    await agent_env.write_file(f"{SUBMISSION_DIR}/SmokeHelpers/Lemmas.lean", helper)
     await agent_env.write_file(f"{SUBMISSION_DIR}/Spec.lean", spec)
     try:
         code, stdout, stderr = await _bash(
@@ -793,7 +757,7 @@ async def test_lake_builds_multi_module_submission(agent_env: SandboxEnvironment
         assert code == 0, f"lake build Submission.Spec failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
         code, stdout, stderr = await _bash(
             agent_env,
-            "cd /workspace/leanproject && find .lake/build/lib -path '*/Submission/SmokeHelpers/Aux.olean'",
+            "cd /workspace/leanproject && find .lake/build/lib -path '*/Submission/SmokeHelpers/Lemmas.olean'",
         )
         assert code == 0 and stdout.strip(), f"helper olean not built:\n{stderr[-2000:]}"
     finally:

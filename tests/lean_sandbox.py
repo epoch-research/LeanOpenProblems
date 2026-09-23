@@ -1,4 +1,4 @@
-"""Shared Inspect-sandbox plumbing for the isolation validation suites.
+"""Shared Inspect-sandbox plumbing for the container test suites.
 
 ``tests/test_oeis_isolation.py`` and ``tests/test_fc100_isolation.py`` both
 validate committed ``Isolated/`` specs by running the Lean declaration-range
@@ -31,6 +31,7 @@ from typing import Any, cast
 
 import yaml
 
+from inspect_ai.util import SandboxEnvironment
 from inspect_ai.util._sandbox.context import (
     cleanup_sandbox_environments_sample,
     init_sandbox_environments_sample,
@@ -38,10 +39,12 @@ from inspect_ai.util._sandbox.context import (
 from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 from apn import __version__
+from apn.layout import SUBMISSION_DIR
 from apn.task import (
     IMAGE_REPOSITORY,
     _build_section,
     _docker_tag_component,
+    get_compose_file,
     get_identifier_for_image,
 )
 from scripts.isolation import BAKED_EXE, CONTAINER_PROJECT, COMPILE_SCRIPT, parse_extractor_output
@@ -86,15 +89,11 @@ def generate_compose_file(fc_commit: str) -> str:
 
 
 @asynccontextmanager
-async def generate_env(task_name: str, fc_commit: str) -> AsyncIterator[DockerSandboxEnvironment]:
-    """Bring up the ``generate`` compose at the dataset's FC pin and yield the
-    live sandbox env.
-
-    Per-session bring-up/tear-down through Inspect's sandbox lifecycle (the same
-    path a real eval uses); the docker cache keeps repeat runs cheap. Mirrors
-    ``tests/test_proof_acceptance.py::_sandbox_envs``.
-    """
-    compose = generate_compose_file(fc_commit)
+async def compose_envs(
+    task_name: str, compose: str
+) -> AsyncIterator[dict[str, SandboxEnvironment]]:
+    """Bring up ``compose`` through Inspect's sandbox lifecycle (the same path a
+    real eval uses) and yield the live ``{service: env}`` dict."""
     await DockerSandboxEnvironment.task_init(task_name, compose)
     try:
         envs = await init_sandbox_environments_sample(
@@ -106,7 +105,7 @@ async def generate_env(task_name: str, fc_commit: str) -> AsyncIterator[DockerSa
             metadata={},
         )
         try:
-            yield cast(DockerSandboxEnvironment, envs["default"])
+            yield envs
         finally:
             await cleanup_sandbox_environments_sample(
                 type="docker",
@@ -117,6 +116,34 @@ async def generate_env(task_name: str, fc_commit: str) -> AsyncIterator[DockerSa
             )
     finally:
         await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
+
+
+@asynccontextmanager
+async def production_envs(
+    task_name: str, fc_commit: str
+) -> AsyncIterator[dict[str, SandboxEnvironment]]:
+    """The production compose at ``fc_commit`` (``apn.task.get_compose_file``,
+    built from the Dockerfile): the agent's ``default`` env and the trusted
+    ``comparator`` env."""
+    compose = str(get_compose_file(fc_commit, literature=False))
+    async with compose_envs(f"{task_name}_{fc_commit[:8]}", compose) as envs:
+        yield envs
+
+
+@asynccontextmanager
+async def generate_env(task_name: str, fc_commit: str) -> AsyncIterator[DockerSandboxEnvironment]:
+    """The ``generate`` compose at the dataset's FC pin; yields its one env."""
+    async with compose_envs(task_name, generate_compose_file(fc_commit)) as envs:
+        yield cast(DockerSandboxEnvironment, envs["default"])
+
+
+async def write_submission(env: SandboxEnvironment, files: dict[str, str]) -> None:
+    """Replace the agent sandbox's ``Submission/`` tree with ``files`` (paths
+    relative to it), as an agent would have left it for the scorer."""
+    await env.exec(["rm", "-rf", SUBMISSION_DIR])
+    await env.exec(["mkdir", "-p", SUBMISSION_DIR])
+    for rel, content in files.items():
+        await env.write_file(f"{SUBMISSION_DIR}/{rel}", content)
 
 
 # Where host .lean files are staged inside the sandbox; members keep their

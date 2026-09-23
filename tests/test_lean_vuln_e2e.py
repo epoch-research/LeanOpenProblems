@@ -38,16 +38,18 @@ rather than blind-ported from SafeVerify:
   swallows the IO exception and lets the build succeed, the verdict must stay
   reject (the ``sorry`` is still caught). This doubles as the landrun canary.
 
-Memory: the honest/attacker cases import ProblemImports (Mathlib) like a real
-sample. Docker is part of the test environment, so -- like the sibling suite --
-these always run; the first run builds the image, later runs hit the layer cache.
+Every case runs against every registered FC pin (``apn.dataset.FC_PINS``),
+with its import line rewritten to that pin's util module.
+
+Memory: the honest/attacker cases import the pin's FC util module (Mathlib)
+like a real sample. Docker is part of the test environment, so -- like the
+sibling suite -- these always run; the first run builds the images, later runs
+hit the layer cache.
 """
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -56,19 +58,13 @@ from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, Score, Target
 from inspect_ai.solver import TaskState
 from inspect_ai.util import SandboxEnvironment
-from inspect_ai.util._sandbox.context import (
-    cleanup_sandbox_environments_sample,
-    init_sandbox_environments_sample,
-)
-from inspect_ai.util._sandbox.docker.docker import DockerSandboxEnvironment
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import Claim, SandboxComparator
-from apn.dataset import OEIS_DIR, fc_commit
 from apn.layout import SUBMISSION_DIR
 from apn.scorer import CLAIM_STORE_KEY, proof_scorer
-from apn.task import get_compose_file
+from tests.lean_sandbox import production_envs, write_submission
 
 _IMPORT = "import FormalConjectures.Util.ProblemImports\n"
 
@@ -91,7 +87,7 @@ INJECT = (
     "    type := .const ``False [], value := .const ``True.intro [], all := [`fakeFalse] }\n"
     "  liftCoreM (addDecl decl)\n"
 )
-IMPORT_AUX = "import Submission.Helpers.Aux\n"
+IMPORT_AUX = "import Submission.Helpers.Lemmas\n"
 
 # Code-execution attack on the verifier's TCB. The submission is *built*
 # (`lake build Submission.Spec`) inside the comparator container -- but under landrun
@@ -185,7 +181,7 @@ CASES: list[Case] = [
         secure_accept=False,
     ),
     # ------------------- cheating from a helper module ------------------- #
-    # Helpers are real modules: `import Submission.Helpers.Aux` resolves in the
+    # Helpers are real modules: `import Submission.Helpers.Lemmas` resolves in the
     # comparator sandbox exactly as in the agent's, so a helper is built,
     # imported, and lands in the entry's export closure -- which comparator
     # kernel-replays and axiom-checks whole. Nothing in a helper is trusted.
@@ -199,7 +195,7 @@ CASES: list[Case] = [
         "helper_inject_false_rejected",
         _spec("False"),
         {
-            "Helpers/Aux.lean": INJECT,
+            "Helpers/Lemmas.lean": INJECT,
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : False := fakeFalse\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
@@ -211,7 +207,7 @@ CASES: list[Case] = [
         "helper_sorry_rejected",
         _spec("2 + 2 = 4"),
         {
-            "Helpers/Aux.lean": _IMPORT + "theorem aux : 2 + 2 = 4 := by sorry\n",
+            "Helpers/Lemmas.lean": _IMPORT + "theorem aux : 2 + 2 = 4 := by sorry\n",
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
@@ -222,7 +218,7 @@ CASES: list[Case] = [
         "helper_custom_axiom_rejected",
         _spec("2 + 2 = 4"),
         {
-            "Helpers/Aux.lean": _IMPORT + "axiom bad : 2 + 2 = 4\n",
+            "Helpers/Lemmas.lean": _IMPORT + "axiom bad : 2 + 2 = 4\n",
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := bad\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
         },
@@ -275,7 +271,7 @@ CASES: list[Case] = [
         _spec("2 + 2 = 4"),
         {
             "Helpers/Base.lean": _IMPORT + "theorem base : 2 + 2 = 4 := by norm_num\n",
-            "Helpers/Aux.lean": _IMPORT + "import Submission.Helpers.Base\n"
+            "Helpers/Lemmas.lean": _IMPORT + "import Submission.Helpers.Base\n"
             + "theorem aux : 2 + 2 = 4 := base\n",
             "Spec.lean": _IMPORT + IMPORT_AUX + "theorem tgt : 2 + 2 = 4 := aux\n"
             + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n",
@@ -345,6 +341,14 @@ CASES: list[Case] = [
 ]
 
 
+def _at_pin(case: Case, imp: str) -> Case:
+    return replace(
+        case,
+        spec=case.spec.replace(_IMPORT, imp),
+        files={path: text.replace(_IMPORT, imp) for path, text in case.files.items()},
+    )
+
+
 def _params() -> list[object]:
     return [pytest.param(c, id=c.label) for c in CASES]
 
@@ -362,50 +366,6 @@ class _FakeStore:
 
     def set(self, key: str, value: object) -> None:
         self._data[key] = value
-
-
-@asynccontextmanager
-async def _sandboxes() -> AsyncIterator[dict[str, SandboxEnvironment]]:
-    """Bring up the production compose; yield the live ``{name: env}`` dict.
-
-    Same lifecycle as ``test_proof_acceptance._comparator_env``. Exposes the
-    default (agent) sandbox -- where the submission tree is staged and tarred --
-    plus the trusted ``comparator`` sandbox the checker uses. Per-test bring-up
-    isolates an OOM/crash (and any compile-time tamper against the read-only
-    rootfs) to a single case.
-    """
-    compose = str(get_compose_file(fc_commit(OEIS_DIR), literature=False))
-    task_name = "pytest_lean_vuln_e2e"
-    await DockerSandboxEnvironment.task_init(task_name, compose)
-    try:
-        envs = await init_sandbox_environments_sample(
-            sandboxenv_type=DockerSandboxEnvironment,
-            task_name=task_name,
-            config=compose,
-            files={},
-            setup=None,
-            metadata={},
-        )
-        try:
-            yield envs
-        finally:
-            await cleanup_sandbox_environments_sample(
-                type="docker",
-                task_name=task_name,
-                config=compose,
-                environments=envs,
-                interrupted=False,
-            )
-    finally:
-        await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
-
-
-async def _write_tree(env: SandboxEnvironment, files: dict[str, str]) -> None:
-    """Stage ``files`` (paths relative to ``Submission/``) in the agent sandbox."""
-    await env.exec(["rm", "-rf", SUBMISSION_DIR])
-    await env.exec(["mkdir", "-p", SUBMISSION_DIR])
-    for rel, content in files.items():
-        await env.write_file(f"{SUBMISSION_DIR}/{rel}", content)
 
 
 async def _score(
@@ -439,9 +399,12 @@ async def _score(
 
 
 @pytest.mark.parametrize("case", _params())
-async def test_scorer_verdict(case: Case, monkeypatch: pytest.MonkeyPatch) -> None:
-    async with _sandboxes() as envs:
-        await _write_tree(envs["default"], case.files)
+async def test_scorer_verdict(
+    pin: str, imp: str, case: Case, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case = _at_pin(case, imp)
+    async with production_envs("pytest_lean_vuln_e2e", pin) as envs:
+        await write_submission(envs["default"], case.files)
         score = await _score(envs, monkeypatch, case.label, case.spec, case.claim)
 
     accepted = score.value == CORRECT
@@ -453,21 +416,23 @@ async def test_scorer_verdict(case: Case, monkeypatch: pytest.MonkeyPatch) -> No
     )
 
 
-async def test_symlinks_are_not_staged(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_symlinks_are_not_staged(
+    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Symlink members of the agent's ``Submission/`` -- as ``tar(1)`` records
     them, unfollowed -- are dropped by the sanitizer, whatever they point at: a
     link to a file outside the tree and an alias of the entry both vanish, the
     honest single-file proof beside them is accepted, and the comparator
     sandbox's staged tree holds exactly ``Spec.lean``, root-owned and read-only
     to the build."""
-    spec = _spec("2 + 2 = 4")
+    spec = _spec("2 + 2 = 4").replace(_IMPORT, imp)
     honest = (
-        _IMPORT + "theorem tgt : 2 + 2 = 4 := by decide\n"
+        imp + "theorem tgt : 2 + 2 = 4 := by decide\n"
         + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
     )
-    async with _sandboxes() as envs:
+    async with production_envs("pytest_lean_vuln_e2e", pin) as envs:
         agent_env = envs["default"]
-        await _write_tree(agent_env, {"Spec.lean": honest})
+        await write_submission(agent_env, {"Spec.lean": honest})
         for link, target in [
             (f"{SUBMISSION_DIR}/Passwd.lean", "/etc/passwd"),
             (f"{SUBMISSION_DIR}/Helpers/Alias.lean", "../Spec.lean"),
