@@ -21,6 +21,7 @@ the Lean module tree under ``Submission/``, entry module ``Spec.lean``; the
 plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
 ``test_checker.py`` and the cheating attempts in ``test_lean_vuln_e2e.py``):
 
+* a single-file proof is accepted;
 * a theorem whose fully qualified name contains a dotted guillemet-quoted
   component is accepted (the shape of three live FC100 targets);
 * **a proof split across helper modules is accepted** -- ``Spec.lean`` imports
@@ -28,10 +29,12 @@ plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
   stages the whole tree at ``Submission/`` in the comparator sandbox, where the
   image's lakefile registers the ``Submission`` library, so Lake builds the
   helpers as part of building the entry module;
-* every case runs at the one battery pin (``tests/conftest.py::pin``);
-  Comparator's verdict logic does not vary with the pin, and that each
-  registered pin's images build and accept an honest proof and disproof is
-  ``tests/test_pin_smoke.py``'s job;
+* every case above runs in every registered FC pin's comparator image
+  (``apn.dataset.FC_PINS``) -- the institutionalized pin-move smoke test: the
+  pins span upstream's ``FormalConjecturesUtil`` rename and both live Lean
+  tracks, so the end-to-end build + kernel replay run with each pin's util
+  oleans in the import closure;
+* a single-file disproof is accepted under the ``disproof`` claim;
 * a pattern-matching ``def`` in the entry module + a real proof is accepted --
   the module-name story (Challenge and the entry module are different modules
   by design, so this confirms a faithful private/generated-name closure still
@@ -133,6 +136,18 @@ async def _check(
 # Tests.                                                                        #
 # --------------------------------------------------------------------------- #
 @pytest.mark.asyncio(loop_scope="module")
+async def test_single_file_proof_is_accepted(
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec = _spec("1 + 1 = 2", imp)
+    submission = {"Spec.lean": _spec("1 + 1 = 2", imp).replace(
+        "theorem tgt : 1 + 1 = 2 := by sorry", "theorem tgt : 1 + 1 = 2 := by norm_num"
+    )}
+    outcome = await _check(envs, monkeypatch, spec, submission)
+    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
+
+
+@pytest.mark.asyncio(loop_scope="module")
 async def test_quoted_decl_name_component_containing_dot_is_accepted(
     envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -180,6 +195,22 @@ async def test_multi_module_proof_is_accepted(
         f"a proof split across helper modules should be accepted, got "
         f"stage={outcome.stage}:\n{outcome.detail[-1500:]}"
     )
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_single_file_disproof_is_accepted(
+    envs: dict[str, SandboxEnvironment], imp: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A false conjecture: the agent fills the .disproof sorry and declares the
+    # disproof claim. The kept `tgt := sorry` is inert (not a config target and
+    # not in tgt.disproof's closure).
+    spec = _spec("1 + 1 = 3", imp)
+    submission = {"Spec.lean": _spec("1 + 1 = 3", imp).replace(
+        "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry",
+        "theorem tgt.disproof : ¬ (type_of% @tgt) := by norm_num",
+    )}
+    outcome = await _check(envs, monkeypatch, spec, submission, claim="disproof")
+    assert outcome.ok, f"expected acceptance, got stage={outcome.stage}:\n{outcome.detail[-1500:]}"
 
 
 @pytest.mark.asyncio(loop_scope="module")
