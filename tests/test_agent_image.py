@@ -3,8 +3,9 @@
 The agent image's tool roster is *declared* -- in ``apn/lean/sage.yaml`` and
 ``apn/lean/conda.yaml`` (the two conda-forge envs), the per-tool scripts under
 ``apn/lean`` (``unpackaged/*.sh``, ``sage/*.sh``, ``walnut.sh``, ``julia.sh``),
-the ``agent`` stage's apt line, and the exposure list ``apn/lean/agent-commands``
--- and advertised to the agent by ``apn.prompts.user_prompt``. This suite is
+the ``lean_libs`` stage, the ``agent`` stage's apt line, and the exposure list
+``apn/lean/agent-commands`` -- and advertised to the agent by
+``apn.prompts.user_prompt``. This suite is
 the hardcoded contract between the two: every advertised binary resolves, every
 advertised python module imports in the interpreter that owns it (the agent's
 ``python3``, or Sage's own via ``sage -c``), a handful of end-to-end smokes prove
@@ -191,6 +192,8 @@ DOCS_DIRS = [
     "gclc",
     "loogle",
 ]
+
+LEAN_LIBS = ["/opt/tauceti", "/opt/lean-pool"]
 
 # The exposure list the agent stage symlinks into /usr/local/bin, one absolute
 # path per line (see the Dockerfile's agent stage).
@@ -415,6 +418,15 @@ async def test_docs_dir_present(agent_env: SandboxEnvironment, tool: str) -> Non
     # Non-empty, not merely present.
     code, stdout, _ = await _bash(agent_env, f"ls /usr/local/share/doc/{tool} | head -1")
     assert code == 0 and stdout.strip(), f"/usr/local/share/doc/{tool} missing or empty"
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("lib", LEAN_LIBS)
+async def test_lean_lib_source_present(agent_env: SandboxEnvironment, lib: str) -> None:
+    code, stdout, _ = await _bash(agent_env, f"find {lib} -name '*.lean' | head -1")
+    assert code == 0 and stdout.strip(), f"{lib} has no .lean files"
+    code, _, _ = await _bash(agent_env, f"test -f {lib}/LICENSE && test ! -e {lib}/.git")
+    assert code == 0, f"{lib} lacks LICENSE or still carries .git"
 
 
 # --------------------------------------------------------------------------- #

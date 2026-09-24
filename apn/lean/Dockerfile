@@ -78,6 +78,8 @@
 #                                                                   prompt names
 #   julia       one product (julia.sh)             /opt/julia       julia
 #                                                  /root/.julia
+#   lean_libs   Tau Ceti + Lean Pool source trees  /opt/tauceti     the paths the
+#               (pinned clones, not importable)    /opt/lean-pool   prompt names
 #   loogle      tied to the FC pin                 binary, index,   loogle; README in
 #                                                  README           /usr/local/share/doc
 #   apt line    bookworm packages conda-forge      in place         on PATH already
@@ -509,6 +511,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY julia.sh /build/
 RUN /build/julia.sh
 
+FROM debian:bookworm-slim AS lean_libs
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Tau-Ceti commit 647c65c is from 2026-08-31
+ARG TAUCETI_COMMIT=647c65c0c69e69e42f31144d9e44e3cfcde99217
+# Lean Pool commit 34e4309 is from 2026-08-30
+ARG LEAN_POOL_COMMIT=34e4309df9f06073d1bad30aecfb61e90cada2b5
+RUN git clone --filter=blob:none https://github.com/TauCetiProject/TauCeti /opt/tauceti \
+    && git -C /opt/tauceti checkout --detach "${TAUCETI_COMMIT}" \
+    && rm -rf /opt/tauceti/.git
+RUN git clone --filter=blob:none https://github.com/Vilin97/lean-pool /opt/lean-pool \
+    && git -C /opt/lean-pool checkout --detach "${LEAN_POOL_COMMIT}" \
+    && rm -rf /opt/lean-pool/.git
+
 # --------------------------------------------------------------------------- #
 # loogle: the Loogle type-pattern Mathlib search CLI. Upstream's "Running     #
 # locally" contract: the binary is dependency-free, must merely be built with #
@@ -559,6 +580,8 @@ COPY --from=sage       /opt/sage    /opt/sage
 COPY --from=julia      /opt/julia   /opt/julia
 COPY --from=julia      /root/.julia /root/.julia
 COPY --from=walnut     /opt/walnut  /opt/walnut
+COPY --from=lean_libs  /opt/tauceti   /opt/tauceti
+COPY --from=lean_libs  /opt/lean-pool /opt/lean-pool
 COPY --from=unpackaged /            /usr/local/
 
 # Loogle: the dependency-free binary, its README, and the Mathlib search index
