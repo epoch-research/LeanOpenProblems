@@ -5,8 +5,6 @@ from __future__ import annotations
 from apn.checker import PERMITTED_AXIOMS
 from apn.layout import ENTRY_MODULE, ENTRY_PATH, PROJECT, SUBMISSION_DIR
 
-LEAN_LIBS_SNAPSHOT = "31 August 2026"
-
 
 def literature_prompt() -> str:
     N_PAPERS = 475_000
@@ -52,7 +50,7 @@ Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib, plus the `loogle` search CLI.
-* Two Lean libraries: Tau Ceti at `/opt/tauceti` and Lean Pool at `/opt/lean-pool` (snapshots from {LEAN_LIBS_SNAPSHOT}). They contain formalizations beyond Mathlib. They are provided as source only and may not be compatible with your Lean project. To use a result, copy the declarations you need and their dependencies into files under `{SUBMISSION_DIR}/` and adapt them to this project's toolchain. Only copy what you need.
+* Two Lean libraries: Tau Ceti at `/opt/tauceti` and Lean Pool at `/opt/lean-pool`. They contain formalizations beyond Mathlib. They are provided as source only and may not be compatible with your Lean project. To use a result, copy the declarations you need and their dependencies into files under `{SUBMISSION_DIR}/` and adapt them to this project's toolchain. Only copy what you need.
 * The `sage` computer algebra system (SageMath 10); `sage.features` reports which engines, optional backends and databases are present. `gp`, `gap`, `Singular`, and `maxima` are also on PATH. Sage runs its own Python: Sage code, including Python that imports Sage, runs via `sage -c '<code>'` or `sage <file.py|file.sage>`; the `python3` below does not include Sage.
 * `python3` with numpy, scipy, sympy, mpmath, pandas, networkx, igraph, python-flint, cvxpy (with Clarabel), pyscipopt (SCIP, global MINLP), clingo (answer-set programming), graphillion (ZDD set families), libsemigroups_pybind11 (semigroups/automata), pymanopt (manifold optimization), pysindy (sparse dynamics identification), hypothesis (property-based testing), python bindings for z3, cvc5, OR-Tools CP-SAT, and pysat, snappy (SnapPy, 3-manifolds), and regina (low-dimensional topology).
 * `julia` with OSCAR and Hecke preinstalled (Galois groups, number fields, group theory).
