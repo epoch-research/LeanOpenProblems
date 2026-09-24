@@ -183,7 +183,7 @@ wheels = [
 
 [[package]]
 name = "apn"
-version = "0.1.11rc10"
+version = "0.1.11rc11"
 source = { editable = "." }
 dependencies = [
     { name = "inspect-boltons" },
