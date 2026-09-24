@@ -29,11 +29,10 @@ plumbing -- tar sanitizing, verdict mapping -- is unit-tested in
   stages the whole tree at ``Submission/`` in the comparator sandbox, where the
   image's lakefile registers the ``Submission`` library, so Lake builds the
   helpers as part of building the entry module;
-* every case above runs in every registered FC pin's comparator image
-  (``apn.dataset.FC_PINS``) -- the institutionalized pin-move smoke test: the
-  pins span upstream's ``FormalConjecturesUtil`` rename and both live Lean
-  tracks, so the end-to-end build + kernel replay run with each pin's util
-  oleans in the import closure;
+* every case runs at the one battery pin (``tests/conftest.py::pin``);
+  Comparator's verdict logic does not vary with the pin, and that each
+  registered pin's images build and accept an honest proof and disproof is
+  ``tests/test_pin_smoke.py``'s job;
 * a single-file disproof is accepted under the ``disproof`` claim;
 * a pattern-matching ``def`` in the entry module + a real proof is accepted --
   the module-name story (Challenge and the entry module are different modules
@@ -101,7 +100,7 @@ def _multi_module_submission(imp: str) -> dict[str, str]:
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
 async def envs(pin: str) -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """The live sandbox envs at ``pin`` -- the agent's ``default`` and the
-    trusted ``comparator`` -- brought up **once** per pin for the whole module.
+    trusted ``comparator`` -- brought up **once** for the whole module.
 
     Every case here is honest, and ``SandboxComparator.check`` resets the
     workspace before each check, so a shared sandbox is safe -- and it builds
