@@ -38,8 +38,9 @@ rather than blind-ported from SafeVerify:
   swallows the IO exception and lets the build succeed, the verdict must stay
   reject (the ``sorry`` is still caught). This doubles as the landrun canary.
 
-Every case runs against every registered FC pin (``apn.dataset.FC_PINS``),
-with its import line rewritten to that pin's util module.
+Every case runs at the one battery pin (``PIN``, the OEIS pin), with its
+import line rewritten to that pin's util module (``IMP``); Comparator's verdicts
+do not vary with the pin, and ``test_proof_acceptance.py`` runs at every pin.
 
 Memory: the honest/attacker cases import the pin's FC util module (Mathlib)
 like a real sample. Docker is part of the test environment, so -- like the
@@ -62,10 +63,13 @@ from inspect_ai.util import SandboxEnvironment
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
 from apn.checker import Claim, SandboxComparator
+from apn.dataset import OEIS_DIR, fc_commit, fc_profile
 from apn.layout import SUBMISSION_DIR
 from apn.scorer import CLAIM_STORE_KEY, proof_scorer
 from tests.lean_sandbox import production_envs, write_submission
 
+PIN = fc_commit(OEIS_DIR)
+IMP = f"import {fc_profile(PIN).util_module}\n"
 _IMPORT = "import FormalConjectures.Util.ProblemImports\n"
 
 # --------------------------------------------------------------------------- #
@@ -341,11 +345,11 @@ CASES: list[Case] = [
 ]
 
 
-def _at_pin(case: Case, imp: str) -> Case:
+def _at_pin(case: Case) -> Case:
     return replace(
         case,
-        spec=case.spec.replace(_IMPORT, imp),
-        files={path: text.replace(_IMPORT, imp) for path, text in case.files.items()},
+        spec=case.spec.replace(_IMPORT, IMP),
+        files={path: text.replace(_IMPORT, IMP) for path, text in case.files.items()},
     )
 
 
@@ -400,10 +404,10 @@ async def _score(
 
 @pytest.mark.parametrize("case", _params())
 async def test_scorer_verdict(
-    pin: str, imp: str, case: Case, monkeypatch: pytest.MonkeyPatch
+    case: Case, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    case = _at_pin(case, imp)
-    async with production_envs("pytest_lean_vuln_e2e", pin) as envs:
+    case = _at_pin(case)
+    async with production_envs("pytest_lean_vuln_e2e", PIN) as envs:
         await write_submission(envs["default"], case.files)
         score = await _score(envs, monkeypatch, case.label, case.spec, case.claim)
 
@@ -417,7 +421,7 @@ async def test_scorer_verdict(
 
 
 async def test_symlinks_are_not_staged(
-    pin: str, imp: str, monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Symlink members of the agent's ``Submission/`` -- as ``tar(1)`` records
     them, unfollowed -- are dropped by the sanitizer, whatever they point at: a
@@ -425,12 +429,12 @@ async def test_symlinks_are_not_staged(
     honest single-file proof beside them is accepted, and the comparator
     sandbox's staged tree holds exactly ``Spec.lean``, root-owned and read-only
     to the build."""
-    spec = _spec("2 + 2 = 4").replace(_IMPORT, imp)
+    spec = _spec("2 + 2 = 4").replace(_IMPORT, IMP)
     honest = (
-        imp + "theorem tgt : 2 + 2 = 4 := by decide\n"
+        IMP + "theorem tgt : 2 + 2 = 4 := by decide\n"
         + "theorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
     )
-    async with production_envs("pytest_lean_vuln_e2e", pin) as envs:
+    async with production_envs("pytest_lean_vuln_e2e", PIN) as envs:
         agent_env = envs["default"]
         await write_submission(agent_env, {"Spec.lean": honest})
         for link, target in [

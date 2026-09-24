@@ -22,6 +22,7 @@ suites via ``scripts/isolation.py``.)
 from __future__ import annotations
 
 import io
+import os
 import tarfile
 import tempfile
 from collections.abc import AsyncIterator
@@ -52,6 +53,8 @@ from scripts.isolation import BAKED_EXE, CONTAINER_PROJECT, COMPILE_SCRIPT, pars
 # The disproof-declaration certifier baked next to the extractor (the
 # Dockerfile `generate` stage builds both exes of apn/lean/extract_ranges).
 CERTIFY_EXE = "/opt/apn/extract_ranges/.lake/build/bin/certify_disproof"
+
+MAX_COMPILE_JOBS = 16
 
 
 def generate_compose_file(fc_commit: str) -> str:
@@ -237,7 +240,10 @@ async def compile_all(env: DockerSandboxEnvironment, files: list[Path]) -> list[
     """Compile every file with the scorer's ``lake env lean -o`` command in the
     sandbox; return the stems that failed. Uses the shared ``COMPILE_SCRIPT``."""
     cpaths = await stage(env, files)
-    res = await env.exec(["bash", "-s", "--", *cpaths], input=COMPILE_SCRIPT)
+    jobs = str(min(os.cpu_count() or 1, MAX_COMPILE_JOBS))
+    res = await env.exec(
+        ["bash", "-s", "--", *cpaths], input=COMPILE_SCRIPT, env={"APN_COMPILE_JOBS": jobs}
+    )
     if not res.success:
         raise RuntimeError(f"compile driver failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
     return sorted(s for s in res.stdout.split() if s)
