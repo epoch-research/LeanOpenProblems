@@ -87,6 +87,11 @@ jobs:
           # the agent image in-test, like the other container suites).
           - suite: agent-image
             args: tests/test_agent_image.py
+          - suite: isolation-compile-jobs-16
+            compile_jobs: 16
+            args: >-
+              tests/test_oeis_isolation.py
+              tests/test_fc100_isolation.py
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -98,4 +103,6 @@ jobs:
           python-version-file: pyproject.toml
       - run: uv sync
       - name: Run ${{ matrix.suite }}
-        run: uv run pytest ${{ matrix.args }}
+        env:
+          APN_COMPILE_JOBS: ${{ matrix.compile_jobs }}
+        run: uv run pytest --durations=0 -s ${{ matrix.args }}

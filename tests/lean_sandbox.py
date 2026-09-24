@@ -22,8 +22,11 @@ suites via ``scripts/isolation.py``.)
 from __future__ import annotations
 
 import io
+import os
+import sys
 import tarfile
 import tempfile
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -52,6 +55,10 @@ from scripts.isolation import BAKED_EXE, CONTAINER_PROJECT, COMPILE_SCRIPT, pars
 # The disproof-declaration certifier baked next to the extractor (the
 # Dockerfile `generate` stage builds both exes of apn/lean/extract_ranges).
 CERTIFY_EXE = "/opt/apn/extract_ranges/.lake/build/bin/certify_disproof"
+
+
+def _report(label: str, started: float) -> None:
+    print(f"[timing] {label}: {time.perf_counter() - started:.1f}s", file=sys.stderr, flush=True)
 
 
 def generate_compose_file(fc_commit: str) -> str:
@@ -94,8 +101,11 @@ async def compose_envs(
 ) -> AsyncIterator[dict[str, SandboxEnvironment]]:
     """Bring up ``compose`` through Inspect's sandbox lifecycle (the same path a
     real eval uses) and yield the live ``{service: env}`` dict."""
+    started = time.perf_counter()
     await DockerSandboxEnvironment.task_init(task_name, compose)
+    _report(f"{task_name} task_init (compose build)", started)
     try:
+        started = time.perf_counter()
         envs = await init_sandbox_environments_sample(
             sandboxenv_type=DockerSandboxEnvironment,
             task_name=task_name,
@@ -104,9 +114,11 @@ async def compose_envs(
             setup=None,
             metadata={},
         )
+        _report(f"{task_name} sample_init (compose up)", started)
         try:
             yield envs
         finally:
+            started = time.perf_counter()
             await cleanup_sandbox_environments_sample(
                 type="docker",
                 task_name=task_name,
@@ -114,8 +126,11 @@ async def compose_envs(
                 environments=envs,
                 interrupted=False,
             )
+            _report(f"{task_name} sample_cleanup (compose down)", started)
     finally:
+        started = time.perf_counter()
         await DockerSandboxEnvironment.task_cleanup(task_name, compose, cleanup=True)
+        _report(f"{task_name} task_cleanup", started)
 
 
 @asynccontextmanager
@@ -162,6 +177,7 @@ async def stage(
     if arcnames is None:
         arcnames = [p.name for p in files]
     assert len(set(arcnames)) == len(files), "staging arcnames collide"
+    started = time.perf_counter()
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w") as tf:
         for p, arc in zip(files, arcnames):
@@ -172,6 +188,7 @@ async def stage(
          f"&& tar -xf {_STAGE_TAR} -C {_STAGE_DIR}"]
     )
     assert res.success, f"staging files into sandbox failed:\n{res.stderr}"
+    _report(f"stage {len(files)} files", started)
     return [f"{_STAGE_DIR}/{arc}" for arc in arcnames]
 
 
@@ -191,10 +208,12 @@ async def extract(
     named the staged files.
     """
     cpaths = await stage(env, files, arcnames)
+    started = time.perf_counter()
     res = await env.exec(
         ["lake", "env", BAKED_EXE, "--util-module", util_module, *cpaths],
         cwd=CONTAINER_PROJECT,
     )
+    _report(f"extract {len(files)} files", started)
     if not res.success:
         raise RuntimeError(f"extractor failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
     records: list[dict[str, Any]] = parse_extractor_output(res.stdout)
@@ -219,10 +238,12 @@ async def certify(
     ``file`` is rewritten to its arcname, mirroring :func:`extract`.
     """
     cpaths = await stage(env, files, arcnames)
+    started = time.perf_counter()
     res = await env.exec(
         ["lake", "env", CERTIFY_EXE, "--util-module", util_module, *cpaths],
         cwd=CONTAINER_PROJECT,
     )
+    _report(f"certify {len(files)} files", started)
     if not res.success:
         raise RuntimeError(f"certifier failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
     verdicts: list[dict[str, Any]] = parse_extractor_output(res.stdout)
@@ -237,7 +258,11 @@ async def compile_all(env: DockerSandboxEnvironment, files: list[Path]) -> list[
     """Compile every file with the scorer's ``lake env lean -o`` command in the
     sandbox; return the stems that failed. Uses the shared ``COMPILE_SCRIPT``."""
     cpaths = await stage(env, files)
-    res = await env.exec(["bash", "-s", "--", *cpaths], input=COMPILE_SCRIPT)
+    jobs = os.environ.get("APN_COMPILE_JOBS")
+    exec_env: dict[str, str] = {"APN_COMPILE_JOBS": jobs} if jobs else {}
+    started = time.perf_counter()
+    res = await env.exec(["bash", "-s", "--", *cpaths], input=COMPILE_SCRIPT, env=exec_env)
+    _report(f"compile_all {len(files)} files (APN_COMPILE_JOBS={jobs or '4 default'})", started)
     if not res.success:
         raise RuntimeError(f"compile driver failed (rc={res.returncode}):\n{res.stderr[-3000:]}")
     return sorted(s for s in res.stdout.split() if s)
