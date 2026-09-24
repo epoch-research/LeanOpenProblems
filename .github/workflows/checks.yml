@@ -67,7 +67,6 @@ jobs:
               --ignore=tests/test_lean_vuln_e2e.py
               --ignore=tests/test_comparator_security.py
               --ignore=tests/test_comparator_primitives.py
-              --ignore=tests/test_pin_smoke.py
               --ignore=tests/test_agent_image.py
           - suite: comparator-tests
             args: >-
@@ -86,10 +85,6 @@ jobs:
             args: tests/test_fc100_isolation.py
           - suite: gold-proofs
             args: tests/test_gold_proofs.py
-          # Contract test for the agent image's declared compute stack (builds
-          # the agent image in-test, like the other container suites).
-          - suite: agent-image
-            args: tests/test_agent_image.py
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -120,8 +115,8 @@ jobs:
       - id: list
         run: uv run python -c 'import json; from apn.dataset import FC_PINS; print("pins=" + json.dumps(list(FC_PINS)))' >> "$GITHUB_OUTPUT"
 
-  pin-smoke:
-    name: pin-smoke ${{ matrix.pin }}
+  per-pin:
+    name: per-pin ${{ matrix.pin }}
     needs: pins
     runs-on: epoch-research-x64-64core-256GB-2040GB
     strategy:
@@ -138,10 +133,14 @@ jobs:
         with:
           python-version-file: pyproject.toml
       - run: uv sync
-      - run: uv run pytest --durations=25 --fc-pin ${{ matrix.pin }} tests/test_pin_smoke.py tests/test_comparator_primitives.py
+      - run: >-
+          uv run pytest --durations=25 --fc-pin ${{ matrix.pin }}
+          tests/test_proof_acceptance.py
+          tests/test_agent_image.py
+          tests/test_comparator_primitives.py
 
   all-checks:
-    needs: [check-version, mypy, pytest, pins, pin-smoke]
+    needs: [check-version, mypy, pytest, pins, per-pin]
     if: always()
     runs-on: ubuntu-24.04
     steps:

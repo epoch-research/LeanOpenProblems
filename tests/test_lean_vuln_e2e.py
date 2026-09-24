@@ -39,8 +39,8 @@ rather than blind-ported from SafeVerify:
   reject (the ``sorry`` is still caught). This doubles as the landrun canary.
 
 Every case runs at the one battery pin (``PIN``, the OEIS pin), with its
-import line rewritten to that pin's util module (``IMP``); Comparator's verdicts do not
-vary with the pin, and per-pin image health is ``tests/test_pin_smoke.py``.
+import line rewritten to that pin's util module (``IMP``); Comparator's verdicts
+do not vary with the pin, and ``test_proof_acceptance.py`` runs at every pin.
 
 Memory: the honest/attacker cases import the pin's FC util module (Mathlib)
 like a real sample. Docker is part of the test environment, so -- like the

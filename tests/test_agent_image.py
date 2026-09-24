@@ -21,11 +21,13 @@ tool executes (``apn.tools``) -- so the exposure mechanism (symlinks in
 /usr/local/bin, plus the ``sage`` wrapper, which a login shell's PATH puts
 ahead of /usr/bin) is itself under test.
 
-The agent (``default``) sandbox is brought up **once for the whole module**
-through Inspect's lifecycle from the production compose
-(``apn.task.get_compose_file``, which builds from ``apn/lean/Dockerfile``),
-exactly like ``tests/test_gold_proofs.py``, sharing one module-scoped event
-loop. Docker is part of the test environment, so this always runs.
+The agent (``default``) sandbox is brought up **once per registered FC pin**
+(``apn.dataset.FC_PINS``, the ``pin`` fixture) through Inspect's lifecycle
+from the production compose (``apn.task.get_compose_file``, which builds from
+``apn/lean/Dockerfile``), exactly like ``tests/test_gold_proofs.py``, sharing
+one module-scoped event loop; Loogle's binary and index are built per pin, the
+rest of the stack is Lean-agnostic. Docker is part of the test environment, so
+this always runs.
 """
 
 from __future__ import annotations
@@ -39,7 +41,6 @@ import pytest_asyncio
 from inspect_ai.util import SandboxEnvironment
 
 import apn
-from apn.dataset import OEIS_DIR, fc_commit
 from apn.layout import SUBMISSION_DIR
 from tests.lean_sandbox import production_envs
 
@@ -207,8 +208,8 @@ AGENT_COMMANDS = [
 
 
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
-async def agent_env() -> AsyncIterator[SandboxEnvironment]:
-    async with production_envs("pytest_agent_image", fc_commit(OEIS_DIR)) as envs:
+async def agent_env(pin: str) -> AsyncIterator[SandboxEnvironment]:
+    async with production_envs("pytest_agent_image", pin) as envs:
         yield envs["default"]
 
 
