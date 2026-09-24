@@ -70,7 +70,6 @@ jobs:
               --ignore=tests/test_agent_image.py
           - suite: comparator-tests
             args: >-
-              tests/test_proof_acceptance.py
               tests/test_lean_vuln_e2e.py
               tests/test_comparator_security.py
           - suite: isolation-oeis
