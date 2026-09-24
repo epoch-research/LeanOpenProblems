@@ -73,7 +73,8 @@
 #               PyPI package (conda.yaml)                           the CLI tools in
 #                                                                   agent-commands
 #   unpackaged  no conda-forge/apt/PyPI package;   bin/ share/doc/  copied into
-#               one stage per tool (unpackaged/)                    /usr/local
+#               one stage per tool (unpackaged/)   (capd: lib/      /usr/local
+#                                                  include/ too)
 #   walnut      one product (walnut.sh)            /opt/walnut      the path the
 #                                                                   prompt names
 #   julia       one product (julia.sh)             /opt/julia       julia
@@ -458,6 +459,10 @@ FROM build_base AS primality
 COPY unpackaged/primality.sh /build/
 RUN /build/primality.sh
 
+FROM build_base AS capd
+COPY unpackaged/capd.sh /build/
+RUN /build/capd.sh
+
 FROM scratch AS unpackaged
 COPY --from=kissat    /out /
 COPY --from=plantri   /out /
@@ -474,6 +479,7 @@ COPY --from=msieve    /out /
 COPY --from=kamis     /out /
 COPY --from=gclc      /out /
 COPY --from=primality /out /
+COPY --from=capd      /out /
 
 # --------------------------------------------------------------------------- #
 # walnut: Walnut, the decision procedure for automatic sequences / base-k     #
@@ -542,14 +548,15 @@ FROM base AS agent
 # ATP), mpsolve (certified polynomial roots); default-jre-headless runs Walnut;
 # jq + ripgrep serve the bash tool (git is already in base); man-db + less make
 # the packages' man pages readable; libmpfr6 is msolve's one runtime link the
-# image would otherwise lack (gmp comes with base's libgmp-dev). bookworm-slim
+# image would otherwise lack (gmp comes with base's libgmp-dev); pkg-config
+# backs CAPD's `capd-config` script (unpackaged/capd.sh). bookworm-slim
 # configures dpkg to drop /usr/share/doc and man pages; that rule goes first so
 # these packages keep their documentation.
 RUN rm /etc/dpkg/dpkg.cfg.d/docker \
     && apt-get update && apt-get install -y --no-install-recommends \
         polymake macaulay2 cryptominisat coinor-csdp \
         topcom cadabra2 minizinc berkeley-abc eprover mpsolve \
-        default-jre-headless jq ripgrep man-db less libmpfr6 \
+        default-jre-headless jq ripgrep man-db less libmpfr6 pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # The chunks, each at its final path. Nothing in the two envs is on PATH; the

@@ -116,13 +116,16 @@ BINARIES = [
     "make",
 ]
 
-# The special-form primality toolchain: absent from arm64 images (local dev
-# on Apple silicon); CI and production images are amd64. sllr64/pfgw64 are
-# x86-64 gwnum assembly; srsieve2's makefile only knows x86 and 32-bit ARM.
+# x86-64-only tools: absent from arm64 images (local dev on Apple silicon);
+# CI and production images are amd64. The special-form primality toolchain:
+# sllr64/pfgw64 are x86-64 gwnum assembly; srsieve2's makefile only knows x86
+# and 32-bit ARM. capd-config is CAPD's compile-flags script (unpackaged/
+# capd.sh); its bundled filib interval kernel builds only with SSE.
 BINARIES_X86_ONLY = [
     "sllr64",
     "pfgw64",
     "srsieve2",
+    "capd-config",
 ]
 
 # Python modules importable from the agent's `python3` (the /opt/env python).
@@ -665,6 +668,54 @@ async def test_vampire_refutes(agent_env: SandboxEnvironment) -> None:
     )
     assert code == 0, f"vampire failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
     assert "Refutation" in stdout
+
+
+_CAPD_SMOKE_CPP = r"""
+#include "capd/capdlib.h"
+#include <iostream>
+using namespace capd;
+int main() {
+  // Interval arithmetic: the enclosure of 1/3 must contain the true value.
+  interval third = interval(1.0) / interval(3.0);
+  bool ok_third = third.leftBound() <= 1.0 / 3 && 1.0 / 3 <= third.rightBound();
+  // Validated ODE integration: x' = -x, x(0) = 1, so x(1) = 1/e.
+  IMap f("var:x;fun:-x;");
+  IOdeSolver solver(f, 20);
+  ITimeMap tm(solver);
+  IVector x0(1);
+  x0[0] = 1.0;
+  C0HORect2Set s(x0);
+  IVector x1 = tm(1.0, s);
+  bool ok_ode = x1[0].leftBound() < 0.36787944117144234 && 0.36787944117144232 < x1[0].rightBound();
+  std::cout.precision(17);
+  std::cout << third << " " << x1[0] << std::endl;
+  std::cout << (ok_third && ok_ode ? "CAPD_OK" : "CAPD_FAIL") << std::endl;
+  return 0;
+}
+"""
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.skipif(
+    platform.machine() in ("arm64", "aarch64"),
+    reason="CAPD is x86-64-only (filib needs SSE); the sandbox is built for the host arch",
+)
+async def test_capd_compiles_and_encloses(agent_env: SandboxEnvironment) -> None:
+    """CAPD is a library, so `command -v capd-config` proves little: the real
+    contract is that a program compiled the documented way (g++ plus
+    `capd-config --cflags --libs`, which needs pkg-config from the agent apt
+    line and the headers/static libs under /usr/local) links and produces
+    rigorous enclosures. Also checks the shipped docs directory."""
+    code, stdout, stderr = await _bash(
+        agent_env,
+        "cat > /tmp/capd_smoke.cpp <<'EOF'\n" + _CAPD_SMOKE_CPP.strip() + "\nEOF\n"
+        "g++ /tmp/capd_smoke.cpp $(capd-config --cflags --libs) -o /tmp/capd_smoke "
+        "&& /tmp/capd_smoke && ls /usr/local/share/doc/capd/README.md "
+        "/usr/local/share/doc/capd/projectStarter/Makefile",
+        timeout=600,
+    )
+    assert code == 0, f"capd smoke failed:\n{stderr[-2000:]}\n{stdout[-2000:]}"
+    assert "CAPD_OK" in stdout, f"enclosures wrong:\n{stdout[-2000:]}"
 
 
 @pytest.mark.asyncio(loop_scope="module")
