@@ -519,9 +519,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 2026-08-31
+# Tau-Ceti commit 647c65c is from 2026-08-31
 ARG TAUCETI_COMMIT=647c65c0c69e69e42f31144d9e44e3cfcde99217
-# 2026-08-30
+# Lean Pool commit 34e4309 is from 2026-08-30
 ARG LEAN_POOL_COMMIT=34e4309df9f06073d1bad30aecfb61e90cada2b5
 RUN git clone --filter=blob:none https://github.com/TauCetiProject/TauCeti /opt/tauceti \
     && git -C /opt/tauceti checkout --detach "${TAUCETI_COMMIT}" \
