@@ -24,8 +24,10 @@ be true):
   target statement's negation (comparator-migration-plan.md §4).
 * **Compile** -- every isolated file compiles cleanly with ``lake env lean -o``,
   in parallel in the container.
-* **Oracle** -- for the paper's solved problems, our isolated target's elaborated
-  type matches the published challenge file's ``target_theorem_0``.
+
+That each solved problem's spec states the published challenge is covered by
+``tests/test_gold_proofs.py``: Comparator compares the statement closure before
+accepting a gold proof against our spec.
 
 Docker is part of the test environment, so these always run -- they are not
 gated or skipped. The first run builds the image (Lean + Mathlib) from the
@@ -36,8 +38,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -47,16 +48,9 @@ from scripts.isolation import (
     matches_name,
     planned_survivors,
     theorem_command_decls,
-    theorem_decls,
 )
 from scripts.oeis_isolation import ISOLATED_DIR, SOURCES_DIR
 from tests.lean_sandbox import certify, compile_all, extract, generate_env
-
-# The paper's published challenge files (the oracle cross-checks our isolated
-# target's elaborated type against each one's ``target_theorem_0``). Vendored and
-# committed under tests/data (NOT read from the gitignored ``reference_sources/``
-# clone, which is absent in CI) -- see tests/data/gold_proofs/README.md.
-REF_DIR = Path(__file__).resolve().parent / "data" / "gold_proofs"
 
 # The OEIS generator strips `private` from these samples' specs while their
 # vendored sources keep it (scripts.isolation.strip_private; comparator#58 /
@@ -117,7 +111,6 @@ class IsoData:
 
     src_ranges: dict[str, dict[str, Any]]  # extractor records for distinct Sources/ files, by filename
     iso_ranges: dict[str, dict[str, Any]]  # extractor records for every Isolated/ file, by stem (= name)
-    ref_ranges: list[dict[str, Any]]  # extractor records for the published challenge files
     cert_verdicts: dict[str, dict[str, Any]]  # certify_disproof verdicts, by stem
     compile_failures: list[str]  # stems of Isolated/ files that failed to compile
 
@@ -154,8 +147,7 @@ def test_stripped_private_ids_pinned(manifest: list[SampleRow]) -> None:
 @pytest_asyncio.fixture(loop_scope="module", scope="module")
 async def iso_data(manifest: list[SampleRow]) -> IsoData:
     """Bring the sandbox up once and run every Lean step inside it: extract the
-    vendored sources, the Isolated files, and the reference challenge files,
-    then compile every Isolated file.
+    vendored sources and the Isolated files, then compile every Isolated file.
 
     An async, module-scoped fixture (with the gate tests on the same module-scoped
     event loop) -- the only safe way to drive Inspect's sandbox lifecycle from
@@ -170,14 +162,11 @@ async def iso_data(manifest: list[SampleRow]) -> IsoData:
         src = await extract(env, [SOURCES_DIR / f for f in source_files], util_module)
         iso_files = sorted(ISOLATED_DIR.glob("*.lean"))
         iso = await extract(env, iso_files, util_module)
-        ref_files = sorted(REF_DIR.glob("*.lean"))
-        ref = await extract(env, ref_files, util_module) if ref_files else []
         cert = await certify(env, iso_files, util_module)
         failures = await compile_all(env, iso_files)
     return IsoData(
         src_ranges={fr["file"]: fr for fr in src},
         iso_ranges={fr["file"][: -len(".lean")]: fr for fr in iso},
-        ref_ranges=ref,
         cert_verdicts={v["file"][: -len(".lean")]: v for v in cert},
         compile_failures=failures,
     )
@@ -253,42 +242,4 @@ async def test_isolated_files_compile(iso_data: IsoData) -> None:
     assert not iso_data.compile_failures, (
         f"{len(iso_data.compile_failures)} isolated file(s) failed to compile: "
         f"{iso_data.compile_failures}"
-    )
-
-
-@pytest.mark.asyncio(loop_scope="module")
-async def test_oracle_matches_published_challenge_files(iso_data: IsoData) -> None:
-    """For each solved problem the paper published, our isolated target's
-    elaborated type matches its ``target_theorem_0`` (the paper renames the
-    conjecture). Confirms isolation reproduces the published challenge statement."""
-    if not iso_data.ref_ranges:
-        pytest.skip("no reference challenge files vendored")
-
-    def target_type(name: str, fr: dict[str, Any]) -> str:
-        (target,) = [d for d in theorem_command_decls(fr) if matches_name(d["name"], name)]
-        return cast(str, target["type"])
-
-    iso_types = {name: target_type(name, fr) for name, fr in iso_data.iso_ranges.items()}
-    match = mismatch = 0
-    mismatches: list[str] = []
-    for fr in iso_data.ref_ranges:
-        name = fr["file"].rsplit("/", 1)[-1][: -len(".lean")]
-        if name not in iso_types:
-            continue
-        tgt = [d for d in theorem_decls(fr) if matches_name(d["name"], "target_theorem_0")]
-        if len(tgt) != 1:
-            continue
-        ref_type, iso_type = cast(str, tgt[0]["type"]), iso_types[name]
-        if name in STRIPPED_PRIVATE_IDS:
-            # The published file keeps `private` helpers our spec has stripped.
-            ref_type = unmangle_private_names(ref_type)
-            iso_type = unmangle_private_names(iso_type)
-        if ref_type == iso_type:
-            match += 1
-        else:
-            mismatch += 1
-            mismatches.append(name)
-    assert mismatch == 0, f"oracle mismatch for: {mismatches}"
-    assert match == len(iso_data.ref_ranges), (
-        f"only {match}/{len(iso_data.ref_ranges)} reference files matched"
     )
