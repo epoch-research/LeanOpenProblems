@@ -78,13 +78,16 @@ jobs:
             args: >-
               tests/test_pin_smoke.py
               tests/test_comparator_primitives.py
-          - suite: isolation
-            args: >-
-              tests/test_oeis_isolation.py
-              tests/test_erdos_isolation.py
-              tests/test_erdos_autoformalized_isolation.py
-              tests/test_personal_corresp_isolation.py
-              tests/test_fc100_isolation.py
+          - suite: isolation-oeis
+            args: tests/test_oeis_isolation.py
+          - suite: isolation-erdos
+            args: tests/test_erdos_isolation.py
+          - suite: isolation-erdos-autoformalized
+            args: tests/test_erdos_autoformalized_isolation.py
+          - suite: isolation-personal-corresp
+            args: tests/test_personal_corresp_isolation.py
+          - suite: isolation-fc100
+            args: tests/test_fc100_isolation.py
           - suite: gold-proofs
             args: tests/test_gold_proofs.py
           # Contract test for the agent image's declared compute stack (builds
@@ -103,3 +106,12 @@ jobs:
       - run: uv sync
       - name: Run ${{ matrix.suite }}
         run: uv run pytest ${{ matrix.args }}
+
+  all-checks:
+    needs: [check-version, mypy, pytest]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |-
+          echo '${{ toJSON(needs) }}'
+          test "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "false"
