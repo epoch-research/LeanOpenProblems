@@ -38,8 +38,9 @@ rather than blind-ported from SafeVerify:
   swallows the IO exception and lets the build succeed, the verdict must stay
   reject (the ``sorry`` is still caught). This doubles as the landrun canary.
 
-Every case runs against every registered FC pin (``apn.dataset.FC_PINS``),
-with its import line rewritten to that pin's util module.
+Every case runs at the one battery pin (``tests/conftest.py::pin``), with its
+import line rewritten to that pin's util module; Comparator's verdicts do not
+vary with the pin, and per-pin image health is ``tests/test_pin_smoke.py``.
 
 Memory: the honest/attacker cases import the pin's FC util module (Mathlib)
 like a real sample. Docker is part of the test environment, so -- like the

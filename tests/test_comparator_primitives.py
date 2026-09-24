@@ -41,8 +41,9 @@ BUILTIN_TARGETS = [
 ]
 
 
-async def test_primitive_and_builtin_targets_resolve(pin: str) -> None:
+async def test_primitive_and_builtin_targets_resolve(every_pin: str) -> None:
     """Every comparator primitive/builtin target resolves in the dataset env."""
+    pin = every_pin
     names = PRIMITIVE_TARGETS + BUILTIN_TARGETS
     name_list = "\n".join(f"  `{n}," for n in names)
     probe = (
