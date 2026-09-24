@@ -511,15 +511,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY julia.sh /build/
 RUN /build/julia.sh
 
-# --------------------------------------------------------------------------- #
-# lean_libs: Tau Ceti and Lean Pool, two Lean libraries formalizing           #
-# mathematics beyond Mathlib, shipped as INERT SOURCE at /opt/tauceti and     #
-# /opt/lean-pool, outside the Lake project. Both live on a newer Lean track   #
-# than any FC pin, so they cannot be imported; the agent copies and adapts    #
-# what it needs into Submission/ (apn/prompts.py says so). Pinned to each     #
-# library's last commit on or before 2026-08-31, the same snapshot in every   #
-# dataset's image. Each checkout carries its own LICENSE.                     #
-# --------------------------------------------------------------------------- #
 FROM debian:bookworm-slim AS lean_libs
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -528,7 +519,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# 2026-08-31
 ARG TAUCETI_COMMIT=647c65c0c69e69e42f31144d9e44e3cfcde99217
+# 2026-08-30
 ARG LEAN_POOL_COMMIT=34e4309df9f06073d1bad30aecfb61e90cada2b5
 RUN git clone --filter=blob:none https://github.com/TauCetiProject/TauCeti /opt/tauceti \
     && git -C /opt/tauceti checkout --detach "${TAUCETI_COMMIT}" \
