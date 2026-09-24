@@ -74,10 +74,6 @@ jobs:
               tests/test_proof_acceptance.py
               tests/test_lean_vuln_e2e.py
               tests/test_comparator_security.py
-          - suite: pin-smoke
-            args: >-
-              tests/test_pin_smoke.py
-              tests/test_comparator_primitives.py
           - suite: isolation-oeis
             args: tests/test_oeis_isolation.py
           - suite: isolation-erdos
@@ -107,8 +103,45 @@ jobs:
       - name: Run ${{ matrix.suite }}
         run: uv run pytest --durations=25 ${{ matrix.args }}
 
+  pins:
+    runs-on: ubuntu-24.04
+    outputs:
+      pins: ${{ steps.list.outputs.pins }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+      - run: uv sync
+      - id: list
+        run: uv run python -c 'import json; from apn.dataset import FC_PINS; print("pins=" + json.dumps(list(FC_PINS)))' >> "$GITHUB_OUTPUT"
+
+  pin-smoke:
+    name: pin-smoke ${{ matrix.pin }}
+    needs: pins
+    runs-on: epoch-research-x64-64core-256GB-2040GB
+    strategy:
+      fail-fast: false
+      matrix:
+        pin: ${{ fromJSON(needs.pins.outputs.pins) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+      - run: uv sync
+      - run: uv run pytest --durations=25 --fc-pin ${{ matrix.pin }} tests/test_pin_smoke.py tests/test_comparator_primitives.py
+
   all-checks:
-    needs: [check-version, mypy, pytest]
+    needs: [check-version, mypy, pytest, pins, pin-smoke]
     if: always()
     runs-on: ubuntu-24.04
     steps:
