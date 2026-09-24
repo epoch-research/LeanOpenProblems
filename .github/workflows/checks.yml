@@ -105,7 +105,7 @@ jobs:
           python-version-file: pyproject.toml
       - run: uv sync
       - name: Run ${{ matrix.suite }}
-        run: uv run pytest ${{ matrix.args }}
+        run: uv run pytest --durations=25 ${{ matrix.args }}
 
   all-checks:
     needs: [check-version, mypy, pytest]
