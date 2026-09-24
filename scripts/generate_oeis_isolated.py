@@ -17,9 +17,9 @@ This is a *vendor-time* dev tool (like ``scripts/bump_version.py``), not importe
 at runtime. ``apn/dataset.py`` reads the committed ``Isolated/`` files directly.
 
 This script only *generates*. The committed ``Isolated/`` files are validated by
-``tests/test_oeis_isolation.py`` -- re-extraction structural checks and the
-authoritative ``lake env lean -o`` compile gate -- both of which run the Lean
-toolchain in a container (the shared cut
+``tests/test_oeis_isolation.py`` -- re-extraction structural checks, the
+authoritative ``lake env lean -o`` compile gate, and the paper oracle
+cross-check -- all of which run the Lean toolchain in a container (the shared cut
 logic and Docker plumbing live in ``scripts/isolation.py``; the OEIS data
 locations in ``scripts/oeis_isolation.py``). After regenerating, run those
 tests to confirm the output is sound.

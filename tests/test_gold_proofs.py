@@ -25,11 +25,9 @@ each conjecture:
 
 This is the complement of every other checker test. Those prove Comparator says
 **no** to bad proofs (a ``sorry``/custom axiom/build failure is rejected --
-``test_proof_acceptance.py``, ``test_checker.py``). This proves it says **yes**
-to the known-good proofs, end to end -- and, since Comparator compares the
-statement closure before accepting, that each spec states the published
-challenge (formerly a separate extractor-based oracle in
-``test_oeis_isolation.py``, which elaborated every gold proof again). It is
+``test_proof_acceptance.py``, ``test_checker.py``) and that our isolated
+statements line up with the published ones (the ``test_oeis_isolation.py``
+oracle). This proves it says **yes** to the known-good proofs, end to end. It is
 the only test that catches the over-strict-checker class: an axiom-allowlist
 regression, a Mathlib/toolchain skew, or a ``def``-value mismatch between our
 spec and the gold proof -- any of which would silently reject valid proofs and
