@@ -128,6 +128,10 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     return yaml.safe_dump(compose, sort_keys=False)
 
 
+AGENT_EPHEMERAL_STORAGE_GIB = 20
+COMPARATOR_EPHEMERAL_STORAGE_GIB = 8
+
+
 def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
@@ -149,10 +153,17 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
     repository = os.environ.get(IMAGE_REPOSITORY_VAR, IMAGE_REPOSITORY_DEFAULT)
     agent_kind = _agent_image_kind(literature)
 
-    # Just a memory limit: k8s defaults the request to the limit (so
-    # scheduling still reserves it), and CPU is compressible, so no CPU knobs.
-    def resources(memory_gib: int) -> dict[str, Any]:
-        return {"limits": {"memory": f"{memory_gib}Gi"}}
+    # Memory: a limit only; k8s defaults the request to the limit (so
+    # scheduling still reserves it). CPU is compressible, so no CPU knobs.
+    # Ephemeral storage: a request only -- a scheduling floor that keeps the
+    # kubelet's disk-pressure eviction from ranking these pods first (any
+    # usage exceeds a zero request), with no cap that would evict a pod for
+    # writing more.
+    def resources(memory_gib: int, ephemeral_storage_gib: int) -> dict[str, Any]:
+        return {
+            "limits": {"memory": f"{memory_gib}Gi"},
+            "requests": {"ephemeral-storage": f"{ephemeral_storage_gib}Gi"},
+        }
 
     values: dict[str, Any] = {
         "services": {
@@ -163,7 +174,7 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
                 "command": list(SANDBOX_COMMAND),
                 "networkIsolated": True,
                 "dnsRecord": True,
-                "resources": resources(AGENT_MEMORY_GIB),
+                "resources": resources(AGENT_MEMORY_GIB, AGENT_EPHEMERAL_STORAGE_GIB),
             },
             "comparator": {
                 "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
@@ -171,7 +182,9 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
                 "runtimeClassName": "CLUSTER_DEFAULT",
                 "networkIsolated": True,
                 "dnsRecord": True,
-                "resources": resources(COMPARATOR_MEMORY_GIB),
+                "resources": resources(
+                    COMPARATOR_MEMORY_GIB, COMPARATOR_EPHEMERAL_STORAGE_GIB
+                ),
             },
         }
     }
