@@ -13,6 +13,7 @@ FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
 PERSONAL_CORRESP_DIR = Path(__file__).parent / "data" / "personal_corresp"
+JACOBIAN_DIR = Path(__file__).parent / "data" / "jacobian"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -342,3 +343,10 @@ def personal_corresp_dataset(names: list[str] | None = None) -> MemoryDataset:
     the derived ``<target>.disproof`` declaration. See
     ``apn/data/personal_corresp/NOTICE.md``."""
     return build_dataset(PERSONAL_CORRESP_DIR, "personal_corresp", (), names)
+
+
+def jacobian_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """The Jacobian conjecture over ``ℂ``, restated from formal-conjectures
+    with its resolution withheld (1 sample). The sketch ends with the derived
+    ``<target>.disproof`` declaration. See ``apn/data/jacobian/NOTICE.md``."""
+    return build_dataset(JACOBIAN_DIR, "jacobian", (), names)

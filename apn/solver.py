@@ -163,6 +163,7 @@ def lean_prover(
     gated: bool,
     literature: bool,
     util_module: str,
+    problem_prompt: str | None = None,
 ) -> Solver:
     """
     Args:
@@ -172,6 +173,8 @@ def lean_prover(
         util_module: The dataset pin's FC util module
             (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
             import-integrity rule.
+        problem_prompt: Problem-specific text placed ahead of the generic
+            Lean instructions.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
@@ -217,7 +220,9 @@ def lean_prover(
         )
         state.messages = [
             ChatMessageUser(
-                content=user_prompt(ENTRY_PATH, state.token_limit, literature, util_module),
+                content=user_prompt(
+                    ENTRY_PATH, state.token_limit, literature, util_module, problem_prompt
+                ),
                 source="input",
             )
         ]

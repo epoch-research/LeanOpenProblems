@@ -29,8 +29,67 @@ Advice about this task:
 """
 
 
-def user_prompt(path: str, token_limit: int | None, literature: bool, util_module: str) -> str:
+def jacobian_prompt(agent_type: str) -> str:
+    parts = [
+        """\
+# Current task statement
+
+Let n ≥ 1. A polynomial map F : ℂⁿ → ℂⁿ is a map
+
+    F(x) = (F₁(x), ..., Fₙ(x)),
+
+where each Fᵢ ∈ ℂ[x₁, ..., xₙ]. Its Jacobian determinant is
+
+    det J_F = det (∂Fᵢ/∂xⱼ).
+
+**Resolve the Jacobian Conjecture completely: every polynomial map F : ℂⁿ → ℂⁿ with nonzero constant Jacobian determinant has a polynomial inverse.**
+
+You must either:
+
+1. Prove that for every n ≥ 1, if det J_F ∈ ℂˣ, then there exists a polynomial map G : ℂⁿ → ℂⁿ such that G ∘ F = id_ℂⁿ and F ∘ G = id_ℂⁿ; or
+2. Disprove the conjecture by giving an explicit polynomial map F : ℂⁿ → ℂⁿ with nonzero constant Jacobian determinant and proving rigorously that F has no polynomial inverse.
+
+A complete disproof must include an explicit dimension n, explicit coordinate polynomials F₁, ..., Fₙ, an exact computation showing det J_F ∈ ℂˣ, and a complete proof that no polynomial inverse exists.
+
+Partial progress does not count unless it implies exactly one of the two resolutions above. In particular, proofs only in dimension 1 or 2, bounded-degree cases, homogeneous or cubic reductions without completing the reduced case, formal power-series inverses, local analytic inverses, injectivity assumptions, birationality assumptions, reductions to another unproved conjecture, computational verification through any fixed dimension or degree, or candidate counterexamples without a complete noninvertibility proof are insufficient.
+
+The resolution must be formalized in Lean, as described below: option 1 is a proof of the conjecture theorem, option 2 a proof of its `.disproof` theorem."""
+    ]
+
+    if agent_type == "deep":
+        parts.append("""\
+# Search and coordination requirements
+
+Use subagents aggressively and dynamically. The `agent` tool dispatches a `general` subagent, which has the same tools and sandbox (including the filesystem) as you, starts from a fresh context, and returns its final response to you. Subagents draw on the same budget that the `resources` tool reports. Do not use a fixed assignment such as "N agents for strategy X." Instead, manage the search using the following heuristics:
+
+* Begin with a genuinely diverse portfolio of proof and counterexample approaches. Agents should explore algebraic geometry, commutative algebra, polynomial automorphism theory, degree growth, formal inverse expansions, cubic homogeneous reductions, differential forms, étale morphisms, invariant theory, valuations, Newton polyhedra, elimination theory, locally nilpotent derivations, topology, model theory, and computational sanity checks.
+* Preserve independence during early rounds. Do not tell most agents the currently favored proof or counterexample strategy.
+* Maintain an explicit registry of approach families. Group agents by the mathematical idea they are using, not by superficial wording. Redirect agents when too many converge to the same incomplete route.
+* Do not allow one approach to dominate merely because it gives elegant reductions. A route that ends at a lemma equivalent in strength to the original conjecture is not close to completion unless it supplies a genuinely new proof of that lemma.
+* When an approach stalls at a theorem-strength missing lemma, mark that route as blocked. Continue only if someone proposes a materially new mechanism, invariant, construction, or obstruction.
+* Keep several incompatible proof and disproof routes alive through multiple rounds. Cross-pollinate ideas only after independent agents have exposed the real strengths and gaps of their approaches.
+* Use adversarial agents throughout. Every affirmative proof must be checked for confusion between formal and polynomial inverses, local and global invertibility, analytic and algebraic arguments, hidden injectivity or surjectivity assumptions, characteristic-zero dependence, degree bounds, denominators introduced by inversion, unjustified convergence claims, nonreversible reductions, and circular use of statements equivalent to the Jacobian Conjecture.
+* Every proposed counterexample must be checked for exact Jacobian determinant computation, hidden polynomial inverses, birational inverses, coordinate changes that trivialize it, numerical artifacts, characteristic-p phenomena mistakenly imported into ℂ, and incomplete noninvertibility arguments.
+* Require agents to return concrete lemmas, constructions, equations, degree estimates, explicit candidate maps, or counterexamples to proposed sublemmas. Reject status reports, vague optimism, and claims that an unproved global compatibility statement is "routine."
+* The root agent should repeatedly synthesize, challenge, redirect, and launch new rounds. Do not stop after the first wave fails.""")
+
+    parts.append("""\
+Submit only when either a complete affirmative proof or a complete explicit counterexample survives adversarial audit and is fully formalized in Lean. Do not settle for a reduction, partial result, isolated missing lemma, "best effort" summary, or explanation of why the problem is difficult. Do not even think of giving up while your `resources` budget remains.""")
+
+    return "\n\n".join(parts)
+
+
+def user_prompt(
+    path: str,
+    token_limit: int | None,
+    literature: bool,
+    util_module: str,
+    problem_prompt: str | None = None,
+) -> str:
     parts = []
+
+    if problem_prompt is not None:
+        parts.append(problem_prompt)
 
     PROOF_PATH = ENTRY_PATH
 
@@ -50,7 +109,6 @@ Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib, plus the `loogle` search CLI.
-* Two Lean libraries: Tau Ceti at `/opt/tauceti` and Lean Pool at `/opt/lean-pool`. They contain formalizations beyond Mathlib. They are provided as source only and may not be compatible with your Lean project. To use a result, copy the declarations you need and their dependencies into files under `{SUBMISSION_DIR}/` and adapt them to this project's toolchain. Only copy what you need.
 * The `sage` computer algebra system (SageMath 10); `sage.features` reports which engines, optional backends and databases are present. `gp`, `gap`, `Singular`, and `maxima` are also on PATH. Sage runs its own Python: Sage code, including Python that imports Sage, runs via `sage -c '<code>'` or `sage <file.py|file.sage>`; the `python3` below does not include Sage.
 * `python3` with numpy, scipy, sympy, mpmath, pandas, networkx, igraph, python-flint, cvxpy (with Clarabel), pyscipopt (SCIP, global MINLP), clingo (answer-set programming), graphillion (ZDD set families), libsemigroups_pybind11 (semigroups/automata), pymanopt (manifold optimization), pysindy (sparse dynamics identification), hypothesis (property-based testing), python bindings for z3, cvc5, OR-Tools CP-SAT, and pysat, snappy (SnapPy, 3-manifolds), and regina (low-dimensional topology).
 * `julia` with OSCAR and Hecke preinstalled (Galois groups, number fields, group theory).

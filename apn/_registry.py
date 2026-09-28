@@ -6,6 +6,7 @@ from apn.task import (
     apn_erdos,
     apn_erdos_autoformalized,
     apn_fc100open,
+    apn_jacobian,
     apn_personal_corresp,
     apn_oeis,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "apn_erdos",
     "apn_erdos_autoformalized",
     "apn_fc100open",
+    "apn_jacobian",
     "apn_math_software_test",
     "apn_personal_corresp",
     "apn_oeis",

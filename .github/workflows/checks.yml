@@ -62,6 +62,7 @@ jobs:
               --ignore=tests/test_erdos_isolation.py
               --ignore=tests/test_erdos_autoformalized_isolation.py
               --ignore=tests/test_personal_corresp_isolation.py
+              --ignore=tests/test_jacobian_isolation.py
               --ignore=tests/test_fc100_isolation.py
               --ignore=tests/test_proof_acceptance.py
               --ignore=tests/test_lean_vuln_e2e.py
@@ -80,6 +81,8 @@ jobs:
             args: tests/test_erdos_autoformalized_isolation.py
           - suite: isolation-personal-corresp
             args: tests/test_personal_corresp_isolation.py
+          - suite: isolation-jacobian
+            args: tests/test_jacobian_isolation.py
           - suite: isolation-fc100
             args: tests/test_fc100_isolation.py
           - suite: gold-proofs

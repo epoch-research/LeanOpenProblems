@@ -16,6 +16,7 @@ from apn.dataset import (
     ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
+    JACOBIAN_DIR,
     PERSONAL_CORRESP_DIR,
     OEIS_DIR,
     erdos_autoformalized_dataset,
@@ -23,10 +24,12 @@ from apn.dataset import (
     fc100open_dataset,
     fc_commit,
     fc_profile,
+    jacobian_dataset,
     load_subset,
     personal_corresp_dataset,
     oeis_dataset,
 )
+from apn.prompts import jacobian_prompt
 from apn.scorer import proof_scorer
 
 SANDBOX_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_sandbox"
@@ -357,6 +360,32 @@ def apn_personal_corresp(
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+    )
+
+
+@task
+def apn_jacobian(
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "deep",
+    sandbox_backend: SandboxBackend = "docker",
+) -> Task:
+    """The Jacobian conjecture over ``ℂ``, with a problem-specific prompt
+    (adapted from https://aaronlou.com/jacobian_counterexample_prompt.pdf).
+    Defaults to the ``deep`` agent, whose subagents the prompt's coordination
+    section directs; under ``react`` that section is omitted."""
+    pin = fc_commit(JACOBIAN_DIR)
+    return Task(
+        dataset=jacobian_dataset(),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            util_module=fc_profile(pin).util_module,
+            problem_prompt=jacobian_prompt(agent_type),
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
