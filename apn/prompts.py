@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from apn.checker import PERMITTED_AXIOMS
 from apn.layout import ENTRY_MODULE, ENTRY_PATH, PROJECT, SUBMISSION_DIR
 
@@ -29,19 +31,24 @@ Advice about this task:
 """
 
 
-def jacobian_prompt(agent_type: str) -> str:
-    parts = [
-        """\
-# Current task statement
+JacobianGoal = Literal["resolve", "counterexample"]
 
-Let n ≥ 1. A polynomial map F : ℂⁿ → ℂⁿ is a map
 
-    F(x) = (F₁(x), ..., Fₙ(x)),
+def jacobian_prompt(agent_type: str, goal: JacobianGoal) -> str:
+    counterexample = goal == "counterexample"
+    if counterexample:
+        task = """\
+**Disprove the Jacobian Conjecture by an explicit counterexample.** The conjecture states that every polynomial map F : ℂⁿ → ℂⁿ with nonzero constant Jacobian determinant has a polynomial inverse.
 
-where each Fᵢ ∈ ℂ[x₁, ..., xₙ]. Its Jacobian determinant is
+You must give an explicit polynomial map F : ℂⁿ → ℂⁿ with nonzero constant Jacobian determinant and prove rigorously that F has no polynomial inverse.
 
-    det J_F = det (∂Fᵢ/∂xⱼ).
+A complete disproof must include an explicit dimension n, explicit coordinate polynomials F₁, ..., Fₙ, an exact computation showing det J_F ∈ ℂˣ, and a complete proof that no polynomial inverse exists.
 
+Partial progress does not count. In particular, reductions to another unproved conjecture, computational verification through any fixed dimension or degree, or candidate counterexamples without a complete noninvertibility proof are insufficient.
+
+The counterexample must be formalized in Lean, as described below, as a proof of the `.disproof` theorem, submitted with `claim="disproof"`. A proof of the conjecture theorem does not count for this task."""
+    else:
+        task = """\
 **Resolve the Jacobian Conjecture completely: every polynomial map F : ℂⁿ → ℂⁿ with nonzero constant Jacobian determinant has a polynomial inverse.**
 
 You must either:
@@ -54,27 +61,59 @@ A complete disproof must include an explicit dimension n, explicit coordinate po
 Partial progress does not count unless it implies exactly one of the two resolutions above. In particular, proofs only in dimension 1 or 2, bounded-degree cases, homogeneous or cubic reductions without completing the reduced case, formal power-series inverses, local analytic inverses, injectivity assumptions, birationality assumptions, reductions to another unproved conjecture, computational verification through any fixed dimension or degree, or candidate counterexamples without a complete noninvertibility proof are insufficient.
 
 The resolution must be formalized in Lean, as described below: option 1 is a proof of the conjecture theorem, option 2 a proof of its `.disproof` theorem."""
+
+    parts = [
+        """\
+# Current task statement
+
+Let n ≥ 1. A polynomial map F : ℂⁿ → ℂⁿ is a map
+
+    F(x) = (F₁(x), ..., Fₙ(x)),
+
+where each Fᵢ ∈ ℂ[x₁, ..., xₙ]. Its Jacobian determinant is
+
+    det J_F = det (∂Fᵢ/∂xⱼ).
+
+"""
+        + task
     ]
 
     if agent_type == "deep":
-        parts.append("""\
+        approaches = "counterexample" if counterexample else "proof and counterexample"
+        favored = "counterexample" if counterexample else "proof or counterexample"
+        routes = "disproof" if counterexample else "proof and disproof"
+        affirmative_audit = (
+            ""
+            if counterexample
+            else "* Use adversarial agents throughout. Every affirmative proof must be checked for confusion between formal and polynomial inverses, local and global invertibility, analytic and algebraic arguments, hidden injectivity or surjectivity assumptions, characteristic-zero dependence, degree bounds, denominators introduced by inversion, unjustified convergence claims, nonreversible reductions, and circular use of statements equivalent to the Jacobian Conjecture.\n"
+        )
+        counterexample_audit = (
+            "* Use adversarial agents throughout. Every proposed counterexample"
+            if counterexample
+            else "* Every proposed counterexample"
+        )
+        parts.append(f"""\
 # Search and coordination requirements
 
 Use subagents aggressively and dynamically. The `agent` tool dispatches a `general` subagent, which has the same tools and sandbox (including the filesystem) as you, starts from a fresh context, and returns its final response to you. Subagents draw on the same budget that the `resources` tool reports. Do not use a fixed assignment such as "N agents for strategy X." Instead, manage the search using the following heuristics:
 
-* Begin with a genuinely diverse portfolio of proof and counterexample approaches. Agents should explore algebraic geometry, commutative algebra, polynomial automorphism theory, degree growth, formal inverse expansions, cubic homogeneous reductions, differential forms, étale morphisms, invariant theory, valuations, Newton polyhedra, elimination theory, locally nilpotent derivations, topology, model theory, and computational sanity checks.
-* Preserve independence during early rounds. Do not tell most agents the currently favored proof or counterexample strategy.
+* Begin with a genuinely diverse portfolio of {approaches} approaches. Agents should explore algebraic geometry, commutative algebra, polynomial automorphism theory, degree growth, formal inverse expansions, cubic homogeneous reductions, differential forms, étale morphisms, invariant theory, valuations, Newton polyhedra, elimination theory, locally nilpotent derivations, topology, model theory, and computational sanity checks.
+* Preserve independence during early rounds. Do not tell most agents the currently favored {favored} strategy.
 * Maintain an explicit registry of approach families. Group agents by the mathematical idea they are using, not by superficial wording. Redirect agents when too many converge to the same incomplete route.
 * Do not allow one approach to dominate merely because it gives elegant reductions. A route that ends at a lemma equivalent in strength to the original conjecture is not close to completion unless it supplies a genuinely new proof of that lemma.
 * When an approach stalls at a theorem-strength missing lemma, mark that route as blocked. Continue only if someone proposes a materially new mechanism, invariant, construction, or obstruction.
-* Keep several incompatible proof and disproof routes alive through multiple rounds. Cross-pollinate ideas only after independent agents have exposed the real strengths and gaps of their approaches.
-* Use adversarial agents throughout. Every affirmative proof must be checked for confusion between formal and polynomial inverses, local and global invertibility, analytic and algebraic arguments, hidden injectivity or surjectivity assumptions, characteristic-zero dependence, degree bounds, denominators introduced by inversion, unjustified convergence claims, nonreversible reductions, and circular use of statements equivalent to the Jacobian Conjecture.
-* Every proposed counterexample must be checked for exact Jacobian determinant computation, hidden polynomial inverses, birational inverses, coordinate changes that trivialize it, numerical artifacts, characteristic-p phenomena mistakenly imported into ℂ, and incomplete noninvertibility arguments.
+* Keep several incompatible {routes} routes alive through multiple rounds. Cross-pollinate ideas only after independent agents have exposed the real strengths and gaps of their approaches.
+{affirmative_audit}{counterexample_audit} must be checked for exact Jacobian determinant computation, hidden polynomial inverses, birational inverses, coordinate changes that trivialize it, numerical artifacts, characteristic-p phenomena mistakenly imported into ℂ, and incomplete noninvertibility arguments.
 * Require agents to return concrete lemmas, constructions, equations, degree estimates, explicit candidate maps, or counterexamples to proposed sublemmas. Reject status reports, vague optimism, and claims that an unproved global compatibility statement is "routine."
 * The root agent should repeatedly synthesize, challenge, redirect, and launch new rounds. Do not stop after the first wave fails.""")
 
-    parts.append("""\
-Submit only when either a complete affirmative proof or a complete explicit counterexample survives adversarial audit and is fully formalized in Lean. Do not settle for a reduction, partial result, isolated missing lemma, "best effort" summary, or explanation of why the problem is difficult. Do not even think of giving up while your `resources` budget remains.""")
+    outcome = (
+        "a complete explicit counterexample"
+        if counterexample
+        else "either a complete affirmative proof or a complete explicit counterexample"
+    )
+    parts.append(f"""\
+Submit only when {outcome} survives adversarial audit and is fully formalized in Lean. Do not settle for a reduction, partial result, isolated missing lemma, "best effort" summary, or explanation of why the problem is difficult. Do not even think of giving up while your `resources` budget remains.""")
 
     return "\n\n".join(parts)
 

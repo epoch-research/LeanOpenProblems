@@ -29,7 +29,7 @@ from apn.dataset import (
     personal_corresp_dataset,
     oeis_dataset,
 )
-from apn.prompts import jacobian_prompt
+from apn.prompts import JacobianGoal, jacobian_prompt
 from apn.scorer import proof_scorer
 
 SANDBOX_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_sandbox"
@@ -368,6 +368,7 @@ def apn_personal_corresp(
 
 @task
 def apn_jacobian(
+    goal: JacobianGoal = "resolve",
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "deep",
@@ -376,7 +377,9 @@ def apn_jacobian(
     """The Jacobian conjecture over ``ℂ``, with a problem-specific prompt
     (adapted from https://aaronlou.com/jacobian_counterexample_prompt.pdf).
     Defaults to the ``deep`` agent, whose subagents the prompt's coordination
-    section directs; under ``react`` that section is omitted."""
+    section directs; under ``react`` that section is omitted.
+    ``goal="counterexample"`` asks specifically for a disproof by explicit
+    counterexample, submitted with ``claim="disproof"``."""
     pin = fc_commit(JACOBIAN_DIR)
     return Task(
         dataset=jacobian_dataset(),
@@ -385,7 +388,7 @@ def apn_jacobian(
             literature=literature,
             agent_type=agent_type,
             util_module=fc_profile(pin).util_module,
-            problem_prompt=jacobian_prompt(agent_type),
+            problem_prompt=jacobian_prompt(agent_type, goal),
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),

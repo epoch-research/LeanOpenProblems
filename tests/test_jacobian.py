@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import re
 
+import pytest
+
 from apn.dataset import JACOBIAN_DIR, jacobian_dataset, load_manifest
-from apn.prompts import jacobian_prompt, user_prompt
+from apn.prompts import JacobianGoal, jacobian_prompt, user_prompt
 from scripts.fc_statements import strip_comments
 from scripts.isolation import disproof_declaration
 
@@ -52,20 +54,39 @@ def test_sketch_declarations() -> None:
     assert text.rstrip().endswith(disproof_declaration(ID))
 
 
-def test_prompt_coordination_section_only_for_deep_agent() -> None:
-    deep = jacobian_prompt("deep")
-    react = jacobian_prompt("react")
+@pytest.mark.parametrize("goal", ["resolve", "counterexample"])
+def test_prompt_coordination_section_only_for_deep_agent(goal: JacobianGoal) -> None:
+    deep = jacobian_prompt("deep", goal)
+    react = jacobian_prompt("react", goal)
     assert "Search and coordination requirements" in deep
     assert "`agent` tool" in deep
     assert "Search and coordination requirements" not in react
     assert "`agent` tool" not in react
     for text in (deep, react):
-        assert "Resolve the Jacobian Conjecture completely" in text
         assert "Codex" not in text and "multiagent" not in text
 
 
+def test_resolve_prompt_allows_either_outcome() -> None:
+    for agent_type in ("deep", "react"):
+        text = jacobian_prompt(agent_type, "resolve")
+        assert "Resolve the Jacobian Conjecture completely" in text
+        assert "complete affirmative proof" in text
+        assert 'claim="disproof"' not in text
+
+
+def test_counterexample_prompt_requires_disproof() -> None:
+    for agent_type in ("deep", "react"):
+        text = jacobian_prompt(agent_type, "counterexample")
+        assert "Disprove the Jacobian Conjecture by an explicit counterexample" in text
+        assert 'submitted with `claim="disproof"`' in text
+        assert "A proof of the conjecture theorem does not count" in text
+        assert "Resolve the Jacobian Conjecture completely" not in text
+        assert "affirmative proof" not in text
+        assert "proof and disproof routes" not in text
+
+
 def test_problem_prompt_leads_user_prompt() -> None:
-    problem = jacobian_prompt("deep")
+    problem = jacobian_prompt("deep", "counterexample")
     prompt = user_prompt("Submission/Spec.lean", None, False, "FormalConjecturesUtil", problem)
     assert prompt.startswith(problem)
     assert "Settle the conjecture in the Lean file" in prompt
