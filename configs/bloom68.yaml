@@ -32,7 +32,7 @@ models:
 
 # 1 model x 68 samples x $300/sample cap = $20,400 max; gated runs sit near max.
 cost_limit: 300.0
-working_limit: 259_200  # 72 * 60 * 60
+working_limit: 129_600  # 36 * 60 * 60
 
 # $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
 model_cost_config:
