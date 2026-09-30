@@ -48,6 +48,16 @@ The minimal value of $N$ such that there exists a sum-distinct set with five
 elements is $13$.
 
 https://oeis.org/A276661
+
+Mathematical proof:
+1. Existence: The set A = {6, 9, 11, 12, 13} ⊆ {1, ..., 13} has card 5.
+   Its 2^5 = 32 subset sums:
+   {0, 6, 9, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+    26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 38, 39, 40, 42, 45, 51}
+   are strictly all distinct, so A is a sum-distinct set with max element 13.
+2. Minimality: Exhaustive check of all (12 choose 5) = 792 subsets of {1, ..., 12}
+   shows that every subset has at least one pair of subsets with identical sum.
+   Hence 13 is the least element.
 -/
 theorem erdos_1.variants.least_N_5 :
     IsLeast { N | ∃ A, IsSumDistinctSet A N ∧ A.card = 5 } 13 := by
