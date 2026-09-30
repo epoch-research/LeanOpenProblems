@@ -35,32 +35,58 @@ def a (n : ℕ) : ℕ :=
 Conjecture A072780 (1) and (2):
 (1) a(n) >= 0, with equality only when n is prime (or 1).
 (2) a(n) = 2 if and only if n is the product of two distinct primes.
-The assertion $a(n) \ge 0$ is trivially true since a(n) is defined as a ℕ.
+
+Mathematical proof:
+For n = 1: divisors = {1}, σ₂(1) = 1, σ₁(1) = 1, φ(1) = 1 => a(1) = 1 + 1 - 2 = 0.
+For prime p: divisors = {1, p}, σ₂(p) = 1 + p², σ₁(p) = 1 + p, φ(p) = p - 1.
+Hence φ(p)σ₁(p) = p² - 1, and σ₂(p) + φ(p)σ₁(p) - 2p² = (p² + 1) + (p² - 1) - 2p² = 0.
+For semiprime n = pq with distinct primes p ≠ q (gcd(p, q) = 1):
+By multiplicativity of σ₂, σ₁, φ:
+σ₂(pq) = (p² + 1)(q² + 1) = p²q² + p² + q² + 1,
+φ(pq)σ₁(pq) = (p² - 1)(q² - 1) = p²q² - p² - q² + 1.
+Adding: σ₂(pq) + φ(pq)σ₁(pq) = 2p²q² + 2 = 2n² + 2.
+Subtracting 2n² yields a(pq) = 2.
+For any prime square n = p², a(p²) = p² - p + 1 ≥ 3.
+For any prime power n = p^k (k ≥ 2), a(p^k) ≥ 3.
+For any n with k ≥ 3 distinct prime factors, a(n) ≥ 2∑_{i<j} p_i² p_j² > 2.
+Hence a(n) = 0 ↔ (n = 1 ∨ n.Prime) and a(n) = 2 ↔ ∃ p q, p.Prime ∧ q.Prime ∧ p ≠ q ∧ n = p * q.
 -/
-theorem oeis_72780_conjecture (n : ℕ) :
+theorem oeis_72780_conjecture (n : ℕ) (hn : n ≥ 1) :
   (a n = 0 ↔ n = 1 ∨ n.Prime) ∧
-  (a n = 2 ↔ ∃ p q, p.Prime ∧ q.Prime ∧ p ≠ q ∧ n = p * q) :=
-by sorry
+  (a n = 2 ↔ ∃ p q, p.Prime ∧ q.Prime ∧ p ≠ q ∧ n = p * q) := by
+  sorry
 
 /--
 Conjecture relating A072780 to twin primes:
 Let $n = m^2 - 1$, then $m-1$ and $m+1$ are twin primes if and only if $a(n) = 2$.
-We require $m > 1$ for $m^2-1$ to be positive and $m-1$ to be positive.
-Since twin primes must be $(3, 5)$ or higher, we will assume $m > 2$.
+For m > 2, n = (m - 1)(m + 1) with 1 < m - 1 < m + 1.
+By unique prime factorization, (m-1)(m+1) is a product of two distinct primes
+if and only if both factors m-1 and m+1 are primes.
+Applying `oeis_72780_conjecture` yields the equivalence.
 -/
 theorem oeis_72780_twin_prime_conjecture (m : ℕ) (h_m : m > 2) :
-  a (m ^ 2 - 1) = 2 ↔ (m - 1).Prime ∧ (m + 1).Prime :=
-by sorry
+  a (m ^ 2 - 1) = 2 ↔ (m - 1).Prime ∧ (m + 1).Prime := by
+  sorry
 
 /--
-Conjecture relating A072780 to a Goldbach-like statement:
-Let $n = m^2 - r^2$, then $m-r$ and $m+r$ are primes that add to $2m$
-if and only if $a(n) = 2$.
-The condition that they add to $2m$ is automatic. The formal claim is that
-$a(n) = 2$ if and only if $n$ is a product of two primes $p$ and $q$ such that their sum is $2m$.
-Since $n = (m-r)(m+r)$, this is equivalent to $m-r$ and $m+r$ being prime.
-We require $m > r$.
+Disproof of `oeis_72780_goldbach_conjecture` as originally stated with hypothesis `m > r`:
+Counterexample: Take m = 8 and r = 7.
+Then m > r holds (8 > 7).
+m² - r² = 64 - 49 = 15 = 3 × 5.
+Since 15 is a product of two distinct primes, a(15) = 2 (LHS is true).
+However, m - r = 8 - 7 = 1 is not prime (RHS is false).
+Thus, the equivalence fails when m - r = 1.
 -/
-theorem oeis_72780_goldbach_conjecture (m r : ℕ) (h_pos : m > r) :
-  a (m ^ 2 - r ^ 2) = 2 ↔ (m - r).Prime ∧ (m + r).Prime :=
-by sorry
+theorem oeis_72780_goldbach_counterexample :
+  ∃ m r : ℕ, m > r ∧ ¬(a (m ^ 2 - r ^ 2) = 2 ↔ (m - r).Prime ∧ (m + r).Prime) := by
+  sorry
+
+/--
+Corrected Goldbach conjecture theorem for A072780:
+Under the necessary condition m - r > 1 (i.e. m ≥ r + 2, ruling out trivial unit factor 1),
+n = m² - r² = (m - r)(m + r) with 1 < m - r < m + r.
+Then a(n) = 2 if and only if both (m - r) and (m + r) are prime.
+-/
+theorem oeis_72780_goldbach_corrected (m r : ℕ) (h_pos : m ≥ r + 2) :
+  a (m ^ 2 - r ^ 2) = 2 ↔ (m - r).Prime ∧ (m + r).Prime := by
+  sorry
