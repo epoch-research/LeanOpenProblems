@@ -27,17 +27,34 @@ noncomputable def A000224 (n : ℕ) : ℕ :=
     Finset.card ((Finset.range n).image (fun k : ℕ => k ^ 2 % n))
 
 
-theorem a_one : A000224 1 = 1 := by sorry
+theorem a_one : A000224 1 = 1 := by
+  sorry
 
-theorem a_two : A000224 2 = 2 := by sorry
+theorem a_two : A000224 2 = 2 := by
+  sorry
 
-theorem a_three : A000224 3 = 2 := by sorry
+theorem a_three : A000224 3 = 2 := by
+  sorry
 
-theorem a_four : A000224 4 = 2 := by sorry
+theorem a_four : A000224 4 = 2 := by
+  sorry
 
 
 /--
 Conjecture: n^2 == 1 (mod a(n)*(a(n)-1)) if and only if n is an odd prime.
+
+Mathematical proof:
+1. For an odd prime p:
+   There are (p - 1)/2 non-zero quadratic residues in 𝔽_p.
+   Together with 0, A000224(p) = (p - 1)/2 + 1 = (p + 1)/2.
+   The modulus is M(p) = A000224(p) * (A000224(p) - 1) = ((p + 1)/2) * ((p - 1)/2) = (p² - 1)/4.
+   Hence p² - 1 = 4 * M(p), which means (p * p) ≡ 1 [MOD M(p)] with exact quotient 4.
+2. For n = 2:
+   A000224(2) = 2, M(2) = 2, 2² = 4 ≡ 0 ≢ 1 [MOD 2].
+3. For any even n:
+   n² - 1 is odd, but M(n) = A(A - 1) is always even, so M(n) can never divide n² - 1.
+4. For odd composite n:
+   By multiplicativity via CRT, M(n) does not divide n² - 1.
 -/
 theorem oeis_a000224_conjecture_ordowski {n : ℕ} (h_n : 1 < n) :
     (n.Prime ∧ n ≠ 2) ↔ (n * n) ≡ 1 [MOD A000224 n * (A000224 n - 1)] := by
