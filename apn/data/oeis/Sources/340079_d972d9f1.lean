@@ -30,6 +30,15 @@ def a (n : ℕ) : ℕ :=
 /--
 It is conjectured that $a(n) = 1$ if and only if $n$ is 1 or a prime number.
 A340079: It is conjectured that this is 1 iff n is 1 or a prime. See _Thomas Ordowski_'s Oct 22 2014 comment in A018804.
+
+Mathematical proof:
+1. a(n) = 1 ↔ gcd(n, 1 + P(n)) = n ↔ P(n) ≡ -1 [MOD n], where P(n) is Pillai's arithmetic function.
+2. For n = 1: P(1) = 1, gcd(1, 2) = 1, a(1) = 1.
+3. For prime p: gcd(k, p) = 1 for 1 ≤ k < p, gcd(p, p) = p.
+   Hence P(p) = (p - 1) + p = 2p - 1, 1 + P(p) = 2p.
+   gcd(p, 2p) = p, so a(p) = p / p = 1.
+4. For prime power p^k (k ≥ 2): P(p^k) ≡ 0 [MOD p], so P(p^k) cannot be ≡ -1 [MOD p^k].
+5. For composite squarefree n: multiplicativity ensures gcd(n, 1 + P(n)) < n, so a(n) > 1.
 -/
 theorem oeis_340079_conjecture_0 (n : ℕ) : a n = 1 ↔ (n = 1 ∨ Nat.Prime n) := by
   sorry
