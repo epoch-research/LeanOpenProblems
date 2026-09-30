@@ -65,6 +65,10 @@ is that the denominator of the generating function for A122589 factors based on
 the cosines of the angles of a regular 13-gon.
 Specifically, let $P(x)$ be the denominator of the generating function. Then
 $$P(x) = 1 - 11x + 45x^2 - 84x^3 + 70x^4 - 21x^5 + x^6 = \prod_{k=1}^6 \left(1 - 4 \cos^2\left(\frac{\pi k}{13}\right) x\right)$$
+
+Proven algebraically by Christian Duguay & Alix (2026) via the 13th cyclotomic polynomial
+$\Phi_{13}(z)$, Chebyshev reduction $u = 2\cos(2k\pi/13)$, and translation $y = u + 2$.
+See full proof in SOLUTION_OEIS_A122589.md.
 -/
 theorem oeis_a122589_conjecture_0 :
     (C (1 : ℝ) - C (11 : ℝ) * X + C (45 : ℝ) * X^2 - C (84 : ℝ) * X^3 + C (70 : ℝ) * X^4 - C (21 : ℝ) * X^5 + C (1 : ℝ) * X^6)
@@ -74,3 +78,4 @@ theorem oeis_a122589_conjecture_0 :
 
 instance : Coe ℕ ℝ where
   coe := Nat.cast
+
