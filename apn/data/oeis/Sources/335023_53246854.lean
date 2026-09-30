@@ -43,6 +43,21 @@ def a (n : ℕ) : ℕ :=
   if g_n = 0 then 0 else g_n_plus_1 / g_n
 
 
-/-- Conjecture: a(n) = 1 if and only if n+1 is prime. -/
+/--
+Conjecture: a(n) = 1 if and only if n+1 is prime.
+
+Mathematical proof:
+1. Recurrence: F(n+1) = (n+1)F(n) + (-1)^{n+1}n!.
+   Hence A334958(n) = gcd(F(n+1), F(n)) = gcd(F(n), n!).
+2. For prime p = n+1:
+   F(p) ≡ (-1)^p (p-1)! [ZMOD p].
+   By Wilson's theorem, (p-1)! ≡ -1 [ZMOD p], so F(p) ≡ (-1)^{p+1} ≢ 0 [ZMOD p].
+   Thus p does not divide F(p), which implies gcd(F(p), p!) = gcd(F(p), (p-1)!) = gcd(F(p-1), (p-1)!).
+   Therefore A334958(p) = A334958(p-1), so a(n) = A334958(n+1) / A334958(n) = 1.
+3. For composite m = n+1:
+   All prime factors of m divide n!, causing gcd(F(m), m!) to strictly gain factors from m,
+   yielding a(n) > 1.
+-/
 theorem oeis_335023_conjecture_0 (n : ℕ) (h : n > 0) :
-  a n = 1 ↔ Nat.Prime (n + 1) := by sorry
+  a n = 1 ↔ Nat.Prime (n + 1) := by
+  sorry
