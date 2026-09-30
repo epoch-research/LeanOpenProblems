@@ -49,7 +49,7 @@ async def score_workspace(
     store().set("_score_call_idx", attempt)
 
     try:
-        tar = await read_submission_tar(sandbox(), workspace.submission_dir)
+        tar = await read_submission_tar(sandbox(workspace.sandbox))
     except OutputLimitExceededError as exc:
         return Score(
             value=INCORRECT,

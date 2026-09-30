@@ -10,7 +10,6 @@ def bash(
     timeout: int | None = None,
     user: str | None = None,
     sandbox_name: str | None = None,
-    cwd: str | None = None,
 ) -> Tool:
 
     async def execute(command: str) -> str:
@@ -24,7 +23,7 @@ def bash(
           The output of the command.
         """
         result = await sandbox(sandbox_name).exec(
-            cmd=["bash", "--login", "-c", command], timeout=timeout, user=user, cwd=cwd
+            cmd=["bash", "--login", "-c", command], timeout=timeout, user=user
         )
         if result.returncode == 0:
             # Mimic inspect_ai.tool.bash, which just concatenates

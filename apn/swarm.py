@@ -1,20 +1,25 @@
 from __future__ import annotations
 
-import posixpath
-import shlex
-from contextlib import AbstractAsyncContextManager, nullcontext
+from contextlib import AbstractAsyncContextManager, contextmanager, nullcontext
+from copy import deepcopy
+from pathlib import Path
+from typing import Iterator
 
 import anyio
+import yaml
+from inspect_ai import Task, task
 from inspect_ai.agent import AgentAttempts, AgentSubmit, run
 from inspect_ai.model import ChatMessageUser, CompactionSummary
 from inspect_ai.scorer import Score, Scorer, Target, accuracy, scorer, stderr
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import memory, text_editor
-from inspect_ai.util import LimitExceededError, sandbox
+from inspect_ai.util import LimitExceededError, sandbox, sandbox_default
+from inspect_ai.util._sandbox.context import sandbox_environments_context_var
 from inspect_boltons.tools import resources
 
-from apn.checker import ProofChecker
-from apn.layout import ENTRY_PATH, PROJECT
+from apn.checker import ProofChecker, SandboxComparator
+from apn.dataset import fc_commit, fc_profile, load_subset
+from apn.layout import ENTRY_PATH
 from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
 from apn.scorer import score_workspace
@@ -24,33 +29,23 @@ from apn.solver import (
     gated_incorrect_message,
     submit,
 )
+from apn.task import BENCHMARKS, Benchmark, SandboxBackend, get_sandbox_config
 from apn.tools import bash
 from apn.workspace import CLAIM_STORE_KEY, Workspace, current_workspace, set_workspace
 
-SWARM_ROOT = "/workspace/swarm"
+
+def _sandbox_name(index: int) -> str:
+    return "default" if index == 0 else f"agent-{index}"
 
 
-def swarm_prompt(name: str, swarm_size: int, workspace: Workspace) -> str:
-    return f"""\
-You are {name}, one of {swarm_size} peer agents working on this same problem in parallel. There is no leader.
-
-Your Lake project is `{workspace.project}`; every path above refers to your copy. Each peer has its own copy at `{SWARM_ROOT}/<name>/leanproject`. You may read and copy from peers' projects, but never write to them.
-
-Coordinate with your peers through the `memory` tool: its `/memories` directory is shared by all of them. 
-"""
-
-
-async def _create_projects(members: list[Workspace]) -> None:
-    script = "set -e\n" + "".join(
-        f"mkdir -p {shlex.quote(posixpath.dirname(m.project))}\n"
-        f"cp -a {PROJECT} {shlex.quote(m.project)}\n"
-        for m in members
-    )
-    result = await sandbox().exec(["sh", "-c", script])
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"swarm project copy failed (exit {result.returncode}):\n{result.stderr[-2000:]}"
-        )
+@contextmanager
+def _only_sandboxes(names: list[str]) -> Iterator[None]:
+    environments = sandbox_environments_context_var.get()
+    token = sandbox_environments_context_var.set({n: environments[n] for n in names})
+    try:
+        yield
+    finally:
+        sandbox_environments_context_var.reset(token)
 
 
 def swarm_members(
@@ -60,12 +55,43 @@ def swarm_members(
     return {
         f"agent-{i}": Workspace(
             name=f"agent-{i}",
-            project=f"{SWARM_ROOT}/agent-{i}/leanproject",
+            sandbox=_sandbox_name(i),
             claim_key=f"{CLAIM_STORE_KEY}:agent-{i}",
             check_lock=check_lock,
         )
         for i in range(swarm_size)
     }
+
+
+def swarm_sandbox_config(
+    fc_commit: str, literature: bool, backend: SandboxBackend, swarm_size: int
+) -> tuple[str, str]:
+    backend_type, path = get_sandbox_config(fc_commit, literature, backend)
+    config = yaml.safe_load(Path(path).read_text())
+    services = config["services"]
+    agent = services.pop("default")
+    config["services"] = {
+        **{_sandbox_name(i): deepcopy(agent) for i in range(swarm_size)},
+        **services,
+    }
+    out = Path(path).with_name(
+        f"swarm-{swarm_size}.compose.yaml"
+        if backend == "docker"
+        else f"swarm-{swarm_size}-values.yaml"
+    )
+    content = yaml.safe_dump(config, sort_keys=False)
+    if not out.exists() or out.read_text() != content:
+        out.write_text(content)
+    return (backend_type, str(out))
+
+
+def swarm_prompt(name: str, swarm_size: int) -> str:
+    return f"""\
+You are {name}, one of {swarm_size} peer agents working on this same problem in parallel. There is no leader. Each peer works in its own separate environment; you cannot see theirs and they cannot see yours.
+
+Coordinate with your peers through the `memory` tool: its `/memories` directory is shared by all of them, and it is the only channel between you. Check it regularly. Record your approach, progress, and reusable lemmas (with their full Lean source, if peers may want them) under `/memories/{name}/`, read the others' notes, and use them to divide up the work rather than duplicating it.
+
+You stop once your own submission passes verification; your peers carry on independently. Each peer's submission is scored separately."""
 
 
 async def _score_member(
@@ -102,55 +128,65 @@ def lean_swarm(
 ) -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         _warn_if_ignored_formalizations(state)
-        await sandbox().write_file(ENTRY_PATH, state.metadata["sketch"])
-
         members = swarm_members(swarm_size, check_lock=anyio.Lock())
-        await _create_projects(list(members.values()))
+        for workspace in members.values():
+            await sandbox(workspace.sandbox).write_file(
+                ENTRY_PATH, state.metadata["sketch"]
+            )
 
-        async with anyio.create_task_group() as tg:
+        prompt = user_prompt(ENTRY_PATH, state.token_limit, literature, util_module)
 
-            async def run_member(name: str, workspace: Workspace) -> None:
-                set_workspace(workspace)
-                agent = build_agent(
-                    "react",
-                    tools=[
-                        text_editor(),
-                        bash(timeout=300, cwd=workspace.project),
-                        resources(),
-                        memory(),
-                    ],
-                    attempts=AgentAttempts(
-                        attempts=99_999_999,
-                        incorrect_message=gated_incorrect_message,
-                    ),
-                    submit=AgentSubmit(
-                        tool=submit(), name="submit_proof", keep_in_messages=True
-                    ),
-                    on_continue=continue_unless_looping("Continue working on the problem."),
-                    compaction=CompactionSummary(threshold=300_000),
-                )
-                prompt = "\n\n".join(
-                    [
-                        user_prompt(
-                            workspace.entry_path,
-                            state.token_limit,
-                            literature,
-                            util_module,
-                            workspace=workspace,
-                        ),
-                        swarm_prompt(name, swarm_size, workspace),
-                    ]
-                )
+        async def run_member(name: str, workspace: Workspace, sandbox_name: str) -> None:
+            set_workspace(workspace)
+            agent = build_agent(
+                "react",
+                tools=[text_editor(), bash(timeout=300), resources(), memory()],
+                attempts=AgentAttempts(
+                    attempts=99_999_999,
+                    incorrect_message=gated_incorrect_message,
+                ),
+                submit=AgentSubmit(
+                    tool=submit(), name="submit_proof", keep_in_messages=True
+                ),
+                on_continue=continue_unless_looping("Continue working on the problem."),
+                compaction=CompactionSummary(threshold=300_000),
+            )
+            content = f"{prompt}\n\n{swarm_prompt(name, swarm_size)}"
+            with sandbox_default(sandbox_name), _only_sandboxes([sandbox_name, "comparator"]):
                 try:
-                    await run(agent, [ChatMessageUser(content=prompt)], name=name)
+                    await run(agent, [ChatMessageUser(content=content)], name=name)
                 except LimitExceededError as ex:
                     if ex.type != "custom":
                         raise
 
-            for name, workspace in members.items():
-                tg.start_soon(run_member, name, workspace)
+        async with anyio.create_task_group() as tg:
+            for i, (name, workspace) in enumerate(members.items()):
+                tg.start_soon(run_member, name, workspace, _sandbox_name(i))
 
         state.completed = True
         return state
 
     return solve
+
+
+@task
+def apn_swarm(
+    benchmark: Benchmark,
+    subset: str | None = None,
+    swarm_size: int = 3,
+    literature: bool = False,
+    sandbox_backend: SandboxBackend = "docker",
+) -> Task:
+    dataset_dir, dataset_fn = BENCHMARKS[benchmark]
+    name_list = load_subset(dataset_dir, subset) if subset is not None else None
+    pin = fc_commit(dataset_dir)
+    return Task(
+        dataset=dataset_fn(names=name_list),
+        solver=lean_swarm(
+            swarm_size=swarm_size,
+            literature=literature,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=swarm_scorer(SandboxComparator(), swarm_size=swarm_size),
+        sandbox=swarm_sandbox_config(pin, literature, sandbox_backend, swarm_size),
+    )

@@ -29,7 +29,6 @@ from apn.dataset import (
     oeis_dataset,
 )
 from apn.scorer import proof_scorer
-from apn.swarm import lean_swarm, swarm_scorer
 
 SANDBOX_FILES_DIR = Path(tempfile.gettempdir()) / "leanopenproblems_sandbox"
 IMAGE_REPOSITORY_VAR = "LEAN_OPEN_PROBLEMS_IMAGE_NAME"
@@ -367,33 +366,10 @@ def apn_personal_corresp(
 
 Benchmark = Literal["oeis", "fc100open", "erdos", "erdos_autoformalized", "personal_corresp"]
 
-_BENCHMARKS: dict[Benchmark, tuple[Path, Callable[..., MemoryDataset]]] = {
+BENCHMARKS: dict[Benchmark, tuple[Path, Callable[..., MemoryDataset]]] = {
     "oeis": (OEIS_DIR, oeis_dataset),
     "fc100open": (FC100_DIR, fc100open_dataset),
     "erdos": (ERDOS_DIR, erdos_dataset),
     "erdos_autoformalized": (ERDOS_AUTOFORMALIZED_DIR, erdos_autoformalized_dataset),
     "personal_corresp": (PERSONAL_CORRESP_DIR, personal_corresp_dataset),
 }
-
-
-@task
-def apn_swarm(
-    benchmark: Benchmark,
-    subset: str | None = None,
-    swarm_size: int = 3,
-    literature: bool = False,
-    sandbox_backend: SandboxBackend = "docker",
-) -> Task:
-    dataset_dir, dataset_fn = _BENCHMARKS[benchmark]
-    name_list = load_subset(dataset_dir, subset) if subset is not None else None
-    pin = fc_commit(dataset_dir)
-    return Task(
-        dataset=dataset_fn(names=name_list),
-        solver=lean_swarm(
-            swarm_size=swarm_size,
-            literature=literature,
-            util_module=fc_profile(pin).util_module,
-        ),
-        scorer=swarm_scorer(SandboxComparator(), swarm_size=swarm_size),
-        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
-    )
