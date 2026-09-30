@@ -87,11 +87,11 @@ def swarm_sandbox_config(
 
 def swarm_prompt(name: str, swarm_size: int) -> str:
     return f"""\
-You are {name}, one of {swarm_size} peer agents working on this same problem in parallel. There is no leader. Each peer works in its own separate environment; you cannot see theirs and they cannot see yours.
+You are {name}, one of {swarm_size} peer agents working on this same problem in parallel.  
+Each peer works in its own separate environment; you cannot see theirs and they cannot see yours.
 
-Coordinate with your peers through the `memory` tool: its `/memories` directory is shared by all of them, and it is the only channel between you. Check it regularly. Record your approach, progress, and reusable lemmas (with their full Lean source, if peers may want them) under `/memories/{name}/`, read the others' notes, and use them to divide up the work rather than duplicating it.
-
-You stop once your own submission passes verification; your peers carry on independently. Each peer's submission is scored separately."""
+Coordinate with your peers through the `memory` tool. The tool is shared by all peers and is the only channel between you.
+"""
 
 
 async def _score_member(
