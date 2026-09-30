@@ -24,6 +24,7 @@ from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
 from apn.scorer import score_workspace
 from apn.solver import (
+    AgentType,
     _warn_if_ignored_formalizations,
     build_agent,
     gated_incorrect_message,
@@ -125,6 +126,7 @@ def lean_swarm(
     swarm_size: int,
     literature: bool,
     util_module: str,
+    agent_type: AgentType = "react",
 ) -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         _warn_if_ignored_formalizations(state)
@@ -139,7 +141,7 @@ def lean_swarm(
         async def run_member(name: str, workspace: Workspace, sandbox_name: str) -> None:
             set_workspace(workspace)
             agent = build_agent(
-                "react",
+                agent_type,
                 tools=[text_editor(), bash(timeout=300), resources(), memory()],
                 attempts=AgentAttempts(
                     attempts=99_999_999,
@@ -175,6 +177,7 @@ def apn_swarm(
     subset: str | None = None,
     swarm_size: int = 3,
     literature: bool = False,
+    agent_type: AgentType = "react",
     sandbox_backend: SandboxBackend = "docker",
 ) -> Task:
     dataset_dir, dataset_fn = BENCHMARKS[benchmark]
@@ -186,6 +189,7 @@ def apn_swarm(
             swarm_size=swarm_size,
             literature=literature,
             util_module=fc_profile(pin).util_module,
+            agent_type=agent_type,
         ),
         scorer=swarm_scorer(SandboxComparator(), swarm_size=swarm_size),
         sandbox=swarm_sandbox_config(pin, literature, sandbox_backend, swarm_size),

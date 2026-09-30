@@ -1,7 +1,8 @@
 # Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
 #
 # Swarm smoke: the 5 bloom68 samples gpt-6.1-sol solved, run with apn_swarm
-# (5 leaderless react agents per sample sharing a memory() board).
+# (5 leaderless deepagent()s per sample, each in its own sandbox, sharing a
+# memory() board).
 name: b68-solved5-swarm5-gpt61sol
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@agent-swarm
@@ -13,6 +14,7 @@ tasks:
           benchmark: erdos
           subset: bloom_selection
           swarm_size: 5
+          agent_type: deep
           literature: true
       - name: apn_swarm
         sample_ids: [Erdos548.erdos_548, Erdos571.erdos_571]
@@ -20,6 +22,7 @@ tasks:
           benchmark: erdos_autoformalized
           subset: bloom_selection
           swarm_size: 5
+          agent_type: deep
           literature: true
 models:
   - package: git+https://github.com/epoch-research/benchmarks
