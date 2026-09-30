@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from apn.checker import PERMITTED_AXIOMS
-from apn.layout import ENTRY_MODULE, ENTRY_PATH, PROJECT, SUBMISSION_DIR
+from apn.layout import ENTRY_MODULE
+from apn.workspace import Workspace
 
 
 def literature_prompt() -> str:
@@ -29,10 +30,18 @@ Advice about this task:
 """
 
 
-def user_prompt(path: str, token_limit: int | None, literature: bool, util_module: str) -> str:
+def user_prompt(
+    path: str,
+    token_limit: int | None,
+    literature: bool,
+    util_module: str,
+    workspace: Workspace = Workspace(),
+) -> str:
     parts = []
 
-    PROOF_PATH = ENTRY_PATH
+    PROOF_PATH = workspace.entry_path
+    PROJECT = workspace.project
+    SUBMISSION_DIR = workspace.submission_dir
 
     parts.append(f"""\
 Settle the conjecture in the Lean file `{PROOF_PATH}`. The file states two theorems, each with a `sorry` proof: the conjecture itself, and a `.disproof` theorem stating exactly its negation. Replace the `sorry` of exactly one of them with a complete proof:

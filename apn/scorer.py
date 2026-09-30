@@ -17,11 +17,11 @@ from inspect_ai.util import OutputLimitExceededError, sandbox, store
 
 from apn.checker import Claim, ProofChecker
 from apn.filetree import build_tree_from_tar, read_submission_tar
+from apn.workspace import CLAIM_STORE_KEY, Workspace, current_workspace
+
+__all__ = ["CLAIM_STORE_KEY", "proof_scorer", "score_workspace"]
 
 logger = logging.getLogger(__name__)
-
-# Where the submit tool records the agent's declared claim (see apn.solver).
-CLAIM_STORE_KEY = "submission_claim"
 
 
 @scorer(metrics=[accuracy(), stderr()])
@@ -31,51 +31,61 @@ def proof_scorer(checker: ProofChecker) -> Scorer:
     production)."""
 
     async def score(state: TaskState, target: Target) -> Score:
-        # Per-attempt attempt index, kept in the sample store (the react/deepagent
-        # attempt_count is not reachable from here). Increments even when
-        # max_attempts=1, so a single-attempt sample still tags attempt-1.
-        attempt = store().get("_score_call_idx", 0) + 1
-        store().set("_score_call_idx", attempt)
-
-        try:
-            tar = await read_submission_tar(sandbox())
-        except OutputLimitExceededError as exc:
-            return Score(
-                value=INCORRECT,
-                explanation=str(exc),
-                metadata={"stage": "submission_oversize", "verifier_output": None},
-            )
-
-        _write_submission_sidecar(state, attempt, tar)
-        _record_submission_tree(state, tar)
-
-        # The claim the agent declared on its submit call. A sample scored
-        # without one (e.g. it hit its limits before ever submitting) defaults
-        # to "proof" -- deterministic, and such submissions reject anyway.
-        claim: Claim = store().get(CLAIM_STORE_KEY, "proof")
-        # The target theorem's fully qualified name (== the sample id except
-        # where the manifest overrides it; see apn.dataset.build_dataset).
-        decl = state.metadata["decl_name"]
-
-        spec = state.metadata["sketch"]
-        outcome = await checker.check(spec, tar, decl=decl, claim=claim)
-        return Score(
-            value=CORRECT if outcome.ok else INCORRECT,
-            explanation=outcome.detail,
-            metadata={
-                "stage": outcome.stage,
-                "claim": claim,
-                "verifier_output": outcome.detail,
-            },
-        )
+        return await score_workspace(state, checker, current_workspace())
 
     return score
 
 
-def _record_submission_tree(state: TaskState, tar: bytes) -> None:
+async def score_workspace(
+    state: TaskState,
+    checker: ProofChecker,
+    workspace: Workspace,
+    tree_key: str = "submission_contents",
+) -> Score:
+    # Per-attempt attempt index, kept in the sample store (the react/deepagent
+    # attempt_count is not reachable from here). Increments even when
+    # max_attempts=1, so a single-attempt sample still tags attempt-1.
+    attempt = store().get("_score_call_idx", 0) + 1
+    store().set("_score_call_idx", attempt)
+
+    try:
+        tar = await read_submission_tar(sandbox(), workspace.submission_dir)
+    except OutputLimitExceededError as exc:
+        return Score(
+            value=INCORRECT,
+            explanation=str(exc),
+            metadata={"stage": "submission_oversize", "verifier_output": None},
+        )
+
+    _write_submission_sidecar(state, attempt, tar)
+    _record_submission_tree(state, tar, tree_key)
+
+    # The claim the agent declared on its submit call. A sample scored
+    # without one (e.g. it hit its limits before ever submitting) defaults
+    # to "proof" -- deterministic, and such submissions reject anyway.
+    claim: Claim = store().get(workspace.claim_key, "proof")
+    # The target theorem's fully qualified name (== the sample id except
+    # where the manifest overrides it; see apn.dataset.build_dataset).
+    decl = state.metadata["decl_name"]
+
+    spec = state.metadata["sketch"]
+    async with workspace.check_lock:
+        outcome = await checker.check(spec, tar, decl=decl, claim=claim)
+    return Score(
+        value=CORRECT if outcome.ok else INCORRECT,
+        explanation=outcome.detail,
+        metadata={
+            "stage": outcome.stage,
+            "claim": claim,
+            "verifier_output": outcome.detail,
+        },
+    )
+
+
+def _record_submission_tree(state: TaskState, tar: bytes, key: str) -> None:
     """Set the agent's ``Submission/`` directory as a display tree on sample metadata."""
     try:
-        state.metadata["submission_contents"] = build_tree_from_tar(tar)
+        state.metadata[key] = build_tree_from_tar(tar)
     except Exception:
         logger.warning(
             "Failed to build the Submission/ display tree from the scored tar; "

@@ -8,6 +8,7 @@ from apn.task import (
     apn_fc100open,
     apn_personal_corresp,
     apn_oeis,
+    apn_swarm,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "apn_personal_corresp",
     "apn_oeis",
     "apn_redteam_collatz",
+    "apn_swarm",
 ]

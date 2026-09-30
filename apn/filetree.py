@@ -20,6 +20,7 @@ The tar bytes are used two ways, which must not be conflated:
 from __future__ import annotations
 
 import tarfile
+import uuid
 from io import BytesIO
 from pathlib import Path
 from typing import Union
@@ -30,10 +31,9 @@ from apn.layout import SUBMISSION_DIR
 
 FileTreeForLogViewer = dict[str, Union[str, "FileTreeForLogViewer"]]
 
-_TAR_TMP = "/tmp/apn_submission.tar"
-
-
-async def read_submission_tar(sb: SandboxEnvironment) -> bytes:
+async def read_submission_tar(
+    sb: SandboxEnvironment, submission_dir: str = SUBMISSION_DIR
+) -> bytes:
     """Tar the *contents* of ``Submission/`` in ``sb`` and return the bytes.
 
     Tars with ``-C SUBMISSION_DIR .`` so members are relative to the submission
@@ -41,11 +41,12 @@ async def read_submission_tar(sb: SandboxEnvironment) -> bytes:
     the caller decides whether that is infrastructure (the scorer errors the
     sample) or best-effort (the solver records an empty tree).
     """
-    await sb.exec(["tar", "-cf", _TAR_TMP, "-C", SUBMISSION_DIR, "."])
+    tar_tmp = f"/tmp/apn_submission-{uuid.uuid4().hex}.tar"
+    await sb.exec(["tar", "-cf", tar_tmp, "-C", submission_dir, "."])
     try:
-        return await sb.read_file(_TAR_TMP, text=False)
+        return await sb.read_file(tar_tmp, text=False)
     finally:
-        await sb.exec(["rm", "-f", _TAR_TMP])
+        await sb.exec(["rm", "-f", tar_tmp])
 
 
 def build_tree_from_tar(tar_bytes: bytes) -> FileTreeForLogViewer:

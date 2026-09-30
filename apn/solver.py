@@ -29,8 +29,8 @@ from apn.checker import Claim
 from apn.layout import ENTRY_PATH
 from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
-from apn.scorer import CLAIM_STORE_KEY
 from apn.tools import bash
+from apn.workspace import current_workspace
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ def submit() -> Tool:
         """
         if claim not in ("proof", "disproof"):
             raise ValueError(f'claim must be "proof" or "disproof", got {claim!r}')
-        store().set(CLAIM_STORE_KEY, claim)
+        store().set(current_workspace().claim_key, claim)
         return "Submitted."
 
     return execute
