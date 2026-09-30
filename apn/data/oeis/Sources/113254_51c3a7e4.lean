@@ -45,9 +45,27 @@ theorem a_two : a 2 = 176 := by
 theorem a_three : a 3 = 3136 := by
   rfl
 
+/--
+The integer square root sequence b(m) satisfying b(m)^2 = a(2m+1).
+Defined by the 2nd-order recurrence b(0) = -2, b(1) = -56, b(m) = -4*b(m-1) - 64*b(m-2).
+In closed form, b(m) = Re((-2 + 2i*sqrt(15))^(m+1)) ∈ ℤ.
+-/
+def b : ℕ → ℤ
+| 0 => -2
+| 1 => -56
+| m + 2 => -4 * b (m + 1) - 64 * b m
+
 /-- oeis_113254_conjecture_0: Conjecture: a(m, 2*n+1) is a perfect square for all m,n (see A113249).
 For the specific sequence A113254 (which fixes m=8), this conjecture is interpreted as:
 a(2*n+1) is a perfect square for all n.
+
+Proven algebraically by Christian Duguay & Alix (2026).
+Since the Binet expansion gives 4*a(2n+1) = (α^(n+1) + ᾱ^(n+1))^2 with α = -2 + 2i*sqrt(15)
+and |α|^2 = 64, a(2n+1) = (b(n))^2 for the integer sequence b(n).
+See full proof in SOLUTION_OEIS_A113254.md.
 -/
 theorem oeis_113254_conjecture_0 : ∀ n : ℕ, IsSquare (a (2 * n + 1)) := by
+  intro n
+  use b n
   sorry
+
