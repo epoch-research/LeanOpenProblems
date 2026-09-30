@@ -108,7 +108,15 @@ def test_deep_agent_offers_only_general_subagent(
     assert [sa.name for sa in seen["subagents"]] == ["general"]
 
 
-def test_react_agent_gets_no_subagents_kwarg(monkeypatch: pytest.MonkeyPatch) -> None:
-    # react() has no subagents parameter; the deep-only kwarg must not leak.
+def test_deep_agent_dispatches_up_to_64_background_subagents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen = _build(monkeypatch, "deep")
+    assert seen["background"] == 64
+
+
+def test_react_agent_gets_no_deep_only_kwargs(monkeypatch: pytest.MonkeyPatch) -> None:
+    # react() has no subagents or background parameters; the deep-only kwargs must not leak.
     seen = _build(monkeypatch, "react")
     assert "subagents" not in seen
+    assert "background" not in seen
