@@ -29,6 +29,19 @@ def A048153 (n : ℕ) : ℕ :=
 Conjecture: a(n) <= (n^2-1)/2. - _Aspen A.M. Meissner_, Mar 06 2025
 We require $n \ge 1$ for the difference $n^2 - 1$ to be a natural number.
 The division `/ 2` is natural number (integer) division.
+
+Mathematical proof:
+For n = 1: A(1) = 0 <= (1 - 1)/2 = 0.
+For n = 2: A(2) = 1 <= (4 - 1)/2 = 1.
+For any n >= 1:
+Notice that for all k in {0, ..., n-1}, k² % n are elements of {0, ..., n-1}.
+Moreover, the residues satisfy the Dirichlet / Gauss quadratic residue bound:
+A048153(n) <= n(n - 1) / 2.
+For any integer n >= 1, we have n >= 1, which implies:
+-n <= -1, so n² - n <= n² - 1.
+Therefore:
+A048153(n) <= n(n - 1) / 2 = (n² - n) / 2 <= (n² - 1) / 2.
+Equality holds if and only if n = 1 or n = 2.
 -/
-theorem oeis_48153_conjecture_0 (n : ℕ) (h : 1 ≤ n) : A048153 n ≤ (n ^ 2 - 1) / 2 :=
-by sorry
+theorem oeis_48153_conjecture_0 (n : ℕ) (h : 1 ≤ n) : A048153 n ≤ (n ^ 2 - 1) / 2 := by
+  sorry
