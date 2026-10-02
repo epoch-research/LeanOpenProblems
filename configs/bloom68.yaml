@@ -58,6 +58,6 @@ runner:
 packages:
   # Right now needs to be kept in sync with epoch-research/benchmarks@main.
   # TODO Remove once this wart is no longer necessary.
-  - inspect-ai==0.3.259
+  - inspect-ai==0.3.273
 
 retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
