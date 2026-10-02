@@ -46,7 +46,7 @@ there are configurations whose number of distinct distances is
 $O(\frac{n}{\sqrt{\log n}})$.
 -/
 theorem erdos_89.variants.grid_upper_bound :
-    (fun n => (minimalDistinctDistances n : ℝ)) =O[atTop]
+    (fun n => (minimalDistinctDistances ℝ² n : ℝ)) =O[atTop]
       (fun (n : ℕ) => n/(n : ℝ).log.sqrt) := by
   sorry
 

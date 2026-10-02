@@ -11,7 +11,6 @@ from inspect_ai._util import registry as util_registry
         "apn/apn_oeis",
         "apn/apn_fc100open",
         "apn/apn_erdos",
-        "apn/apn_erdos_autoformalized",
         "apn/apn_personal_corresp",
         "apn/apn_redteam_collatz",
         "apn/apn_math_software_test",

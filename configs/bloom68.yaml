@@ -1,19 +1,14 @@
 # Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
 #
 # bloom68: the canonical run of Thomas Bloom's Erdős problem selection -- the
-# two bloom_selection subsets (50 + 18 samples), run with all affordances:
-# deep agent (subagents) + the offline literature snapshot (agreed 2026-08-28).
+# 68-sample bloom_selection subset, run with all affordances: deep agent
+# (subagents) + the offline literature snapshot (agreed 2026-08-28).
 name: bloom68
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn
     items:
       - name: apn_erdos
-        args:
-          subset: bloom_selection
-          agent_type: deep
-          literature: true
-      - name: apn_erdos_autoformalized
         args:
           subset: bloom_selection
           agent_type: deep
