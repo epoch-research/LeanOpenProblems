@@ -28,7 +28,10 @@ The gates (all over the committed files, recomputing independently what
   α-equivalence). This certifies the text surgery preserved elaborated
   meaning -- in particular that un-filling recorded ``answer(True/False)``
   verdicts changed nothing but the answer-key wrapper -- by Lean's own
-  elaborator rather than by trusting the regex.
+  elaborator rather than by trusting the regex. The orientation special case
+  (``erdos_1``, which FC negated to record its disproof) is certified the same
+  way: the source's elaborated statement must be exactly ``Not`` of the
+  shipped one.
 * **Compile** -- every isolated file compiles cleanly with the scorer's exact
   ``lake env lean -o`` command, in parallel in the container.
 
@@ -50,6 +53,7 @@ from scripts.erdos_isolation import (
     HN_DECL,
     HN_SAMPLE_IDS,
     ISOLATED_DIR,
+    NEGATED_VERDICT_HEADERS,
     SOURCES_DIR,
 )
 from scripts.fc_statements import (
@@ -190,7 +194,13 @@ async def test_isolated_files_are_structurally_correct(
                 f"{row.id}: manifest answer_form {row.extra['answer_form']} != source's {form}"
             )
             continue
-        if not answer_certified(form, src_type, iso_type):
+        if row.id in NEGATED_VERDICT_HEADERS:
+            # The orientation special case (scripts/erdos_isolation.py): the
+            # source states the negation of the shipped statement.
+            certified = src_type == f"Not ({iso_type})"
+        else:
+            certified = answer_certified(form, src_type, iso_type)
+        if not certified:
             failures.append(f"{row.id}: target statement changed during isolation ({form=})")
     assert not failures, "structural validation failed:\n  " + "\n  ".join(failures)
 

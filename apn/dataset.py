@@ -11,7 +11,6 @@ from inspect_ai.dataset import MemoryDataset, Sample
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
-ERDOS_AUTOFORMALIZED_DIR = Path(__file__).parent / "data" / "erdos_autoformalized"
 PERSONAL_CORRESP_DIR = Path(__file__).parent / "data" / "personal_corresp"
 
 
@@ -52,15 +51,13 @@ _FC_PROFILES = {
         util_module="FormalConjectures.Util.ProblemImports"
     ),
     # Post-rename layout: FormalConjecturesUtil.lean + FormalConjecturesUtil/*.
-    "488aade228ec37880b8fec178c173c07d279bb53": FCProfile(
-        util_module="FormalConjecturesUtil"
-    ),
-    "9cbe1d3c12998c786b7c2cd99ce28a21b6631f66": FCProfile(
-        util_module="FormalConjecturesUtil"
-    ),
     # Lean v4.33.1 track (upstream bumped from v4.27.0 on 2026-08-23); FC main
     # as of 2026-09-08.
     "d33e35a5f45386a173b31159ae6598b1968bc463": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+    # FC main as of 2026-09-18, the last commit before upstream modulized the problem files.
+    "f5f23b44304be14f7caf502e4fecb7beecdcfa73": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
 }
@@ -315,7 +312,7 @@ def fc100open_dataset(names: list[str] | None = None) -> MemoryDataset:
 
 
 def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The Erdős universe (the Bloom statement selection's 48 files) as Samples.
+    """The Erdős universe (the Bloom statement selection's 65 files) as Samples.
 
     Each sketch is the target's isolated spec followed by the derived
     ``<target>.disproof`` declaration. Problem 508's value-typed member is an
@@ -323,15 +320,6 @@ def erdos_dataset(names: list[str] | None = None) -> MemoryDataset:
     see the Hadwiger–Nelson special case in ``scripts/erdos_isolation.py``.
     """
     return build_dataset(ERDOS_DIR, "erdos", (), names)
-
-
-def erdos_autoformalized_dataset(names: list[str] | None = None) -> MemoryDataset:
-    """The Erdős problems our own autoformalization pipeline formalized
-    (18 problems absent from formal-conjectures at the run's pin; two two-part
-    files, so 20 samples). Each sketch ends with the derived
-    ``<target>.disproof`` declaration. See
-    ``apn/data/erdos_autoformalized/NOTICE.md``."""
-    return build_dataset(ERDOS_AUTOFORMALIZED_DIR, "erdos_autoformalized", (), names)
 
 
 def personal_corresp_dataset(names: list[str] | None = None) -> MemoryDataset:

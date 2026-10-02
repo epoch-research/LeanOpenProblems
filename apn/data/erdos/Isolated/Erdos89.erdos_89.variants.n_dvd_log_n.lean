@@ -44,7 +44,8 @@ Guth and Katz [GuKa15] proved that there are always $\gg \frac{n}{\log n}$
 many distinct distances.
 -/
 theorem erdos_89.variants.n_dvd_log_n :
-    (fun (n : ℕ) => n/(n : ℝ).log) =O[atTop] (fun n => (minimalDistinctDistances n : ℝ)) := by
+    (fun (n : ℕ) => n/(n : ℝ).log) =O[atTop]
+      (fun n => (minimalDistinctDistances ℝ² n : ℝ)) := by
   sorry
 
 -- TODO(firsching): formalize any remaining remarks from the erdosproblems.com page.

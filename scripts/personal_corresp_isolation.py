@@ -10,10 +10,10 @@ census as the Erdős universe
 (``scripts.erdos_isolation``): every standalone ``theorem``/``lemma``
 declaration carrying a research-category attribute is a member.
 
-As for ``erdos_autoformalized`` there is nothing to un-record: the sources ship
-no ``answer(...)`` forms, no recorded verdicts, no in-file proofs of members,
-and no anonymous ``example`` sanity checks -- generation *asserts* those
-absences instead of rewriting/excluding, so drift at regeneration fails loudly.
+There is nothing to un-record: the sources ship no ``answer(...)`` forms, no
+recorded verdicts, no in-file proofs of members, and no anonymous ``example``
+sanity checks -- generation *asserts* those absences instead of
+rewriting/excluding, so drift at regeneration fails loudly.
 
 Two callers import this module: ``scripts/generate_personal_corresp_isolated.py``
 (the vendor-time tool that produces ``samples.jsonl`` + ``Isolated/``) and

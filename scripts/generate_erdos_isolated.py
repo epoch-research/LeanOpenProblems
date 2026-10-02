@@ -4,7 +4,7 @@ plus the per-target isolated specs in ``apn/data/erdos/Isolated/``.
 
 Membership is *defined* by the vendored sources, so this script computes it:
 every ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
-attribute in ``Sources/`` (the Bloom statement selection's 48
+attribute in ``Sources/`` (the Bloom statement selection's 65
 ``FormalConjectures/ErdosProblems`` files at the pinned FC commit; see
 ``apn/data/erdos/NOTICE.md``) is a universe member, resolution status
 notwithstanding. Value-typed ``answer(sorry)`` members -- a ``sorryAx`` in the
@@ -17,10 +17,12 @@ definitions + the single target theorem and cuts every other standalone
 recorded-verdict ``answer(True/False)`` members, whose answer key must not
 leak -- and FC's recorded-verdict annotations are stripped (see
 ``scripts/erdos_isolation.py``; the rewrite's re-elaboration certificate lives
-in ``scripts/fc_statements.py`` / ``tests/test_erdos_isolation.py``). One
-special case: 508's excluded value-typed member additionally yields three
+in ``scripts/fc_statements.py`` / ``tests/test_erdos_isolation.py``). Two
+special cases: 508's excluded value-typed member additionally yields three
 derived prove-or-disprove specs, ``χ(ℝ²) = 5/6/7`` (the Hadwiger–Nelson
-special case in ``scripts/erdos_isolation.py``). The
+special case in ``scripts/erdos_isolation.py``), and ``erdos_1``, which FC
+negated to record its disproof, ships un-negated (the orientation special case
+there). The
 per-row ``answer_form``/``category_at_pin`` land in the manifest for tooling
 and tests; ``apn/dataset.py`` deliberately keeps them out of sample metadata.
 
@@ -57,6 +59,7 @@ from scripts.erdos_isolation import (
     ERDOS_DIR,
     HN_DECL,
     ISOLATED_DIR,
+    NEGATED_VERDICT_HEADERS,
     PROVED_IN_FILE_REASON,
     RESEARCH_ATTR_RE,
     SORRY_ALLOWLIST_FILES,
@@ -66,6 +69,7 @@ from scripts.erdos_isolation import (
     derive_hadwiger_nelson_specs,
     hn_manifest_rows,
     research_categories,
+    restore_orientation,
     strip_fc_annotations,
     universe_members,
 )
@@ -241,6 +245,8 @@ def main() -> None:
                 if form is None or n != 1 or "answer(" in strip_comments(text):
                     problems.append(f"{decl['name']}: answer(...) ↔ rewrite did not apply cleanly")
                     continue
+            if decl["name"] in NEGATED_VERDICT_HEADERS:
+                text = restore_orientation(text, decl["name"])
             forms[form] = forms.get(form, 0) + 1
             row["answer_form"] = form
             for snippet in VERDICT_PROSE:
