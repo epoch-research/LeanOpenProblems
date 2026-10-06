@@ -1,0 +1,64 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+#
+# bloom68: the canonical run of Thomas Bloom's Erdős problem selection -- the
+# 68-sample bloom_selection subset, run with all affordances: deep agent
+# (subagents) + the offline literature snapshot (agreed 2026-08-28).
+name: bloom68-epochs32
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@0cc3d23c6f765385efdd221b222296292c330098
+    name: apn
+    items:
+      - name: apn_erdos
+        args:
+          subset: bloom_selection
+          agent_type: deep
+          literature: true
+models:
+  - package: git+https://github.com/epoch-research/benchmarks@2a607f0e971099b31dfc14115ffbfa3ba5e55e93
+    name: epoch
+    items:
+      - name: gpt-6.1-sol
+        args:
+          config:
+            # Policy: use the highest reasoning effort the model supports.
+            reasoning_effort: "max"
+            max_retries: 7
+            max_connections: 40
+
+# 1 model x 68 samples x $300/sample cap = $20,400 max; gated runs sit near max.
+cost_limit: 300.0
+working_limit: 129_600  # 36 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  epoch/gpt-6.1-sol:
+    input: 2.0
+    output: 10.0
+    input_cache_read: 0.1
+    input_cache_write: 2.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  storage: 300Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with the pinned epoch-research/benchmarks commit.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.273
+
+retry_on_error: 8  # https://github.com/epoch-research/epoch-hawk/pull/13
