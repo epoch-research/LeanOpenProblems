@@ -7,7 +7,7 @@ re-elaboration certificates) in ``scripts/fc_statements.py``; this module owns
 what is Erdős-specific -- the data locations under ``apn/data/erdos/`` and the
 universe census. Membership is *defined* by the vendored sources: every
 ``theorem``/``lemma`` declaration carrying a ``@[category research ...]``
-attribute in ``Sources/`` (the Bloom statement selection's 48
+attribute in ``Sources/`` (the Bloom statement selection's 65
 ``FormalConjectures/ErdosProblems`` files at the pinned FC commit -- see
 ``apn/data/erdos/NOTICE.md`` and
 ``ERDOS_PROBLEM_STATEMENT_SELECTION.md`` next to it) is a universe member,
@@ -84,7 +84,7 @@ def universe_members(src: bytes, filerec: dict) -> list[tuple[dict, str]]:
     standalone theorem/lemma command carrying a research-category attribute.
 
     Anonymous ``example`` commands may carry the attribute too (the
-    Tsoukalas-era 387.lean's sanity check did; none of the current 48 files
+    Tsoukalas-era 387.lean's sanity check did; none of the current 65 files
     do); they introduce no declaration and are not members.
     The caller cross-checks that no research attribute was silently skipped by
     comparing the file-total against the per-command sum.
@@ -123,6 +123,18 @@ VERDICT_PROSE = [
     # 138.variants.difference: a recorded-verdict answer(True) member shipped
     # un-filled; this sentence is that verdict in prose.
     "\n\nThe DeepMind prover agent has found a formal proof of this statement.\n",
+    # erdos_1, erdos_74, erdos_126: the resolutions FC recorded on 2026-09-12.
+    "\n\nThis conjecture is false. A machine-checked disproof constructs sum-distinct sets for which\n"
+    "$N / 2^n$ tends to zero.\n",
+    "\n\nThe answer is no. A machine-checked disproof constructs a function $f(n) \\to \\infty$ for which\n"
+    "every graph satisfying this local deletion bound has finite chromatic number.\n",
+    "\n\nThe answer is yes, and a machine-checked proof is available.\n",
+    # erdos_571: a sketch of the recorded proof, and its link in the module doc.
+    "\n\nThe proof constructs balanced rooted models for all rational parameters. Its upper-bound "
+    "closure replaces old edges by paths\nof arbitrary length, adds two color-class hubs, and "
+    "commutes with positive rooted powers.\n",
+    "\n- [Formal Lean proof](https://github.com/Jayyhk/erdos-lean/blob/"
+    "2f055a777231a73a305b379e993c37f00ed5a66b/problems/571/Erdos571.lean)\n",
 ]
 
 
@@ -204,6 +216,32 @@ def hn_manifest_rows() -> list[dict]:
         }
         for sample_id in HN_SAMPLE_IDS
     ]
+
+
+# --------------------------------------------------------------------------- #
+# The Erdős 1 orientation special case.                                        #
+# --------------------------------------------------------------------------- #
+# FC recorded the disproof of Erdős 1 (formal-conjectures#5581, 2026-09-12) by
+# negating the statement itself, `erdos_1 : ¬ ∃ C > 0, ...`, rather than via
+# an answer(...) literal. The negated statement poses the same task under
+# prove-or-disprove (every spec carries both the target and its `.disproof`),
+# but it still leaks the verdict: FC states open problems in the direction
+# they were conjectured, so a target that is the negation of a famous
+# conjecture tells the agent that someone has disproved it. The spec therefore
+# ships the reviewed orientation (`∃ C > 0, ...`, the statement Thomas Bloom
+# selected), just as recorded answer(True/False) literals ship un-filled.
+# tests/test_erdos_isolation.py certifies that the source statement's
+# elaborated type is exactly `Not` of the shipped one.
+NEGATED_VERDICT_HEADERS = {
+    "Erdos1.erdos_1": "theorem erdos_1 : ¬ ∃ C > (0 : ℝ), ",
+}
+
+
+def restore_orientation(text: str, decl_name: str) -> str:
+    """Un-negate a :data:`NEGATED_VERDICT_HEADERS` target's statement."""
+    header = NEGATED_VERDICT_HEADERS[decl_name]
+    assert text.count(header) == 1, f"{decl_name}: negated header not found exactly once"
+    return text.replace(header, header.replace("¬ ", "", 1))
 
 
 def strip_fc_annotations(text: str) -> tuple[str, dict[str, int]]:

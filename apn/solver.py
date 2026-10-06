@@ -34,6 +34,8 @@ from apn.workspace import current_workspace
 
 logger = logging.getLogger(__name__)
 
+MAX_BACKGROUND_SUBAGENTS = 64
+
 # Deliberately reveals nothing about *why* (no verifier output), so the model
 # cannot search for verifier gaps.
 INCORRECT_MESSAGE = (
@@ -127,8 +129,9 @@ def build_agent(
     """Construct the configured agent loop.
 
     Only exposes functionality common to ``deepagent`` and ``react`` so the two
-    behave identically apart from the loop itself. The one ``deepagent``-only
-    setting is the subagent roster, restricted to ``general()``.
+    behave identically apart from the loop itself. The ``deepagent``-only
+    settings are the subagent roster, restricted to ``general()``, and
+    background dispatch, capped at ``MAX_BACKGROUND_SUBAGENTS``.
     """
     constructor: Callable[..., Agent]
     loop_kwargs: dict[str, Any] = {}
@@ -139,6 +142,7 @@ def build_agent(
         # research() and plan() default to read-only sandbox tools (read_file,
         # list_files, grep), and this is not made clear to agents.
         loop_kwargs["subagents"] = [general()]
+        loop_kwargs["background"] = MAX_BACKGROUND_SUBAGENTS
     elif agent_type == "react":
         constructor = react
     else:

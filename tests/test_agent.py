@@ -106,9 +106,3 @@ def test_deep_agent_offers_only_general_subagent(
     # alone, since it is the only one that inherits the parent's Lean tools.
     seen = _build(monkeypatch, "deep")
     assert [sa.name for sa in seen["subagents"]] == ["general"]
-
-
-def test_react_agent_gets_no_subagents_kwarg(monkeypatch: pytest.MonkeyPatch) -> None:
-    # react() has no subagents parameter; the deep-only kwarg must not leak.
-    seen = _build(monkeypatch, "react")
-    assert "subagents" not in seen

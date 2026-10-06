@@ -14,12 +14,10 @@ from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxComparator
 from apn.dataset import (
-    ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
     PERSONAL_CORRESP_DIR,
     OEIS_DIR,
-    erdos_autoformalized_dataset,
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
@@ -297,35 +295,6 @@ def apn_erdos(
     pin = fc_commit(ERDOS_DIR)
     return Task(
         dataset=erdos_dataset(names=name_list),
-        solver=lean_prover(
-            gated=gated,
-            literature=literature,
-            agent_type=agent_type,
-            util_module=fc_profile(pin).util_module,
-        ),
-        scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
-    )
-
-
-@task
-def apn_erdos_autoformalized(
-    subset: str | None = "bloom_selection",
-    gated: bool = True,
-    literature: bool = False,
-    agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
-) -> Task:
-    """The Erdős problems our own autoformalization pipeline formalized.
-
-    The default ``bloom_selection`` subset applies Thomas Bloom's verdicts;
-    ``subset=None`` runs the full manifest."""
-    name_list = (
-        load_subset(ERDOS_AUTOFORMALIZED_DIR, subset) if subset is not None else None
-    )
-    pin = fc_commit(ERDOS_AUTOFORMALIZED_DIR)
-    return Task(
-        dataset=erdos_autoformalized_dataset(names=name_list),
         solver=lean_prover(
             gated=gated,
             literature=literature,

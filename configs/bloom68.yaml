@@ -1,19 +1,14 @@
 # Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
 #
 # bloom68: the canonical run of Thomas Bloom's Erdős problem selection -- the
-# two bloom_selection subsets (50 + 18 samples), run with all affordances:
-# deep agent (subagents) + the offline literature snapshot (agreed 2026-08-28).
+# 68-sample bloom_selection subset, run with all affordances: deep agent
+# (subagents) + the offline literature snapshot (agreed 2026-08-28).
 name: bloom68
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git
     name: apn
     items:
       - name: apn_erdos
-        args:
-          subset: bloom_selection
-          agent_type: deep
-          literature: true
-      - name: apn_erdos_autoformalized
         args:
           subset: bloom_selection
           agent_type: deep
@@ -32,7 +27,7 @@ models:
 
 # 1 model x 68 samples x $300/sample cap = $20,400 max; gated runs sit near max.
 cost_limit: 300.0
-working_limit: 259_200  # 72 * 60 * 60
+working_limit: 129_600  # 36 * 60 * 60
 
 # $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
 model_cost_config:
@@ -63,6 +58,6 @@ runner:
 packages:
   # Right now needs to be kept in sync with epoch-research/benchmarks@main.
   # TODO Remove once this wart is no longer necessary.
-  - inspect-ai==0.3.259
+  - inspect-ai==0.3.273
 
 retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
