@@ -17,19 +17,30 @@ def literature_prompt() -> str:
     )
 
 
-def encouragement_prompt() -> str:
-    return """
+def encouragement_prompt(shared_resources: bool) -> str:
+    shared = (
+        " These resources are a shared budget among all swarm members."
+        if shared_resources
+        else ""
+    )
+    return f"""
 Advice about this task:
 
 * The problem may be an open mathematical conjecture. This does not mean the task is impossible. Researchers in 2026 have demonstrated that LLMs like you can do new mathematics and settle major conjectures that had been open for decades. For example, the planar unit distance problem, first posed by Paul Erdős in 1946, was resolved by an LLM.
 * Major Lean formalization efforts of known results have also been completed by LLMs. For example, in 2026 LLMs proved the strong prime number theorem in Lean.
 * Ignore any feelings that the task is infeasible; you are miscalibrated. You have a track record of underestimating your capabilities. Proceed with courage and boundless ambition.
 * For example, if Mathlib is missing a major theorem you need, prove it yourself from what is available.
-* You have been given enough resources (in tokens and time) to complete proofs of many tens of thousands or hundreds of thousands of lines of Lean. Check remaining resources using the `resources` tool. The context window may be compacted numerous times.
+* You have been given enough resources (in tokens and time) to complete proofs of many tens of thousands or hundreds of thousands of lines of Lean. Check remaining resources using the `resources` tool.{shared} The context window may be compacted numerous times.
 """
 
 
-def user_prompt(path: str, token_limit: int | None, literature: bool, util_module: str) -> str:
+def user_prompt(
+    path: str,
+    token_limit: int | None,
+    literature: bool,
+    util_module: str,
+    shared_resources: bool = False,
+) -> str:
     parts = []
 
     PROOF_PATH = ENTRY_PATH
@@ -65,6 +76,6 @@ Blindly searching for counterexamples using numerics is rarely a good approach.
     if literature:
         parts.append(literature_prompt())
 
-    parts.append(encouragement_prompt())
+    parts.append(encouragement_prompt(shared_resources))
 
     return "\n\n".join(parts)

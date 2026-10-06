@@ -1,0 +1,62 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+name: erdos3-swarm32-sol61-1600usd
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@agent-swarm
+    name: apn
+    items:
+      - name: apn_swarm
+        sample_ids: [Erdos3.erdos_3]
+        args:
+          benchmark: erdos
+          subset: bloom_selection
+          swarm_size: 32
+          agent_type: deep
+          literature: true
+models:
+  - package: git+https://github.com/epoch-research/benchmarks
+    name: epoch
+    items:
+      - name: gpt-6.1-sol
+        args:
+          config:
+            # Policy: use the highest reasoning effort the model supports.
+            reasoning_effort: "max"
+            max_retries: 7
+            max_connections: 40
+
+# 32 agents x $50 = $1600, shared by the sample's 32 agents.
+cost_limit: 1600.0
+working_limit: 259_200  # 72 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  epoch/gpt-6.1-sol:
+    input: 2.0
+    output: 10.0
+    input_cache_read: 0.1
+    input_cache_write: 2.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with epoch-research/benchmarks@main.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.273
+
+retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13

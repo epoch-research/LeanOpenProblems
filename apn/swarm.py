@@ -136,7 +136,9 @@ def lean_swarm(
                 ENTRY_PATH, state.metadata["sketch"]
             )
 
-        prompt = user_prompt(ENTRY_PATH, state.token_limit, literature, util_module)
+        prompt = user_prompt(
+            ENTRY_PATH, state.token_limit, literature, util_module, shared_resources=True
+        )
 
         async def run_member(name: str, workspace: Workspace, sandbox_name: str) -> None:
             set_workspace(workspace)
