@@ -333,12 +333,11 @@ def apn_personal_corresp(
     )
 
 
-Benchmark = Literal["oeis", "fc100open", "erdos", "erdos_autoformalized", "personal_corresp"]
+Benchmark = Literal["oeis", "fc100open", "erdos", "personal_corresp"]
 
 BENCHMARKS: dict[Benchmark, tuple[Path, Callable[..., MemoryDataset]]] = {
     "oeis": (OEIS_DIR, oeis_dataset),
     "fc100open": (FC100_DIR, fc100open_dataset),
     "erdos": (ERDOS_DIR, erdos_dataset),
-    "erdos_autoformalized": (ERDOS_AUTOFORMALIZED_DIR, erdos_autoformalized_dataset),
     "personal_corresp": (PERSONAL_CORRESP_DIR, personal_corresp_dataset),
 }
