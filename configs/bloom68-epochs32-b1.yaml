@@ -3,7 +3,7 @@
 # bloom68: the canonical run of Thomas Bloom's Erdős problem selection -- the
 # 68-sample bloom_selection subset, run with all affordances: deep agent
 # (subagents) + the offline literature snapshot (agreed 2026-08-28).
-name: bloom68-epochs32
+name: bloom68-epochs32-b1
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@0cc3d23c6f765385efdd221b222296292c330098
     name: apn
@@ -13,6 +13,7 @@ tasks:
           subset: bloom_selection
           agent_type: deep
           literature: true
+epochs: 4
 models:
   - package: git+https://github.com/epoch-research/benchmarks@2a607f0e971099b31dfc14115ffbfa3ba5e55e93
     name: epoch
@@ -23,9 +24,9 @@ models:
             # Policy: use the highest reasoning effort the model supports.
             reasoning_effort: "max"
             max_retries: 7
-            max_connections: 40
+            max_connections: 300
 
-# 1 model x 68 samples x $300/sample cap = $20,400 max; gated runs sit near max.
+# 1 model x 68 samples x 4 epochs x $300/sample cap = $81,600 max; gated runs sit near max.
 cost_limit: 300.0
 working_limit: 129_600  # 36 * 60 * 60
 
