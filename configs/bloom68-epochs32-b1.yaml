@@ -47,7 +47,6 @@ secrets:
 
 runner:
   memory: 200Gi
-  storage: 300Gi
   environment:
     # TODO: Remove once default in Hawk
     INSPECT_LOG_CONDENSE: "true"
