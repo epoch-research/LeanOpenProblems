@@ -36,6 +36,23 @@ IMAGE_REPOSITORY = f"${{{IMAGE_REPOSITORY_VAR}:-{IMAGE_REPOSITORY_DEFAULT}}}"
 
 SandboxBackend = Literal["docker", "k8s"]
 
+
+def resolve_sandbox_backend(backend: SandboxBackend | None) -> SandboxBackend:
+    """``backend`` if given, else the backend native to where the task loads.
+
+    Inside a Kubernetes pod -- Hawk's runner -- that is ``k8s``. Hawk also
+    accepts the docker compose file, but only by auto-converting it to chart
+    values, and the result lacks everything the compose file cannot say: the
+    ephemeral-storage requests (compose has no such resource) and the
+    comparator ``runtimeClassName`` pin from :func:`get_values_file_content`.
+    Everywhere else (local runs, CI) it is ``docker``.
+    """
+    if backend is not None:
+        return backend
+    # Kubernetes injects this into every container it starts.
+    return "k8s" if "KUBERNETES_SERVICE_HOST" in os.environ else "docker"
+
+
 # --------------------------------------------------------------------------- #
 # Shared sandbox constants. Both backend writers draw from these so the two    #
 # artifacts cannot drift semantically. Each config is written in its backend's #
@@ -190,15 +207,17 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
 
 
 def get_sandbox_config(
-    fc_commit: str, literature: bool, backend: SandboxBackend
-) -> tuple[str, str]:
-    """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend.
+    fc_commit: str, literature: bool, backend: SandboxBackend | None
+) -> tuple[SandboxBackend, str]:
+    """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend
+    (``None``: see :func:`resolve_sandbox_backend`).
 
     Each backend gets its own generated artifact (``compose.yaml`` for docker,
     ``values.yaml`` for k8s -- k8s_sandbox treats any config file NOT named
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
     per-(version, FC pin, variant) subdirs so they don't clobber each other.
     """
+    backend = resolve_sandbox_backend(backend)
     variant = "corpus" if literature else "closed-book"
     directory = (
         SANDBOX_FILES_DIR
@@ -234,7 +253,7 @@ def apn_oeis(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
 
@@ -264,7 +283,7 @@ def apn_fc100open(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
     pin = fc_commit(FC100_DIR)
@@ -287,7 +306,7 @@ def apn_erdos(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
@@ -311,7 +330,7 @@ def apn_personal_corresp(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Open conjectures sent to us in personal correspondence, formalized by
     their contributors (the finitistic dimension and Nakayama conjectures from
