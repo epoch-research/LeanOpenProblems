@@ -40,17 +40,18 @@ SandboxBackend = Literal["docker", "k8s"]
 def resolve_sandbox_backend(backend: SandboxBackend | None) -> SandboxBackend:
     """``backend`` if given, else the backend native to where the task loads.
 
-    Inside a Kubernetes pod -- Hawk's runner -- that is ``k8s``. Hawk also
-    accepts the docker compose file, but only by auto-converting it to chart
-    values, and the result lacks everything the compose file cannot say: the
-    ephemeral-storage requests (compose has no such resource) and the
-    comparator ``runtimeClassName`` pin from :func:`get_values_file_content`.
-    Everywhere else (local runs, CI) it is ``docker``.
+    In a Hawk runner that is ``k8s``. Hawk also accepts the docker compose
+    file, but only by auto-converting it to chart values, and the result lacks
+    everything the compose file cannot say: the ephemeral-storage requests
+    (compose has no such resource) and the comparator ``runtimeClassName`` pin
+    from :func:`get_values_file_content`. Everywhere else (local runs, CI,
+    ``hawk local``) it is ``docker``.
     """
     if backend is not None:
         return backend
-    # Kubernetes injects this into every container it starts.
-    return "k8s" if "KUBERNETES_SERVICE_HOST" in os.environ else "docker"
+    # Hawk's runner Job sets this unconditionally, next to the flag that turns
+    # on its docker->k8s sandbox conversion; `hawk local` sets neither.
+    return "k8s" if "HAWK_JOB_ID" in os.environ else "docker"
 
 
 # --------------------------------------------------------------------------- #
