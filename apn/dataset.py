@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from inspect_ai.dataset import MemoryDataset, Sample
+from inspect_ai.util import CheckpointSampleConfig
 
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
@@ -277,7 +278,21 @@ def build_dataset(
         for key in metadata_keys:
             if key in row.extra:
                 metadata[key] = row.extra[key]
-        samples.append(Sample(input=text, id=row.id, metadata=metadata))
+        samples.append(
+            Sample(
+                input=text,
+                id=row.id,
+                metadata=metadata,
+                # Set on the Sample rather than the Task: a sample-level config
+                # only customizes checkpointing and never enables it, whereas
+                # Task(checkpoint=CheckpointConfig(...)) would turn it on for
+                # every run of the task. Enabling is left to the eval layer
+                # (e.g. `checkpoint.enabled` in a Hawk eval-set config).
+                checkpoint=CheckpointSampleConfig(
+                    sandbox_paths={"default": ["/workspace"], "comparator": []},
+                ),
+            )
+        )
     return MemoryDataset(samples, name=name)
 
 
