@@ -137,6 +137,10 @@ simple equivalence check).
 * Optimization / algebra: `csdp` (a small SDP in its sparse format), `msolve` (a zero-dimensional polynomial system; \
 read `/usr/local/share/doc/msolve`), `glpsol` (GLPK, including `--exact` rational simplex), and the SCIP that ships with `pyscipopt` \
 (from python) on the same instance for cross-checking.
+* Rigorous numerics: CAPD, a C++ library (x86_64 only, so report its absence only on x86_64). Compile programs with \
+`g++ prog.cpp $(capd-config --cflags --libs)`: interval arithmetic, a validated ODE enclosure with `IOdeSolver`/`ITimeMap` \
+cross-checked against `mpmath`, a rigorous Poincaré map, an interval Newton step; read `/usr/local/share/doc/capd`, \
+including the `projectStarter` Makefile.
 """,
     ),
     "number_theory": (
