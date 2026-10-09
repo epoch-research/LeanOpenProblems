@@ -138,7 +138,7 @@ def _apn_codebase_tar() -> bytes:
     return buf.getvalue()
 
 
-def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
+def _sandbox_with_agent_internet(backend: SandboxBackend | None) -> tuple[str, str]:
     """The standard sandbox config, but with the **agent** service (``default``)
     given internet access -- red-team only.
 
@@ -157,7 +157,7 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
     backend_type, path = get_sandbox_config(_FC_PIN, literature=False, backend=backend)
     config = yaml.safe_load(Path(path).read_text())
     agent = config["services"]["default"]
-    if backend == "docker":
+    if backend_type == "docker":
         # Drop `network_mode: none` -> the compose project's default bridge
         # network, which NATs to the host (internet).
         agent.pop("network_mode", None)
@@ -174,7 +174,9 @@ def _sandbox_with_agent_internet(backend: SandboxBackend) -> tuple[str, str]:
         config["allowEntities"] = ["world"]
     src = Path(path)
     out = src.with_name(
-        "redteam-internet.compose.yaml" if backend == "docker" else "redteam-internet-values.yaml"
+        "redteam-internet.compose.yaml"
+        if backend_type == "docker"
+        else "redteam-internet-values.yaml"
     )
     content = yaml.safe_dump(config, sort_keys=False)
     if not out.exists() or out.read_text() != content:
@@ -230,7 +232,7 @@ def lean_redteam_prover(gated: bool) -> Solver:
 @task
 def apn_redteam_collatz(
     gated: bool = True,
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Red-team Comparator's soundness: an architecture-aware adversary tries to
     get a Collatz "proof" accepted. ``accuracy`` is the break rate; the desired
