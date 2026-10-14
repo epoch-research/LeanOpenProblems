@@ -31,7 +31,7 @@ apn = "apn._registry"
 dev = [
     "anthropic>=0.105.2",
     "hawk[cli]",
-    "inspect-ai>=0.3.263",
+    "inspect-ai==0.3.273",
     "mypy>=2.1.0",
     "openai>=2.38.0",
     "pytest>=8.0",
@@ -42,7 +42,7 @@ dev = [
 
 [tool.uv]
 # Force inspect-ai to come from PyPI rather than hawk's [tool.uv.sources].
-override-dependencies = ["inspect-ai"]
+override-dependencies = ["inspect-ai==0.3.273"]
 
 [tool.uv.sources]
 hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v3.3.1" }
