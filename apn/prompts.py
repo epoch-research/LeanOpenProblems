@@ -44,11 +44,11 @@ Keep both theorem declarations in the file and do not alter their statements in 
 
 Work inside the Lake project at `{PROJECT}`. Your submission is the directory `{SUBMISSION_DIR}/`, a Lake library whose entry module is `{PROOF_PATH}` (`{ENTRY_MODULE}`); you may split your proof across further `.lean` files under it. The verifier takes exactly the regular `.lean` files under that directory.
 
-Put any files you want to keep inside `{WORKSPACE}`. If your environment crashes, only `{WORKSPACE}` will be restored.  
-
 Keep the existing `import` statements in `{PROOF_PATH}`; the `{util_module}` import transitively pulls in all of Mathlib, and other utilities.
 
 Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in PERMITTED_AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.
+
+Put any files you want to keep inside `{WORKSPACE}`. If your environment crashes, only `{WORKSPACE}` will be restored.  
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib, plus the `loogle` search CLI.
