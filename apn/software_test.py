@@ -280,7 +280,7 @@ def _samples(groups: list[str]) -> list[Sample]:
     ]
 
 
-def _agent_only_sandbox(backend: SandboxBackend) -> tuple[str, str]:
+def _agent_only_sandbox(backend: SandboxBackend | None) -> tuple[str, str]:
     """The standard sandbox config with the ``comparator`` verifier service
     removed: nothing is scored by proof-checking here, so the second container
     (and its memory reservation) would be waste. Post-processed from the shared
@@ -292,7 +292,7 @@ def _agent_only_sandbox(backend: SandboxBackend) -> tuple[str, str]:
     config["services"].pop("comparator", None)
     src = Path(path)
     out = src.with_name(
-        "software-test.compose.yaml" if backend == "docker" else "software-test-values.yaml"
+        "software-test.compose.yaml" if backend_type == "docker" else "software-test-values.yaml"
     )
     content = yaml.safe_dump(config, sort_keys=False)
     if not out.exists() or out.read_text() != content:
@@ -387,7 +387,7 @@ def software_report_scorer() -> Scorer:
 @task
 def apn_math_software_test(
     group: str | None = None,
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Exercise the agent image's advertised math software and report problems.
 
