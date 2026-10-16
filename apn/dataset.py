@@ -9,6 +9,8 @@ from typing import Any, Iterable
 from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.util import CheckpointSampleConfig
 
+from apn.layout import WORKSPACE
+
 OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
@@ -289,7 +291,7 @@ def build_dataset(
                 # every run of the task. Enabling is left to the eval layer
                 # (e.g. `checkpoint.enabled` in a Hawk eval-set config).
                 checkpoint=CheckpointSampleConfig(
-                    sandbox_paths={"default": ["/workspace"], "comparator": []},
+                    sandbox_paths={"default": [WORKSPACE], "comparator": []},
                 ),
             )
         )
