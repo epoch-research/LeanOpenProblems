@@ -61,3 +61,9 @@ packages:
   - inspect-ai==0.3.273
 
 retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
+
+checkpoint:
+  enabled: true
+  trigger:
+    type: time
+    every: 21600

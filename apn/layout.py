@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+WORKSPACE = "/workspace"
+
 # Root of the Lake project, shared by both sandbox images (agent + scorer).
-PROJECT = "/workspace/leanproject"
+PROJECT = f"{WORKSPACE}/leanproject"
 
 # The agent's submission directory. Its Lean module tree is what the scorer
 # ingests (apn.filetree) and the checker stages for verification (apn.checker).
