@@ -5,7 +5,7 @@
 # literature corpus.
 name: jacobian
 tasks:
-  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@576c04780c7890e4f9ef106fd4772ebea535bcd3
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@jacobian-conjecture
     name: apn
     items:
       - name: apn_jacobian
