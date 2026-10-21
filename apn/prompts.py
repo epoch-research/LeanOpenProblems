@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from apn.checker import PERMITTED_AXIOMS
-from apn.layout import ENTRY_MODULE, ENTRY_PATH, PROJECT, SUBMISSION_DIR
+from apn.layout import ENTRY_MODULE, ENTRY_PATH, PROJECT, SUBMISSION_DIR, WORKSPACE
 
 
 def literature_prompt() -> str:
@@ -145,6 +145,8 @@ Work inside the Lake project at `{PROJECT}`. Your submission is the directory `{
 Keep the existing `import` statements in `{PROOF_PATH}`; the `{util_module}` import transitively pulls in all of Mathlib, and other utilities.
 
 Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in PERMITTED_AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.
+
+Put any files you want to keep inside `{WORKSPACE}`. If your environment crashes, only `{WORKSPACE}` will be restored.  
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib, plus the `loogle` search CLI.

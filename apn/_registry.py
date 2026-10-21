@@ -4,7 +4,6 @@ from apn.redteam import apn_redteam_collatz
 from apn.software_test import apn_math_software_test
 from apn.task import (
     apn_erdos,
-    apn_erdos_autoformalized,
     apn_fc100open,
     apn_jacobian,
     apn_personal_corresp,
@@ -13,7 +12,6 @@ from apn.task import (
 
 __all__ = [
     "apn_erdos",
-    "apn_erdos_autoformalized",
     "apn_fc100open",
     "apn_jacobian",
     "apn_math_software_test",

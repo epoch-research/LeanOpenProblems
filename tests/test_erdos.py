@@ -5,8 +5,8 @@ elaboration, the certified per-form ``answer(...) ↔`` rewrite, only the target
 + its dependency decls surviving -- are enforced authoritatively, in a
 container, by ``tests/test_erdos_isolation.py``. This module checks what can
 be checked cheaply on every run: the manifest census (every research-category
-statement of the Bloom selection's 48 vendored files, plus the three derived
-Hadwiger–Nelson samples), the ``bloom_selection`` subset (the 50 scoreable
+statement of the Bloom selection's 65 vendored files, plus the three derived
+Hadwiger–Nelson samples), the ``bloom_selection`` subset (the 68 scoreable
 selected statements, ``apn_erdos``'s default), the dataset/sample shape, and
 textual invariants of the shipped sketches.
 """
@@ -42,48 +42,65 @@ _SORRY_RE = re.compile(r"\bsorry\b")
 _DECL_RE = re.compile(r"(?m)^(?:protected\s+)?(?:theorem|lemma)\s+([^\s:({\[⦃]+)")
 
 # The Bloom selection (apn/data/erdos/ERDOS_PROBLEM_STATEMENT_SELECTION.md):
-# selected statement's short name per problem number. 508's reviewed statement
-# is the excluded value-typed HadwigerNelsonProblem; the *scoreable* selection
-# -- the bloom_selection subset -- carries its three derived prove-or-disprove
-# samples (HN_SAMPLE_IDS) in its place, 50 statements in all.
-SELECTED = {
+# selected statements' short names per problem number -- one each, except 713,
+# whose two parts are both selected. 508's reviewed statement is the excluded
+# value-typed HadwigerNelsonProblem; the *scoreable* selection -- the
+# bloom_selection subset -- carries its three derived prove-or-disprove samples
+# (HN_SAMPLE_IDS) in its place, 68 statements in all.
+_ONE_EACH = {
     1: "erdos_1", 3: "erdos_3", 5: "erdos_5", 7: "erdos_7", 20: "erdos_20",
     23: "erdos_23", 28: "erdos_28", 30: "erdos_30", 39: "erdos_39",
     41: "erdos_41", 52: "erdos_52", 61: "erdos_61", 66: "erdos_66",
-    68: "erdos_68", 74: "erdos_74", 89: "erdos_89", 97: "erdos_97",
-    101: "erdos_101", 107: "erdos_107", 120: "erdos_120", 126: "erdos_126",
-    128: "erdos_128", 138: "erdos_138", 172: "erdos_172", 184: "erdos_184",
+    68: "erdos_68", 74: "erdos_74", 86: "erdos_86", 89: "erdos_89",
+    97: "erdos_97", 101: "erdos_101", 104: "erdos_104", 107: "erdos_107",
+    120: "erdos_120", 126: "erdos_126", 128: "erdos_128", 138: "erdos_138",
+    172: "erdos_172", 181: "erdos_181", 184: "erdos_184",
     208: "erdos_208.parts.i", 213: "erdos_213", 241: "erdos_241",
-    242: "erdos_242", 324: "erdos_324", 364: "erdos_364", 371: "erdos_371",
-    376: "erdos_376", 406: "erdos_406", 508: "HadwigerNelsonProblem",
-    564: "erdos_564", 595: "erdos_595", 647: "erdos_647", 672: "erdos_672",
-    723: "erdos_723", 812: "erdos_812.parts.i", 821: "erdos_821",
-    829: "erdos_829", 952: "erdos_952", 972: "erdos_972", 975: "erdos_975",
-    1003: "erdos_1003", 1057: "erdos_1057",
+    242: "erdos_242", 322: "erdos_322", 324: "erdos_324", 364: "erdos_364",
+    371: "erdos_371", 376: "erdos_376", 406: "erdos_406", 431: "erdos_431",
+    478: "erdos_478", 508: "HadwigerNelsonProblem", 548: "erdos_548",
+    564: "erdos_564", 571: "erdos_571", 583: "erdos_583", 595: "erdos_595",
+    647: "erdos_647", 672: "erdos_672", 714: "erdos_714", 723: "erdos_723",
+    773: "erdos_773", 812: "erdos_812.parts.i", 821: "erdos_821",
+    829: "erdos_829", 952: "erdos_952", 970: "erdos_970", 972: "erdos_972",
+    975: "erdos_975", 1003: "erdos_1003", 1020: "erdos_1020",
+    1057: "erdos_1057", 1083: "erdos_1083", 1159: "erdos_1159",
+    1206: "erdos_1206.parts.i",
+}
+SELECTED: dict[int, tuple[str, ...]] = {
+    **{n: (name,) for n, name in _ONE_EACH.items()},
+    713: ("erdos_713.parts.i", "erdos_713.parts.ii"),
 }
 
+# Selected statements FC records as resolved at the pin. They ship like the
+# rest, verdict un-filled and annotations stripped: settling them is still the
+# task.
+RECORDED_SOLVED = {1, 74, 126, 548, 571}
 
-def _selected_row(rows: list[SampleRow], number: int) -> SampleRow:
+
+def _selected_rows(rows: list[SampleRow], number: int) -> list[SampleRow]:
     hits = [
         r for r in rows
-        if r.extra["erdos_number"] == number and matches_name(r.id, SELECTED[number])
+        if r.extra["erdos_number"] == number
+        and any(matches_name(r.id, name) for name in SELECTED[number])
     ]
-    assert len(hits) == 1, (number, [r.id for r in hits])
-    return hits[0]
+    assert len(hits) == len(SELECTED[number]), (number, [r.id for r in hits])
+    return hits
 
 
 def test_manifest_census() -> None:
-    # The universe: every research-category statement of the 48 vendored
+    # The universe: every research-category statement of the 65 vendored
     # files -- the selected statements plus their research variants -- plus
     # the three derived Hadwiger–Nelson samples.
     rows = load_manifest(ERDOS_DIR)
-    assert len(rows) == 147
+    assert len(rows) == 167
     assert {r.extra["erdos_number"] for r in rows} == set(SELECTED)
     excluded = {r.id: r.excluded for r in rows if r.excluded is not None}
     assert excluded == {
         "Erdos508.HadwigerNelsonProblem": VALUE_TYPED_REASON,
         "Erdos975.erdos_975.variants.quadratic": VALUE_TYPED_REASON,
         "Erdos647.erdos_647.variants.twenty_four": PROVED_IN_FILE_REASON,
+        "Erdos1.erdos_1.variants.real": PROVED_IN_FILE_REASON,
     }
 
 
@@ -108,9 +125,10 @@ def test_manifest_answer_form_census() -> None:
     # re-checked per member in tests/test_erdos_isolation.py.)
     forms = Counter(r.extra["answer_form"] for r in load_manifest(ERDOS_DIR) if r.excluded is None)
     assert forms == {
-        None: 90,
-        "lhs_sorry": 52,
-        "lhs_true": 2,
+        None: 96,
+        "lhs_sorry": 63,
+        "lhs_true": 3,
+        "lhs_false": 1,
     }
 
 
@@ -122,34 +140,34 @@ def test_spec_files_match_manifest_exactly() -> None:
 
 
 def test_bloom_selection_subset() -> None:
-    # The default subset: the 50 scoreable selected statements -- exactly one
-    # per reviewed problem, except 508's three derived samples -- each
-    # `research open` at the pin.
+    # The default subset: the 68 scoreable selected statements -- SELECTED,
+    # with 508's three derived samples in place of its value-typed statement.
     rows = load_manifest(ERDOS_DIR)
     ids = load_subset(ERDOS_DIR, "bloom_selection")
-    assert len(ids) == 50
-    assert len(set(ids)) == 50
+    assert len(ids) == 68
+    assert len(set(ids)) == 68
     by_id = {r.id: r for r in rows}
     numbers = []
     for sample_id in ids:
         row = by_id[sample_id]
         assert row.excluded is None, sample_id
-        assert row.extra["category_at_pin"] == "research open", sample_id
         numbers.append(row.extra["erdos_number"])
         if row.extra["erdos_number"] == 508:
             assert sample_id in HN_SAMPLE_IDS, sample_id
         else:
-            assert matches_name(sample_id, SELECTED[row.extra["erdos_number"]]), sample_id
-    assert Counter(numbers) == Counter(set(SELECTED) - {508}) + Counter({508: 3})
-    assert len(erdos_dataset(names=ids)) == 50
+            names = SELECTED[row.extra["erdos_number"]]
+            assert any(matches_name(sample_id, name) for name in names), sample_id
+    expected = Counter({n: len(names) for n, names in SELECTED.items() if n != 508})
+    assert Counter(numbers) == expected + Counter({508: 3})
+    assert len(erdos_dataset(names=ids)) == 68
 
 
 def test_508_ships_as_excluded_value_typed_row() -> None:
-    # The selection's 48th statement: χ(ℝ²) = answer(sorry) is value-typed
+    # 508's selected statement, χ(ℝ²) = answer(sorry), is value-typed
     # (sorryAx in the statement type), unscoreable, and 508.lean has no other
     # `research open` statement -- so it ships as an excluded row, documented
     # rather than silently dropped.
-    row = _selected_row(load_manifest(ERDOS_DIR), 508)
+    [row] = _selected_rows(load_manifest(ERDOS_DIR), 508)
     assert row.id == "Erdos508.HadwigerNelsonProblem"
     assert row.excluded == VALUE_TYPED_REASON
 
@@ -173,16 +191,17 @@ def test_508_derived_samples() -> None:
         assert (ERDOS_DIR / row.statement_path).read_text() == text
 
 
-def test_every_selected_statement_is_research_open_at_pin() -> None:
+def test_selected_statement_categories_at_pin() -> None:
     rows = load_manifest(ERDOS_DIR)
     for number in SELECTED:
-        row = _selected_row(rows, number)
-        assert row.extra["category_at_pin"] == "research open", row.id
+        expected = "research solved" if number in RECORDED_SOLVED else "research open"
+        for row in _selected_rows(rows, number):
+            assert row.extra["category_at_pin"] == expected, row.id
 
 
 def test_erdos_dataset_loads_all_samples() -> None:
     ds = erdos_dataset()
-    assert len(ds) == 144
+    assert len(ds) == 163
     ids = [s.id for s in ds]
     assert len(set(ids)) == len(ids)
 

@@ -12,10 +12,9 @@ target theorem and cuts every other standalone ``theorem``/``lemma`` (the
 ``@[category ...]`` classification list (catalogue metadata, not part of the
 statement) and appends the mechanically derived ``<target>.disproof``.
 
-As in ``scripts/generate_erdos_autoformalized_isolated.py`` there is no
-un-recording surgery and no exclusion machinery: the sources were vendored in
-shipping form (no ``answer(...)`` statements, every member's proof a bare
-``sorry``, no recorded verdicts). Generation *asserts* those invariants -- a
+There is no un-recording surgery and no exclusion machinery: the sources were
+vendored in shipping form (no ``answer(...)`` statements, every member's proof
+a bare ``sorry``, no recorded verdicts). Generation *asserts* those invariants -- a
 member that trips one fails the run for a curation decision instead of
 becoming an excluded row.
 

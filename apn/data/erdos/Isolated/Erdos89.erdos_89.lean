@@ -44,7 +44,8 @@ Erdős [Er46] asked whether every set of $n$ distinct points in $\mathbb{R}^2$
 determines $\gg \frac{n}{\sqrt{\log n}}$ many distinct distances.
 -/
 theorem erdos_89 :
-    (fun (n : ℕ) => n/(n : ℝ).log.sqrt) =O[atTop] (fun n => (minimalDistinctDistances n : ℝ)) := by
+    (fun (n : ℕ) => n/(n : ℝ).log.sqrt) =O[atTop]
+      (fun n => (minimalDistinctDistances ℝ² n : ℝ)) := by
   sorry
 
 -- TODO(firsching): formalize any remaining remarks from the erdosproblems.com page.

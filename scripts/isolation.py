@@ -68,12 +68,22 @@ def is_theorem_command(cmd: dict) -> bool:
       structure is a definition -- caught by the all-theorem test.
     * A ``Prop``-valued class ``instance`` (e.g. ``instance : Fact (Nat.Prime 3)``)
       has kind "theorem" but ``isInstance`` -- caught by the no-instance test
-      (A341685)."""
+      (A341685).
+
+    Conversely, a ``decide +native`` proof (Lean v4.33+) emits an auxiliary
+    ``<theorem>._native.decide.ax_<n>`` axiom in the theorem's own command; it
+    belongs to the theorem, so it does not make the command a definition
+    (ErdosProblems/829.lean's ``sumRep_cubes_taxicab`` test lemma)."""
+    decls = [d for d in cmd["decls"] if not _is_native_decide_aux(d)]
     return (
-        bool(cmd["decls"])
-        and all(d["kind"] == "theorem" for d in cmd["decls"])
-        and not any(d["isInstance"] for d in cmd["decls"])
+        bool(decls)
+        and all(d["kind"] == "theorem" for d in decls)
+        and not any(d["isInstance"] for d in decls)
     )
+
+
+def _is_native_decide_aux(decl: dict) -> bool:
+    return decl["kind"] == "axiom" and "._native.decide.ax_" in decl["name"]
 
 
 def theorem_command_decls(filerec: dict) -> list[dict]:

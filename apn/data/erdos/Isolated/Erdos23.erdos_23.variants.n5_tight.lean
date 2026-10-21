@@ -30,6 +30,7 @@ open SimpleGraph BigOperators
 
 namespace Erdos23
 
+open scoped Classical in
 /--
 There exists a triangle-free graph on $25$ vertices such that at least $25$ edges must be
 removed to make it bipartite.  The balanced blow-up of $C_5$ with five parts of size $5$

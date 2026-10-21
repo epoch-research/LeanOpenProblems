@@ -13,13 +13,11 @@ from apn import __version__
 from apn.solver import AgentType, lean_prover
 from apn.checker import SandboxComparator
 from apn.dataset import (
-    ERDOS_AUTOFORMALIZED_DIR,
     ERDOS_DIR,
     FC100_DIR,
     JACOBIAN_DIR,
     PERSONAL_CORRESP_DIR,
     OEIS_DIR,
-    erdos_autoformalized_dataset,
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
@@ -40,6 +38,24 @@ IMAGE_REPOSITORY_DEFAULT = "leanopenproblems"
 IMAGE_REPOSITORY = f"${{{IMAGE_REPOSITORY_VAR}:-{IMAGE_REPOSITORY_DEFAULT}}}"
 
 SandboxBackend = Literal["docker", "k8s"]
+
+
+def resolve_sandbox_backend(backend: SandboxBackend | None) -> SandboxBackend:
+    """``backend`` if given, else the backend native to where the task loads.
+
+    In a Hawk runner that is ``k8s``. Hawk also accepts the docker compose
+    file, but only by auto-converting it to chart values, and the result lacks
+    everything the compose file cannot say: the ephemeral-storage requests
+    (compose has no such resource) and the comparator ``runtimeClassName`` pin
+    from :func:`get_values_file_content`. Everywhere else (local runs, CI,
+    ``hawk local``) it is ``docker``.
+    """
+    if backend is not None:
+        return backend
+    # Hawk's runner Job sets this unconditionally, next to the flag that turns
+    # on its docker->k8s sandbox conversion; `hawk local` sets neither.
+    return "k8s" if "HAWK_JOB_ID" in os.environ else "docker"
+
 
 # --------------------------------------------------------------------------- #
 # Shared sandbox constants. Both backend writers draw from these so the two    #
@@ -195,15 +211,17 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
 
 
 def get_sandbox_config(
-    fc_commit: str, literature: bool, backend: SandboxBackend
-) -> tuple[str, str]:
-    """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend.
+    fc_commit: str, literature: bool, backend: SandboxBackend | None
+) -> tuple[SandboxBackend, str]:
+    """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend
+    (``None``: see :func:`resolve_sandbox_backend`).
 
     Each backend gets its own generated artifact (``compose.yaml`` for docker,
     ``values.yaml`` for k8s -- k8s_sandbox treats any config file NOT named
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
     per-(version, FC pin, variant) subdirs so they don't clobber each other.
     """
+    backend = resolve_sandbox_backend(backend)
     variant = "corpus" if literature else "closed-book"
     directory = (
         SANDBOX_FILES_DIR
@@ -239,7 +257,7 @@ def apn_oeis(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
 
@@ -269,7 +287,7 @@ def apn_fc100open(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
     pin = fc_commit(FC100_DIR)
@@ -292,7 +310,7 @@ def apn_erdos(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
@@ -311,41 +329,12 @@ def apn_erdos(
 
 
 @task
-def apn_erdos_autoformalized(
-    subset: str | None = "bloom_selection",
-    gated: bool = True,
-    literature: bool = False,
-    agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
-) -> Task:
-    """The Erdős problems our own autoformalization pipeline formalized.
-
-    The default ``bloom_selection`` subset applies Thomas Bloom's verdicts;
-    ``subset=None`` runs the full manifest."""
-    name_list = (
-        load_subset(ERDOS_AUTOFORMALIZED_DIR, subset) if subset is not None else None
-    )
-    pin = fc_commit(ERDOS_AUTOFORMALIZED_DIR)
-    return Task(
-        dataset=erdos_autoformalized_dataset(names=name_list),
-        solver=lean_prover(
-            gated=gated,
-            literature=literature,
-            agent_type=agent_type,
-            util_module=fc_profile(pin).util_module,
-        ),
-        scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
-    )
-
-
-@task
 def apn_personal_corresp(
     subset: str | None = None,
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Open conjectures sent to us in personal correspondence, formalized by
     their contributors (the finitistic dimension and Nakayama conjectures from
@@ -372,7 +361,7 @@ def apn_jacobian(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "deep",
-    sandbox_backend: SandboxBackend = "docker",
+    sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Jacobian conjecture over ``ℂ``, with a problem-specific prompt
     (adapted from https://aaronlou.com/jacobian_counterexample_prompt.pdf).

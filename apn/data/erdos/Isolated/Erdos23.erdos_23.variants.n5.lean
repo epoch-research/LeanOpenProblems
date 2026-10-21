@@ -30,6 +30,7 @@ open SimpleGraph BigOperators
 
 namespace Erdos23
 
+open scoped Classical in
 /--
 Every triangle-free graph on $25$ vertices can be made bipartite by removing at most $25$
 edges.

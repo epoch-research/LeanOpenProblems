@@ -26,6 +26,8 @@ import FormalConjecturesUtil
   Helv. (1962/63), 141-147.
 - [Gr01] Green, Ben, The number of squares and {$B_h[g]$} sets. Acta Arith. (2001), 365-390.
 - [Gu04] Guy, Richard K., Unsolved problems in number theory. (2004), xviii+437.
+- [Wh24] White, Ethan Patrick, An optimal $L^2$ autoconvolution inequality. Canad. Math. Bull.
+  67 (2024), 108-121. [doi:10.4153/S0008439523000565](https://doi.org/10.4153/S0008439523000565)
 -/
 
 open Filter Finset
@@ -49,7 +51,7 @@ noncomputable def f (N r : ℕ) : ℕ :=
   candidates.sup card
 
 /--
-The best upper bound known to date is due to Green [Gr01], $f(N) \leq ((7/2)^{1/3}+o(1))N^{1/3}$.
+Green [Gr01] proved the upper bound $f(N) \leq ((7/2)^{1/3}+o(1))N^{1/3}$
 (note that $(7/2)^{1/3}\approx 1.519$).
 -/
 theorem erdos_241.variants.upper_bound :
