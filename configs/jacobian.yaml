@@ -19,7 +19,7 @@ tasks:
           agent_type: deep
           literature: false
 models:
-  - package: git+https://github.com/epoch-research/benchmarks
+  - package: git+https://github.com/epoch-research/benchmarks@48493325ca9c99d21e7c53062ed68e2849f3dffa
     name: epoch
     items:
       - name: claude-fable-5
@@ -27,19 +27,19 @@ models:
           config:
             # Policy: use the highest reasoning effort the model supports.
             reasoning_effort: "max"
-            max_retries: 7
+            max_retries: 485
             max_connections: 40
-      - name: gpt-5.6-sol
+      - name: gpt-6-astra
         args:
           config:
             # Policy: use the highest reasoning effort the model supports.
             reasoning_effort: "max"
-            max_retries: 7
+            max_retries: 485
             max_connections: 40
 
-# 2 models x 2 samples x $300/sample cap = $1,200 max; gated runs sit near max.
-cost_limit: 300.0
-working_limit: 259_200  # 72 * 60 * 60
+# 2 models x 2 samples x $3,000/sample cap = $12,000 max; gated runs sit near max.
+cost_limit: 3000.0
+working_limit: 864_000  # 10 * 24 * 60 * 60
 
 # $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
 model_cost_config:
@@ -48,11 +48,11 @@ model_cost_config:
     output: 50.0
     input_cache_read: 1.0
     input_cache_write: 12.5
-  epoch/gpt-5.6-sol:
-    input: 5.0
-    output: 30.0
-    input_cache_read: 0.5
-    input_cache_write: 6.25
+  epoch/gpt-6-astra:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
 
 secrets:
   - name: ANTHROPIC_API_KEY
@@ -63,6 +63,8 @@ secrets:
 
 runner:
   memory: 200Gi
+  storage_request: 410Gi
+  storage_limit: 410Gi
   environment:
     # TODO: Remove once default in Hawk
     INSPECT_LOG_CONDENSE: "true"
@@ -73,8 +75,12 @@ runner:
     HAWK_RUNNER_REFRESH_TOKEN: ''
 
 packages:
-  # Right now needs to be kept in sync with epoch-research/benchmarks@main.
+  # Right now needs to be kept in sync with the pinned epoch-research/benchmarks commit.
   # TODO Remove once this wart is no longer necessary.
   - inspect-ai==0.3.273
 
-retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
+checkpoint:
+  enabled: true
+  trigger:
+    type: time
+    every: 43200
