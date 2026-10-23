@@ -48,7 +48,7 @@ Keep the existing `import` statements in `{PROOF_PATH}`; the `{util_module}` imp
 
 Your submission may depend only on the following axioms: {', '.join(f'`{a}`' for a in PERMITTED_AXIOMS)}. Don't attempt to cheat with Lean loopholes, the verifier will reject such attempts.
 
-Put any files you want to keep inside `{WORKSPACE}`. If your environment crashes, only `{WORKSPACE}` will be restored.  
+Put any files you want to keep inside `{WORKSPACE}`. If your environment crashes (this is very rare), only `{WORKSPACE}` will be restored. Keep `{WORKSPACE}` small. In addition, do not create more than 20 GB of new files (in any directory) at any one time; if you want to create large temporary data, clean up as you go.
 
 Your environment has the following available:
 * A Lean 4 toolchain with Mathlib, plus the `loogle` search CLI.
