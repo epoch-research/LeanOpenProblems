@@ -203,7 +203,7 @@ def build_agent(
 
 
 @agent
-def prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
+def _prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
     """The prover loop, for a single agent or a swarm member.
 
     ``swarm_tools()`` and ``swarm_on_continue()`` do nothing outside a swarm. A
@@ -257,7 +257,7 @@ def lean_prover(
             agent = swarm(
                 members=[
                     member(
-                        prover,
+                        _prover,
                         name=name,
                         args={"agent_type": agent_type, "gated": gated, "swarm": True},
                         sandbox=name,
@@ -270,7 +270,7 @@ def lean_prover(
             )
         else:
             await sandbox().write_file(ENTRY_PATH, sketch)
-            agent = prover(agent_type, gated)
+            agent = _prover(agent_type, gated)
         state.messages = [
             ChatMessageUser(
                 content=user_prompt(ENTRY_PATH, state.token_limit, literature, util_module),
