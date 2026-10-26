@@ -33,6 +33,7 @@ from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target
 from inspect_ai.solver import TaskState
 from inspect_ai.util import ExecResult, OutputLimitExceededError, tool_state_scope
+from inspect_ai.util._store import Store
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
@@ -769,7 +770,12 @@ def _swarm_fixture(
     state = _state(store)
     state.store.set(
         SWARM_RESULT_KEY,
-        {"members": [{"name": name, "sandbox": name} for name in tars]},
+        {
+            "members": [
+                {"name": name, "sandbox": name, "submitted": name == "prover-2"}
+                for name in tars
+            ]
+        },
     )
     sandboxes = {name: FakeSandbox(tar) for name, tar in tars.items()}
 
@@ -791,6 +797,12 @@ async def test_swarm_final_score_checks_every_member_sandbox(
     assert score.value == CORRECT
     assert score.metadata is not None
     assert score.metadata["passed"] == ["prover-2"]
+    assert score.explanation == (
+        "Swarm of 3: 1 member's work passes (prover-2).\n"
+        "prover-1: INCORRECT  stub  claim proof (not submitted)\n"
+        "prover-2: CORRECT    stub  claim disproof (submitted)\n"
+        "prover-3: INCORRECT  stub  claim proof (default, not submitted)"
+    )
     assert checker.calls == [
         (tars["prover-1"], "proof"),
         (tars["prover-2"], "disproof"),
@@ -808,6 +820,8 @@ async def test_swarm_final_score_incorrect_when_no_member_passes(
     score = await proof_scorer(TarChecker(passing=b""), swarm=True)(state, Target(""))
     assert score is not None
     assert score.value == INCORRECT
+    assert score.explanation is not None
+    assert score.explanation.splitlines()[0] == "Swarm of 3: no member's work passes."
 
 
 async def test_swarm_score_inside_a_member_checks_only_its_own_sandbox(
@@ -820,3 +834,17 @@ async def test_swarm_score_inside_a_member_checks_only_its_own_sandbox(
     assert score is not None
     assert score.value == CORRECT
     assert checker.calls == [(tars["prover-2"], "disproof")]
+
+
+async def test_scorer_does_not_record_a_default_claim(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = Store()
+    monkeypatch.setattr(
+        scorer_mod, "sandbox", lambda *a, **k: FakeSandbox(_tar_of({"./Spec.lean": "x"}))
+    )
+    monkeypatch.setattr(scorer_mod, "store", lambda: store)
+    checker = StubChecker(False)
+    await proof_scorer(checker)(_state(FakeStore()), Target(""))
+    assert checker.calls[0][3] == "proof"
+    assert CLAIM_STORE_KEY not in store.keys()

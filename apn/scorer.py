@@ -58,23 +58,58 @@ def proof_scorer(checker: ProofChecker, swarm: bool = False) -> Scorer:
 async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
     record = state.store.get(SWARM_RESULT_KEY)
     scores: dict[str, Score] = {}
+    stages: dict[str, str] = {}
+    claims: dict[str, str] = {}
     for m in record["members"]:
-        with tool_state_scope(m["name"]):
-            scores[m["name"]] = await _score_sandbox(
+        name = m["name"]
+        with tool_state_scope(name):
+            recorded = store().get(claim_store_key())
+            scores[name] = await _score_sandbox(
                 state,
                 checker,
                 sandbox(m["sandbox"]),
-                f"submission_contents_{m['name']}",
+                f"submission_contents_{name}",
             )
+        metadata = scores[name].metadata
+        assert metadata is not None
+        stages[name] = metadata["stage"]
+        notes = ["submitted" if m["submitted"] else "not submitted"]
+        if recorded is None:
+            notes.insert(0, "default")
+        claims[name] = f"claim {recorded or 'proof'} ({', '.join(notes)})"
     passed = [name for name, s in scores.items() if s.value == CORRECT]
     return Score(
         value=CORRECT if passed else INCORRECT,
-        explanation=f"passed: {', '.join(passed)}" if passed else "no member passed",
+        explanation=_swarm_explanation(scores, stages, claims, passed),
         metadata={
             "passed": passed,
             "members": {name: s.metadata for name, s in scores.items()},
         },
     )
+
+
+def _swarm_explanation(
+    scores: dict[str, Score],
+    stages: dict[str, str],
+    claims: dict[str, str],
+    passed: list[str],
+) -> str:
+    if not passed:
+        summary = f"Swarm of {len(scores)}: no member's work passes."
+    elif len(passed) == 1:
+        summary = f"Swarm of {len(scores)}: 1 member's work passes ({passed[0]})."
+    else:
+        summary = (
+            f"Swarm of {len(scores)}: {len(passed)} members' work passes "
+            f"({', '.join(passed)})."
+        )
+    width = max(len(stage) for stage in stages.values())
+    lines = [
+        f"{name}: {'CORRECT' if s.value == CORRECT else 'INCORRECT':<9}  "
+        f"{stages[name]:<{width}}  {claims[name]}"
+        for name, s in scores.items()
+    ]
+    return "\n".join([summary, *lines])
 
 
 async def _score_sandbox(
@@ -104,7 +139,8 @@ async def _score_sandbox(
     # The claim the agent declared on its submit call. A sample scored
     # without one (e.g. it hit its limits before ever submitting) defaults
     # to "proof" -- deterministic, and such submissions reject anyway.
-    claim: Claim = store().get(claim_store_key(), "proof")
+    recorded: Claim | None = store().get(claim_store_key())
+    claim: Claim = "proof" if recorded is None else recorded
     # The target theorem's fully qualified name (== the sample id except
     # where the manifest overrides it; see apn.dataset.build_dataset).
     decl = state.metadata["decl_name"]
