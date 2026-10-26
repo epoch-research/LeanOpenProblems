@@ -265,6 +265,7 @@ def lean_prover(
                         args={"agent_type": agent_type, "gated": gated, "swarm": True},
                         sandbox=name,
                         visible_sandboxes=[comparator_sandbox_name(name)],
+                        delivery="poll",
                     )
                     for name in names
                 ],
