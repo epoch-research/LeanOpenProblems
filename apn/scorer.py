@@ -95,15 +95,13 @@ def _swarm_explanation(
     claims: dict[str, str],
     passed: list[str],
 ) -> str:
-    if not passed:
-        summary = f"Swarm of {len(scores)}: no member's work passes."
-    elif len(passed) == 1:
-        summary = f"Swarm of {len(scores)}: 1 member's work passes ({passed[0]})."
-    else:
+    if passed:
         summary = (
             f"Swarm of {len(scores)}: {len(passed)} members' work passes "
             f"({', '.join(passed)})."
         )
+    else:
+        summary = f"Swarm of {len(scores)}: no member's work passes."
     width = max(len(stage) for stage in stages.values())
     lines = [
         f"{name}: {'CORRECT' if s.value == CORRECT else 'INCORRECT':<9}  "

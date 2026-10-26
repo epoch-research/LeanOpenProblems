@@ -798,7 +798,7 @@ async def test_swarm_final_score_checks_every_member_sandbox(
     assert score.metadata is not None
     assert score.metadata["passed"] == ["prover-2"]
     assert score.explanation == (
-        "Swarm of 3: 1 member's work passes (prover-2).\n"
+        "Swarm of 3: 1 members' work passes (prover-2).\n"
         'prover-1: INCORRECT  stub  called submit_proof(claim="proof")\n'
         'prover-2: CORRECT    stub  called submit_proof(claim="disproof")\n'
         'prover-3: INCORRECT  stub  did not call submit_proof(), defaulted to claim="proof"'
