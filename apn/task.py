@@ -4,13 +4,13 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Sequence
 
 import yaml
 from inspect_ai import Task, task
 
 from apn import __version__
-from apn.solver import AgentType, lean_prover
+from apn.solver import AgentType, lean_prover, swarm_member_names
 from apn.checker import SandboxComparator
 from apn.dataset import (
     ERDOS_DIR,
@@ -109,7 +109,11 @@ def _build_section(target: str, fc_commit: str) -> dict[str, Any]:
     }
 
 
-def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
+def get_compose_file_content(
+    fc_commit: str,
+    literature: bool = False,
+    agent_services: Sequence[str] = ("default",),
+) -> str:
     """The docker-backend sandbox config (local runs, CI tests).
 
     Two services: the agent's workspace, and the trusted `comparator` verifier.
@@ -123,13 +127,16 @@ def get_compose_file_content(fc_commit: str, literature: bool = False) -> str:
     agent_kind = _agent_image_kind(literature)
     compose: dict[str, Any] = {
         "services": {
-            "default": {
-                "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image(agent_kind, fc_commit)}",
-                "build": _build_section(agent_kind, fc_commit),
-                "init": True,
-                "entrypoint": list(SANDBOX_COMMAND),
-                "mem_limit": f"{AGENT_MEMORY_GIB}g",
-                "network_mode": "none",
+            **{
+                name: {
+                    "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image(agent_kind, fc_commit)}",
+                    "build": _build_section(agent_kind, fc_commit),
+                    "init": True,
+                    "entrypoint": list(SANDBOX_COMMAND),
+                    "mem_limit": f"{AGENT_MEMORY_GIB}g",
+                    "network_mode": "none",
+                }
+                for name in agent_services
             },
             "comparator": {
                 "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image('comparator', fc_commit)}",
@@ -148,7 +155,11 @@ AGENT_EPHEMERAL_STORAGE_GIB = 20
 COMPARATOR_EPHEMERAL_STORAGE_GIB = 8
 
 
-def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
+def get_values_file_content(
+    fc_commit: str,
+    literature: bool = False,
+    agent_services: Sequence[str] = ("default",),
+) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
     Written directly in the Helm chart's vocabulary. k8s_sandbox could
@@ -183,14 +194,19 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
 
     values: dict[str, Any] = {
         "services": {
-            "default": {
-                "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
-                # Without this the chart defaults to a bare `tail -f /dev/null`
-                # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
-                "command": list(SANDBOX_COMMAND),
-                "networkIsolated": True,
-                "dnsRecord": True,
-                "resources": resources(AGENT_MEMORY_GIB, AGENT_EPHEMERAL_STORAGE_GIB),
+            **{
+                name: {
+                    "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
+                    # Without this the chart defaults to a bare `tail -f /dev/null`
+                    # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
+                    "command": list(SANDBOX_COMMAND),
+                    "networkIsolated": True,
+                    "dnsRecord": True,
+                    "resources": resources(
+                        AGENT_MEMORY_GIB, AGENT_EPHEMERAL_STORAGE_GIB
+                    ),
+                }
+                for name in agent_services
             },
             "comparator": {
                 "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
@@ -208,7 +224,10 @@ def get_values_file_content(fc_commit: str, literature: bool = False) -> str:
 
 
 def get_sandbox_config(
-    fc_commit: str, literature: bool, backend: SandboxBackend | None
+    fc_commit: str,
+    literature: bool,
+    backend: SandboxBackend | None,
+    agent_services: Sequence[str] = ("default",),
 ) -> tuple[SandboxBackend, str]:
     """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend
     (``None``: see :func:`resolve_sandbox_backend`).
@@ -216,7 +235,9 @@ def get_sandbox_config(
     Each backend gets its own generated artifact (``compose.yaml`` for docker,
     ``values.yaml`` for k8s -- k8s_sandbox treats any config file NOT named
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
-    per-(version, FC pin, variant) subdirs so they don't clobber each other.
+    per-(version, FC pin, variant, agent services) subdirs so they don't
+    clobber each other. ``agent_services`` names one agent sandbox each (a
+    swarm's members); all share the one comparator.
     """
     backend = resolve_sandbox_backend(backend)
     variant = "corpus" if literature else "closed-book"
@@ -225,14 +246,15 @@ def get_sandbox_config(
         / _docker_tag_component(__version__)
         / f"fc_{fc_commit[:12]}"
         / variant
+        / "+".join(agent_services)
     )
     directory.mkdir(parents=True, exist_ok=True)
     if backend == "docker":
         path = directory / "compose.yaml"
-        content = get_compose_file_content(fc_commit, literature)
+        content = get_compose_file_content(fc_commit, literature, agent_services)
     elif backend == "k8s":
         path = directory / "values.yaml"
-        content = get_values_file_content(fc_commit, literature)
+        content = get_values_file_content(fc_commit, literature, agent_services)
     else:
         raise ValueError(
             f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'."
@@ -248,13 +270,19 @@ def get_compose_file(fc_commit: str, literature: bool = False) -> Path:
     return Path(get_sandbox_config(fc_commit, literature, "docker")[1])
 
 
+def _agent_services(agent_type: AgentType, swarm_size: int) -> list[str]:
+    if agent_type == "swarm":
+        return swarm_member_names(swarm_size)
+    return ["default"]
+
+
 @task
 def apn_oeis(
     subset: str | None = None,
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    swarm_size: int = 8,
+    swarm_size: int = 4,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
@@ -275,8 +303,10 @@ def apn_oeis(
             swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
+        sandbox=get_sandbox_config(
+            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+        ),
     )
 
 
@@ -286,7 +316,7 @@ def apn_fc100open(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    swarm_size: int = 8,
+    swarm_size: int = 4,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
@@ -300,8 +330,10 @@ def apn_fc100open(
             swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
+        sandbox=get_sandbox_config(
+            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+        ),
     )
 
 
@@ -311,7 +343,7 @@ def apn_erdos(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    swarm_size: int = 8,
+    swarm_size: int = 4,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
@@ -326,8 +358,10 @@ def apn_erdos(
             swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
+        sandbox=get_sandbox_config(
+            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+        ),
     )
 
 
@@ -337,7 +371,7 @@ def apn_personal_corresp(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    swarm_size: int = 8,
+    swarm_size: int = 4,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Open conjectures sent to us in personal correspondence, formalized by
@@ -355,6 +389,8 @@ def apn_personal_corresp(
             swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(SandboxComparator()),
-        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+        scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
+        sandbox=get_sandbox_config(
+            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+        ),
     )

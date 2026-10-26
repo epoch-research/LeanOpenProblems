@@ -25,13 +25,20 @@ from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, tool
 from inspect_ai.util import sandbox, store
 from inspect_boltons.tools import resources
-from inspect_swarm import member, shared_memory, swarm, swarm_on_continue, swarm_tools
+from inspect_swarm import (
+    Budget,
+    member,
+    shared_memory,
+    swarm,
+    swarm_on_continue,
+    swarm_tools,
+)
 
 from apn.checker import Claim
 from apn.layout import ENTRY_PATH
 from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
-from apn.scorer import CLAIM_STORE_KEY
+from apn.scorer import claim_store_key
 from apn.tools import bash
 
 logger = logging.getLogger(__name__)
@@ -108,7 +115,7 @@ def submit() -> Tool:
         """
         if claim not in ("proof", "disproof"):
             raise ValueError(f'claim must be "proof" or "disproof", got {claim!r}')
-        store().set(CLAIM_STORE_KEY, claim)
+        store().set(claim_store_key(), claim)
         return "Submitted."
 
     return execute
@@ -150,6 +157,13 @@ def _prover_submit() -> AgentSubmit:
 # The default continue message is very generic ("proceed to the next step"), this one
 # might be better at avoiding doom loops.
 CONTINUE_MESSAGE = "Continue working on the problem."
+
+
+COMPARATOR_SANDBOX = "comparator"
+
+
+def swarm_member_names(swarm_size: int) -> list[str]:
+    return [f"prover-{i}" for i in range(1, swarm_size + 1)]
 
 
 @agent
@@ -212,7 +226,7 @@ def lean_prover(
     gated: bool,
     literature: bool,
     util_module: str,
-    swarm_size: int = 8,
+    swarm_size: int = 4,
 ) -> Solver:
     """
     Args:
@@ -222,25 +236,35 @@ def lean_prover(
         util_module: The dataset pin's FC util module
             (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
             import-integrity rule.
-        swarm_size: Number of members when ``agent_type`` is ``"swarm"``.
+        swarm_size: Number of members when ``agent_type`` is ``"swarm"``. Each
+            member works in its own sandbox (see ``swarm_member_names``) and
+            shares the comparator; the swarm's budget is split equally.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         _warn_if_ignored_formalizations(state)
         sketch = state.metadata["sketch"]
-        await sandbox().write_file(ENTRY_PATH, sketch)
 
         if agent_type == "swarm":
+            names = swarm_member_names(swarm_size)
+            for name in names:
+                await sandbox(name).write_file(ENTRY_PATH, sketch)
             agent = swarm(
-                members=member(
-                    prover_member,
-                    name="prover",
-                    args={"gated": gated},
-                    count=swarm_size,
-                ),
+                members=[
+                    member(
+                        prover_member,
+                        name=name,
+                        args={"gated": gated},
+                        sandbox=name,
+                        visible_sandboxes=[COMPARATOR_SANDBOX],
+                    )
+                    for name in names
+                ],
                 channels=[shared_memory()],
+                budget=Budget(split="equal"),
             )
         else:
+            await sandbox().write_file(ENTRY_PATH, sketch)
             agent = build_agent(
                 agent_type,
                 tools=_prover_tools(),

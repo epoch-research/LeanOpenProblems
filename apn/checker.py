@@ -6,8 +6,10 @@ import tarfile
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Literal, Protocol, runtime_checkable
+from weakref import WeakKeyDictionary
 
-from inspect_ai.util import OutputLimitExceededError, sandbox
+import anyio
+from inspect_ai.util import OutputLimitExceededError, SandboxEnvironment, sandbox
 
 from apn.layout import ENTRY_MODULE, ENTRY_PATH, ENTRY_REL, PROJECT, SUBMISSION_DIR
 
@@ -230,6 +232,9 @@ def comparator_config(decl: str, claim: Claim) -> str:
     )
 
 
+_CHECK_LOCKS: WeakKeyDictionary[SandboxEnvironment, anyio.Lock] = WeakKeyDictionary()
+
+
 class SandboxComparator:
     """Runs Lean FRO's Comparator against the trusted ``comparator`` sandbox.
 
@@ -277,6 +282,12 @@ class SandboxComparator:
         except InvalidSubmission as exc:
             return CheckOutcome(ok=False, stage="entry_missing", detail=str(exc))
 
+        async with _CHECK_LOCKS.setdefault(sb, anyio.Lock()):
+            return await self._run(sb, spec, staged, decl, claim)
+
+    async def _run(
+        self, sb: SandboxEnvironment, spec: str, staged: bytes, decl: str, claim: Claim
+    ) -> CheckOutcome:
         # Trusted filesystem reset (a reference step: failure raises). It
         # restores a pristine .lake -- the only path the untrusted build can
         # write under its landrun sandbox; it does not terminate processes a

@@ -1,5 +1,5 @@
 # Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
-name: erdos74-swarm8
+name: erdos74-swarm4
 
 tasks:
   - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@swarm
@@ -9,7 +9,7 @@ tasks:
         args:
           subset: bloom_selection
           agent_type: swarm
-          swarm_size: 8
+          swarm_size: 4
           literature: true
         sample_ids:
           - Erdos74.erdos_74
@@ -24,7 +24,7 @@ models:
             max_retries: 7
             max_connections: 10
 
-cost_limit: 9600.0
+cost_limit: 400.0
 working_limit: 432_000  # 5 * 24 * 60 * 60
 
 # $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
@@ -41,20 +41,10 @@ secrets:
 
 runner:
   memory: 200Gi
-  storage_request: 410Gi
-  storage_limit: 410Gi
   environment:
     INSPECT_LOG_CONDENSE: "true"
-    # inspect-swarm 0.1.0 was published 2026-10-23; the smoke config's older
-    # cutoff would exclude it.
     UV_EXCLUDE_NEWER: "2026-10-24T00:00:00Z"
 
 packages:
   - inspect-ai==0.3.283
   - semver>=3.0.0,<3.1.0
-
-checkpoint:
-  enabled: true
-  trigger:
-    type: time
-    every: 43200  # 12 * 60 * 60
