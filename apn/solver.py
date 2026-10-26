@@ -31,6 +31,7 @@ from inspect_swarm import (
     shared_memory,
     swarm,
     swarm_on_continue,
+    swarm_resources,
     swarm_tools,
 )
 
@@ -137,11 +138,11 @@ def _attempts(gated: bool) -> AgentAttempts:
     )
 
 
-def _prover_tools() -> list[Tool]:
+def _prover_tools(budget: Tool) -> list[Tool]:
     return [
         text_editor(),
         bash(timeout=300),
-        resources(),
+        budget,
     ]
 
 
@@ -165,9 +166,13 @@ def swarm_member_names(swarm_size: int) -> list[str]:
 
 @agent
 def prover_member(gated: bool) -> Agent:
-    """A swarm member: the react prover loop plus the swarm's channel tools."""
+    """A swarm member: the react prover loop plus the swarm's channel tools,
+    with the swarm's budget (the member's own share) as its ``resources`` tool."""
     return react(
-        tools=[*_prover_tools(), swarm_tools()],
+        tools=[
+            *_prover_tools(ToolDef(swarm_resources(), name="resources").as_tool()),
+            swarm_tools(),
+        ],
         attempts=_attempts(gated),
         submit=_prover_submit(),
         on_continue=swarm_on_continue(continue_unless_looping(CONTINUE_MESSAGE)),
@@ -264,7 +269,7 @@ def lean_prover(
             await sandbox().write_file(ENTRY_PATH, sketch)
             agent = build_agent(
                 agent_type,
-                tools=_prover_tools(),
+                tools=_prover_tools(resources()),
                 attempts=_attempts(gated),
                 submit=_prover_submit(),
                 on_continue=continue_unless_looping(CONTINUE_MESSAGE),
