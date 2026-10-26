@@ -271,9 +271,9 @@ def lean_prover(
                 channels=[shared_memory(
                     # TODO: remove these if inspect_swarm changes their defaults to be more sensible
                     max_files=10_000,
-                    max_file_bytes=1_000_000,
+                    max_file_bytes=262_144,
                     max_file_lines=100_000,
-                    max_board_bytes=400_000_000,
+                    max_board_bytes=16_777_216,
                 )],
                 budget=Budget(split="equal"),
             )
