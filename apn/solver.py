@@ -270,6 +270,8 @@ def lean_prover(
                 ],
                 channels=[shared_memory(
                     # TODO: remove these if inspect_swarm changes their defaults to be more sensible
+                    # TODO: raise max_file_bytes and max_board_bytes (set at inspect_swarm's
+                    # current caps) once the upstream PR removing the caps is released
                     max_files=10_000,
                     max_file_bytes=262_144,
                     max_file_lines=100_000,
