@@ -28,7 +28,6 @@ from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import cast
 
-import anyio
 import pytest
 from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target
@@ -717,35 +716,21 @@ async def test_scorer_writes_attempt_sidecar(
     assert sidecars[0].read_bytes() == tar
 
 
-async def test_concurrent_checks_on_one_comparator_are_serialized(
+async def test_check_uses_the_member_s_own_comparator(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    class SlowSandbox(ScriptedSandbox):
-        async def exec(self, cmd: list[str], **kwargs: object) -> ExecResult[str]:
-            await anyio.sleep(0.01)
-            return await super().exec(cmd, **kwargs)
+    requested: list[str | None] = []
 
-    sb = SlowSandbox(comparator=_ok(_ACCEPT_OUT))
-    monkeypatch.setattr(checker_mod, "sandbox", lambda *a, **k: sb)
+    def fake_sandbox(name: str | None = None) -> ScriptedSandbox:
+        requested.append(name)
+        return ScriptedSandbox(comparator=_ok(_ACCEPT_OUT))
+
+    monkeypatch.setattr(checker_mod, "sandbox", fake_sandbox)
     checker = SandboxComparator()
-
-    async def check() -> None:
+    await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    with tool_state_scope("prover-1"):
         await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
-
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(check)
-        tg.start_soon(check)
-
-    one_check = [
-        ("exec", [RESET_SCRIPT]),
-        ("exec", STAGING_RESET_CMD),
-        ("write", CHALLENGE_PATH),
-        ("write", SUBMISSION_TAR_PATH),
-        ("write", CONFIG_PATH),
-        ("exec", UNPACK_CMD),
-        ("exec", COMPARATOR_CMD),
-    ]
-    assert sb.events == one_check + one_check
+    assert requested == ["comparator", "comparator-prover-1"]
 
 
 def test_claim_store_key_is_per_tool_state_scope() -> None:

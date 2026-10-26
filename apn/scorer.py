@@ -18,11 +18,10 @@ from inspect_ai.util import (
     SandboxEnvironment,
     sandbox,
     store,
-    tool_state_instance,
     tool_state_scope,
 )
 
-from apn.checker import Claim, ProofChecker
+from apn.checker import Claim, ProofChecker, current_member
 from apn.filetree import build_tree_from_tar, read_submission_tar
 
 logger = logging.getLogger(__name__)
@@ -34,8 +33,8 @@ SWARM_RESULT_KEY = "inspect_swarm:result"
 
 
 def claim_store_key() -> str:
-    instance = tool_state_instance(None)
-    return CLAIM_STORE_KEY if instance is None else f"{CLAIM_STORE_KEY}:{instance}"
+    member = current_member()
+    return CLAIM_STORE_KEY if member is None else f"{CLAIM_STORE_KEY}:{member}"
 
 
 @scorer(metrics=[accuracy(), stderr()])
@@ -49,11 +48,9 @@ def proof_scorer(checker: ProofChecker, swarm: bool = False) -> Scorer:
     if any member's submission passes."""
 
     async def score(state: TaskState, target: Target) -> Score:
-        if swarm and tool_state_instance(None) is None:
+        if swarm and current_member() is None:
             return await _score_swarm(state, checker)
-        return await _score_sandbox(
-            state, checker, sandbox(), claim_store_key(), "submission_contents"
-        )
+        return await _score_sandbox(state, checker, sandbox(), "submission_contents")
 
     return score
 
@@ -63,14 +60,12 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
     scores: dict[str, Score] = {}
     for m in record["members"]:
         with tool_state_scope(m["name"]):
-            claim_key = claim_store_key()
-        scores[m["name"]] = await _score_sandbox(
-            state,
-            checker,
-            sandbox(m["sandbox"]),
-            claim_key,
-            f"submission_contents_{m['name']}",
-        )
+            scores[m["name"]] = await _score_sandbox(
+                state,
+                checker,
+                sandbox(m["sandbox"]),
+                f"submission_contents_{m['name']}",
+            )
     passed = [name for name, s in scores.items() if s.value == CORRECT]
     return Score(
         value=CORRECT if passed else INCORRECT,
@@ -86,7 +81,6 @@ async def _score_sandbox(
     state: TaskState,
     checker: ProofChecker,
     sb: SandboxEnvironment,
-    claim_key: str,
     tree_key: str,
 ) -> Score:
     # Per-attempt attempt index, kept in the sample store (the react/deepagent
@@ -110,7 +104,7 @@ async def _score_sandbox(
     # The claim the agent declared on its submit call. A sample scored
     # without one (e.g. it hit its limits before ever submitting) defaults
     # to "proof" -- deterministic, and such submissions reject anyway.
-    claim: Claim = store().get(claim_key, "proof")
+    claim: Claim = store().get(claim_store_key(), "proof")
     # The target theorem's fully qualified name (== the sample id except
     # where the manifest overrides it; see apn.dataset.build_dataset).
     decl = state.metadata["decl_name"]

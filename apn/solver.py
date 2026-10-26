@@ -34,7 +34,7 @@ from inspect_swarm import (
     swarm_tools,
 )
 
-from apn.checker import Claim
+from apn.checker import Claim, comparator_sandbox_name
 from apn.layout import ENTRY_PATH
 from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
@@ -159,9 +159,6 @@ def _prover_submit() -> AgentSubmit:
 CONTINUE_MESSAGE = "Continue working on the problem."
 
 
-COMPARATOR_SANDBOX = "comparator"
-
-
 def swarm_member_names(swarm_size: int) -> list[str]:
     return [f"prover-{i}" for i in range(1, swarm_size + 1)]
 
@@ -237,8 +234,8 @@ def lean_prover(
             (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
             import-integrity rule.
         swarm_size: Number of members when ``agent_type`` is ``"swarm"``. Each
-            member works in its own sandbox (see ``swarm_member_names``) and
-            shares the comparator; the swarm's budget is split equally.
+            member works in its own sandbox (see ``swarm_member_names``) with
+            its own comparator; the swarm's budget is split equally.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
@@ -256,7 +253,7 @@ def lean_prover(
                         name=name,
                         args={"gated": gated},
                         sandbox=name,
-                        visible_sandboxes=[COMPARATOR_SANDBOX],
+                        visible_sandboxes=[comparator_sandbox_name(name)],
                     )
                     for name in names
                 ],

@@ -11,7 +11,7 @@ from inspect_ai import Task, task
 
 from apn import __version__
 from apn.solver import AgentType, lean_prover, swarm_member_names
-from apn.checker import SandboxComparator
+from apn.checker import SandboxComparator, comparator_sandbox_name
 from apn.dataset import (
     ERDOS_DIR,
     FC100_DIR,
@@ -109,14 +109,23 @@ def _build_section(target: str, fc_commit: str) -> dict[str, Any]:
     }
 
 
+def _sandbox_pairs(members: Sequence[str] | None) -> list[tuple[str, str]]:
+    """(agent service, comparator service) names: ``default`` and the single
+    comparator, or one pair per swarm member."""
+    if members is None:
+        return [("default", comparator_sandbox_name(None))]
+    return [(member, comparator_sandbox_name(member)) for member in members]
+
+
 def get_compose_file_content(
     fc_commit: str,
     literature: bool = False,
-    agent_services: Sequence[str] = ("default",),
+    members: Sequence[str] | None = None,
 ) -> str:
     """The docker-backend sandbox config (local runs, CI tests).
 
-    Two services: the agent's workspace, and the trusted `comparator` verifier.
+    Two services per agent (see :func:`_sandbox_pairs`): the agent's workspace,
+    and the trusted `comparator` verifier.
     The comparator container needs no filesystem hardening of its own
     (comparator-migration-plan.md §3.1): comparator's landrun (Landlock)
     sandbox confines the untrusted solution build to writes in `.lake`, every
@@ -125,30 +134,25 @@ def get_compose_file_content(
     reset-dotlake.sh restores a pristine `.lake`.
     """
     agent_kind = _agent_image_kind(literature)
-    compose: dict[str, Any] = {
-        "services": {
-            **{
-                name: {
-                    "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image(agent_kind, fc_commit)}",
-                    "build": _build_section(agent_kind, fc_commit),
-                    "init": True,
-                    "entrypoint": list(SANDBOX_COMMAND),
-                    "mem_limit": f"{AGENT_MEMORY_GIB}g",
-                    "network_mode": "none",
-                }
-                for name in agent_services
-            },
-            "comparator": {
-                "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image('comparator', fc_commit)}",
-                "build": _build_section("comparator", fc_commit),
-                "init": True,
-                "entrypoint": list(SANDBOX_COMMAND),
-                "mem_limit": f"{COMPARATOR_MEMORY_GIB}g",
-                "network_mode": "none",
-            },
+    services: dict[str, Any] = {}
+    for agent, comparator in _sandbox_pairs(members):
+        services[agent] = {
+            "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image(agent_kind, fc_commit)}",
+            "build": _build_section(agent_kind, fc_commit),
+            "init": True,
+            "entrypoint": list(SANDBOX_COMMAND),
+            "mem_limit": f"{AGENT_MEMORY_GIB}g",
+            "network_mode": "none",
         }
-    }
-    return yaml.safe_dump(compose, sort_keys=False)
+        services[comparator] = {
+            "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image('comparator', fc_commit)}",
+            "build": _build_section("comparator", fc_commit),
+            "init": True,
+            "entrypoint": list(SANDBOX_COMMAND),
+            "mem_limit": f"{COMPARATOR_MEMORY_GIB}g",
+            "network_mode": "none",
+        }
+    return yaml.safe_dump({"services": services}, sort_keys=False)
 
 
 AGENT_EPHEMERAL_STORAGE_GIB = 20
@@ -158,7 +162,7 @@ COMPARATOR_EPHEMERAL_STORAGE_GIB = 8
 def get_values_file_content(
     fc_commit: str,
     literature: bool = False,
-    agent_services: Sequence[str] = ("default",),
+    members: Sequence[str] | None = None,
 ) -> str:
     """The k8s/Hawk-backend sandbox config: chart-native agent-env values.
 
@@ -192,42 +196,35 @@ def get_values_file_content(
             "requests": {"ephemeral-storage": f"{ephemeral_storage_gib}Gi"},
         }
 
-    values: dict[str, Any] = {
-        "services": {
-            **{
-                name: {
-                    "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
-                    # Without this the chart defaults to a bare `tail -f /dev/null`
-                    # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
-                    "command": list(SANDBOX_COMMAND),
-                    "networkIsolated": True,
-                    "dnsRecord": True,
-                    "resources": resources(
-                        AGENT_MEMORY_GIB, AGENT_EPHEMERAL_STORAGE_GIB
-                    ),
-                }
-                for name in agent_services
-            },
-            "comparator": {
-                "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
-                "command": list(SANDBOX_COMMAND),
-                "runtimeClassName": "CLUSTER_DEFAULT",
-                "networkIsolated": True,
-                "dnsRecord": True,
-                "resources": resources(
-                    COMPARATOR_MEMORY_GIB, COMPARATOR_EPHEMERAL_STORAGE_GIB
-                ),
-            },
+    services: dict[str, Any] = {}
+    for agent, comparator in _sandbox_pairs(members):
+        services[agent] = {
+            "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
+            # Without this the chart defaults to a bare `tail -f /dev/null`
+            # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
+            "command": list(SANDBOX_COMMAND),
+            "networkIsolated": True,
+            "dnsRecord": True,
+            "resources": resources(AGENT_MEMORY_GIB, AGENT_EPHEMERAL_STORAGE_GIB),
         }
-    }
-    return yaml.safe_dump(values, sort_keys=False)
+        services[comparator] = {
+            "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
+            "command": list(SANDBOX_COMMAND),
+            "runtimeClassName": "CLUSTER_DEFAULT",
+            "networkIsolated": True,
+            "dnsRecord": True,
+            "resources": resources(
+                COMPARATOR_MEMORY_GIB, COMPARATOR_EPHEMERAL_STORAGE_GIB
+            ),
+        }
+    return yaml.safe_dump({"services": services}, sort_keys=False)
 
 
 def get_sandbox_config(
     fc_commit: str,
     literature: bool,
     backend: SandboxBackend | None,
-    agent_services: Sequence[str] = ("default",),
+    members: Sequence[str] | None = None,
 ) -> tuple[SandboxBackend, str]:
     """The Inspect ``sandbox`` spec ``(type, config-file path)`` for a backend
     (``None``: see :func:`resolve_sandbox_backend`).
@@ -235,9 +232,9 @@ def get_sandbox_config(
     Each backend gets its own generated artifact (``compose.yaml`` for docker,
     ``values.yaml`` for k8s -- k8s_sandbox treats any config file NOT named
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
-    per-(version, FC pin, variant, agent services) subdirs so they don't
-    clobber each other. ``agent_services`` names one agent sandbox each (a
-    swarm's members); all share the one comparator.
+    per-(version, FC pin, variant, swarm members) subdirs so they don't
+    clobber each other. ``members``, a swarm's member names, gives each member
+    its own agent and comparator sandboxes.
     """
     backend = resolve_sandbox_backend(backend)
     variant = "corpus" if literature else "closed-book"
@@ -246,15 +243,15 @@ def get_sandbox_config(
         / _docker_tag_component(__version__)
         / f"fc_{fc_commit[:12]}"
         / variant
-        / "+".join(agent_services)
+        / ("single-agent" if members is None else "+".join(members))
     )
     directory.mkdir(parents=True, exist_ok=True)
     if backend == "docker":
         path = directory / "compose.yaml"
-        content = get_compose_file_content(fc_commit, literature, agent_services)
+        content = get_compose_file_content(fc_commit, literature, members)
     elif backend == "k8s":
         path = directory / "values.yaml"
-        content = get_values_file_content(fc_commit, literature, agent_services)
+        content = get_values_file_content(fc_commit, literature, members)
     else:
         raise ValueError(
             f"Unknown sandbox_backend {backend!r}; expected 'docker' or 'k8s'."
@@ -270,10 +267,8 @@ def get_compose_file(fc_commit: str, literature: bool = False) -> Path:
     return Path(get_sandbox_config(fc_commit, literature, "docker")[1])
 
 
-def _agent_services(agent_type: AgentType, swarm_size: int) -> list[str]:
-    if agent_type == "swarm":
-        return swarm_member_names(swarm_size)
-    return ["default"]
+def _swarm_members(agent_type: AgentType, swarm_size: int) -> list[str] | None:
+    return swarm_member_names(swarm_size) if agent_type == "swarm" else None
 
 
 @task
@@ -305,7 +300,7 @@ def apn_oeis(
         ),
         scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+            pin, literature, sandbox_backend, _swarm_members(agent_type, swarm_size)
         ),
     )
 
@@ -332,7 +327,7 @@ def apn_fc100open(
         ),
         scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+            pin, literature, sandbox_backend, _swarm_members(agent_type, swarm_size)
         ),
     )
 
@@ -360,7 +355,7 @@ def apn_erdos(
         ),
         scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+            pin, literature, sandbox_backend, _swarm_members(agent_type, swarm_size)
         ),
     )
 
@@ -391,6 +386,6 @@ def apn_personal_corresp(
         ),
         scorer=proof_scorer(SandboxComparator(), swarm=agent_type == "swarm"),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, _agent_services(agent_type, swarm_size)
+            pin, literature, sandbox_backend, _swarm_members(agent_type, swarm_size)
         ),
     )
