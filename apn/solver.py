@@ -212,14 +212,11 @@ def build_agent(
 
 @agent
 def prover_member(agent_type: AgentType, gated: bool) -> Agent:
-    """A swarm member: the prover loop plus the swarm's channel tools, with the
-    swarm's budget (the member's own share) as its ``resources`` tool."""
+    """A swarm member: the prover loop plus the swarm's channel tools, with
+    ``swarm_resources`` (the member's own share of the budget) as its budget tool."""
     return build_agent(
         agent_type,
-        tools=[
-            *_prover_tools(ToolDef(swarm_resources(), name="resources").as_tool()),
-            swarm_tools(),
-        ],
+        tools=[*_prover_tools(swarm_resources()), swarm_tools()],
         attempts=_attempts(gated),
         submit=_prover_submit(),
         on_continue=swarm_on_continue(continue_unless_looping(CONTINUE_MESSAGE)),
