@@ -73,10 +73,11 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
         metadata = scores[name].metadata
         assert metadata is not None
         stages[name] = metadata["stage"]
-        notes = ["submitted" if m["submitted"] else "not submitted"]
-        if recorded is None:
-            notes.insert(0, "default")
-        claims[name] = f"claim {recorded or 'proof'} ({', '.join(notes)})"
+        claims[name] = (
+            'did not call submit_proof(), defaulted to claim="proof"'
+            if recorded is None
+            else f'called submit_proof(claim="{recorded}")'
+        )
     passed = [name for name, s in scores.items() if s.value == CORRECT]
     return Score(
         value=CORRECT if passed else INCORRECT,
