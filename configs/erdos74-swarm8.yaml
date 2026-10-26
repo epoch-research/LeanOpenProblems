@@ -2,7 +2,7 @@
 name: erdos74-swarm8
 
 tasks:
-  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@21d3e15bd2247a4c44803f3e4360713cc93dc613
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@swarm
     name: apn
     items:
       - name: apn_erdos
