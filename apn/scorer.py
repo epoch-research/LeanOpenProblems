@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from inspect_ai.scorer import (
     CORRECT,
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 CLAIM_STORE_KEY = "submission_claim"
 
 SWARM_RESULT_KEY = "inspect_swarm:result"
+SWARM_LEDGER_KEY = "inspect_swarm:ledger"
 
 
 def claim_store_key() -> str:
@@ -81,11 +83,13 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
             "",
         )
         result = "CORRECT" if score.value == CORRECT else "INCORRECT"
-        rows.append([name, result, claim, score.metadata["stage"], check])
+        rows.append([name, m["status"], result, claim, score.metadata["stage"], check])
     passed = [name for name, s in scores.items() if s.value == CORRECT]
     return Score(
         value=CORRECT if passed else INCORRECT,
-        explanation=_swarm_explanation(len(scores), passed, rows),
+        explanation=_swarm_explanation(
+            len(scores), passed, state.store.get(SWARM_LEDGER_KEY), rows
+        ),
         metadata={
             "passed": passed,
             "members": {name: s.metadata for name, s in scores.items()},
@@ -93,7 +97,9 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
     )
 
 
-def _swarm_explanation(size: int, passed: list[str], rows: list[list[str]]) -> str:
+def _swarm_explanation(
+    size: int, passed: list[str], ledger: dict[str, Any], rows: list[list[str]]
+) -> str:
     if passed:
         summary = (
             f"Swarm of {size}: {len(passed)} members' work passes "
@@ -101,9 +107,12 @@ def _swarm_explanation(size: int, passed: list[str], rows: list[list[str]]) -> s
         )
     else:
         summary = f"Swarm of {size}: no member's work passes."
+    summary += f" Stop reason: {ledger['stop_reason']}."
+    if ledger["ended_by"] is not None:
+        summary += f" Ended by: {ledger['ended_by']}."
     table = [
-        "| Member | Result | Claim | Stage | Checker |",
-        "| --- | --- | --- | --- | --- |",
+        "| Member | Status | Result | Claim | Stage | Checker |",
+        "| --- | --- | --- | --- | --- | --- |",
         *(
             "| " + " | ".join(cell.replace("|", "\\|") for cell in row) + " |"
             for row in rows

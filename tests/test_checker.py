@@ -54,6 +54,7 @@ from apn.checker import (
 )
 from apn.scorer import (
     CLAIM_STORE_KEY,
+    SWARM_LEDGER_KEY,
     SWARM_RESULT_KEY,
     claim_store_key,
     proof_scorer,
@@ -773,11 +774,16 @@ def _swarm_fixture(
         SWARM_RESULT_KEY,
         {
             "members": [
-                {"name": name, "sandbox": name, "submitted": name == "prover-2"}
+                {
+                    "name": name,
+                    "sandbox": name,
+                    "status": "submitted" if name == "prover-2" else "stopped",
+                }
                 for name in tars
             ]
         },
     )
+    state.store.set(SWARM_LEDGER_KEY, {"stop_reason": "submitted", "ended_by": None})
     sandboxes = {name: FakeSandbox(tar) for name, tar in tars.items()}
 
     def fake_sandbox(name: str | None = None) -> FakeSandbox:
@@ -799,13 +805,13 @@ async def test_swarm_final_score_checks_every_member_sandbox(
     assert score.metadata is not None
     assert score.metadata["passed"] == ["prover-2"]
     assert score.explanation == (
-        "Swarm of 3: 1 members' work passes (prover-2).\n"
+        "Swarm of 3: 1 members' work passes (prover-2). Stop reason: submitted.\n"
         "\n"
-        "| Member | Result | Claim | Stage | Checker |\n"
-        "| --- | --- | --- | --- | --- |\n"
-        '| prover-1 | INCORRECT | called `submit_proof(claim="proof")` | comparator | uncaught exception: a \\| b |\n'
-        '| prover-2 | CORRECT | called `submit_proof(claim="disproof")` | comparator | Your solution is okay! |\n'
-        "| prover-3 | INCORRECT | did not call `submit_proof()`, defaulted to "
+        "| Member | Status | Result | Claim | Stage | Checker |\n"
+        "| --- | --- | --- | --- | --- | --- |\n"
+        '| prover-1 | stopped | INCORRECT | called `submit_proof(claim="proof")` | comparator | uncaught exception: a \\| b |\n'
+        '| prover-2 | submitted | CORRECT | called `submit_proof(claim="disproof")` | comparator | Your solution is okay! |\n'
+        "| prover-3 | stopped | INCORRECT | did not call `submit_proof()`, defaulted to "
         '`claim="proof"` | comparator | uncaught exception: a \\| b |'
     )
     assert checker.calls == [
@@ -822,11 +828,17 @@ async def test_swarm_final_score_incorrect_when_no_member_passes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     state, _, _ = _swarm_fixture(monkeypatch)
+    state.store.set(
+        SWARM_LEDGER_KEY, {"stop_reason": "swarm_cap", "ended_by": "sample_limit:cost"}
+    )
     score = await proof_scorer(TarChecker(passing=b""), swarm=True)(state, Target(""))
     assert score is not None
     assert score.value == INCORRECT
     assert score.explanation is not None
-    assert score.explanation.splitlines()[0] == "Swarm of 3: no member's work passes."
+    assert score.explanation.splitlines()[0] == (
+        "Swarm of 3: no member's work passes. Stop reason: swarm_cap. "
+        "Ended by: sample_limit:cost."
+    )
 
 
 async def test_swarm_score_inside_a_member_checks_only_its_own_sandbox(
