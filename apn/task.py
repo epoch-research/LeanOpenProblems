@@ -232,7 +232,7 @@ def get_sandbox_config(
     Each backend gets its own generated artifact (``compose.yaml`` for docker,
     ``values.yaml`` for k8s -- k8s_sandbox treats any config file NOT named
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
-    per-(version, FC pin, variant, swarm members) subdirs so they don't
+    per-(version, FC pin, variant, swarm size) subdirs so they don't
     clobber each other. ``members``, a swarm's member names, gives each member
     its own agent and comparator sandboxes.
     """
@@ -243,7 +243,7 @@ def get_sandbox_config(
         / _docker_tag_component(__version__)
         / f"fc_{fc_commit[:12]}"
         / variant
-        / ("single-agent" if members is None else "+".join(members))
+        / ("single-agent" if members is None else f"swarm-{len(members)}")
     )
     directory.mkdir(parents=True, exist_ok=True)
     if backend == "docker":
