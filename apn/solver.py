@@ -214,6 +214,9 @@ def _prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
         tools=[
             text_editor(),
             bash(timeout=300),
+            # TODO: make inspect_boltons' resources() report a swarm member's own
+            # budget via swarm_budget() (started on tadamcz/inspect_boltons branch
+            # swarm-aware-resources), then use it for everyone and drop `swarm`.
             swarm_resources() if swarm else resources(),
             swarm_tools(),
         ],
