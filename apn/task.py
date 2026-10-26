@@ -254,6 +254,7 @@ def apn_oeis(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
+    swarm_size: int = 8,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
@@ -271,6 +272,7 @@ def apn_oeis(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxComparator()),
@@ -284,6 +286,7 @@ def apn_fc100open(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
+    swarm_size: int = 8,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
@@ -294,6 +297,7 @@ def apn_fc100open(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxComparator()),
@@ -307,6 +311,7 @@ def apn_erdos(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
+    swarm_size: int = 8,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
@@ -318,6 +323,7 @@ def apn_erdos(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxComparator()),
@@ -331,6 +337,7 @@ def apn_personal_corresp(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
+    swarm_size: int = 8,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Open conjectures sent to us in personal correspondence, formalized by
@@ -345,6 +352,7 @@ def apn_personal_corresp(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
+            swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(SandboxComparator()),

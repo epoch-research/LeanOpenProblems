@@ -9,6 +9,7 @@ from inspect_ai.agent import (
     AgentContinue,
     AgentState,
     AgentSubmit,
+    agent,
     as_solver,
     deepagent,
     general,
@@ -24,6 +25,7 @@ from inspect_ai.solver import Generate, Solver, TaskState, solver
 from inspect_ai.tool import Tool, ToolDef, ToolResult, ToolSource, text_editor, tool
 from inspect_ai.util import sandbox, store
 from inspect_boltons.tools import resources
+from inspect_swarm import member, shared_memory, swarm, swarm_on_continue, swarm_tools
 
 from apn.checker import Claim
 from apn.layout import ENTRY_PATH
@@ -112,7 +114,54 @@ def submit() -> Tool:
     return execute
 
 
-AgentType = Literal["deep", "react"]
+AgentType = Literal["deep", "react", "swarm"]
+
+
+def _attempts(gated: bool) -> AgentAttempts:
+    # An effectively infinite max_attempts on the built-in Inspect react() and deepagent()
+    # solvers is used to implement "gated submission" (Inspect allows retries if the scorer
+    # returns INCORRECT). This is a bit of a hack: it would be clearer to implement this
+    # inside the solver. However, doing it like this lets us benefit automatically from
+    # upstream improvements in the built-in solvers; in particular, Inspect maintainers will
+    # keep these up to date with internal Inspect changes.
+    max_attempts = 99_999_999 if gated else 1
+    return AgentAttempts(
+        attempts=max_attempts, incorrect_message=gated_incorrect_message
+    )
+
+
+def _prover_tools() -> list[Tool]:
+    return [
+        text_editor(),
+        bash(timeout=300),
+        resources(),
+    ]
+
+
+def _prover_submit() -> AgentSubmit:
+    # Name it distinctly from any subagents' "submit" tool and keep the
+    # call in the message history. keep_in_messages=True stops the loop
+    # from folding the tool's return into the assistant message; the
+    # distinct name means the main loop's submission scan can never match
+    # a subagent's "submit" (no early-termination collision).
+    return AgentSubmit(tool=submit(), name="submit_proof", keep_in_messages=True)
+
+
+# The default continue message is very generic ("proceed to the next step"), this one
+# might be better at avoiding doom loops.
+CONTINUE_MESSAGE = "Continue working on the problem."
+
+
+@agent
+def prover_member(gated: bool) -> Agent:
+    """A swarm member: the react prover loop plus the swarm's channel tools."""
+    return react(
+        tools=[*_prover_tools(), swarm_tools()],
+        attempts=_attempts(gated),
+        submit=_prover_submit(),
+        on_continue=swarm_on_continue(continue_unless_looping(CONTINUE_MESSAGE)),
+        compaction=CompactionSummary(threshold=300_000),
+    )
 
 
 def build_agent(
@@ -163,6 +212,7 @@ def lean_prover(
     gated: bool,
     literature: bool,
     util_module: str,
+    swarm_size: int = 8,
 ) -> Solver:
     """
     Args:
@@ -172,6 +222,7 @@ def lean_prover(
         util_module: The dataset pin's FC util module
             (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
             import-integrity rule.
+        swarm_size: Number of members when ``agent_type`` is ``"swarm"``.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
@@ -179,42 +230,25 @@ def lean_prover(
         sketch = state.metadata["sketch"]
         await sandbox().write_file(ENTRY_PATH, sketch)
 
-        tools = [
-            text_editor(),
-            bash(timeout=300),
-            resources(),
-        ]
-
-        # An effectively infinite max_attempts on the built-in Inspect react() and deepagent()
-        # solvers is used to implement "gated submission" (Inspect allows retries if the scorer
-        # returns INCORRECT). This is a bit of a hack: it would be clearer to implement this
-        # inside the solver. However, doing it like this lets us benefit automatically from
-        # upstream improvements in the built-in solvers; in particular, Inspect maintainers will
-        # keep these up to date with internal Inspect changes.
-        if gated:
-            max_attempts = 99_999_999
+        if agent_type == "swarm":
+            agent = swarm(
+                members=member(
+                    prover_member,
+                    name="prover",
+                    args={"gated": gated},
+                    count=swarm_size,
+                ),
+                channels=[shared_memory()],
+            )
         else:
-            max_attempts = 1
-
-        agent = build_agent(
-            agent_type,
-            tools=tools,
-            attempts=AgentAttempts(
-                attempts=max_attempts, incorrect_message=gated_incorrect_message
-            ),
-            # Name it distinctly from any subagents' "submit" tool and keep the
-            # call in the message history. keep_in_messages=True stops the loop
-            # from folding the tool's return into the assistant message; the
-            # distinct name means the main loop's submission scan can never match
-            # a subagent's "submit" (no early-termination collision).
-            submit=AgentSubmit(
-                tool=submit(), name="submit_proof", keep_in_messages=True
-            ),
-            # The default continue message is very generic ("proceed to the next step"), this one
-            # might be better at avoiding doom loops.
-            on_continue=continue_unless_looping("Continue working on the problem."),
-            compaction=CompactionSummary(threshold=300_000),
-        )
+            agent = build_agent(
+                agent_type,
+                tools=_prover_tools(),
+                attempts=_attempts(gated),
+                submit=_prover_submit(),
+                on_continue=continue_unless_looping(CONTINUE_MESSAGE),
+                compaction=CompactionSummary(threshold=300_000),
+            )
         state.messages = [
             ChatMessageUser(
                 content=user_prompt(ENTRY_PATH, state.token_limit, literature, util_module),
