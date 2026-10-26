@@ -122,7 +122,7 @@ def submit() -> Tool:
     return execute
 
 
-AgentType = Literal["deep", "react", "swarm"]
+AgentType = Literal["deep", "react"]
 
 
 def _attempts(gated: bool) -> AgentAttempts:
@@ -160,24 +160,12 @@ def _prover_submit() -> AgentSubmit:
 CONTINUE_MESSAGE = "Continue working on the problem."
 
 
-def swarm_member_names(swarm_size: int) -> list[str]:
+def swarm_member_names(swarm_size: int | None) -> list[str] | None:
+    """The swarm's member names, or ``None`` for no swarm (``swarm_size`` unset,
+    zero or negative)."""
+    if swarm_size is None or swarm_size <= 0:
+        return None
     return [f"prover-{i}" for i in range(1, swarm_size + 1)]
-
-
-@agent
-def prover_member(gated: bool) -> Agent:
-    """A swarm member: the react prover loop plus the swarm's channel tools,
-    with the swarm's budget (the member's own share) as its ``resources`` tool."""
-    return react(
-        tools=[
-            *_prover_tools(ToolDef(swarm_resources(), name="resources").as_tool()),
-            swarm_tools(),
-        ],
-        attempts=_attempts(gated),
-        submit=_prover_submit(),
-        on_continue=swarm_on_continue(continue_unless_looping(CONTINUE_MESSAGE)),
-        compaction=CompactionSummary(threshold=300_000),
-    )
 
 
 def build_agent(
@@ -222,33 +210,51 @@ def build_agent(
     )
 
 
+@agent
+def prover_member(agent_type: AgentType, gated: bool) -> Agent:
+    """A swarm member: the prover loop plus the swarm's channel tools, with the
+    swarm's budget (the member's own share) as its ``resources`` tool."""
+    return build_agent(
+        agent_type,
+        tools=[
+            *_prover_tools(ToolDef(swarm_resources(), name="resources").as_tool()),
+            swarm_tools(),
+        ],
+        attempts=_attempts(gated),
+        submit=_prover_submit(),
+        on_continue=swarm_on_continue(continue_unless_looping(CONTINUE_MESSAGE)),
+        compaction=CompactionSummary(threshold=300_000),
+    )
+
+
 @solver
 def lean_prover(
     agent_type: AgentType,
     gated: bool,
     literature: bool,
     util_module: str,
-    swarm_size: int = 4,
+    swarm_size: int | None = None,
 ) -> Solver:
     """
     Args:
         gated: Gated submission (retry until correct or token/time limit).
         literature: Run with the offline arXiv corpus.
-        agent_type: Which agent loop to run.
+        agent_type: Which agent loop to run (each member's, in a swarm).
         util_module: The dataset pin's FC util module
             (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
             import-integrity rule.
-        swarm_size: Number of members when ``agent_type`` is ``"swarm"``. Each
-            member works in its own sandbox (see ``swarm_member_names``) with
-            its own comparator; the swarm's budget is split equally.
+        swarm_size: Run a swarm of this many members; ``None``, zero or
+            negative runs a single agent. Each member works in its own sandbox
+            (see ``swarm_member_names``) with its own comparator; the swarm's
+            budget is split equally.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         _warn_if_ignored_formalizations(state)
         sketch = state.metadata["sketch"]
 
-        if agent_type == "swarm":
-            names = swarm_member_names(swarm_size)
+        names = swarm_member_names(swarm_size)
+        if names is not None:
             for name in names:
                 await sandbox(name).write_file(ENTRY_PATH, sketch)
             agent = swarm(
@@ -256,7 +262,7 @@ def lean_prover(
                     member(
                         prover_member,
                         name=name,
-                        args={"gated": gated},
+                        args={"agent_type": agent_type, "gated": gated},
                         sandbox=name,
                         visible_sandboxes=[comparator_sandbox_name(name)],
                     )

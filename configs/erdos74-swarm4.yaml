@@ -8,7 +8,7 @@ tasks:
       - name: apn_erdos
         args:
           subset: bloom_selection
-          agent_type: swarm
+          agent_type: react
           swarm_size: 4
           literature: true
         sample_ids:
