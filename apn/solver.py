@@ -138,14 +138,6 @@ def _attempts(gated: bool) -> AgentAttempts:
     )
 
 
-def _prover_tools(budget: Tool) -> list[Tool]:
-    return [
-        text_editor(),
-        bash(timeout=300),
-        budget,
-    ]
-
-
 def _prover_submit() -> AgentSubmit:
     # Name it distinctly from any subagents' "submit" tool and keep the
     # call in the message history. keep_in_messages=True stops the loop
@@ -211,12 +203,20 @@ def build_agent(
 
 
 @agent
-def prover_member(agent_type: AgentType, gated: bool) -> Agent:
-    """A swarm member: the prover loop plus the swarm's channel tools, with
-    ``swarm_resources`` (the member's own share of the budget) as its budget tool."""
+def prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
+    """The prover loop, for a single agent or a swarm member.
+
+    ``swarm_tools()`` and ``swarm_on_continue()`` do nothing outside a swarm. A
+    member's budget tool is ``swarm_resources`` (its own share of the budget),
+    since ``resources`` shows the sample's limits."""
     return build_agent(
         agent_type,
-        tools=[*_prover_tools(swarm_resources()), swarm_tools()],
+        tools=[
+            text_editor(),
+            bash(timeout=300),
+            swarm_resources() if swarm else resources(),
+            swarm_tools(),
+        ],
         attempts=_attempts(gated),
         submit=_prover_submit(),
         on_continue=swarm_on_continue(continue_unless_looping(CONTINUE_MESSAGE)),
@@ -257,9 +257,9 @@ def lean_prover(
             agent = swarm(
                 members=[
                     member(
-                        prover_member,
+                        prover,
                         name=name,
-                        args={"agent_type": agent_type, "gated": gated},
+                        args={"agent_type": agent_type, "gated": gated, "swarm": True},
                         sandbox=name,
                         visible_sandboxes=[comparator_sandbox_name(name)],
                     )
@@ -270,14 +270,7 @@ def lean_prover(
             )
         else:
             await sandbox().write_file(ENTRY_PATH, sketch)
-            agent = build_agent(
-                agent_type,
-                tools=_prover_tools(resources()),
-                attempts=_attempts(gated),
-                submit=_prover_submit(),
-                on_continue=continue_unless_looping(CONTINUE_MESSAGE),
-                compaction=CompactionSummary(threshold=300_000),
-            )
+            agent = prover(agent_type, gated)
         state.messages = [
             ChatMessageUser(
                 content=user_prompt(ENTRY_PATH, state.token_limit, literature, util_module),
