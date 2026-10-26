@@ -178,7 +178,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "inspect-boltons", git = "https://github.com/tadamcz/inspect_boltons?rev=35b794e845f1748947a4f18efdfcb31dd0cf746a" },
+    { name = "inspect-boltons", git = "https://github.com/tadamcz/inspect_boltons?rev=0d1af2c6a19395212b72914e150d23a0513f9d3d" },
     { name = "inspect-swarm", specifier = ">=0.1.0,<0.2.0" },
 ]
 
@@ -661,7 +661,7 @@ wheels = [
 [[package]]
 name = "inspect-boltons"
 version = "0.1.0"
-source = { git = "https://github.com/tadamcz/inspect_boltons?rev=35b794e845f1748947a4f18efdfcb31dd0cf746a#35b794e845f1748947a4f18efdfcb31dd0cf746a" }
+source = { git = "https://github.com/tadamcz/inspect_boltons?rev=0d1af2c6a19395212b72914e150d23a0513f9d3d#0d1af2c6a19395212b72914e150d23a0513f9d3d" }
 dependencies = [
     { name = "inspect-ai" },
     { name = "tabulate" },

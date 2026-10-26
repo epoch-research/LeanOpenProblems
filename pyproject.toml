@@ -6,7 +6,7 @@ license = "MIT AND Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "inspect-boltons @ git+https://github.com/tadamcz/inspect_boltons@35b794e845f1748947a4f18efdfcb31dd0cf746a",
+    "inspect-boltons @ git+https://github.com/tadamcz/inspect_boltons@0d1af2c6a19395212b72914e150d23a0513f9d3d",
     "inspect-swarm>=0.1.0,<0.2.0",
 ]
 
