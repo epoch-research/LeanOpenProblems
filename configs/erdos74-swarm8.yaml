@@ -1,0 +1,60 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+name: erdos74-swarm8
+
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@21d3e15bd2247a4c44803f3e4360713cc93dc613
+    name: apn
+    items:
+      - name: apn_erdos
+        args:
+          subset: bloom_selection
+          agent_type: swarm
+          swarm_size: 8
+          literature: true
+        sample_ids:
+          - Erdos74.erdos_74
+models:
+  - package: openai
+    name: openai
+    items:
+      - name: gpt-6-astra
+        args:
+          config:
+            reasoning_effort: "max"
+            max_retries: 7
+            max_connections: 10
+
+cost_limit: 9600.0
+working_limit: 432_000  # 5 * 24 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  openai/gpt-6-astra:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  storage_request: 410Gi
+  storage_limit: 410Gi
+  environment:
+    INSPECT_LOG_CONDENSE: "true"
+    # inspect-swarm 0.1.0 was published 2026-10-23; the smoke config's older
+    # cutoff would exclude it.
+    UV_EXCLUDE_NEWER: "2026-10-24T00:00:00Z"
+
+packages:
+  - inspect-ai==0.3.283
+  - semver>=3.0.0,<3.1.0
+
+checkpoint:
+  enabled: true
+  trigger:
+    type: time
+    every: 43200  # 12 * 60 * 60
