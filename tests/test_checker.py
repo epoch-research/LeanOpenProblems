@@ -753,7 +753,8 @@ class TarChecker:
     ) -> CheckOutcome:
         self.calls.append((submission_tar, claim))
         ok = submission_tar == self._passing
-        return CheckOutcome(ok=ok, stage="stub", detail="stub outcome")
+        last = "Your solution is okay!" if ok else "uncaught exception: a | b"
+        return CheckOutcome(ok=ok, stage="comparator", detail=f"Building\n{last}\n")
 
 
 def _swarm_fixture(
@@ -799,9 +800,13 @@ async def test_swarm_final_score_checks_every_member_sandbox(
     assert score.metadata["passed"] == ["prover-2"]
     assert score.explanation == (
         "Swarm of 3: 1 members' work passes (prover-2).\n"
-        'prover-1: INCORRECT  stub  called submit_proof(claim="proof")\n'
-        'prover-2: CORRECT    stub  called submit_proof(claim="disproof")\n'
-        'prover-3: INCORRECT  stub  did not call submit_proof(), defaulted to claim="proof"'
+        "\n"
+        "| Member | Result | Claim | Stage | Checker |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        '| prover-1 | INCORRECT | called `submit_proof(claim="proof")` | comparator | uncaught exception: a \\| b |\n'
+        '| prover-2 | CORRECT | called `submit_proof(claim="disproof")` | comparator | Your solution is okay! |\n'
+        "| prover-3 | INCORRECT | did not call `submit_proof()`, defaulted to "
+        '`claim="proof"` | comparator | uncaught exception: a \\| b |'
     )
     assert checker.calls == [
         (tars["prover-1"], "proof"),

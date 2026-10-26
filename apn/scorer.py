@@ -58,8 +58,7 @@ def proof_scorer(checker: ProofChecker, swarm: bool = False) -> Scorer:
 async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
     record = state.store.get(SWARM_RESULT_KEY)
     scores: dict[str, Score] = {}
-    stages: dict[str, str] = {}
-    claims: dict[str, str] = {}
+    rows: list[list[str]] = []
     for m in record["members"]:
         name = m["name"]
         with tool_state_scope(name):
@@ -70,18 +69,23 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
                 sandbox(m["sandbox"]),
                 f"submission_contents_{name}",
             )
-        metadata = scores[name].metadata
-        assert metadata is not None
-        stages[name] = metadata["stage"]
-        claims[name] = (
-            'did not call submit_proof(), defaulted to claim="proof"'
+        score = scores[name]
+        assert score.metadata is not None and score.explanation is not None
+        claim = (
+            'did not call `submit_proof()`, defaulted to `claim="proof"`'
             if recorded is None
-            else f'called submit_proof(claim="{recorded}")'
+            else f'called `submit_proof(claim="{recorded}")`'
         )
+        check = next(
+            (line for line in reversed(score.explanation.splitlines()) if line.strip()),
+            "",
+        )
+        result = "CORRECT" if score.value == CORRECT else "INCORRECT"
+        rows.append([name, result, claim, score.metadata["stage"], check])
     passed = [name for name, s in scores.items() if s.value == CORRECT]
     return Score(
         value=CORRECT if passed else INCORRECT,
-        explanation=_swarm_explanation(scores, stages, claims, passed),
+        explanation=_swarm_explanation(len(scores), passed, rows),
         metadata={
             "passed": passed,
             "members": {name: s.metadata for name, s in scores.items()},
@@ -89,26 +93,23 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
     )
 
 
-def _swarm_explanation(
-    scores: dict[str, Score],
-    stages: dict[str, str],
-    claims: dict[str, str],
-    passed: list[str],
-) -> str:
+def _swarm_explanation(size: int, passed: list[str], rows: list[list[str]]) -> str:
     if passed:
         summary = (
-            f"Swarm of {len(scores)}: {len(passed)} members' work passes "
+            f"Swarm of {size}: {len(passed)} members' work passes "
             f"({', '.join(passed)})."
         )
     else:
-        summary = f"Swarm of {len(scores)}: no member's work passes."
-    width = max(len(stage) for stage in stages.values())
-    lines = [
-        f"{name}: {'CORRECT' if s.value == CORRECT else 'INCORRECT':<9}  "
-        f"{stages[name]:<{width}}  {claims[name]}"
-        for name, s in scores.items()
+        summary = f"Swarm of {size}: no member's work passes."
+    table = [
+        "| Member | Result | Claim | Stage | Checker |",
+        "| --- | --- | --- | --- | --- |",
+        *(
+            "| " + " | ".join(cell.replace("|", "\\|") for cell in row) + " |"
+            for row in rows
+        ),
     ]
-    return "\n".join([summary, *lines])
+    return "\n".join([summary, "", *table])
 
 
 async def _score_sandbox(
