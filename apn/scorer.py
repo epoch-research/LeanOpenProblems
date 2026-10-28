@@ -56,6 +56,7 @@ def proof_scorer(checker: ProofChecker, swarm: bool = False) -> Scorer:
     async def score(state: TaskState, target: Target) -> Score:
         if swarm and current_member() is None:
             return await _score_swarm(state, checker)
+        # Known limitation: in a swarm, every member writes this same key, so the last one wins.
         return await _score_sandbox(state, checker, sandbox(), "submission_contents")
 
     return score
