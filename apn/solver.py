@@ -274,7 +274,7 @@ def lean_prover(
                     max_file_lines=100_000,
                     max_board_bytes=400_000_000,
                 )],
-                budget=Budget(split="equal"),
+                budget=Budget(split="equal", reserve=0.01),
             )
         else:
             await sandbox().write_file(ENTRY_PATH, sketch)
