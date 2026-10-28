@@ -39,9 +39,9 @@ SOURCES_DIR = WIKIPEDIA_DIR / "Sources"
 ISOLATED_DIR = WIKIPEDIA_DIR / "Isolated"
 
 VALUE_TYPED_REASON = (
-    "value-typed answer(sorry): the placeholder elaborates to a position-labeled "
-    "sorryAx in the statement's type, so the statement cannot be closed (or even "
-    "stated) without a chosen answer value"
+    "value-typed answer: the statement equates a quantity with a sorry'd "
+    "`<name>.answer` definition (FC's form for 'determine the value' problems), "
+    "so it can be neither proved nor disproved as stated"
 )
 
 PROVED_IN_FILE_REASON = (

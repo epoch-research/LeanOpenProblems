@@ -82,6 +82,32 @@ def proof_is_filled(src: bytes, filerec: dict, decl_name: str) -> bool:
     raise SystemExit(f"{decl_name}: command not found in its file record")
 
 
+def statement_deps(filerec: dict, decl_name: str) -> set[str]:
+    """File-local declarations the target transitively references."""
+    deps = {d["name"]: d["deps"] for c in filerec["commands"] for d in c["decls"]}
+    seen: set[str] = set()
+    stack = list(deps[decl_name])
+    while stack:
+        name = stack.pop()
+        if name not in seen:
+            seen.add(name)
+            stack.extend(deps.get(name, []))
+    return seen
+
+
+def sorried_defs(src: bytes, filerec: dict, closure: set[str]) -> list[str]:
+    """Non-theorem declarations in ``closure`` whose command carries a ``sorry``."""
+    hits: list[str] = []
+    for cmd in filerec["commands"]:
+        names = [d["name"] for d in cmd["decls"] if d["kind"] != "theorem"]
+        if not any(n in closure for n in names):
+            continue
+        code = strip_comments(src[cmd["declStart"] : cmd["declEnd"]].decode("utf-8"))
+        if re.search(r"\bsorry\b", code):
+            hits.extend(n for n in names if n in closure)
+    return hits
+
+
 def extract_sources(
     staged: Path, container: str, exe: str, util_module: str, jobs: int
 ) -> dict[str, dict]:
@@ -174,7 +200,7 @@ def main() -> None:
             raise SystemExit(f"{rel}: research-open attribute on a non-declaration command")
         for decl in members:
             row: dict = {"id": decl["name"], "source": f"Sources/{rel}"}
-            if "sorryAx" in decl["type"]:
+            if "sorryAx" in decl["type"] or sorried_defs(src, filerec, statement_deps(filerec, decl["name"])):
                 row["excluded"] = VALUE_TYPED_REASON
                 n_excluded += 1
                 rows.append(row)
