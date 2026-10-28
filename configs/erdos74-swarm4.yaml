@@ -29,10 +29,9 @@ cost_limit: 400.0
 # minus the periods when any task waits (for a connection slot, a retry or a
 # rate limit), with overlapping waits counted once, so with many concurrent
 # members it can stall far behind the wall clock: working_limit is poorly
-# suited to a swarm. The swarm also turns a time limit into a cap that stops
-# members gently at 95% of it. A time limit does charge members for that
-# waiting, so avoid contention when running a swarm: give max_connections room
-# for every member running at once across samples, and mind rate limits.
+# suited to a swarm. A time limit does charge members for that waiting, so
+# avoid contention when running a swarm: give max_connections room for every
+# member running at once across samples, and mind rate limits.
 time_limit: 86_400  # 24 * 60 * 60
 
 # $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
