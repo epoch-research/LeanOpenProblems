@@ -30,7 +30,6 @@ from inspect_swarm import (
     member,
     shared_memory,
     swarm,
-    swarm_on_continue,
     swarm_resources,
     swarm_tools,
 )
@@ -206,9 +205,9 @@ def build_agent(
 def _prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
     """The prover loop, for a single agent or a swarm member.
 
-    ``swarm_tools()`` and ``swarm_on_continue()`` do nothing outside a swarm. A
-    member's budget tool is ``swarm_resources`` (its own share of the budget),
-    since ``resources`` shows the sample's limits."""
+    ``swarm_tools()`` does nothing outside a swarm. A member's budget tool is
+    ``swarm_resources`` (its own share of the budget), since ``resources``
+    shows the sample's limits."""
     return build_agent(
         agent_type,
         tools=[
@@ -222,7 +221,7 @@ def _prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
         ],
         attempts=_attempts(gated),
         submit=_prover_submit(),
-        on_continue=swarm_on_continue(continue_unless_looping(CONTINUE_MESSAGE)),
+        on_continue=continue_unless_looping(CONTINUE_MESSAGE),
         compaction=CompactionSummary(threshold=300_000),
     )
 
@@ -265,18 +264,15 @@ def lean_prover(
                         args={"agent_type": agent_type, "gated": gated, "swarm": True},
                         sandbox=name,
                         visible_sandboxes=[comparator_sandbox_name(name)],
-                        delivery="poll",
                     )
                     for name in names
                 ],
                 channels=[shared_memory(
                     # TODO: remove these if inspect_swarm changes their defaults to be more sensible
-                    # TODO: raise max_file_bytes and max_board_bytes (set at inspect_swarm's
-                    # current caps) once the upstream PR removing the caps is released
                     max_files=10_000,
-                    max_file_bytes=262_144,
+                    max_file_bytes=1_000_000,
                     max_file_lines=100_000,
-                    max_board_bytes=16_777_216,
+                    max_board_bytes=400_000_000,
                 )],
                 budget=Budget(split="equal"),
             )

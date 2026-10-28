@@ -179,7 +179,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "inspect-boltons", git = "https://github.com/tadamcz/inspect_boltons?rev=35b794e845f1748947a4f18efdfcb31dd0cf746a" },
-    { name = "inspect-swarm", specifier = ">=0.1.0,<0.2.0" },
+    { name = "inspect-swarm", specifier = ">=0.2.0,<0.3.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -669,16 +669,16 @@ dependencies = [
 
 [[package]]
 name = "inspect-swarm"
-version = "0.1.0"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "inspect-ai" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/7a/47f9fb7dd58b29715b2985b5398c53be6cc09b3321b73ada98ab273b02f0/inspect_swarm-0.1.0.tar.gz", hash = "sha256:78e75588583f6a09716973589fe1dbb9bebacf0f2b6a0cd6244ae0e31d7b9048", size = 88033, upload-time = "2026-10-23T13:23:48.01Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/17/21/46b5b1fcd993f0bc2dcf3a66a3b47bdec02932e15eb22a65dbfefa70d7f5/inspect_swarm-0.2.0.tar.gz", hash = "sha256:ef86c4ba67d3e1547650c3ec154323ed1c5f82130758ba9c95a95c886c04817b", size = 84228, upload-time = "2026-10-27T17:05:43.433Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/0f/b86e986fb631688286690571dfd2d85e1ed76b49dadd74809b7e061dd12b/inspect_swarm-0.1.0-py3-none-any.whl", hash = "sha256:e4600ae6709673cd33048b50728a626376d5f943df9e79e2918d6b330b99299d", size = 101415, upload-time = "2026-10-23T13:23:46.65Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/3b/d5eb921541f4e52fae990a60716b2d128ce9efc2facae6de17df0df43db0/inspect_swarm-0.2.0-py3-none-any.whl", hash = "sha256:e11f61870418fe78050e3ea6d45fb7093dc3d3cd55c42d49dbd93c59a158864b", size = 96924, upload-time = "2026-10-27T17:05:42.238Z" },
 ]
 
 [[package]]
