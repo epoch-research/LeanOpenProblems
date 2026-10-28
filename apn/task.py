@@ -17,6 +17,7 @@ from apn.dataset import (
     FC100_DIR,
     PERSONAL_CORRESP_DIR,
     OEIS_DIR,
+    WIKIPEDIA_DIR,
     erdos_dataset,
     fc100open_dataset,
     fc_commit,
@@ -24,6 +25,7 @@ from apn.dataset import (
     load_subset,
     personal_corresp_dataset,
     oeis_dataset,
+    wikipedia_dataset,
 )
 from apn.scorer import proof_scorer
 
@@ -349,4 +351,36 @@ def apn_personal_corresp(
         ),
         scorer=proof_scorer(SandboxComparator()),
         sandbox=get_sandbox_config(pin, literature, sandbox_backend),
+    )
+
+
+@task
+def apn_wikipedia(
+    subset: str | None = None,
+    gated: bool = True,
+    literature: bool = False,
+    agent_type: AgentType = "react",
+    swarm_size: int | None = None,
+    sandbox_backend: SandboxBackend | None = None,
+) -> Task:
+    """Every research-open statement in Formal Conjectures' Wikipedia
+    directory at the pin. No predefined subsets; the default runs the full
+    manifest."""
+    name_list = load_subset(WIKIPEDIA_DIR, subset) if subset is not None else None
+    pin = fc_commit(WIKIPEDIA_DIR)
+    return Task(
+        dataset=wikipedia_dataset(names=name_list),
+        solver=lean_prover(
+            gated=gated,
+            literature=literature,
+            agent_type=agent_type,
+            swarm_size=swarm_size,
+            util_module=fc_profile(pin).util_module,
+        ),
+        scorer=proof_scorer(
+            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
+        ),
+        sandbox=get_sandbox_config(
+            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
+        ),
     )

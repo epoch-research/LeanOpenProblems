@@ -15,6 +15,7 @@ OEIS_DIR = Path(__file__).parent / "data" / "oeis"
 FC100_DIR = Path(__file__).parent / "data" / "fc100open"
 ERDOS_DIR = Path(__file__).parent / "data" / "erdos"
 PERSONAL_CORRESP_DIR = Path(__file__).parent / "data" / "personal_corresp"
+WIKIPEDIA_DIR = Path(__file__).parent / "data" / "wikipedia"
 
 
 def fc_commit(dataset_dir: str | Path) -> str:
@@ -61,6 +62,11 @@ _FC_PROFILES = {
     ),
     # FC main as of 2026-09-18, the last commit before upstream modulized the problem files.
     "f5f23b44304be14f7caf502e4fecb7beecdcfa73": FCProfile(
+        util_module="FormalConjecturesUtil"
+    ),
+    # FC main as of 2026-10-28, after upstream modulized the problem files
+    # (datasets at this pin ship de-modulized specs).
+    "5a2fb85045c86e4a184b15ce7531ba199a3c4580": FCProfile(
         util_module="FormalConjecturesUtil"
     ),
 }
@@ -347,3 +353,12 @@ def personal_corresp_dataset(names: list[str] | None = None) -> MemoryDataset:
     the derived ``<target>.disproof`` declaration. See
     ``apn/data/personal_corresp/NOTICE.md``."""
     return build_dataset(PERSONAL_CORRESP_DIR, "personal_corresp", (), names)
+
+
+def wikipedia_dataset(names: list[str] | None = None) -> MemoryDataset:
+    """Every research-open statement in Formal Conjectures'
+    ``FormalConjectures/Wikipedia`` at the pin, as Samples. Each sketch is the
+    target's isolated spec (cut from the de-modulized source file) followed by
+    the derived ``<target>.disproof`` declaration. See
+    ``apn/data/wikipedia/NOTICE.md``."""
+    return build_dataset(WIKIPEDIA_DIR, "wikipedia", (), names)
