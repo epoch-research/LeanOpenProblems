@@ -51,8 +51,8 @@ runner:
   environment:
     INSPECT_LOG_CONDENSE: "true"
     # TODO: remove UV_EXCLUDE_NEWER once no longer needed (it circumvents the
-    #   security cooldown). It admits inspect-swarm 0.2.0, released 2026-10-27.
-    UV_EXCLUDE_NEWER: "2026-10-28T00:00:00Z"
+    #   security cooldown). It admits inspect-swarm 0.2.1, released 2026-10-28.
+    UV_EXCLUDE_NEWER: "2026-10-29T00:00:00Z"
 
 packages:
   - inspect-ai==0.3.283
