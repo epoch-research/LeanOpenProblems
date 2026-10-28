@@ -1,0 +1,201 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+name: wiki-aurora-a
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@c6c86cba9b7c95d50b40021281f68e7f844b3624
+    name: apn
+    items:
+      - name: apn_wikipedia
+        args:
+          agent_type: deep
+          literature: true
+        sample_ids:
+          - "ABC.abc"
+          - "ABC.abc.variants.lt_constant_mul"
+          - "ABC.abc.variants.quality"
+          - "AgohGiuga.agoh_giuga"
+          - "AgohGiuga.agoh_giuga.variants.giuga"
+          - "AgrawalConjecture.agrawal_conjecture"
+          - "AgrawalConjecture.agrawal_conjecture.variants.popovych"
+          - "AlgebraicGeometry.resolution_of_singularities"
+          - "AlgebraicNormality.irrational_algebraic_absolutely_normal"
+          - "AlgebraicNormality.irrational_algebraic_normal_in_some_base"
+          - "AlmostPerfectNumbers.exists_almost_perfect_not_power_of_two"
+          - "AlspachConjecture.alspach_conjecture.variants.oberwolfach"
+          - "AmicableNumbers.infinitely_many_amicable"
+          - "AmicableNumbers.opposite_parity_amicable"
+          - "AmicableNumbers.relatively_prime_amicable"
+          - "AndrewsCurtis.andrews_curtis_conjecture"
+          - "Andrica.andrica_conjecture"
+          - "ArtinPrimitiveRootsConjecture.artin_primitive_roots.parts.i"
+          - "ArtinPrimitiveRootsConjecture.artin_primitive_roots.parts.ii"
+          - "ArtinPrimitiveRootsConjecture.artin_primitive_roots.variants.part_ii_power_squarefreePart_modeq_one"
+          - "ArtinPrimitiveRootsConjecture.artin_primitive_roots.variants.part_ii_power_squarefreePart_not_modeq_one"
+          - "BabaiSeressConjectures.babai_seress_conjecture"
+          - "BabaiSeressConjectures.babai_seress_conjecture_alternating"
+          - "BalancedPrimes.balanced_primes"
+          - "BalancedPrimes.balanced_primes_order"
+          - "BatemanHornConjecture.bateman_horn_conjecture"
+          - "BealConjecture.beal_conjecture"
+          - "BeckFiala.beck_fiala_conjecture"
+          - "BergeFulkersonConjecture.berge_fulkerson_conjecture"
+          - "BergeFulkersonConjecture.berge_fulkerson_conjecture.variants.berge"
+          - "BergeFulkersonConjecture.berge_fulkerson_conjecture.variants.fan_raspaud"
+          - "BetrothedNumbers.infinitely_many_betrothed"
+          - "BetrothedNumbers.same_parity_betrothed"
+          - "BingBorsuk.bing_borsuk_conjecture"
+          - "Bloch.blochConstant_exact_value"
+          - "Bloch.landauConstant_exact_value"
+          - "Borsuk.borsuk_conjecture.four"
+          - "BrennanConjecture.brennan_universalSpectrumBounded"
+          - "Brocard.brocard_conjecture"
+          - "Buchi.buchi_problem"
+          - "Buchi.buchi_problem_M5"
+          - "Bunyakovsky.bunyakovsky_conjecture"
+          - "CarmichaelTotient.charmichaelTotient"
+          - "Catalan.pillais_conjecture"
+          - "CernyConjecture.cerny_conjecture"
+          - "ClassNumberProblem.class_number_problem"
+          - "CollatzConjecture.collatz_conjecture"
+          - "CongruentNumber.Tunnell_even_converse"
+          - "CongruentNumber.Tunnell_odd_converse"
+          - "Conjecture_1_3_to_2_3.conjecture_1_3_to_2_3"
+          - "Conway99Graph.conway99Graph"
+          - "DeterminantalConjecture.determinantal_conjecture"
+          - "Dickson.dickson_conjecture"
+          - "Dickson.generalized_twin_primes"
+          - "Dickson.infinite_cousin_primes"
+          - "Dickson.infinite_safe_primes"
+          - "Dickson.infinite_sexy_primes"
+          - "DiophantineTuple.hasUniqueExtension_of_forall"
+          - "DiophantineTuple.rational_7_tuple"
+          - "DirichletDivisorProblem.dirichlet_divisor_problem"
+          - "ElliottHalberstamConjecture.elliott_halberstam"
+          - "EllipticCurveRank.RatEllipticCurve.exists_rank_ge_thirtytwo"
+          - "EllipticCurveRank.RatEllipticCurve.finite_twentyone_lt_finrank"
+          - "EllipticCurveRank.RatEllipticCurve.goldfeld_conjecture"
+          - "EllipticCurveRank.RatEllipticCurve.goldfeld_conjecture.variants.squarefree"
+          - "EllipticCurveRank.RatEllipticCurve.half_rank_zero_and_half_rank_one"
+          - "EllipticCurveRank.RatEllipticCurve.rank_height_count_asymptotic"
+          - "EllipticCurveRank.RatEllipticCurve.twentyone_le_rank_height_count_asymptotic"
+          - "EllipticCurveRank.RatEllipticCurve.unbounded_rank_conjecture"
+          - "EllipticCurveRank.WeierstrassCurve.rank_claudeAlpogeHowell31"
+          - "EllipticCurveRank.WeierstrassCurve.rank_elkies28"
+          - "EllipticCurveRank.WeierstrassCurve.rank_elkiesKlagsbrun29"
+          - "EllipticCurveRank.WeierstrassCurve.rank_ranksunbounded30"
+          - "Emirp.infinitude_question"
+          - "ErdosMoser.erdos_moser_conjecture"
+          - "ErdosUlamProblem.erdos_ulam_problem"
+          - "EuclidNumbers.euclid_numbers_are_square_free"
+          - "EuclidNumbers.infinite_prime_euclid_numbers"
+          - "EulerBrick.cuboidThree"
+          - "EulerBrick.cuboidTwo"
+          - "EulerBrick.four_dim_euler_brick_existence"
+          - "EulerBrick.n_dim_euler_brick_existence"
+          - "EulerBrick.perfect_euler_brick_existence"
+          - "EulerSumOfPowers.eulers_sum_of_powers_conjecture"
+          - "Exponentials.four_exponentials_conjecture"
+          - "Exponentials.two_pow_three_pow_transcendental"
+          - "FactorialPrime.infinitely_many_factorial_primes"
+          - "FeitThompsonPrimeConjecture.feit_thompson_primes"
+          - "Fermat.exists_fermat_not_squarefree"
+          - "Fermat.fermat_number_are_composite"
+          - "Fermat.infinite_fermat_composite"
+          - "Fermat.infinite_fermat_primes"
+          - "FermatCatalanConjecture.fermat_catalan"
+          - "FibonacciPrimes.fib_primes_infinite"
+          - "FibonacciPrimes.fib_primes_infinite.variant"
+          - "Firoozbakht.firoozbakht_conjecture"
+          - "FlintCooksonHills.cookson_hills_series_converges"
+          - "FlintCooksonHills.flint_hills_series_converges"
+          - "FortuneConjecture.fortune_conjecture"
+          - "Fuglede.FugledeConjecture.variants.dim_1"
+          - "Fuglede.FugledeConjecture.variants.dim_2"
+          - "GapConjecture.gap_conjecture"
+          - "GaussCircleProblem.error_isBigO"
+          - "Gilbreath.gilbreath_conjecture"
+          - "GoldbachConjecture.goldbach"
+          - "GoodmanConjecture.goodman_conjecture"
+          - "Goormaghtigh.goormaghtigh_conjecture"
+          - "GracefulLabeling.graceful_tree_conjecture"
+          - "Grimm.grimm_conjecture"
+          - "Grimm.grimm_conjecture_weak"
+          - "Hadamard.HadamardConjecture"
+          - "Hadamard.HadamardConjecture.variants.«167»"
+          - "HajosConjecture.hajos_conjecture.variants.five_six"
+          - "Hall.hall_conjecture"
+          - "Hall.weak_hall_conjecture"
+          - "HardyLittlewood.first_hardy_littlewood_conjecture"
+          - "HardyLittlewood.second_hardy_littlewood_conjecture"
+          - "HasseWeil.exists_hasAnalyticContinuation"
+          - "HasseWeil.exists_hasMeromorphicContinuation"
+          - "Idoneal.idoneal_numbers_completeness"
+          - "InscribedSquare.inscribed_rectangle_problem"
+          - "InscribedSquare.inscribed_square_problem"
+          - "InvariantSubspaceProblem.Invariant_subspace_problem"
+          - "InverseGalois.inverse_galois_problem"
+          - "Irrational.algebraicIndependent_e_pi"
+          - "Irrational.irrational_e_plus_pi"
+          - "Irrational.irrational_e_times_pi"
+          - "Irrational.irrational_e_to_e"
+          - "Irrational.irrational_eulerMascheroniConstant"
+          - "Irrational.irrational_ln_pi"
+          - "Irrational.irrational_pi_to_e"
+          - "Irrational.irrational_pi_to_pi"
+          - "JacobianConjecture.jacobian_conjecture_two_variables"
+          - "Jacobson.jacobson_conjecture"
+          - "JugglerConjecture.juggler_conjecture"
+          - "Kakeya.kakeya_set_conjecture"
+          - "Kaplansky.idempotent_conjecture"
+models:
+  # giles-aurora2: the first epoch-research/benchmarks commit with Aurora in models.yaml.
+  - package: git+https://github.com/epoch-research/benchmarks@e60b6bb0c7306ac66d8b6e0873d96300d4eb9572
+    name: epoch
+    items:
+      - name: aurora-alpha-bio-cyber-capabilities
+        args:
+          config:
+            # Policy: use the highest reasoning effort the model supports.
+            reasoning_effort: "max"
+            max_retries: 485
+            # Hawk sizes the sandbox pool at 2 x max_connections (2 sandboxes per
+            # sample), so this lets every sample in this half run at once.
+            max_connections: 140
+
+# Half a of the 273-sample dataset (split in manifest order so every
+# sample runs at once): 137 samples x $1,000/sample cap = $137,000 max.
+cost_limit: 1000.0
+working_limit: 345_600  # 4 * 24 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+# Aurora's prices are not published; GPT-6 Astra's are assumed.
+model_cost_config:
+  epoch/aurora-alpha-bio-cyber-capabilities:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with the pinned epoch-research/benchmarks commit.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.273
+
+retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
