@@ -32,7 +32,8 @@ import pytest
 from inspect_ai.model import ModelName
 from inspect_ai.scorer import CORRECT, INCORRECT, Score, Target
 from inspect_ai.solver import TaskState
-from inspect_ai.util import ExecResult, OutputLimitExceededError
+from inspect_ai.util import ExecResult, OutputLimitExceededError, tool_state_scope
+from inspect_ai.util._store import Store
 
 import apn.checker as checker_mod
 import apn.scorer as scorer_mod
@@ -51,7 +52,13 @@ from apn.checker import (
     module_path,
     sanitize_submission,
 )
-from apn.scorer import CLAIM_STORE_KEY, proof_scorer
+from apn.scorer import (
+    CLAIM_STORE_KEY,
+    SWARM_LEDGER_KEY,
+    SWARM_RESULT_KEY,
+    claim_store_key,
+    proof_scorer,
+)
 
 SPEC = "import Mathlib\ntheorem tgt : True := by sorry\ntheorem tgt.disproof : ¬ (type_of% @tgt) := sorry\n"
 
@@ -709,3 +716,180 @@ async def test_scorer_writes_attempt_sidecar(
     sidecars = list((tmp_path / "artifacts").rglob("attempt-*.tar"))
     assert len(sidecars) == 1
     assert sidecars[0].read_bytes() == tar
+
+
+async def test_check_uses_the_member_s_own_comparator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    requested: list[str | None] = []
+
+    def fake_sandbox(name: str | None = None) -> ScriptedSandbox:
+        requested.append(name)
+        return ScriptedSandbox(comparator=_ok(_ACCEPT_OUT))
+
+    monkeypatch.setattr(checker_mod, "sandbox", fake_sandbox)
+    checker = SandboxComparator()
+    await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    with tool_state_scope("prover-1"):
+        await checker.check(SPEC, SUBMISSION_TAR, decl="tgt", claim="proof")
+    assert requested == ["comparator", "comparator-prover-1"]
+
+
+def test_claim_store_key_is_per_tool_state_scope() -> None:
+    assert claim_store_key() == CLAIM_STORE_KEY
+    with tool_state_scope("prover-1"):
+        key_1 = claim_store_key()
+    with tool_state_scope("prover-2"):
+        key_2 = claim_store_key()
+    assert len({CLAIM_STORE_KEY, key_1, key_2}) == 3
+
+
+class TarChecker:
+    def __init__(self, passing: bytes) -> None:
+        self._passing = passing
+        self.calls: list[tuple[bytes, str]] = []
+
+    async def check(
+        self, spec: str, submission_tar: bytes, decl: str, claim: str
+    ) -> CheckOutcome:
+        self.calls.append((submission_tar, claim))
+        ok = submission_tar == self._passing
+        last = "Your solution is okay!" if ok else "uncaught exception: a | b"
+        return CheckOutcome(ok=ok, stage="comparator", detail=f"Building\n{last}\n")
+
+
+def _swarm_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[TaskState, dict[str, bytes], FakeStore]:
+    tars = {
+        name: _tar_of({"./Spec.lean": f"{name} work"})
+        for name in ("prover-1", "prover-2", "prover-3")
+    }
+    store = FakeStore()
+    for name, claim in (("prover-1", "proof"), ("prover-2", "disproof")):
+        with tool_state_scope(name):
+            store.set(claim_store_key(), claim)
+    state = _state(store)
+    state.store.set(
+        SWARM_RESULT_KEY,
+        {
+            "members": [
+                {
+                    "name": name,
+                    "sandbox": name,
+                    "status": "submitted" if name == "prover-2" else "stopped",
+                }
+                for name in tars
+            ]
+        },
+    )
+    state.store.set(SWARM_LEDGER_KEY, {"stop_reason": "submitted", "ended_by": None})
+    sandboxes = {name: FakeSandbox(tar) for name, tar in tars.items()}
+
+    def fake_sandbox(name: str | None = None) -> FakeSandbox:
+        return sandboxes["prover-2" if name is None else name]
+
+    monkeypatch.setattr(scorer_mod, "sandbox", fake_sandbox)
+    monkeypatch.setattr(scorer_mod, "store", lambda: store)
+    return state, tars, store
+
+
+async def test_swarm_final_score_checks_every_member_sandbox(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state, tars, _ = _swarm_fixture(monkeypatch)
+    checker = TarChecker(passing=tars["prover-2"])
+    score = await proof_scorer(checker, swarm=True)(state, Target(""))
+    assert score is not None
+    assert score.value == CORRECT
+    assert score.metadata is not None
+    assert score.metadata["passed"] == ["prover-2"]
+    assert score.explanation == (
+        "Swarm of 3: 1 members' work passes (prover-2). Stop reason: submitted.\n"
+        "\n"
+        "| Member | Status | Result | Claim | Stage | Checker |\n"
+        "| --- | --- | --- | --- | --- | --- |\n"
+        '| prover-1 | stopped | INCORRECT | called `submit_proof(claim="proof")` | comparator | uncaught exception: a \\| b |\n'
+        '| prover-2 | submitted | CORRECT | called `submit_proof(claim="disproof")` | comparator | Your solution is okay! |\n'
+        "| prover-3 | stopped | INCORRECT | did not call `submit_proof()`, defaulted to "
+        '`claim="proof"` | comparator | uncaught exception: a \\| b |'
+    )
+    assert checker.calls == [
+        (tars["prover-1"], "proof"),
+        (tars["prover-2"], "disproof"),
+        (tars["prover-3"], "proof"),
+    ]
+    assert {"submission_contents_prover-1", "submission_contents_prover-3"} <= set(
+        state.metadata
+    )
+
+
+async def test_swarm_final_score_incorrect_when_no_member_passes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state, _, _ = _swarm_fixture(monkeypatch)
+    state.store.set(
+        SWARM_LEDGER_KEY, {"stop_reason": "swarm_cap", "ended_by": "sample_limit:cost"}
+    )
+    score = await proof_scorer(TarChecker(passing=b""), swarm=True)(state, Target(""))
+    assert score is not None
+    assert score.value == INCORRECT
+    assert score.explanation is not None
+    assert score.explanation.splitlines()[0] == (
+        "Swarm of 3: no member's work passes. Stop reason: swarm_cap. "
+        "Ended by: sample_limit:cost."
+    )
+
+
+async def test_swarm_score_inside_a_member_checks_only_its_own_sandbox(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state, tars, _ = _swarm_fixture(monkeypatch)
+    checker = TarChecker(passing=tars["prover-2"])
+    with tool_state_scope("prover-2"):
+        score = await proof_scorer(checker, swarm=True)(state, Target(""))
+    assert score is not None
+    assert score.value == CORRECT
+    assert checker.calls == [(tars["prover-2"], "disproof")]
+
+
+async def test_scorer_does_not_record_a_default_claim(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = Store()
+    monkeypatch.setattr(
+        scorer_mod, "sandbox", lambda *a, **k: FakeSandbox(_tar_of({"./Spec.lean": "x"}))
+    )
+    monkeypatch.setattr(scorer_mod, "store", lambda: store)
+    checker = StubChecker(False)
+    await proof_scorer(checker)(_state(FakeStore()), Target(""))
+    assert checker.calls[0][3] == "proof"
+    assert CLAIM_STORE_KEY not in store.keys()
+
+
+async def test_swarm_sidecars_are_per_member(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    import inspect_ai.log._samples as samples_mod
+
+    monkeypatch.setattr(
+        samples_mod,
+        "sample_active",
+        lambda: SimpleNamespace(log_location=str(tmp_path / "run.eval")),
+    )
+    state, tars, _ = _swarm_fixture(monkeypatch)
+    checker = TarChecker(passing=tars["prover-2"])
+    with tool_state_scope("prover-2"):
+        await proof_scorer(checker, swarm=True)(state, Target(""))
+    await proof_scorer(checker, swarm=True)(state, Target(""))
+    root = tmp_path / "artifacts" / state.uuid
+    sidecars = {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("attempt-*.tar")
+    }
+    assert sidecars == {
+        "prover-1/attempt-00001.tar": tars["prover-1"],
+        "prover-2/attempt-00001.tar": tars["prover-2"],
+        "prover-2/attempt-00002.tar": tars["prover-2"],
+        "prover-3/attempt-00001.tar": tars["prover-3"],
+    }

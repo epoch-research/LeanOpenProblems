@@ -7,9 +7,23 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Literal, Protocol, runtime_checkable
 
-from inspect_ai.util import OutputLimitExceededError, sandbox
+from inspect_ai.util import OutputLimitExceededError, sandbox, tool_state_instance
 
 from apn.layout import ENTRY_MODULE, ENTRY_PATH, ENTRY_REL, PROJECT, SUBMISSION_DIR
+
+COMPARATOR_SANDBOX = "comparator"
+
+
+def current_member() -> str | None:
+    """The swarm member whose tool state scope the caller runs in, if any."""
+    instance = tool_state_instance(None)
+    return None if instance is None else instance.removeprefix("@")
+
+
+def comparator_sandbox_name(member: str | None) -> str:
+    """The comparator sandbox that checks ``member``'s submissions: one per
+    swarm member, or the sample's single comparator outside a swarm."""
+    return COMPARATOR_SANDBOX if member is None else f"{COMPARATOR_SANDBOX}-{member}"
 
 # Paths inside the trusted `comparator` sandbox (the comparator stage of
 # apn/lean/Dockerfile). The challenge is staged into the lake project's `run/`
@@ -231,7 +245,8 @@ def comparator_config(decl: str, claim: Claim) -> str:
 
 
 class SandboxComparator:
-    """Runs Lean FRO's Comparator against the trusted ``comparator`` sandbox.
+    """Runs Lean FRO's Comparator against the trusted comparator sandbox
+    (the caller's, per :func:`comparator_sandbox_name`).
 
     Per check (comparator-migration-plan.md §3.2): reset the sandbox's
     ``.lake`` to the image's pristine tree, recreate the ``run/`` and
@@ -256,18 +271,13 @@ class SandboxComparator:
     Comparator transcript at scoring time.
     """
 
-    def __init__(
-        self,
-        sandbox_name: str | None = "comparator",
-        timeout: int = 60 * 60,
-    ) -> None:
-        self._sandbox_name = sandbox_name
+    def __init__(self, timeout: int = 60 * 60) -> None:
         self._timeout = timeout
 
     async def check(
         self, spec: str, submission_tar: bytes, decl: str, claim: Claim
     ) -> CheckOutcome:
-        sb = sandbox(self._sandbox_name)
+        sb = sandbox(comparator_sandbox_name(current_member()))
 
         # Host-side: re-serialize the agent's tar as a trusted archive of its
         # Lean modules (a verdict if that is impossible; the sandbox is never

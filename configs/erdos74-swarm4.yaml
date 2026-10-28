@@ -1,0 +1,59 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+name: erdos74-swarm4
+
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@swarm
+    name: apn
+    items:
+      - name: apn_erdos
+        args:
+          subset: bloom_selection
+          agent_type: deep
+          swarm_size: 4
+          literature: true
+        sample_ids:
+          - Erdos74.erdos_74
+models:
+  - package: openai
+    name: openai
+    items:
+      - name: gpt-6-astra
+        args:
+          config:
+            reasoning_effort: "max"
+            max_retries: 7
+            max_connections: 10
+
+cost_limit: 400.0
+# Swarms use time_limit, not working_limit. Working time is wall-clock time
+# minus the periods when any task waits (for a connection slot, a retry or a
+# rate limit), with overlapping waits counted once, so with many concurrent
+# members it can stall far behind the wall clock: working_limit is poorly
+# suited to a swarm. A time limit does charge members for that waiting, so
+# avoid contention when running a swarm: give max_connections room for every
+# member running at once across samples, and mind rate limits.
+time_limit: 86_400  # 24 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+model_cost_config:
+  openai/gpt-6-astra:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    INSPECT_LOG_CONDENSE: "true"
+    # TODO: remove UV_EXCLUDE_NEWER once no longer needed (it circumvents the
+    #   security cooldown). It admits inspect-swarm 0.2.0, released 2026-10-27.
+    UV_EXCLUDE_NEWER: "2026-10-28T00:00:00Z"
+
+packages:
+  - inspect-ai==0.3.283
+  - semver>=3.0.0,<3.1.0

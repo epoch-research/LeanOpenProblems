@@ -7,6 +7,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "inspect-boltons @ git+https://github.com/tadamcz/inspect_boltons@35b794e845f1748947a4f18efdfcb31dd0cf746a",
+    "inspect-swarm>=0.2.0,<0.3.0",
 ]
 
 [build-system]
@@ -31,7 +32,7 @@ apn = "apn._registry"
 dev = [
     "anthropic>=0.105.2",
     "hawk[cli]",
-    "inspect-ai>=0.3.263",
+    "inspect-ai>=0.3.283",
     "mypy>=2.1.0",
     "openai>=2.38.0",
     "pytest>=8.0",
