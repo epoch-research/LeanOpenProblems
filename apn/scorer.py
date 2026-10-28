@@ -34,9 +34,13 @@ SWARM_RESULT_KEY = "inspect_swarm:result"
 SWARM_LEDGER_KEY = "inspect_swarm:ledger"
 
 
-def claim_store_key() -> str:
+def _member_key(key: str) -> str:
     member = current_member()
-    return CLAIM_STORE_KEY if member is None else f"{CLAIM_STORE_KEY}:{member}"
+    return key if member is None else f"{key}:{member}"
+
+
+def claim_store_key() -> str:
+    return _member_key(CLAIM_STORE_KEY)
 
 
 @scorer(metrics=[accuracy(), stderr()])
@@ -130,8 +134,9 @@ async def _score_sandbox(
     # Per-attempt attempt index, kept in the sample store (the react/deepagent
     # attempt_count is not reachable from here). Increments even when
     # max_attempts=1, so a single-attempt sample still tags attempt-1.
-    attempt = store().get("_score_call_idx", 0) + 1
-    store().set("_score_call_idx", attempt)
+    attempt_key = _member_key("_score_call_idx")
+    attempt = store().get(attempt_key, 0) + 1
+    store().set(attempt_key, attempt)
 
     try:
         tar = await read_submission_tar(sb)
@@ -180,7 +185,8 @@ def _record_submission_tree(state: TaskState, tar: bytes, key: str) -> None:
 
 
 def _write_submission_sidecar(state: TaskState, attempt: int, tar: bytes) -> None:
-    """Write the scored ``Submission/`` tar to ``artifacts/<uuid>/attempt-N.tar``."""
+    """Write the scored ``Submission/`` tar to ``artifacts/<uuid>/attempt-N.tar``,
+    or ``artifacts/<uuid>/<member>/attempt-N.tar`` for a swarm member."""
     try:
         # private Inspect API -- no public way to get the log path from a scorer.
         from inspect_ai.log._samples import sample_active
@@ -191,6 +197,9 @@ def _write_submission_sidecar(state: TaskState, attempt: int, tar: bytes) -> Non
             logger.warning("Could not get active sample; skipping submission sidecar")
             return
         sidecar_dir = UPath(active.log_location).parent / "artifacts" / state.uuid
+        member = current_member()
+        if member is not None:
+            sidecar_dir = sidecar_dir / member
         sidecar_dir.mkdir(parents=True, exist_ok=True)
         # Zero-pad the attempt index (PortBench's sidecar convention) so the
         # files sort lexicographically in attempt order.

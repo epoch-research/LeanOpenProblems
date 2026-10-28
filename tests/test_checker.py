@@ -865,3 +865,31 @@ async def test_scorer_does_not_record_a_default_claim(
     await proof_scorer(checker)(_state(FakeStore()), Target(""))
     assert checker.calls[0][3] == "proof"
     assert CLAIM_STORE_KEY not in store.keys()
+
+
+async def test_swarm_sidecars_are_per_member(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    import inspect_ai.log._samples as samples_mod
+
+    monkeypatch.setattr(
+        samples_mod,
+        "sample_active",
+        lambda: SimpleNamespace(log_location=str(tmp_path / "run.eval")),
+    )
+    state, tars, _ = _swarm_fixture(monkeypatch)
+    checker = TarChecker(passing=tars["prover-2"])
+    with tool_state_scope("prover-2"):
+        await proof_scorer(checker, swarm=True)(state, Target(""))
+    await proof_scorer(checker, swarm=True)(state, Target(""))
+    root = tmp_path / "artifacts" / state.uuid
+    sidecars = {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("attempt-*.tar")
+    }
+    assert sidecars == {
+        "prover-1/attempt-00001.tar": tars["prover-1"],
+        "prover-2/attempt-00001.tar": tars["prover-2"],
+        "prover-2/attempt-00002.tar": tars["prover-2"],
+        "prover-3/attempt-00001.tar": tars["prover-3"],
+    }
