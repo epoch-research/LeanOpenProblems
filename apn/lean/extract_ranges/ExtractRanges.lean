@@ -103,18 +103,36 @@ def declExprs : ConstantInfo → Array Expr
   | .recInfo v => #[v.type]
   | .quotInfo v => #[v.type]
 
+/-- Whether `n` is a compiler/elaborator auxiliary such as `foo._proof_1`: some
+component starts with `_`, the `_private` prefix of a private declaration's
+name excepted. -/
+def isAuxName : Name → Bool
+  | .str p s => (s.startsWith "_" && s != "_private") || isAuxName p
+  | .num p _ => isAuxName p
+  | .anonymous => false
+
 /-- The file-local constants `ci` references (defined earlier in this file, hence
 present in `after`'s local constant map `map₂`), excluding itself. Lean forbids
 forward references, so a declaration's local dependencies are always already in
-`map₂` when it is elaborated. -/
+`map₂` when it is elaborated. Internal auxiliaries (e.g. the `foo._proof_1`
+lemmas Lean abstracts out of a definition's proof arguments) are looked
+through, so a definition's dependency on the theorem such a proof uses is
+recorded. -/
 def localDeps (after : Environment) (name : Name) (ci : ConstantInfo) : Array String := Id.run do
   let mut seen : Std.HashSet Name := {}
   let mut out : Array String := #[]
-  for e in declExprs ci do
+  let mut stack : Array Expr := declExprs ci
+  while !stack.isEmpty do
+    let e := stack.back!
+    stack := stack.pop
     for c in e.getUsedConstants do
-      if c != name && !seen.contains c && (after.constants.map₂.find? c).isSome then
-        seen := seen.insert c
-        out := out.push c.toString
+      if c != name && !seen.contains c then
+        if let some cci := after.constants.map₂.find? c then
+          seen := seen.insert c
+          if isAuxName c then
+            stack := stack ++ declExprs cci
+          else
+            out := out.push c.toString
   return out
 
 /-- The new, source-ranged declarations introduced going from `before` to

@@ -68,4 +68,5 @@ abbrev PromislowGroup : Type :=
 
 end Kaplansky
 
+omit hG in
 theorem Kaplansky.idempotent_conjecture.disproof : ¬ (type_of% @Kaplansky.idempotent_conjecture) := sorry

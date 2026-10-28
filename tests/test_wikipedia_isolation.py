@@ -16,6 +16,7 @@ every spec is cut from (``scripts.wikipedia_isolation.extraction_source``):
 
 from __future__ import annotations
 
+import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,6 +36,9 @@ from scripts.fc_statements import (
 from scripts.isolation import planned_survivors, theorem_command_decls
 from scripts.wikipedia_isolation import ISOLATED_DIR, extraction_source
 from tests.lean_sandbox import certify, compile_all, extract, generate_env
+
+
+_PRIVATE_PREFIX_RE = re.compile(r"^_private\.(?:[^.]+\.)*?0\.")
 
 
 @dataclass
@@ -99,6 +103,9 @@ async def test_isolated_files_are_structurally_correct(
         name, rel = row.id, row.source.removeprefix("Sources/")
         stem = row.statement_path.removeprefix("Isolated/").removesuffix(".lean")
         src_type, planned = planned_survivors(iso_data.src_ranges[rel], name)
+        # Specs ship with `private` stripped, so kept private theorems carry
+        # their plain names.
+        planned = [_PRIVATE_PREFIX_RE.sub("", d) for d in planned]
         src_type = normalize_hygiene(src_type)
         fr = iso_data.iso_ranges.get(stem)
         if fr is None:

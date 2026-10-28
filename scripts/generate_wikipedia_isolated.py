@@ -49,6 +49,7 @@ from scripts.isolation import (
     REPO,
     append_disproof,
     dependency_closure,
+    disproof_declaration,
     host_to_container,
     isolate,
     kept_flags,
@@ -59,6 +60,7 @@ from scripts.isolation import (
 )
 from scripts.wikipedia_isolation import (
     ANY_RESEARCH_ATTR_RE,
+    DISPROOF_PREAMBLES,
     ISOLATED_DIR,
     PROVED_IN_FILE_REASON,
     RESEARCH_OPEN_ATTR_RE,
@@ -230,6 +232,10 @@ def main() -> None:
             row["answer_form"] = form
             text, _ = strip_category_attrs(text)
             text, _ = append_disproof(text, decl["name"], decl["name"])
+            if decl["name"] in DISPROOF_PREAMBLES:
+                line = disproof_declaration(decl["name"])
+                assert text.count(line) == 1
+                text = text.replace(line, DISPROOF_PREAMBLES[decl["name"]] + line)
             n_seen = casefold_seen[decl["name"].casefold()] = (
                 casefold_seen.get(decl["name"].casefold(), 0) + 1
             )

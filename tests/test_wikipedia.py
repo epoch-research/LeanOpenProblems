@@ -14,7 +14,7 @@ from apn.dataset import WIKIPEDIA_DIR, load_manifest, wikipedia_dataset
 from apn.task import apn_wikipedia
 from scripts.fc_statements import strip_comments
 from scripts.isolation import disproof_declaration
-from scripts.wikipedia_isolation import RESEARCH_OPEN_ATTR_RE, SOURCES_DIR
+from scripts.wikipedia_isolation import DISPROOF_PREAMBLES, RESEARCH_OPEN_ATTR_RE, SOURCES_DIR
 
 
 def test_manifest_covers_every_research_open_statement() -> None:
@@ -47,7 +47,8 @@ def test_sketches_are_plain_lean_with_one_target() -> None:
         assert not re.search(r"^import FormalConjectures\.", code, re.MULTILINE), sample.id
         assert "answer(" not in code, sample.id
         assert "@[category" not in code, sample.id
-        assert sample.input.rstrip().endswith(disproof_declaration(str(sample.id))), sample.id
+        tail = DISPROOF_PREAMBLES.get(str(sample.id), "") + disproof_declaration(str(sample.id))
+        assert sample.input.rstrip().endswith(tail), sample.id
 
 
 def test_task_builds() -> None:
