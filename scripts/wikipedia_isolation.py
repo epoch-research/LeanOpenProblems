@@ -80,6 +80,14 @@ SIBLING_IMPORT_PATCHES: dict[str, list[tuple[str, str]]] = {
     ],
 }
 
+# Lines inserted just before a target's appended `.disproof` declaration.
+# Kaplansky.lean's top-level `include hG` is back in force after `end
+# Kaplansky`, so without the `omit` the disproof would pick up the section
+# variables and their universes, and would not be the target's negation.
+DISPROOF_PREAMBLES: dict[str, str] = {
+    "Kaplansky.idempotent_conjecture": "omit hG in\n",
+}
+
 _MODULE_HEADER_RE = re.compile(r"^module[ \t]*\n", re.MULTILINE)
 _PUBLIC_IMPORT_RE = re.compile(r"^public import ", re.MULTILINE)
 _PUBLIC_SECTION_RE = re.compile(r"^@\[expose\] public section\n", re.MULTILINE)

@@ -41,6 +41,14 @@ namespace FortuneConjecture
 
 open Nat
 
+/-- For any natural number `N` there is some `m > 1` with `N + m` prime; an
+immediate consequence of the infinitude of primes. -/
+lemma exists_one_lt_prime_add (N : ℕ) : ∃ m, 1 < m ∧ Nat.Prime (N + m) := by
+  obtain ⟨p, hp_ge, hp_prime⟩ := Nat.exists_infinite_primes (N + 2)
+  refine ⟨p - N, by omega, ?_⟩
+  have hsum : N + (p - N) = p := by omega
+  rw [hsum]; exact hp_prime
+
 /-- The $n$-th *Fortunate number* (0-indexed): the smallest integer $m > 1$ such
 that $p_{n+1}\\# + m$ is prime.
 
