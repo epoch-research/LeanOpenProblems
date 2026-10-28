@@ -360,7 +360,6 @@ def apn_wikipedia(
     gated: bool = True,
     literature: bool = False,
     agent_type: AgentType = "react",
-    swarm_size: int | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Every research-open statement in Formal Conjectures' Wikipedia
@@ -374,13 +373,8 @@ def apn_wikipedia(
             gated=gated,
             literature=literature,
             agent_type=agent_type,
-            swarm_size=swarm_size,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
-        ),
-        sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
-        ),
+        scorer=proof_scorer(SandboxComparator()),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend),
     )
