@@ -1,0 +1,62 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+name: wiki-aurora-smoke
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@c6c86cba9b7c95d50b40021281f68e7f844b3624
+    name: apn
+    items:
+      - name: apn_wikipedia
+        args:
+          agent_type: deep
+          literature: true
+        sample_ids:
+          - AmicableNumbers.infinitely_many_amicable
+          - Hadamard.HadamardConjecture.variants.«167»
+models:
+  # giles-aurora2: the first epoch-research/benchmarks commit with Aurora in models.yaml.
+  - package: git+https://github.com/epoch-research/benchmarks@e60b6bb0c7306ac66d8b6e0873d96300d4eb9572
+    name: epoch
+    items:
+      - name: aurora-alpha-bio-cyber-capabilities
+        args:
+          config:
+            # Policy: use the highest reasoning effort the model supports.
+            reasoning_effort: "max"
+            max_retries: 7
+            max_connections: 10
+
+# 2 samples x $20 cap: a smoke test of images, install and scoring, not a measurement.
+cost_limit: 20.0
+working_limit: 7_200  # 2 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+# Aurora's prices are not published; GPT-6 Astra's are assumed.
+model_cost_config:
+  epoch/aurora-alpha-bio-cyber-capabilities:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with the pinned epoch-research/benchmarks commit.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.273
+

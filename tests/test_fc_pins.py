@@ -12,6 +12,7 @@ from apn.dataset import (
     FC100_DIR,
     PERSONAL_CORRESP_DIR,
     OEIS_DIR,
+    WIKIPEDIA_DIR,
     fc_commit,
     fc_profile,
 )
@@ -22,6 +23,7 @@ DATASET_DIRS = {
     "fc100open": FC100_DIR,
     "personal_corresp": PERSONAL_CORRESP_DIR,
     "oeis": OEIS_DIR,
+    "wikipedia": WIKIPEDIA_DIR,
 }
 
 

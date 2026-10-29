@@ -1,0 +1,200 @@
+# Schema: https://github.com/METR/hawk/blob/main/hawk/api/EvalSetConfig.schema.json
+name: wiki-aurora-b
+tasks:
+  - package: git+ssh://git@github.com/epoch-research/LeanOpenProblems.git@c6c86cba9b7c95d50b40021281f68e7f844b3624
+    name: apn
+    items:
+      - name: apn_wikipedia
+        args:
+          agent_type: deep
+          literature: true
+        sample_ids:
+          - "Koethe.KotheConjecture"
+          - "Koethe.KotherConjecture.variants.general_matrix"
+          - "Koethe.KotherConjecture.variants.le_KotherRadical"
+          - "Koethe.KotherConjecture.variants.matrixOver_KotherRadical"
+          - "Koethe.KotherConjecture.variants.two_by_two_matrix"
+          - "KummerVandiver.kummer_vandiver"
+          - "LanderParkinSelfridge.lander_parkin_selfridge"
+          - "LanderParkinSelfridge.lander_parkin_selfridge.variants.five_three"
+          - "LebesgueNagell.lebesgue_nagell"
+          - "LegendreConjecture.legendre_conjecture"
+          - "LehmerMahlerMeasureProblem.lehmer_mahler_measure_problem"
+          - "LehmerMahlerMeasureProblem.lehmer_mahler_measure_problem.variants.best"
+          - "LehmerTotient.lehmer_totient"
+          - "LeinsterGroup.infinitely_many_leinster_groups"
+          - "Lemoine.lemoine_conjecture"
+          - "Lemoine.lemoine_conjecture_extension"
+          - "LinearArboricityConjecture.linear_arboricity_conjecture"
+          - "LinearArboricityConjecture.linear_arboricity_conjecture.variants.regular"
+          - "LittlewoodConjecture.littlewood_conjecture"
+          - "LittlewoodConjecture.padic_littlewood_conjecture"
+          - "LocalUniformization.local_uniformization"
+          - "LonelyRunnerConjecture.lonely_runner_conjecture"
+          - "LovaszConjecture.lovasz_conjecture"
+          - "LovaszPlummerConjecture.sheehan_conjecture"
+          - "LychrelNumbers.isLychrel10_196"
+          - "LychrelNumbers.no_lychrel_numbers_base10"
+          - "MagicSquares.exists_magic_square_squares"
+          - "MagicSquares.exists_semi_magic_square_cubes"
+          - "Mahler32.mahler_conjecture"
+          - "Mandelbrot.MLC"
+          - "Mandelbrot.MLC_general_exponent"
+          - "Mandelbrot.density_of_hyperbolicity"
+          - "Mandelbrot.density_of_hyperbolicity_general_exponent"
+          - "Mandelbrot.volume_frontier_mandelbrotSet_eq_zero"
+          - "Mandelbrot.volume_frontier_multibrotSet_eq_zero"
+          - "MeanValueProblem.mean_value_problem"
+          - "Mersenne.catalans_mersenne_conjecture"
+          - "Mersenne.infinitely_many_mersenne_primes"
+          - "Mersenne.new_mersenne_conjecture"
+          - "Mersenne.new_mersenne_conjecture.variants.prime"
+          - "MeynielConjecture.meyniel_conjecture"
+          - "MeynielConjecture.meyniel_conjecture.variants.soft"
+          - "NormalNumber.pi_normal_base_ten"
+          - "Oppermann.oppermann_conjecture"
+          - "Oppermann.oppermann_conjecture.parts.i"
+          - "Oppermann.oppermann_conjecture.parts.ii"
+          - "PebblingNumberConjecture.pebbling_number_conjecture"
+          - "PellNumbers.infinite_pellNumber_primes"
+          - "PerfectNumbers.infinitely_many_even_perfect"
+          - "PerfectNumbers.infinitely_many_perfect"
+          - "PerfectNumbers.odd_perfect_number_conjecture"
+          - "PetersenColoringConjecture.petersen_coloring_conjecture"
+          - "PierceBirkhoff.pierce_birkhoff_conjecture"
+          - "PierpontPrime.infinitely_many_pierpont_primes"
+          - "PollocksConjecture.pollock_tetrahedral"
+          - "PollocksConjecture.pollock_tetrahedral.salzer_levine"
+          - "PolyTime.isPolyTime_primeFactorsList"
+          - "PolyTime.isPolyTime_squareRootSum"
+          - "PolyTime.isPolyTime_squareRootSumTwoSided"
+          - "PowerfulNumbersDensity.error_term_improvement"
+          - "PrimeTriplets.prime_triplets"
+          - "PrimesAndPerfectSquares.infinite_prime_sq_add_one"
+          - "QuasiperfectNumbers.exists_quasiperfect"
+          - "RamanujanTau.lehmer_ramanujan_tau"
+          - "RationalDistanceProblem.rational_distance_problem"
+          - "ReconstructionConjecture.edge_reconstruction_conjecture"
+          - "ReconstructionConjecture.reconstruction_conjecture"
+          - "RegularPrimes.regularprime_conjecture"
+          - "RepunitPrime.infinitely_many_repunit_primes"
+          - "RiemannZetaValues.irrational_eleven"
+          - "RiemannZetaValues.irrational_nine"
+          - "RiemannZetaValues.irrational_odd"
+          - "RiemannZetaValues.irrational_seven"
+          - "RudinsConjecture.rudins_conjecture"
+          - "RudinsConjecture.rudins_conjecture_strong"
+          - "RudinsConjecture.rudins_conjecture_unique"
+          - "Schanuel.schanuel_conjecture"
+          - "Schinzel.schinzel_conjecture"
+          - "ScholzConjecture.scholz_conjecture"
+          - "Selfridge.selfridge_conjecture"
+          - "Selfridge.selfridge_seq_conjecture"
+          - "SerreMultiplicityConjectures.intersectionMultiplicity_pos"
+          - "SerreMultiplicityConjectures.intersectionMultiplicity_pos_quotient"
+          - "SidorenkoConjecture.tournament_anti_sidorenko_trees_conjecture"
+          - "SidorenkoConjecture.tournament_anti_sidorenko_trees_conjecture_tournamenton"
+          - "SierpinskiNumber.extended_sierpinski_problem"
+          - "SierpinskiNumber.prime_sierpinski_problem"
+          - "SierpinskiNumber.selfridge_conjecture"
+          - "Singmaster.singmaster"
+          - "SmallCohenMacaulayModules.exists_isSmallCohenMacaulay"
+          - "SolitaryNumber.infinite_club_exists"
+          - "SolitaryNumber.is_ten_solitary"
+          - "SparseRuler.wichmann_conjecture"
+          - "SteinerSystems.large_steiner_systems"
+          - "SumOfThreeCubes.isSumOfThreeCubes_iff_mod_9"
+          - "SumnerUniversalTournamentConjecture.sumner_conjecture"
+          - "Superperfect.twoFivePerfect"
+          - "TarskiExponentialFunctionProblem.tarski_exponential_function_problem"
+          - "Taxicab.taxicab_for_5_2_2"
+          - "Taxicab.taxicab_for_5_2_n"
+          - "Toronto.DiscreteTopology.of_t2_of_torontoSpace"
+          - "TotalColoringConjecture.total_coloring_conjecture"
+          - "Transcendental.exp_add_pi_transcendental"
+          - "Transcendental.exp_exp_transcendental"
+          - "Transcendental.exp_mul_pi_transcendental"
+          - "Transcendental.exp_pow_pi_sq_transcendental"
+          - "Transcendental.pi_pow_exp_transcendental"
+          - "Transcendental.pi_pow_pi_pow_pi_pow_pi_not_integer"
+          - "Transcendental.pi_pow_pi_pow_pi_pow_pi_transcendental"
+          - "Transcendental.pi_pow_pi_pow_pi_transcendental"
+          - "Transcendental.pi_pow_pi_transcendental"
+          - "Transcendental.pi_pow_sqrt_two_transcendental"
+          - "Transcendental.rlog_pi_transcendental"
+          - "Transcendental.rlog_rlog_two_transcendental"
+          - "Transcendental.sin_exp_transcendental"
+          - "Transcendental.transcendental_catalanConstant"
+          - "Transcendental.transcendental_gamma_one_div"
+          - "Transcendental.transcendental_gompertzConstant"
+          - "TuzaConjecture.tuza_conjecture"
+          - "TwinPrimes.twin_primes"
+          - "UnionClosed.union_closed"
+          - "UnionClosed.union_closed.variants.cardinality_even_of_union_closed_tight"
+          - "VaughtConjecture.vaught_conjecture"
+          - "VizingConjecture.vizing_conjecture"
+          - "WallSunSun.exists_isWallSunSunPrime"
+          - "WallSunSun.infinite_isWallSunSunPrime"
+          - "WallSunSun.infinite_isWallSunSunPrime_of_disc_eq"
+          - "WieferichMirimanoffPrime.exists_isWieferichPrime_and_isMirimanoffPrime"
+          - "WieferichMirimanoffPrime.isMirimanoffPrime_iff"
+          - "WieferichPrime.exists_isWieferichPrimeBase_47"
+          - "WieferichPrime.infinite_isWieferichPrime"
+          - "WieferichPrime.infinite_isWieferichPrimeBase"
+          - "WieferichPrime.isWieferichPrime_iff"
+          - "WilsonPrime.infinitely_many_wilson_primes"
+          - "WolstenholmePrime.wolstenholme_prime_infinite"
+          - "WoodallPrimes.infinitely_many_woodall_primes"
+models:
+  # giles-aurora2: the first epoch-research/benchmarks commit with Aurora in models.yaml.
+  - package: git+https://github.com/epoch-research/benchmarks@e60b6bb0c7306ac66d8b6e0873d96300d4eb9572
+    name: epoch
+    items:
+      - name: aurora-alpha-bio-cyber-capabilities
+        args:
+          config:
+            # Policy: use the highest reasoning effort the model supports.
+            reasoning_effort: "max"
+            max_retries: 485
+            # Hawk sizes the sandbox pool at 2 x max_connections (2 sandboxes per
+            # sample), so this lets every sample in this half run at once.
+            max_connections: 140
+
+# Half b of the 273-sample dataset (split in manifest order so every
+# sample runs at once): 136 samples x $1,000/sample cap = $136,000 max.
+cost_limit: 1000.0
+working_limit: 345_600  # 4 * 24 * 60 * 60
+
+# $ per 1M tokens; keys must match Inspect's resolved <provider>/<model> names.
+# Aurora's prices are not published; GPT-6 Astra's are assumed.
+model_cost_config:
+  epoch/aurora-alpha-bio-cyber-capabilities:
+    input: 10.0
+    output: 50.0
+    input_cache_read: 1.0
+    input_cache_write: 12.5
+
+secrets:
+  - name: ANTHROPIC_API_KEY
+  - name: OPENAI_API_KEY
+  - name: GOOGLE_API_KEY
+  - name: LEAN_OPEN_PROBLEMS_IMAGE_NAME
+    description: "The ECR repo containing the LeanOpenProblems sandbox images"
+
+runner:
+  memory: 200Gi
+  environment:
+    # TODO: Remove once default in Hawk
+    INSPECT_LOG_CONDENSE: "true"
+    ANTHROPIC_BASE_URL: https://api.anthropic.com
+    OPENAI_BASE_URL: https://api.openai.com/v1
+    GOOGLE_BASE_URL: https://generativelanguage.googleapis.com
+    HAWK_RUNNER_REFRESH_CLIENT_ID: ""
+    HAWK_RUNNER_REFRESH_TOKEN: ''
+
+packages:
+  # Right now needs to be kept in sync with the pinned epoch-research/benchmarks commit.
+  # TODO Remove once this wart is no longer necessary.
+  - inspect-ai==0.3.273
+
+retry_on_error: 16  # https://github.com/epoch-research/epoch-hawk/pull/13
