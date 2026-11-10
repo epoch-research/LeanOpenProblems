@@ -10,7 +10,7 @@ import yaml
 from inspect_ai import Task, task
 
 from apn import __version__
-from apn.solver import AgentType, lean_prover, swarm_member_names
+from apn.solver import LEADER, AgentType, lean_prover, swarm_member_names
 from apn.checker import SandboxComparator, comparator_sandbox_name
 from apn.dataset import (
     ERDOS_DIR,
@@ -220,6 +220,13 @@ def get_values_file_content(
     return yaml.safe_dump({"services": services}, sort_keys=False)
 
 
+def _sandbox_config_dirname(members: Sequence[str] | None) -> str:
+    if members is None:
+        return "single-agent"
+    name = f"swarm-{len(members)}"
+    return f"{name}-{LEADER}" if LEADER in members else name
+
+
 def get_sandbox_config(
     fc_commit: str,
     literature: bool,
@@ -243,7 +250,7 @@ def get_sandbox_config(
         / _docker_tag_component(__version__)
         / f"fc_{fc_commit[:12]}"
         / variant
-        / ("single-agent" if members is None else f"swarm-{len(members)}")
+        / _sandbox_config_dirname(members)
     )
     directory.mkdir(parents=True, exist_ok=True)
     if backend == "docker":
@@ -274,6 +281,7 @@ def apn_oeis(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_leader: bool = False,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
@@ -284,6 +292,7 @@ def apn_oeis(
     """
     name_list = load_subset(OEIS_DIR, subset) if subset is not None else None
     pin = fc_commit(OEIS_DIR)
+    members = swarm_member_names(swarm_size, swarm_leader)
 
     return Task(
         dataset=oeis_dataset(names=name_list),
@@ -292,14 +301,11 @@ def apn_oeis(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_leader=swarm_leader,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
-        ),
-        sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
-        ),
+        scorer=proof_scorer(SandboxComparator(), swarm=members is not None),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend, members),
     )
 
 
@@ -310,10 +316,12 @@ def apn_fc100open(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_leader: bool = False,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
     pin = fc_commit(FC100_DIR)
+    members = swarm_member_names(swarm_size, swarm_leader)
     return Task(
         dataset=fc100open_dataset(names=name_list),
         solver=lean_prover(
@@ -321,14 +329,11 @@ def apn_fc100open(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_leader=swarm_leader,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
-        ),
-        sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
-        ),
+        scorer=proof_scorer(SandboxComparator(), swarm=members is not None),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend, members),
     )
 
 
@@ -339,11 +344,13 @@ def apn_erdos(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_leader: bool = False,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
     name_list = load_subset(ERDOS_DIR, subset) if subset is not None else None
     pin = fc_commit(ERDOS_DIR)
+    members = swarm_member_names(swarm_size, swarm_leader)
     return Task(
         dataset=erdos_dataset(names=name_list),
         solver=lean_prover(
@@ -351,14 +358,11 @@ def apn_erdos(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_leader=swarm_leader,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
-        ),
-        sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
-        ),
+        scorer=proof_scorer(SandboxComparator(), swarm=members is not None),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend, members),
     )
 
 
@@ -369,6 +373,7 @@ def apn_personal_corresp(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_leader: bool = False,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Open conjectures sent to us in personal correspondence, formalized by
@@ -377,6 +382,7 @@ def apn_personal_corresp(
     No predefined subsets; the default runs the full manifest."""
     name_list = load_subset(PERSONAL_CORRESP_DIR, subset) if subset is not None else None
     pin = fc_commit(PERSONAL_CORRESP_DIR)
+    members = swarm_member_names(swarm_size, swarm_leader)
     return Task(
         dataset=personal_corresp_dataset(names=name_list),
         solver=lean_prover(
@@ -384,12 +390,9 @@ def apn_personal_corresp(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_leader=swarm_leader,
             util_module=fc_profile(pin).util_module,
         ),
-        scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
-        ),
-        sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
-        ),
+        scorer=proof_scorer(SandboxComparator(), swarm=members is not None),
+        sandbox=get_sandbox_config(pin, literature, sandbox_backend, members),
     )
