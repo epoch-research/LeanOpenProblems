@@ -8,6 +8,7 @@ import yaml
 
 import apn.task
 from apn.dataset import ERDOS_DIR, fc_commit
+from apn.solver import swarm_member_names
 from apn.task import get_sandbox_config, resolve_sandbox_backend
 
 
@@ -43,3 +44,19 @@ def test_hawk_default_carries_values_only_settings(
     for name in ("default", "comparator"):
         assert "ephemeral-storage" in services[name]["resources"]["requests"]
     assert services["comparator"]["runtimeClassName"] == "CLUSTER_DEFAULT"
+
+
+def test_leader_swarm_gets_its_own_config_beside_a_plain_swarm() -> None:
+    pin = fc_commit(ERDOS_DIR)
+    _, plain = get_sandbox_config(pin, False, "docker", swarm_member_names(3))
+    _, led = get_sandbox_config(pin, False, "docker", swarm_member_names(3, leader=True))
+    assert plain != led
+    services = yaml.safe_load(Path(led).read_text())["services"]
+    assert set(services) == {
+        "leader",
+        "comparator-leader",
+        "prover-1",
+        "comparator-prover-1",
+        "prover-2",
+        "comparator-prover-2",
+    }

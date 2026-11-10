@@ -22,10 +22,15 @@ import apn.solver as solver_module
 from apn.limits import continue_unless_looping
 from apn.solver import (
     INCORRECT_MESSAGE,
+    LEADER,
+    LEADER_ROLE,
+    LED_PROVER_ROLE,
     RESOURCE_INCORRECT_MESSAGE,
     AgentType,
     build_agent,
     gated_incorrect_message,
+    swarm_member_names,
+    swarm_member_role,
 )
 
 
@@ -112,3 +117,25 @@ def test_react_agent_gets_no_subagents_kwarg(monkeypatch: pytest.MonkeyPatch) ->
     # react() has no subagents parameter; the deep-only kwarg must not leak.
     seen = _build(monkeypatch, "react")
     assert "subagents" not in seen
+
+
+def test_swarm_without_leader_has_numbered_provers_and_no_roles() -> None:
+    names = swarm_member_names(3)
+    assert names == ["prover-1", "prover-2", "prover-3"]
+    assert [swarm_member_role(n, leader=False) for n in names] == [None, None, None]
+
+
+def test_swarm_leader_is_first_of_swarm_size_members() -> None:
+    names = swarm_member_names(3, leader=True)
+    assert names == [LEADER, "prover-1", "prover-2"]
+    assert [swarm_member_role(n, leader=True) for n in names] == [
+        LEADER_ROLE,
+        LED_PROVER_ROLE,
+        LED_PROVER_ROLE,
+    ]
+
+
+@pytest.mark.parametrize("swarm_size", [None, 0, 1])
+def test_swarm_leader_needs_another_member(swarm_size: int | None) -> None:
+    with pytest.raises(ValueError, match="swarm_leader"):
+        swarm_member_names(swarm_size, leader=True)

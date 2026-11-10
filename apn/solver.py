@@ -151,12 +151,36 @@ def _prover_submit() -> AgentSubmit:
 CONTINUE_MESSAGE = "Continue working on the problem."
 
 
-def swarm_member_names(swarm_size: int | None) -> list[str] | None:
+LEADER = "leader"
+LEADER_ROLE = "lead the swarm"
+LED_PROVER_ROLE = (
+    "Contribute to the swarm's goal(s). "
+    f"Follow the direction of the swarm leader, `{LEADER}`"
+)
+
+
+def swarm_member_names(
+    swarm_size: int | None, leader: bool = False
+) -> list[str] | None:
     """The swarm's member names, or ``None`` for no swarm (``swarm_size`` unset,
     zero or negative)."""
     if swarm_size is None or swarm_size <= 0:
+        if leader:
+            raise ValueError("swarm_leader requires a positive swarm_size.")
         return None
-    return [f"prover-{i}" for i in range(1, swarm_size + 1)]
+    if not leader:
+        return [f"prover-{i}" for i in range(1, swarm_size + 1)]
+    if swarm_size < 2:
+        raise ValueError(
+            f"swarm_leader requires a swarm_size of at least 2, got {swarm_size}."
+        )
+    return [LEADER] + [f"prover-{i}" for i in range(1, swarm_size)]
+
+
+def swarm_member_role(name: str, leader: bool) -> str | None:
+    if not leader:
+        return None
+    return LEADER_ROLE if name == LEADER else LED_PROVER_ROLE
 
 
 def build_agent(
@@ -233,6 +257,7 @@ def lean_prover(
     literature: bool,
     util_module: str,
     swarm_size: int | None = None,
+    swarm_leader: bool = False,
 ) -> Solver:
     """
     Args:
@@ -252,7 +277,7 @@ def lean_prover(
         _warn_if_ignored_formalizations(state)
         sketch = state.metadata["sketch"]
 
-        names = swarm_member_names(swarm_size)
+        names = swarm_member_names(swarm_size, swarm_leader)
         if names is not None:
             for name in names:
                 await sandbox(name).write_file(ENTRY_PATH, sketch)
@@ -261,6 +286,7 @@ def lean_prover(
                     member(
                         _prover,
                         name=name,
+                        role=swarm_member_role(name, swarm_leader),
                         args={"agent_type": agent_type, "gated": gated, "swarm": True},
                         sandbox=name,
                         visible_sandboxes=[comparator_sandbox_name(name)],
