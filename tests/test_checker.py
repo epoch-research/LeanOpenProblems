@@ -824,6 +824,23 @@ async def test_swarm_final_score_checks_every_member_sandbox(
     )
 
 
+async def test_swarm_final_score_checks_a_shared_sandbox_once_per_claim(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state, _, _ = _swarm_fixture(monkeypatch)
+    record = state.store.get(SWARM_RESULT_KEY)
+    for m in record["members"]:
+        m["sandbox"] = None
+    shared = _tar_of({"./Spec.lean": "shared work"})
+    monkeypatch.setattr(scorer_mod, "sandbox", lambda name=None: FakeSandbox(shared))
+    checker = TarChecker(passing=shared)
+    score = await proof_scorer(checker, swarm=True)(state, Target(""))
+    assert score is not None
+    assert score.metadata is not None
+    assert score.metadata["passed"] == ["prover-1", "prover-2", "prover-3"]
+    assert checker.calls == [(shared, "proof"), (shared, "disproof")]
+
+
 async def test_swarm_final_score_incorrect_when_no_member_passes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

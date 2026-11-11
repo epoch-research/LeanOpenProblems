@@ -27,14 +27,14 @@ from inspect_ai.util import sandbox, store
 from inspect_boltons.tools import resources
 from inspect_swarm import (
     Budget,
+    filesystem,
     member,
-    shared_memory,
     swarm,
     swarm_resources,
     swarm_tools,
 )
 
-from apn.checker import Claim, comparator_sandbox_name
+from apn.checker import Claim
 from apn.layout import ENTRY_PATH
 from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
@@ -150,6 +150,10 @@ def _prover_submit() -> AgentSubmit:
 # might be better at avoiding doom loops.
 CONTINUE_MESSAGE = "Continue working on the problem."
 
+SWARM_SHARED_DIR = "/shared"
+SWARM_NOTES_PATH = f"{SWARM_SHARED_DIR}/notes.md"
+SWARM_SCRATCH_DIR = "/scratch/{member}"
+
 
 def swarm_member_names(swarm_size: int | None) -> list[str] | None:
     """The swarm's member names, or ``None`` for no swarm (``swarm_size`` unset,
@@ -243,35 +247,45 @@ def lean_prover(
             (``apn.dataset.fc_profile(...).util_module``), named in the prompt's
             import-integrity rule.
         swarm_size: Run a swarm of this many members; ``None``, zero or
-            negative runs a single agent. Each member works in its own sandbox
-            (see ``swarm_member_names``) with its own comparator; the swarm's
-            budget is split equally.
+            negative runs a single agent. The members (see
+            ``swarm_member_names``) share the sample's sandbox and talk
+            through the ``filesystem`` channel; each has its own comparator.
+            The swarm's budget is split equally.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         _warn_if_ignored_formalizations(state)
         sketch = state.metadata["sketch"]
 
+        await sandbox().write_file(ENTRY_PATH, sketch)
         names = swarm_member_names(swarm_size)
         if names is not None:
-            for name in names:
-                await sandbox(name).write_file(ENTRY_PATH, sketch)
+            await sandbox().write_file(SWARM_NOTES_PATH, "")
+            made = await sandbox().exec(
+                ["mkdir", "-p", SWARM_SHARED_DIR]
+                + [SWARM_SCRATCH_DIR.format(member=name) for name in names]
+            )
+            if not made.success:
+                raise RuntimeError(f"Creating the swarm's directories failed: {made.stderr}")
             agent = swarm(
                 members=[
                     member(
                         _prover,
                         name=name,
                         args={"agent_type": agent_type, "gated": gated, "swarm": True},
-                        sandbox=name,
-                        visible_sandboxes=[comparator_sandbox_name(name)],
                     )
                     for name in names
                 ],
-                channels=[shared_memory()],
+                channels=[
+                    filesystem(
+                        shared=SWARM_SHARED_DIR,
+                        notes=SWARM_NOTES_PATH,
+                        scratch=SWARM_SCRATCH_DIR,
+                    )
+                ],
                 budget=Budget(split="equal", reserve=0.01),
             )
         else:
-            await sandbox().write_file(ENTRY_PATH, sketch)
             agent = _prover(agent_type, gated)
         state.messages = [
             ChatMessageUser(

@@ -8,7 +8,7 @@ import yaml
 
 import apn.task
 from apn.dataset import ERDOS_DIR, fc_commit
-from apn.task import get_sandbox_config, resolve_sandbox_backend
+from apn.task import SandboxBackend, get_sandbox_config, resolve_sandbox_backend
 
 
 @pytest.fixture(autouse=True)
@@ -43,3 +43,21 @@ def test_hawk_default_carries_values_only_settings(
     for name in ("default", "comparator"):
         assert "ephemeral-storage" in services[name]["resources"]["requests"]
     assert services["comparator"]["runtimeClassName"] == "CLUSTER_DEFAULT"
+
+
+@pytest.mark.parametrize("backend", ["docker", "k8s"])
+def test_swarm_members_share_the_agent_sandbox(backend: SandboxBackend) -> None:
+    _, path = get_sandbox_config(
+        fc_commit(ERDOS_DIR),
+        literature=False,
+        backend=backend,
+        members=["prover-1", "prover-2"],
+    )
+    services = yaml.safe_load(Path(path).read_text())["services"]
+    assert list(services) == ["default", "comparator-prover-1", "comparator-prover-2"]
+    memory = (
+        services["default"]["mem_limit"]
+        if backend == "docker"
+        else services["default"]["resources"]["limits"]["memory"]
+    )
+    assert memory.rstrip("Gig") == str(apn.task.SWARM_AGENT_MEMORY_GIB)

@@ -68,6 +68,7 @@ def resolve_sandbox_backend(backend: SandboxBackend | None) -> SandboxBackend:
 # simplification.                                                              #
 # --------------------------------------------------------------------------- #
 AGENT_MEMORY_GIB = 32
+SWARM_AGENT_MEMORY_GIB = 256
 COMPARATOR_MEMORY_GIB = 32
 
 # Both backends' long-lived main process, wrapped in a reaping PID 1. A bare
@@ -109,12 +110,17 @@ def _build_section(target: str, fc_commit: str) -> dict[str, Any]:
     }
 
 
-def _sandbox_pairs(members: Sequence[str] | None) -> list[tuple[str, str]]:
-    """(agent service, comparator service) names: ``default`` and the single
-    comparator, or one pair per swarm member."""
+def _comparator_services(members: Sequence[str] | None) -> list[str]:
+    """Comparator service names: the single comparator, or one per swarm
+    member. The agent service is always ``default``, which a swarm's members
+    share."""
     if members is None:
-        return [("default", comparator_sandbox_name(None))]
-    return [(member, comparator_sandbox_name(member)) for member in members]
+        return [comparator_sandbox_name(None)]
+    return [comparator_sandbox_name(member) for member in members]
+
+
+def _agent_memory_gib(members: Sequence[str] | None) -> int:
+    return AGENT_MEMORY_GIB if members is None else SWARM_AGENT_MEMORY_GIB
 
 
 def get_compose_file_content(
@@ -124,8 +130,8 @@ def get_compose_file_content(
 ) -> str:
     """The docker-backend sandbox config (local runs, CI tests).
 
-    Two services per agent (see :func:`_sandbox_pairs`): the agent's workspace,
-    and the trusted `comparator` verifier.
+    The agent's workspace (``default``, shared by a swarm's members) and a
+    trusted `comparator` verifier per agent (see :func:`_comparator_services`).
     The comparator container needs no filesystem hardening of its own
     (comparator-migration-plan.md §3.1): comparator's landrun (Landlock)
     sandbox confines the untrusted solution build to writes in `.lake`, every
@@ -134,16 +140,17 @@ def get_compose_file_content(
     reset-dotlake.sh restores a pristine `.lake`.
     """
     agent_kind = _agent_image_kind(literature)
-    services: dict[str, Any] = {}
-    for agent, comparator in _sandbox_pairs(members):
-        services[agent] = {
+    services: dict[str, Any] = {
+        "default": {
             "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image(agent_kind, fc_commit)}",
             "build": _build_section(agent_kind, fc_commit),
             "init": True,
             "entrypoint": list(SANDBOX_COMMAND),
-            "mem_limit": f"{AGENT_MEMORY_GIB}g",
+            "mem_limit": f"{_agent_memory_gib(members)}g",
             "network_mode": "none",
         }
+    }
+    for comparator in _comparator_services(members):
         services[comparator] = {
             "image": f"{IMAGE_REPOSITORY}:{get_identifier_for_image('comparator', fc_commit)}",
             "build": _build_section("comparator", fc_commit),
@@ -196,17 +203,20 @@ def get_values_file_content(
             "requests": {"ephemeral-storage": f"{ephemeral_storage_gib}Gi"},
         }
 
-    services: dict[str, Any] = {}
-    for agent, comparator in _sandbox_pairs(members):
-        services[agent] = {
+    services: dict[str, Any] = {
+        "default": {
             "image": f"{repository}:{get_identifier_for_image(agent_kind, fc_commit)}",
             # Without this the chart defaults to a bare `tail -f /dev/null`
             # as PID 1, which never reaps orphans (see SANDBOX_COMMAND).
             "command": list(SANDBOX_COMMAND),
             "networkIsolated": True,
             "dnsRecord": True,
-            "resources": resources(AGENT_MEMORY_GIB, AGENT_EPHEMERAL_STORAGE_GIB),
+            "resources": resources(
+                _agent_memory_gib(members), AGENT_EPHEMERAL_STORAGE_GIB
+            ),
         }
+    }
+    for comparator in _comparator_services(members):
         services[comparator] = {
             "image": f"{repository}:{get_identifier_for_image('comparator', fc_commit)}",
             "command": list(SANDBOX_COMMAND),
@@ -234,7 +244,7 @@ def get_sandbox_config(
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
     per-(version, FC pin, variant, swarm size) subdirs so they don't
     clobber each other. ``members``, a swarm's member names, gives each member
-    its own agent and comparator sandboxes.
+    its own comparator sandbox; the members share the agent sandbox.
     """
     backend = resolve_sandbox_backend(backend)
     variant = "corpus" if literature else "closed-book"

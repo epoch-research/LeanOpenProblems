@@ -22,7 +22,7 @@ from inspect_ai.util import (
     tool_state_scope,
 )
 
-from apn.checker import Claim, ProofChecker, current_member
+from apn.checker import CheckOutcome, Claim, ProofChecker, current_member
 from apn.filetree import build_tree_from_tar, read_submission_tar
 
 logger = logging.getLogger(__name__)
@@ -49,9 +49,10 @@ def proof_scorer(checker: ProofChecker, swarm: bool = False) -> Scorer:
     module ``Spec.lean``) with the configured proof checker (Comparator in
     production).
 
-    With ``swarm``, a check inside a member scores that member's own sandbox,
+    With ``swarm``, a check inside a member scores the sandbox it works in,
     and the final score after the swarm checks every member's sandbox: CORRECT
-    if any member's submission passes."""
+    if any member's submission passes. Members whose submission and claim are
+    the same (as when they share a sandbox) are checked once."""
 
     async def score(state: TaskState, target: Target) -> Score:
         if swarm and current_member() is None:
@@ -66,6 +67,7 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
     record = state.store.get(SWARM_RESULT_KEY)
     scores: dict[str, Score] = {}
     rows: list[list[str]] = []
+    checked: dict[tuple[bytes, Claim], CheckOutcome] = {}
     for m in record["members"]:
         name = m["name"]
         with tool_state_scope(name):
@@ -75,6 +77,7 @@ async def _score_swarm(state: TaskState, checker: ProofChecker) -> Score:
                 checker,
                 sandbox(m["sandbox"]),
                 f"submission_contents_{name}",
+                checked,
             )
         score = scores[name]
         assert score.metadata is not None and score.explanation is not None
@@ -131,6 +134,7 @@ async def _score_sandbox(
     checker: ProofChecker,
     sb: SandboxEnvironment,
     tree_key: str,
+    checked: dict[tuple[bytes, Claim], CheckOutcome] | None = None,
 ) -> Score:
     # Per-attempt attempt index, kept in the sample store (the react/deepagent
     # attempt_count is not reachable from here). Increments even when
@@ -161,7 +165,12 @@ async def _score_sandbox(
     decl = state.metadata["decl_name"]
 
     spec = state.metadata["sketch"]
-    outcome = await checker.check(spec, tar, decl=decl, claim=claim)
+    if checked is not None and (tar, claim) in checked:
+        outcome = checked[(tar, claim)]
+    else:
+        outcome = await checker.check(spec, tar, decl=decl, claim=claim)
+        if checked is not None:
+            checked[(tar, claim)] = outcome
     return Score(
         value=CORRECT if outcome.ok else INCORRECT,
         explanation=outcome.detail,
