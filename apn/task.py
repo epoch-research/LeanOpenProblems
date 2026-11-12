@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import tempfile
@@ -232,7 +233,7 @@ def get_sandbox_config(
     Each backend gets its own generated artifact (``compose.yaml`` for docker,
     ``values.yaml`` for k8s -- k8s_sandbox treats any config file NOT named
     ``*compose.yaml``/``*compose.yml`` as chart values). Files are isolated in
-    per-(version, FC pin, variant, swarm size) subdirs so they don't
+    per-(version, FC pin, variant, swarm roster) subdirs so they don't
     clobber each other. ``members``, a swarm's member names, gives each member
     its own agent and comparator sandboxes.
     """
@@ -243,7 +244,11 @@ def get_sandbox_config(
         / _docker_tag_component(__version__)
         / f"fc_{fc_commit[:12]}"
         / variant
-        / ("single-agent" if members is None else f"swarm-{len(members)}")
+        / (
+            "single-agent"
+            if members is None
+            else f"swarm-{len(members)}-{hashlib.sha256(' '.join(members).encode()).hexdigest()[:12]}"
+        )
     )
     directory.mkdir(parents=True, exist_ok=True)
     if backend == "docker":
@@ -274,6 +279,7 @@ def apn_oeis(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_managers: int | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
@@ -292,13 +298,14 @@ def apn_oeis(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_managers=swarm_managers,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
+            SandboxComparator(), swarm=swarm_member_names(swarm_size, swarm_managers) is not None
         ),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
+            pin, literature, sandbox_backend, swarm_member_names(swarm_size, swarm_managers)
         ),
     )
 
@@ -310,6 +317,7 @@ def apn_fc100open(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_managers: int | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
@@ -321,13 +329,14 @@ def apn_fc100open(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_managers=swarm_managers,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
+            SandboxComparator(), swarm=swarm_member_names(swarm_size, swarm_managers) is not None
         ),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
+            pin, literature, sandbox_backend, swarm_member_names(swarm_size, swarm_managers)
         ),
     )
 
@@ -339,6 +348,7 @@ def apn_erdos(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_managers: int | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
@@ -351,13 +361,14 @@ def apn_erdos(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_managers=swarm_managers,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
+            SandboxComparator(), swarm=swarm_member_names(swarm_size, swarm_managers) is not None
         ),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
+            pin, literature, sandbox_backend, swarm_member_names(swarm_size, swarm_managers)
         ),
     )
 
@@ -369,6 +380,7 @@ def apn_personal_corresp(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_managers: int | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Open conjectures sent to us in personal correspondence, formalized by
@@ -384,12 +396,13 @@ def apn_personal_corresp(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_managers=swarm_managers,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(
-            SandboxComparator(), swarm=swarm_member_names(swarm_size) is not None
+            SandboxComparator(), swarm=swarm_member_names(swarm_size, swarm_managers) is not None
         ),
         sandbox=get_sandbox_config(
-            pin, literature, sandbox_backend, swarm_member_names(swarm_size)
+            pin, literature, sandbox_backend, swarm_member_names(swarm_size, swarm_managers)
         ),
     )

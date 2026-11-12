@@ -40,6 +40,7 @@ from apn.limits import continue_unless_looping
 from apn.prompts import user_prompt
 from apn.scorer import claim_store_key
 from apn.tools import bash
+from apn.tree_channel import tree
 
 logger = logging.getLogger(__name__)
 
@@ -151,12 +152,33 @@ def _prover_submit() -> AgentSubmit:
 CONTINUE_MESSAGE = "Continue working on the problem."
 
 
-def swarm_member_names(swarm_size: int | None) -> list[str] | None:
+def swarm_member_names(
+    swarm_size: int | None, swarm_managers: int | None = None
+) -> list[str] | None:
     """The swarm's member names, or ``None`` for no swarm (``swarm_size`` unset,
     zero or negative)."""
     if swarm_size is None or swarm_size <= 0:
         return None
+    if swarm_managers is not None:
+        return list(swarm_tree(swarm_size, swarm_managers))
     return [f"prover-{i}" for i in range(1, swarm_size + 1)]
+
+
+def swarm_tree(swarm_size: int, swarm_managers: int) -> dict[str, str | None]:
+    leaves = swarm_size - 1 - swarm_managers
+    if swarm_managers < 1 or leaves < swarm_managers:
+        raise ValueError(
+            f"A tree swarm of {swarm_size} needs at least one manager and at least "
+            f"one leaf per manager; got swarm_managers={swarm_managers}."
+        )
+    parents: dict[str, str | None] = {"root": None}
+    for m in range(1, swarm_managers + 1):
+        parents[f"mgr-{m}"] = "root"
+    for m in range(1, swarm_managers + 1):
+        reports = leaves // swarm_managers + (m <= leaves % swarm_managers)
+        for leaf in range(1, reports + 1):
+            parents[f"leaf-{m}-{leaf}"] = f"mgr-{m}"
+    return parents
 
 
 def build_agent(
@@ -233,6 +255,7 @@ def lean_prover(
     literature: bool,
     util_module: str,
     swarm_size: int | None = None,
+    swarm_managers: int | None = None,
 ) -> Solver:
     """
     Args:
@@ -252,7 +275,7 @@ def lean_prover(
         _warn_if_ignored_formalizations(state)
         sketch = state.metadata["sketch"]
 
-        names = swarm_member_names(swarm_size)
+        names = swarm_member_names(swarm_size, swarm_managers)
         if names is not None:
             for name in names:
                 await sandbox(name).write_file(ENTRY_PATH, sketch)
@@ -267,7 +290,11 @@ def lean_prover(
                     )
                     for name in names
                 ],
-                channels=[shared_memory()],
+                channels=[
+                    shared_memory()
+                    if swarm_managers is None
+                    else tree(swarm_tree(len(names), swarm_managers))
+                ],
                 budget=Budget(split="equal", reserve=0.01),
             )
         else:
