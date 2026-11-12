@@ -114,7 +114,7 @@ class _Tree(Channel):
                 f"The swarm's {len(self.parents)} members are organised as a tree of height {max(depths)}, with {root} at the top ({levels}). "
                 "Each member below the root has one manager, the member directly above it, and the members directly below a member are its direct reports. "
                 "The whole tree, each member indented under its manager:",
-                "\n".join(outline),
+                "\n".join(["```", *outline, "```"]),
                 " ".join(position),
                 "Messages travel only along the tree's edges: you can message only your manager and your direct reports, with `send_message`, and messages to anyone else are refused. "
                 "Anything meant for a member further away has to be passed on by each member in between, so a leaf's message reaches the root only if its manager forwards it, and the root reaches a leaf only through that leaf's manager. "

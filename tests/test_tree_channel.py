@@ -70,8 +70,8 @@ def test_each_member_is_shown_the_whole_tree_and_its_place_in_it() -> None:
             "The swarm's 4 members are organised as a tree of height 2, with root at "
             "the top (1 at depth 0, 1 at depth 1, 2 at depth 2)."
         ) in text
-    assert "\n\nroot\n  mgr\n    leaf-a  <- you\n    leaf-b\n\n" in leaf
-    assert "\n\nroot  <- you\n  mgr\n    leaf-a\n    leaf-b\n\n" in root
+    assert "\n\n```\nroot\n  mgr\n    leaf-a  <- you\n    leaf-b\n```\n\n" in leaf
+    assert "\n\n```\nroot  <- you\n  mgr\n    leaf-a\n    leaf-b\n```\n\n" in root
     assert "You are the root: you have no manager. Your direct reports are mgr." in root
     assert (
         "You are mgr, at depth 1. Your manager is root. "
