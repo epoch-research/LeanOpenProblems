@@ -20,10 +20,12 @@ from inspect_swarm import (
 from inspect_swarm._bus._record import Draft
 from inspect_swarm._bus._storm import StormControls
 from inspect_swarm._evidence import comm_read
-from inspect_swarm._fence import fence
+from inspect_swarm._fence import fence, utf8_bytes
 from pydantic import JsonValue
 
 CHANNEL = "tree"
+TAG = "message"
+_MAX_COUNT = 10**12
 
 _MEMBER_NAME = re.compile(r"[a-z][a-z0-9_-]{0,47}")
 
@@ -33,7 +35,8 @@ _SEND_DESCRIPTION = (
 )
 
 _READ_DESCRIPTION = (
-    "Read the messages sent to you that you have not read yet. Each is shown once."
+    "Read the messages sent to you that you have not read yet, oldest first. Each is shown once. "
+    "When they do not all fit in one result, the result ends with how many are still unread; call read_messages again for them."
 )
 
 
@@ -54,6 +57,7 @@ class _Tree(Channel):
         for name, parent in self.parents.items():
             if parent is not None:
                 self.children[parent].append(name)
+        self.max_message_bytes = max_message_bytes
         self.storm = StormControls(max_bytes=max_message_bytes, rate=rate)
         self.max_wait = max_wait
 
@@ -137,6 +141,12 @@ class _TreeState:
         self._bus = run.bus
         self._unread: dict[str, list[_Message]] = {info.name: [] for info in run.roster}
         self._tools: list[Tool] | None = None
+        longest = max((info.name for info in run.roster), key=len)
+        envelope = utf8_bytes(
+            fence(TAG, [("id", f"{_Tree.prefix}-{_MAX_COUNT}"), ("from", longest)], "")
+        )
+        self._reserve = len("\n\n") + utf8_bytes(_trailer(_MAX_COUNT))
+        self._budget = envelope + tree.max_message_bytes + self._reserve
 
     def tools(self) -> list[Tool]:
         if self._tools is None:
@@ -214,9 +224,19 @@ class _TreeState:
                     "The read_messages tool was called outside a member of its swarm."
                 )
             unread = self._unread[context.name]
-            self._unread[context.name] = []
             if not unread:
                 return "No unread messages."
+            shown: list[str] = []
+            size = self._reserve
+            for m in unread:
+                text = _fenced(m)
+                grown = size + utf8_bytes(text) + (len("\n\n") if shown else 0)
+                if shown and grown > self._budget:
+                    break
+                shown.append(text)
+                size = grown
+            read = unread[: len(shown)]
+            del unread[: len(shown)]
             comm_read(
                 context.span_id,
                 context.name,
@@ -225,23 +245,35 @@ class _TreeState:
                 current_agent_span_id(),
                 False,
                 current_span_id(),
-                [{"message": m.id, "sender": m.sender} for m in unread],
+                [{"message": m.id, "sender": m.sender} for m in read],
                 False,
             )
-            return "\n\n".join(
-                fence("message", [("id", m.id), ("from", m.sender)], m.text)
-                for m in unread
-            )
+            result = "\n\n".join(shown)
+            if unread:
+                result += "\n\n" + _trailer(len(unread))
+            return result
 
         return ToolDef(
-            execute, name="read_messages", description=_READ_DESCRIPTION
+            execute,
+            name="read_messages",
+            description=_READ_DESCRIPTION,
+            max_output=0,
         ).as_tool()
+
+
+def _fenced(m: _Message) -> str:
+    return fence(TAG, [("id", m.id), ("from", m.sender)], m.text)
+
+
+def _trailer(count: int) -> str:
+    more = "1 more unread message" if count == 1 else f"{count} more unread messages"
+    return f"{more}; call read_messages() again."
 
 
 @swarm_channel
 def tree(
     parents: dict[str, str | None],
-    max_message_bytes: int = 100_000,
+    max_message_bytes: int = 8_000,
     rate: tuple[int, float] | list[int | float] | None = (60, 60.0),
     max_wait: int = 600,
 ) -> Channel:

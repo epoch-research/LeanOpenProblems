@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, cast
 
+import anyio
 import pytest
 from inspect_ai import Task, eval_async
 from inspect_ai.agent import Agent, AgentState, agent
 from inspect_ai.dataset import Sample
 from inspect_ai.event import InfoEvent
 from inspect_ai.tool import Tool, ToolDef, ToolError
-from inspect_swarm import MemberInfo, leaderless, member, swarm, swarm_tools
+from inspect_swarm import ChannelRun, MemberInfo, leaderless, member, swarm, swarm_tools
 
 from apn.solver import swarm_member_names, swarm_tree
 from apn.tree_channel import tree
@@ -118,12 +119,7 @@ async def _leaf_b(tools: dict[str, Tool]) -> None:
     await _read_until(tools, "leaf-b")
 
 
-SCRIPTS: dict[str, Script] = {
-    "root": _root,
-    "mgr": _mgr,
-    "leaf-a": _leaf_a,
-    "leaf-b": _leaf_b,
-}
+SCRIPTS: dict[str, Script] = {}
 
 
 @agent
@@ -136,9 +132,11 @@ def scripted(script: str) -> Agent:
     return execute
 
 
-async def test_messages_flow_only_along_tree_edges(tmp_path: Path) -> None:
+async def _run(tmp_path: Path, scripts: dict[str, Script]) -> Any:
     RESULTS.clear()
     RESULTS.update({name: [] for name in PARENTS})
+    SCRIPTS.clear()
+    SCRIPTS.update(scripts)
     [log] = await eval_async(
         Task(
             dataset=[Sample(input="task")],
@@ -152,6 +150,14 @@ async def test_messages_flow_only_along_tree_edges(tmp_path: Path) -> None:
         log_dir=str(tmp_path),
     )
     assert log.status == "success", log.error
+    return log
+
+
+async def test_messages_flow_only_along_tree_edges(tmp_path: Path) -> None:
+    log = await _run(
+        tmp_path,
+        {"root": _root, "mgr": _mgr, "leaf-a": _leaf_a, "leaf-b": _leaf_b},
+    )
 
     assert RESULTS["leaf-a"][0] == "Sent m-1 to mgr."
     assert RESULTS["mgr"] == ['<message id="m-1" from="leaf-a">\nup from a\n</message>']
@@ -180,3 +186,71 @@ async def test_messages_flow_only_along_tree_edges(tmp_path: Path) -> None:
         ("leaf-a", ["mgr", "root"]),
     ]
     assert {s["rejected"]["control"] for s in refused} == {"admit"}
+
+
+async def _idle(tools: dict[str, Tool]) -> None:
+    return None
+
+
+BACKLOG = [str(i) * 3_000 for i in range(5)] + ["x" * 8_000, "done"]
+SENT: list[anyio.Event] = []
+
+
+async def _leaf_a_backlog(tools: dict[str, Tool]) -> None:
+    for body in BACKLOG[:-1]:
+        await tools["send_message"](["mgr"], body)
+    with pytest.raises(ToolError, match="the limit is 8000"):
+        await tools["send_message"](["mgr"], "x" * 8_001)
+    await tools["send_message"](["mgr"], BACKLOG[-1])
+    SENT[0].set()
+
+
+async def _mgr_backlog(tools: dict[str, Tool]) -> None:
+    await SENT[0].wait()
+    while (text := str(await tools["read_messages"]())) != "No unread messages.":
+        RESULTS["mgr"].append(text)
+
+
+async def test_a_read_shows_whole_messages_within_its_budget(tmp_path: Path) -> None:
+    SENT[:] = [anyio.Event()]
+    await _run(
+        tmp_path,
+        {
+            "root": _idle,
+            "mgr": _mgr_backlog,
+            "leaf-a": _leaf_a_backlog,
+            "leaf-b": _idle,
+        },
+    )
+    pages = [
+        [body for body in BACKLOG if f">\n{body}\n</message>" in result]
+        for result in RESULTS["mgr"]
+    ]
+    assert pages == [
+        BACKLOG[0:2],
+        BACKLOG[2:4],
+        BACKLOG[4:5],
+        BACKLOG[5:6],
+        BACKLOG[6:7],
+    ]
+    trailers = [
+        result.rsplit("\n\n", 1)[1] if "more unread" in result else None
+        for result in RESULTS["mgr"]
+    ]
+    assert trailers == [
+        "5 more unread messages; call read_messages() again.",
+        "3 more unread messages; call read_messages() again.",
+        "2 more unread messages; call read_messages() again.",
+        "1 more unread message; call read_messages() again.",
+        None,
+    ]
+
+
+def test_read_messages_is_never_truncated_by_inspect() -> None:
+    run = ChannelRun(
+        bus=cast(Any, None), roster=[MemberInfo(name, None) for name in PARENTS]
+    )
+    state = tree(PARENTS).open(run)
+    assert state is not None
+    [read] = [t for t in state.tools() if ToolDef(t).name == "read_messages"]
+    assert ToolDef(read).max_output == 0
