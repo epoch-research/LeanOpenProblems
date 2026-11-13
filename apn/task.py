@@ -274,6 +274,7 @@ def apn_oeis(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_model_roles: list[str] | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Formal Conjectures autoformalized OEIS conjectures (492 samples).
@@ -292,6 +293,7 @@ def apn_oeis(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_model_roles=swarm_model_roles,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(
@@ -310,6 +312,7 @@ def apn_fc100open(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_model_roles: list[str] | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     name_list = load_subset(FC100_DIR, subset) if subset is not None else None
@@ -321,6 +324,7 @@ def apn_fc100open(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_model_roles=swarm_model_roles,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(
@@ -339,6 +343,7 @@ def apn_erdos(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_model_roles: list[str] | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """The Bloom statement selection of Erdős problems."""
@@ -351,6 +356,7 @@ def apn_erdos(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_model_roles=swarm_model_roles,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(
@@ -369,6 +375,7 @@ def apn_personal_corresp(
     literature: bool = False,
     agent_type: AgentType = "react",
     swarm_size: int | None = None,
+    swarm_model_roles: list[str] | None = None,
     sandbox_backend: SandboxBackend | None = None,
 ) -> Task:
     """Open conjectures sent to us in personal correspondence, formalized by
@@ -384,6 +391,7 @@ def apn_personal_corresp(
             literature=literature,
             agent_type=agent_type,
             swarm_size=swarm_size,
+            swarm_model_roles=swarm_model_roles,
             util_module=fc_profile(pin).util_module,
         ),
         scorer=proof_scorer(

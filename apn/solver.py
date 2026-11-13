@@ -19,6 +19,8 @@ from inspect_ai.model import (
     ChatMessageUser,
     CompactionStrategy,
     CompactionSummary,
+    Model,
+    get_model,
 )
 from inspect_ai.scorer import Score
 from inspect_ai.solver import Generate, Solver, TaskState, solver
@@ -167,6 +169,7 @@ def build_agent(
     submit: AgentSubmit,
     on_continue: AgentContinue,
     compaction: CompactionStrategy,
+    model: Model | None = None,
 ) -> Agent:
     """Construct the configured agent loop.
 
@@ -197,12 +200,18 @@ def build_agent(
         submit=submit,
         on_continue=on_continue,
         compaction=compaction,
+        model=model,
         **loop_kwargs,
     )
 
 
 @agent
-def _prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
+def _prover(
+    agent_type: AgentType,
+    gated: bool,
+    swarm: bool = False,
+    model_role: str | None = None,
+) -> Agent:
     """The prover loop, for a single agent or a swarm member.
 
     ``swarm_tools()`` does nothing outside a swarm. A member's budget tool is
@@ -223,6 +232,7 @@ def _prover(agent_type: AgentType, gated: bool, swarm: bool = False) -> Agent:
         submit=_prover_submit(),
         on_continue=continue_unless_looping(CONTINUE_MESSAGE),
         compaction=CompactionSummary(threshold=300_000),
+        model=None if model_role is None else get_model(role=model_role),
     )
 
 
@@ -233,6 +243,7 @@ def lean_prover(
     literature: bool,
     util_module: str,
     swarm_size: int | None = None,
+    swarm_model_roles: list[str] | None = None,
 ) -> Solver:
     """
     Args:
@@ -256,16 +267,22 @@ def lean_prover(
         if names is not None:
             for name in names:
                 await sandbox(name).write_file(ENTRY_PATH, sketch)
+            roles = swarm_model_roles or [None] * len(names)
             agent = swarm(
                 members=[
                     member(
                         _prover,
                         name=name,
-                        args={"agent_type": agent_type, "gated": gated, "swarm": True},
+                        args={
+                            "agent_type": agent_type,
+                            "gated": gated,
+                            "swarm": True,
+                            "model_role": role,
+                        },
                         sandbox=name,
                         visible_sandboxes=[comparator_sandbox_name(name)],
                     )
-                    for name in names
+                    for name, role in zip(names, roles, strict=True)
                 ],
                 channels=[shared_memory()],
                 budget=Budget(split="equal", reserve=0.01),
