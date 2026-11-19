@@ -1,0 +1,9 @@
+# How owl builds this repository's runner image (owl's design/diagrams/run-from-source.md): from uv.lock,
+# on the Python of requires-python, with what Inspect fetches at run time (restic, tiktoken's encoding) and
+# owl's sandbox provider added by owl. The two sandboxes are the task's own compose file, built by owl.
+version = 1
+
+[build]
+include = ["apn", "LICENSE"]
+# The provider SDKs are locked only in `dev`.
+groups = ["dev"]

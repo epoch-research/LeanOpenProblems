@@ -1,0 +1,32 @@
+# owl run owl/erdos-1.toml --model anthropic/claude-haiku-5-5 --hard-cost-limit-usd 1
+# configs/bloom68.yaml's task and affordances (the deep agent, the arXiv corpus), cut to one sample of the 68,
+# Erdos1.erdos_1, and 20 minutes. The sample ends at that limit, or at the task's own when the model has
+# stopped calling tools for 100 turns, and its Submission/ is then scored, so the Comparator runs whatever
+# the model did.
+#
+# Where it departs from the team's run on Hawk:
+#   --model anthropic/…     the team's `epoch/…` models need the benchmarks package
+#   --working-limit 1200    259200 on Hawk, with --cost-limit 300; `owl run --hard-cost-limit-usd` bounds
+#                           the spend. Not --time-limit, from which Inspect gives the scorer half: the
+#                           Comparator's first build on a fresh sandbox took longer than 600 s
+#   --checkpoint time:8m    every 6 hours on Hawk; a run this short would otherwise never checkpoint
+#   --retry-attempts 0      --retry-on-error 16 on Hawk
+benchmark = "erdos"
+name = "erdos-1"
+task = "apn/apn_erdos"
+args = [
+  "-T", "subset=bloom_selection",
+  "-T", "agent_type=deep",
+  "-T", "literature=true",
+  "--sample-id", "Erdos1.erdos_1",
+  "--working-limit", "1200",
+  "--checkpoint", "time:8m",
+  "--retry-attempts", "0",
+]
+
+[tags]
+sample = "Erdos1.erdos_1"
+purpose = "benchmarks-on-owl"
+
+[limits]
+max_groups = 1                         # one group (two sandboxes) per sample
