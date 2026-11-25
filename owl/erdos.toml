@@ -1,0 +1,31 @@
+# owl run owl/erdos.toml --model MODEL --hard-cost-limit-usd N
+# The whole of configs/bloom68.yaml, the team's run on Hawk: the 68 problems of Thomas Bloom's selection, with
+# all affordances (the deep agent, the arXiv corpus), each for up to 72 hours of working time and checkpointed
+# every 6 hours. What `owl launch erdos` launches (the benchmarks repository's owl/suite.toml). A cut for a
+# test goes after `--`: `-- --sample-id Erdos1.erdos_1 --working-limit 300` is one problem for five minutes,
+# then the Comparator, whose first build on a fresh sandbox takes about 14 minutes. erdos-1.toml is that
+# problem for 20 minutes.
+#
+# Where it departs from the team's run on Hawk:
+#   no --cost-limit        Hawk's 300 USD a sample is Inspect's, priced from the config's model_cost_config;
+#                          owl prices calls at its gateway, and `--hard-cost-limit-usd` bounds the whole run
+#   --working-limit        not --time-limit, from which Inspect gives the scorer half (erdos-1.toml)
+#   [runner] r7i.4xlarge   128 GiB where Hawk's pod has 200: the largest r7i that still hibernates, so that a
+#                          paused run keeps its samples; Inspect runs 40 at once (the suite's max_connections)
+benchmark = "erdos"
+name = "erdos"
+task = "apn/apn_erdos"
+args = [
+  "-T", "subset=bloom_selection",
+  "-T", "agent_type=deep",
+  "-T", "literature=true",
+  "--working-limit", "259200",
+  "--checkpoint", "time:6h",
+  "--retry-on-error", "16",
+]
+
+[tags]
+purpose = "benchmarks-on-owl"
+
+[runner]
+instance_type = "r7i.4xlarge"
