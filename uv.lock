@@ -289,7 +289,7 @@ wheels = [
 [[package]]
 name = "benchmarks"
 version = "0.1.0"
-source = { git = "https://github.com/epoch-research/benchmarks?branch=owl#e357fe426be435c614dc253ab0dceecd9565706b" }
+source = { git = "https://github.com/epoch-research/benchmarks?branch=owl#e7c0ab0da4a1a2b85656c50b69bb306eef0eb925" }
 dependencies = [
     { name = "agent-client-protocol" },
     { name = "aioboto3" },
