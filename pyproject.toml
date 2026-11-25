@@ -29,6 +29,12 @@ artifacts = [
 apn = "apn._registry"
 
 [dependency-groups]
+# The benchmarks/models package, for owl's runner (owl.toml installs this group beside `dev`): its Epoch
+# providers serve the run's models (`epoch/…` on Hawk) through owl-inspect's plugin, with their provider
+# workarounds, and it brings google-genai and the providers only it has (alibaba, zhipu). Its `owl` branch
+# carries the plugin; uv.lock pins its commit, which `uv lock --upgrade-package benchmarks` moves to the
+# branch's head.
+epoch = ["benchmarks"]
 dev = [
     # The oldest SDKs the locked inspect-ai (0.3.285) accepts when it creates a model.
     "anthropic>=2.0.0",
@@ -43,10 +49,13 @@ dev = [
 ]
 
 [tool.uv]
-# Force inspect-ai to come from PyPI rather than hawk's [tool.uv.sources].
-override-dependencies = ["inspect-ai"]
+# Force inspect-ai to come from PyPI rather than hawk's [tool.uv.sources]. benchmarks/models pins the
+# inspect-ai of Hawk's runner (0.3.273) and the SDKs it takes, older than inspect-swarm needs: they are
+# overridden too, so `epoch` runs on this repository's inspect-ai and SDKs.
+override-dependencies = ["inspect-ai", "anthropic>=2.0.0", "openai>=3.4.0"]
 
 [tool.uv.sources]
+benchmarks = { git = "https://github.com/epoch-research/benchmarks", branch = "owl" }
 hawk = { git = "https://github.com/METR/hawk", subdirectory = "hawk", tag = "v3.3.1" }
 
 [tool.mypy]

@@ -5,5 +5,8 @@ version = 1
 
 [build]
 include = ["apn", "LICENSE"]
-# The provider SDKs are locked only in `dev`.
-groups = ["dev"]
+# The provider SDKs are locked only in `dev`; benchmarks/models, whose Epoch providers serve owl's runs, in
+# `epoch`.
+groups = ["dev", "epoch"]
+# For the benchmarks repository, which is private.
+secrets = ["GITHUB_TOKEN"]
