@@ -10,7 +10,10 @@
 #                           the spend. Not --time-limit, from which Inspect gives the scorer half: the
 #                           Comparator's first build on a fresh sandbox took longer than 600 s
 #   --checkpoint time:8m    every 6 hours on Hawk; a run this short would otherwise never checkpoint
-#   --retry-attempts 0      --retry-on-error 16 on Hawk
+#   --retry-on-error 0      --retry-on-error 16 and 10 retry attempts on Hawk: a test is not run again
+#   --retry-attempts 0
+# As on Hawk, the other samples of a cut of several go on when one errors (--continue-on-fail), and a model
+# call is tried 7 times (--max-retries 7).
 benchmark = "erdos"
 name = "erdos-1"
 task = "apn/apn_erdos"
@@ -21,7 +24,10 @@ args = [
   "--sample-id", "Erdos1.erdos_1",
   "--working-limit", "1200",
   "--checkpoint", "time:8m",
+  "--continue-on-fail",
+  "--retry-on-error", "0",
   "--retry-attempts", "0",
+  "--max-retries", "7",
 ]
 
 [tags]

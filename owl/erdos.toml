@@ -12,6 +12,11 @@
 #   --working-limit        not --time-limit, from which Inspect gives the scorer half (erdos-1.toml)
 #   [runner] r7i.4xlarge   128 GiB where Hawk's pod has 200: the largest r7i that still hibernates, so that a
 #                          paused run keeps its samples; Inspect runs 40 at once (the suite's max_connections)
+# What the run does when something errors is Hawk's: the other samples go on (Hawk's runner sets
+# continue_on_fail), an errored sample is run again up to 16 times (the config's retry_on_error), a model call
+# is tried 7 times (its max_retries), and a failed task is run again 10 times for its errored samples: the
+# config sets no retry_attempts, so Hawk gives Inspect's default (10) unless its API's
+# HAWK_API_EVAL_SET_RETRY_ATTEMPTS says otherwise, which no file of epoch-hawk sets for production.
 benchmark = "erdos"
 name = "erdos"
 task = "apn/apn_erdos"
@@ -21,7 +26,10 @@ args = [
   "-T", "literature=true",
   "--working-limit", "259200",
   "--checkpoint", "time:6h",
+  "--continue-on-fail",
   "--retry-on-error", "16",
+  "--retry-attempts", "10",
+  "--max-retries", "7",
 ]
 
 [tags]
